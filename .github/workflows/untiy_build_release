@@ -3,8 +3,8 @@ name: Unity Build & Release (Release Branch)
 on:
   push:
     branches:
-      - release   # 只在 release 分支触发
-  workflow_dispatch:  # 允许手动触发
+      - release   # 只在 push 到 release 分支（PR merge）时触发
+  workflow_dispatch:  # 可选，允许手动触发
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. 缓存 Unity Library 加快构建
+      # 2. 缓存 Library
       - name: Cache Library
         uses: actions/cache@v3
         with:
@@ -25,12 +25,12 @@ jobs:
           restore-keys: |
             Library-${{ runner.os }}-
 
-      # 3. 使用 GameCI 构建 Unity
+      # 3. 构建 Unity
       - name: Build project
         uses: game-ci/unity-builder@v4
         with:
           targetPlatform: StandaloneWindows64
-          unityVersion: 2022.3.16f1   # ⚠ 换成你的 Unity 版本
+          unityVersion: 2022.3.16f1
 
       # 4. 压缩构建产物
       - name: Zip Build
@@ -39,19 +39,19 @@ jobs:
           zip -r ../../UnityBuild.zip ./*
           cd ../..
 
-      # 5. 上传 Artifact（Actions 页面可下载）
+      # 5. 上传 Artifact
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: UnityBuild-Windows
           path: UnityBuild.zip
-          retention-days: 7   # ⚠ 可设置保存天数（默认 90）
+          retention-days: 7
 
-      # 6. 创建 Release 并上传构建包
+      # 6. 创建 Release
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: release-${{ github.run_number }}   # 自动生成 tag，避免冲突
+          tag_name: release-${{ github.run_number }}
           name: "Release Build #${{ github.run_number }}"
           body: "自动构建的测试版本（release 分支触发）。"
           files: UnityBuild.zip
