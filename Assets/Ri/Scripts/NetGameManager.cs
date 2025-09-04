@@ -11,7 +11,7 @@ public class NetworkGameManager : MonoBehaviour
     [SerializeField] private int serverPort = 8888;
     [SerializeField] private int discoveryPort = 9999;
     [SerializeField] private bool startAsServer = false;
-    [SerializeField] private string serverIP = "127.0.0.1";
+    [SerializeField] private string serverIP = "10.64.58.157";
 
     [Header("Prefabs")]
     [SerializeField] private GameObject playerPrefab;
