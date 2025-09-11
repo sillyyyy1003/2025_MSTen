@@ -129,6 +129,24 @@ public class HexCell : MonoBehaviour
 	public RectTransform uiRect;
 	public HexGridChunk chunk;
 
+
+	bool isVacancy; //whether this cell is vacant
+
+	public bool IsVacancy
+	{
+		get
+		{
+			return isVacancy;
+		}
+		set
+		{
+			isVacancy = value;
+		}
+
+	}
+
+
+	Color color;
 	public Color Color		//cell color
 	{
 		get
@@ -146,7 +164,6 @@ public class HexCell : MonoBehaviour
 		}
 	}
 
-	Color color;
 	public int Elevation
 	{
 		get
