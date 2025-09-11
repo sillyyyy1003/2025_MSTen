@@ -2,49 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class HexMetrics
-{
-	public const float outerRadius = 10f;
-	public const float innerRadius = outerRadius * 0.866025404f;
-
-	static Vector3[] corners = {
-		new Vector3(0f, 0f, outerRadius),
-		new Vector3(innerRadius, 0f, 0.5f * outerRadius),
-		new Vector3(innerRadius, 0f, -0.5f * outerRadius),
-		new Vector3(0f, 0f, -outerRadius),
-		new Vector3(-innerRadius, 0f, -0.5f * outerRadius),
-		new Vector3(-innerRadius, 0f, 0.5f * outerRadius),
-		new Vector3(0f, 0f, outerRadius)
-	};
-
-	public static Vector3 GetFirstCorner(HexDirection direction)
-	{
-		return corners[(int)direction];
-	}
-
-	public static Vector3 GetSecondCorner(HexDirection direction)
-	{
-		return corners[(int)direction + 1];
-	}
-
-	public const float solidFactor = 0.75f;
-	public const float blendFactor = 1f - solidFactor;
-
-	public static Vector3 GetFirstSolidCorner(HexDirection direction)
-	{
-		return corners[(int)direction] * solidFactor;
-	}
-
-	public static Vector3 GetSecondSolidCorner(HexDirection direction)
-	{
-		return corners[(int)direction + 1] * solidFactor;
-	}
-	public static Vector3 GetBridge(HexDirection direction)
-	{
-		return (corners[(int)direction] + corners[(int)direction + 1]) * blendFactor;
-	}
-}
-
 [System.Serializable]
 public struct HexCoordinates
 {
@@ -136,6 +93,13 @@ public enum HexDirection
 	NW	// NorthWest
 }
 
+public enum HexEdgeType
+{
+	Flat,	
+	Slope, 
+	Cliff
+}
+
 /// <summary>
 /// Hex direction for neighbors in opposite directions.
 /// </summary>
@@ -160,12 +124,64 @@ public static class HexDirectionExtensions
 
 public class HexCell : MonoBehaviour
 {
-	public HexCoordinates coordinates;
-	public Color color;
+	public HexCoordinates coordinates;  // Hex coordinate(https://catlikecoding.com/unity/tutorials/hex-map/part-1/hexagonal-coordinates/cube-coordinates.png)
+
+	public RectTransform uiRect;
+	public HexGridChunk chunk;
+
+	public Color Color		//cell color
+	{
+		get
+		{
+			return color;
+		}
+		set
+		{
+			if (color == value)
+			{
+				return;
+			}
+			color = value;
+			Refresh();
+		}
+	}
+
+	Color color;
+	public int Elevation
+	{
+		get
+		{
+			return elevation;
+		}
+		set
+		{
+			if (elevation == value)
+			{
+				return;
+			}
+			elevation = value;
+			Vector3 position = transform.localPosition;
+			position.y = value * HexMetrics.elevationStep;
+			position.y += (HexMetrics.SampleNoise(position).y * 2f - 1f) * HexMetrics.elevationPerturbStrength;//applies this perturbation to the cell's vertical position.
+			transform.localPosition = position;
+
+			Vector3 uiPosition = uiRect.localPosition;
+			uiPosition.z = -position.y;
+			uiRect.localPosition = uiPosition;
+
+			Refresh();  // Refresh the chunk this cell belongs to
+		}
+	}
+	public int elevation = int.MinValue;    // hex height
 
 	[SerializeField]
 	HexCell[] neighbors;    // 6 neighbors of this cell
 
+	/// <summary>
+	/// Find neighbor cell in the given direction
+	/// </summary>
+	/// <param name="direction"></param>
+	/// <returns></returns>
 	public HexCell GetNeighbor(HexDirection direction)
 	{
 		return neighbors[(int)direction];
@@ -175,6 +191,54 @@ public class HexCell : MonoBehaviour
 	{
 		neighbors[(int)direction] = cell;
 		cell.neighbors[(int)direction.Opposite()] = this;
+	}
+
+	/// <summary>
+	/// Find edge type between this cell and its neighbor in the given direction
+	/// </summary>
+	/// <param name="direction"></param>
+	/// <returns></returns>
+	public HexEdgeType GetEdgeType(HexDirection direction)
+	{
+		return HexMetrics.GetEdgeType(
+			elevation, neighbors[(int)direction].elevation
+		);
+	}
+
+	public HexEdgeType GetEdgeType(HexCell otherCell)
+	{
+		return HexMetrics.GetEdgeType(
+			elevation, otherCell.elevation
+		);
+	}
+
+	/// <summary>
+	///  retrieve cell's position
+	/// </summary>
+	public Vector3 Position
+	{
+		get
+		{
+			return transform.localPosition;
+		}
+	}
+
+	void Refresh()
+	{
+		if (chunk) //error check
+		{
+			chunk.Refresh();
+			for (int i = 0; i < neighbors.Length; i++)
+			{
+				HexCell neighbor = neighbors[i];
+				if (neighbor != null && neighbor.chunk != chunk)
+				{
+					neighbor.chunk.Refresh();
+				}
+			}
+	
+
+		}
 	}
 }
 
