@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Newtonsoft.Json;
 using UnityEditor;
+using System.Net.Sockets;
+using System.Net;
 
 public class NetworkGameManager : MonoBehaviour
 {
@@ -11,7 +13,7 @@ public class NetworkGameManager : MonoBehaviour
     [SerializeField] private int serverPort = 8888;
     [SerializeField] private int discoveryPort = 9999;
     [SerializeField] private bool startAsServer = false;
-    [SerializeField] private string serverIP = "10.64.58.157";
+    [SerializeField] private string serverIP = "192.168.1.20";
 
     [Header("Prefabs")]
     [SerializeField] private GameObject playerPrefab;
@@ -46,12 +48,32 @@ public class NetworkGameManager : MonoBehaviour
     {
         if (startAsServer)
         {
+            serverIP = GetLocalIPv4();
+            Debug.Log("server ip is:" + serverIP);
             StartServer();
         }
     }
 
+    private string GetLocalIPv4()
+    {
+        string localIP = "";
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+            {
+                localIP = ip.ToString();
+                break;
+            }
+        }
+        return string.IsNullOrEmpty(localIP) ? "can't find this pc IPv4 address" : localIP;
+    }
+
     public async void StartServer()
     {
+        serverIP = GetLocalIPv4();
+        Debug.Log("server ip is:" + serverIP);
+
         server = new UnityNetworkServer();
         isServer = true;
 
@@ -109,6 +131,8 @@ public class NetworkGameManager : MonoBehaviour
             networkObj.NetworkId = ++nextNetworkId;
         else
             networkObj.NetworkId = nextNetworkId++;
+
+        networkObj.ObjectType = "Player";
 
         networkObj.IsNetworkOwned = true;
         networkObj.OwnerId = ownerId == 0 ? (isServer ? 0 : client?.ClientId ?? 0) : ownerId;
@@ -243,7 +267,7 @@ public class NetworkGameManager : MonoBehaviour
     private void SpawnNetworkObjectFromData(NetworkData data)
     {
         Debug.Log($"Spawning object: {data.ObjectType} (ID: {data.NetworkId}) at position: {data.Position}");
-       
+
         if (networkObjects.ContainsKey(data.NetworkId))
         {
             Debug.LogWarning($"Network object {data.NetworkId} already exists, updating instead.");
@@ -252,9 +276,11 @@ public class NetworkGameManager : MonoBehaviour
         }
 
         GameObject prefab = GetPrefabByType(data.ObjectType);
+
+        Debug.Log("obg type is"+data.ObjectType.ToString());
         if (prefab != null)
         {
-          
+
             Vector3 position = new Vector3(data.Position.x, data.Position.y, data.Position.z);
             Vector3 rotation = new Vector3(data.Rotation.x, data.Rotation.y, data.Rotation.z);
 
@@ -298,7 +324,7 @@ public class NetworkGameManager : MonoBehaviour
         if (networkObjects.ContainsKey(data.NetworkId))
         {
             var networkObj = networkObjects[data.NetworkId];
-            if (!networkObj.IsNetworkOwned) 
+            if (!networkObj.IsNetworkOwned)
             {
                 Vector3 position = new Vector3(data.Position.x, data.Position.y, data.Position.z);
                 Vector3 rotation = new Vector3(data.Rotation.x, data.Rotation.y, data.Rotation.z);

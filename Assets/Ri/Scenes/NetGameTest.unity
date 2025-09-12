@@ -291,7 +291,7 @@ MonoBehaviour:
   serverPort: 8888
   discoveryPort: 9999
   startAsServer: 0
-  serverIP: 127.0.0.1
+  serverIP: 192.168.1.20
   playerPrefab: {fileID: 9146044461655363388, guid: 620d9850e9161be43bbab59f4af77a80,
     type: 3}
   networkPrefabs: []

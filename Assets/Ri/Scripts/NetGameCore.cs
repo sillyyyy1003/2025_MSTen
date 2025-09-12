@@ -106,7 +106,7 @@ public class NetworkData
 {
     public uint NetworkId;
     public SerializableVector3 Position;
-    public SerializableVector3 Rotation; 
+    public SerializableVector3 Rotation;
     public string ObjectType;
     public uint OwnerId;
     public Dictionary<string, object> CustomData;
@@ -456,4 +456,3 @@ public class UnityNetworkServer
         Debug.Log("Server stopped");
     }
 }
-

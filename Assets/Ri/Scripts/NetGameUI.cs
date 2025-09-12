@@ -16,6 +16,7 @@ public class NetworkUI : MonoBehaviour
     private void Start()
     {
         networkManager = FindObjectOfType<NetworkGameManager>();
+
         if (startServerButton != null)
             startServerButton.onClick.AddListener(StartServer);
         if (startClientButton != null)
@@ -31,8 +32,8 @@ public class NetworkUI : MonoBehaviour
     private void StartServer()
     {
         networkManager.StartServer();
-        startServerButton.interactable = false; 
-        startClientButton.interactable = false; 
+        startServerButton.interactable = false;
+        startClientButton.interactable = false;
         spawnPlayerButton.interactable = false;
         UpdateStatus("Starting server...");
         networkManager.SpawnPlayer();
@@ -43,10 +44,9 @@ public class NetworkUI : MonoBehaviour
         startServerButton.interactable = false;
         startClientButton.interactable = false;
 
-        string ip = serverIPInput != null ? serverIPInput.text : "10.64.58.159";
-        Debug.Log("serverIp :" + ip);
+        string ip = serverIPInput != null ? serverIPInput.text : "192.168.1.20";
         if (string.IsNullOrEmpty(ip))
-            ip = "10.64.58.159";
+            ip = "192.168.1.20";
 
         UpdateStatus($"Connecting to {ip}...");
 

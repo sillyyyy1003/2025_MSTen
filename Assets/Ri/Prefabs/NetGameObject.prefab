@@ -121,5 +121,5 @@ MonoBehaviour:
   networkId: 0
   isNetworkOwned: 0
   ownerId: 0
-  objectType: 
+  objectType: Player
   sendRate: 20
