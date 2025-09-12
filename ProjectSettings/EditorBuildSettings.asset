@@ -5,7 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Matsu/Scene/TITLE.unity
+    guid: 02613ab0e0586b6419ff13dc2e8f0c4f
+  - enabled: 1
+    path: Assets/Matsu/Scene/GAME.unity
+    guid: 577eba7bf739505419b4a18c8ca0cc17
+  - enabled: 1
+    path: Assets/Matsu/Scene/RESULT.unity
+    guid: 88f553af2425fb64192cf1e4cbf46b96
   m_configObjects: {}
