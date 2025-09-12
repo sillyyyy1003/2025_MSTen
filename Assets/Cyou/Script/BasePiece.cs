@@ -5,40 +5,40 @@ using System.Collections;
 namespace GamePieces
 {
     /// <summary>
-    /// ã™ã¹ã¦ã®é§’ã®åŸºåº•ã‚¯ãƒ©ã‚¹
+    /// ‚·‚×‚Ä‚Ì‹î‚ÌŠî’êƒNƒ‰ƒXiGameManager‘Î‰”Åj
     /// </summary>
     public abstract class BasePiece : MonoBehaviour
     {
-        #region åŸºæœ¬å±æ€§
-        
-        [Header("åŸºæœ¬ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿")]
+        #region Šî–{‘®«
+
+        [Header("Šî–{ƒpƒ‰ƒ[ƒ^")]
         [SerializeField] protected float maxHP = 100f;
         [SerializeField] protected float currentHP;
         [SerializeField] protected int populationCost = 1;
         [SerializeField] protected int resourceCost = 10;
-        
-        [Header("æˆ¦é—˜ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿")]
+
+        [Header("í“¬ƒpƒ‰ƒ[ƒ^")]
         [SerializeField] protected float attackPower = 10f;
         [SerializeField] protected bool canAttack = true;
         [SerializeField] protected float attackRange = 1f;
         [SerializeField] protected float attackCoolDown = 1f;
         protected float lastAttackTime;
-        
-        [Header("è¡Œå‹•åŠ›ã‚·ã‚¹ãƒ†ãƒ ")]
+
+        [Header("s“®—ÍƒVƒXƒeƒ€")]
         [SerializeField] protected float maxActionPoints = 100f;
         [SerializeField] protected float currentActionPoints;
-        [SerializeField] protected float actionPointRecoveryRate = 10f; // æ¯ç§’ã®å›å¾©é‡
+        [SerializeField] protected float actionPointRecoveryRate = 10f;
         [SerializeField] protected float moveActionCost = 10f;
         [SerializeField] protected float attackActionCost = 20f;
-        
-        [Header("ç§»å‹•ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿")]
-        [SerializeField] protected float moveSpeed = 1f; // 1ãƒã‚¹ç§»å‹•ã«ã‹ã‹ã‚‹æ™‚é–“ï¼ˆç§’ï¼‰
-        [SerializeField] protected int moveRangeLimit = -1; // -1ã¯ç„¡åˆ¶é™ã€æ­£ã®å€¤ã¯ç§»å‹•ç¯„å›²åˆ¶é™
-        
+
+        [Header("ˆÚ“®ƒpƒ‰ƒ[ƒ^")]
+        [SerializeField] protected float moveSpeed = 1f;
+        [SerializeField] protected int moveRangeLimit = -1;
+
         #endregion
-        
-        #region ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£
-        
+
+        #region ƒvƒƒpƒeƒB
+
         public float CurrentHP => currentHP;
         public float MaxHP => maxHP;
         public float CurrentActionPoints => currentActionPoints;
@@ -48,57 +48,102 @@ namespace GamePieces
         public bool CanPerformAttack => canAttack && currentActionPoints >= attackActionCost;
         public Vector2Int CurrentPosition { get; protected set; }
         public Team OwnerTeam { get; protected set; }
-        
+
         #endregion
-        
-        #region ã‚¤ãƒ™ãƒ³ãƒˆ
-        
+
+        #region ƒCƒxƒ“ƒg
+
         public event Action<BasePiece> OnPieceDeath;
         public event Action<float, float> OnHPChanged;
         public event Action<float, float> OnActionPointsChanged;
         public event Action<Vector2Int, Vector2Int> OnPositionChanged;
-        
+
         #endregion
-        
-        #region Unity Lifecycle
-        
+
+        #region ‰Šú‰»
+
+        /// <summary>
+        /// GameManager‚©‚çŒÄ‚Î‚ê‚é‰Šú‰»ƒƒ\ƒbƒh
+        /// </summary>
+        public virtual void Initialize(Team team, Vector2Int position)
+        {
+            OwnerTeam = team;
+            CurrentPosition = position;
+            currentHP = maxHP;
+            currentActionPoints = maxActionPoints;
+        }
+
         protected virtual void Awake()
         {
             currentHP = maxHP;
             currentActionPoints = maxActionPoints;
         }
-        
+
         protected virtual void Start()
         {
             StartCoroutine(ActionPointRecoveryCoroutine());
         }
-        
+
         protected virtual void Update()
         {
-            // æ´¾ç”Ÿã‚¯ãƒ©ã‚¹ã§å¿…è¦ã«å¿œã˜ã¦ã‚ªãƒ¼ãƒãƒ¼ãƒ©ã‚¤ãƒ‰
+            // ”h¶ƒNƒ‰ƒX‚Å•K—v‚É‰‚¶‚ÄƒI[ƒo[ƒ‰ƒCƒh
         }
-        
+
         #endregion
-        
-        #region è¡Œå‹•åŠ›ç®¡ç†
-        
+
+        #region ƒAƒNƒZƒT
+
         /// <summary>
-        /// è¡Œå‹•åŠ›ã®è‡ªå‹•å›å¾©ã‚³ãƒ«ãƒ¼ãƒãƒ³
+        /// ƒŠƒ\[ƒXƒRƒXƒg‚ğæ“¾iGameManager—pj
+        /// </summary>
+        public int GetResourceCost()
+        {
+            return resourceCost;
+        }
+
+        /// <summary>
+        /// ƒ|ƒsƒ…ƒŒ[ƒVƒ‡ƒ“ƒRƒXƒg‚ğæ“¾iGameManager—pj
+        /// </summary>
+        public int GetPopulationCost()
+        {
+            return populationCost;
+        }
+
+        #endregion
+
+        #region s“®—ÍŠÇ—
+
+        /// <summary>
+        /// s“®—Í‚ğŠ®‘S‰ñ•œiƒ^[ƒ“ŠJn‚ÉGameManager‚©‚çŒÄ‚Î‚ê‚éj
+        /// </summary>
+        public void RestoreActionPoints()
+        {
+            ModifyActionPoints(maxActionPoints - currentActionPoints);
+        }
+
+        /// <summary>
+        /// s“®—Í‚Ì©“®‰ñ•œƒRƒ‹[ƒ`ƒ“
         /// </summary>
         protected IEnumerator ActionPointRecoveryCoroutine()
         {
             while (IsAlive)
             {
-                if (currentActionPoints < maxActionPoints)
+                // GameManager‚Ìó‘Ô‚ğŠm”F
+                if (GameManager.Instance != null &&
+                    GameManager.Instance.CurrentState == GameManager.GameState.WaitingForInput &&
+                    GameManager.Instance.CurrentTurn == OwnerTeam)
                 {
-                    ModifyActionPoints(actionPointRecoveryRate * Time.deltaTime);
+                    if (currentActionPoints < maxActionPoints)
+                    {
+                        ModifyActionPoints(actionPointRecoveryRate * Time.deltaTime);
+                    }
                 }
                 yield return null;
             }
         }
-        
+
         /// <summary>
-        /// è¡Œå‹•åŠ›ã‚’æ¶ˆè²»ã™ã‚‹
+        /// s“®—Í‚ğÁ”ï‚·‚é
         /// </summary>
         protected bool ConsumeActionPoints(float amount)
         {
@@ -109,92 +154,97 @@ namespace GamePieces
             }
             return false;
         }
-        
+
         /// <summary>
-        /// è¡Œå‹•åŠ›ã‚’å¤‰æ›´ã™ã‚‹
+        /// s“®—Í‚ğ•ÏX‚·‚é
         /// </summary>
         protected void ModifyActionPoints(float amount)
         {
             float oldValue = currentActionPoints;
             currentActionPoints = Mathf.Clamp(currentActionPoints + amount, 0, maxActionPoints);
-            
+
             if (oldValue != currentActionPoints)
             {
                 OnActionPointsChanged?.Invoke(currentActionPoints, maxActionPoints);
             }
         }
-        
+
         #endregion
-        
-        #region ç§»å‹•ã‚·ã‚¹ãƒ†ãƒ 
-        
+
+        #region ˆÚ“®ƒVƒXƒeƒ€
+
         /// <summary>
-        /// æŒ‡å®šä½ç½®ã¸ã®ç§»å‹•ã‚’è©¦ã¿ã‚‹
+        /// w’èˆÊ’u‚Ö‚ÌˆÚ“®‚ğ‚İ‚é
         /// </summary>
         public virtual bool TryMove(Vector2Int targetPosition)
         {
             if (!CanMove)
                 return false;
-            
+
+            // GameManager‚ÉˆÚ“®‰Â”\‚©Šm”F
+            if (GameManager.Instance != null &&
+                !GameManager.Instance.CanMovePieceTo(this, targetPosition))
+                return false;
+
             if (!IsValidMove(targetPosition))
                 return false;
-            
-            // ç§»å‹•å…ˆã«æ•µãŒã„ã‚‹ã‹ç¢ºèª
-            BasePiece targetPiece = GameBoard.Instance.GetPieceAt(targetPosition);
+
+            // ˆÚ“®æ‚É“G‚ª‚¢‚é‚©Šm”F
+            BasePiece targetPiece = GetPieceAt(targetPosition);
             if (targetPiece != null && targetPiece.OwnerTeam != OwnerTeam)
             {
-                // è‡ªå‹•æ”»æ’ƒ
+                // ©“®UŒ‚
                 return TryAttack(targetPiece);
             }
-            
-            // ç§»å‹•å®Ÿè¡Œ
+
+            // ˆÚ“®Às
             if (ConsumeActionPoints(moveActionCost))
             {
                 StartCoroutine(MoveCoroutine(targetPosition));
                 return true;
             }
-            
+
             return false;
         }
-        
+
         /// <summary>
-        /// ç§»å‹•ãŒæœ‰åŠ¹ã‹ãƒã‚§ãƒƒã‚¯
+        /// ˆÚ“®‚ª—LŒø‚©ƒ`ƒFƒbƒN
         /// </summary>
         protected virtual bool IsValidMove(Vector2Int targetPosition)
         {
-            // ç§»å‹•ç¯„å›²åˆ¶é™ãƒã‚§ãƒƒã‚¯
+            // ˆÚ“®”ÍˆÍ§ŒÀƒ`ƒFƒbƒN
             if (moveRangeLimit > 0)
             {
-                int distance = Mathf.Abs(targetPosition.x - CurrentPosition.x) + 
+                int distance = Mathf.Abs(targetPosition.x - CurrentPosition.x) +
                               Mathf.Abs(targetPosition.y - CurrentPosition.y);
                 if (distance > moveRangeLimit)
                     return false;
             }
-            
-            // ãƒã‚¹ã®æœ‰åŠ¹æ€§ãƒã‚§ãƒƒã‚¯
-            if (!GameBoard.Instance.IsValidPosition(targetPosition))
+
+            // GameBoardŒo—R‚Åƒ}ƒX‚Ì—LŒø«ƒ`ƒFƒbƒN
+            if (!IsValidPosition(targetPosition))
                 return false;
-            
-            // é§’ã®é‡è¤‡ãƒã‚§ãƒƒã‚¯ï¼ˆ1ãƒã‚¹ã«1ä½“ã®ã¿ï¼‰
-            if (GameBoard.Instance.GetPieceAt(targetPosition) != null)
+
+            // ‹î‚Ìd•¡ƒ`ƒFƒbƒN
+            if (GetPieceAt(targetPosition) != null)
                 return false;
-            
-            // çµŒè·¯ä¸Šã®éšœå®³ç‰©ãƒã‚§ãƒƒã‚¯ï¼ˆé§’ã‚’é£›ã³è¶Šãˆã‚‰ã‚Œãªã„ï¼‰
-            if (!GameBoard.Instance.IsPathClear(CurrentPosition, targetPosition))
+
+            // Œo˜Hã‚ÌáŠQ•¨ƒ`ƒFƒbƒN
+            if (!IsPathClear(CurrentPosition, targetPosition))
                 return false;
-            
+
             return true;
         }
-        
+
         /// <summary>
-        /// ç§»å‹•ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³
+        /// ˆÚ“®ƒAƒjƒ[ƒVƒ‡ƒ“
         /// </summary>
         protected virtual IEnumerator MoveCoroutine(Vector2Int targetPosition)
         {
             Vector2Int oldPosition = CurrentPosition;
             Vector3 startPos = transform.position;
-            Vector3 endPos = GameBoard.Instance.GetWorldPosition(targetPosition);
-            
+            Vector3 endPos = GetWorldPosition(targetPosition);
+
             float elapsedTime = 0;
             while (elapsedTime < moveSpeed)
             {
@@ -202,86 +252,86 @@ namespace GamePieces
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
-            
+
             transform.position = endPos;
             CurrentPosition = targetPosition;
             OnPositionChanged?.Invoke(oldPosition, targetPosition);
         }
-        
+
         #endregion
-        
-        #region æˆ¦é—˜ã‚·ã‚¹ãƒ†ãƒ 
-        
+
+        #region í“¬ƒVƒXƒeƒ€
+
         /// <summary>
-        /// æ”»æ’ƒã‚’è©¦ã¿ã‚‹
+        /// UŒ‚‚ğ‚İ‚é
         /// </summary>
         public virtual bool TryAttack(BasePiece target)
         {
             if (!CanPerformAttack)
                 return false;
-            
+
             if (Time.time - lastAttackTime < attackCoolDown)
                 return false;
-            
+
             float distance = Vector2Int.Distance(CurrentPosition, target.CurrentPosition);
             if (distance > attackRange)
                 return false;
-            
+
             if (ConsumeActionPoints(attackActionCost))
             {
                 PerformAttack(target);
                 lastAttackTime = Time.time;
                 return true;
             }
-            
+
             return false;
         }
-        
+
         /// <summary>
-        /// æ”»æ’ƒã®å®Ÿè¡Œï¼ˆæ´¾ç”Ÿã‚¯ãƒ©ã‚¹ã§ã‚ªãƒ¼ãƒãƒ¼ãƒ©ã‚¤ãƒ‰å¯èƒ½ï¼‰
+        /// UŒ‚‚ÌÀs
         /// </summary>
         protected virtual void PerformAttack(BasePiece target)
         {
             target.TakeDamage(attackPower, this);
         }
-        
+
         /// <summary>
-        /// ãƒ€ãƒ¡ãƒ¼ã‚¸ã‚’å—ã‘ã‚‹
+        /// ƒ_ƒ[ƒW‚ğó‚¯‚é
         /// </summary>
         public virtual void TakeDamage(float damage, BasePiece attacker)
         {
             float oldHP = currentHP;
             currentHP = Mathf.Max(0, currentHP - damage);
-            
+
             OnHPChanged?.Invoke(currentHP, maxHP);
-            
+
             if (currentHP <= 0 && oldHP > 0)
             {
                 Die();
             }
         }
-        
+
         #endregion
-        
-        #region æ­»äº¡å‡¦ç†
-        
+
+        #region €–Sˆ—
+
         /// <summary>
-        /// æ­»äº¡å‡¦ç†
+        /// €–Sˆ—
         /// </summary>
         protected virtual void Die()
         {
             OnPieceDeath?.Invoke(this);
-            
-            // æ­»äº¡ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³
+
+            // €–SƒAƒjƒ[ƒVƒ‡ƒ“
             StartCoroutine(DeathAnimation());
         }
-        
+
         protected virtual IEnumerator DeathAnimation()
         {
-            // ç°¡å˜ãªãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆ
+            // ŠÈ’P‚ÈƒtƒF[ƒhƒAƒEƒg
             float fadeTime = 1f;
             float elapsedTime = 0;
-            
+
             SpriteRenderer renderer = GetComponent<SpriteRenderer>();
             if (renderer != null)
             {
@@ -294,28 +344,64 @@ namespace GamePieces
                     yield return null;
                 }
             }
-            
+
             Destroy(gameObject);
         }
-        
+
         #endregion
-        
-        #region é™æ­¢è¡Œå‹•
-        
+
+        #region GameBoard˜AŒg—pƒwƒ‹ƒp[ƒƒ\ƒbƒh
+
         /// <summary>
-        /// é™æ­¢ã—ã¦è¡Œå‹•åŠ›ã‚’å›å¾©ã™ã‚‹
+        /// w’èˆÊ’u‚Ì‹î‚ğæ“¾iGameBoardŒo—Rj
+        /// </summary>
+        protected BasePiece GetPieceAt(Vector2Int position)
+        {
+            return GameBoard.Instance?.GetPieceAt(position);
+        }
+
+        /// <summary>
+        /// ˆÊ’u‚ª—LŒø‚©ƒ`ƒFƒbƒNiGameBoardŒo—Rj
+        /// </summary>
+        protected bool IsValidPosition(Vector2Int position)
+        {
+            return GameBoard.Instance?.IsValidPosition(position) ?? false;
+        }
+
+        /// <summary>
+        /// ƒpƒX‚ª’Ês‰Â”\‚©ƒ`ƒFƒbƒNiGameBoardŒo—Rj
+        /// </summary>
+        protected bool IsPathClear(Vector2Int start, Vector2Int end)
+        {
+            return GameBoard.Instance?.IsPathClear(start, end) ?? false;
+        }
+
+        /// <summary>
+        /// ƒ[ƒ‹ƒhÀ•W‚ğæ“¾iGameBoardŒo—Rj
+        /// </summary>
+        protected Vector3 GetWorldPosition(Vector2Int gridPosition)
+        {
+            return GameBoard.Instance?.GetWorldPosition(gridPosition) ?? Vector3.zero;
+        }
+
+        #endregion
+
+        #region ‹xŒes“®
+
+        /// <summary>
+        /// ‹xŒe‚µ‚Äs“®—Í‚ğ‰ñ•œ‚·‚é
         /// </summary>
         public virtual void Rest()
         {
-            // å›å¾©é€Ÿåº¦ã‚’ä¸€æ™‚çš„ã«ä¸Šæ˜‡ã•ã›ã‚‹ãªã©ã®å‡¦ç†
-            // åŸºæœ¬çš„ãªå›å¾©ã¯è‡ªå‹•å›å¾©ã‚³ãƒ«ãƒ¼ãƒãƒ³ã§è¡Œã‚ã‚Œã‚‹
+            // ’Êí‚Ì2”{‘¬‚Å‰ñ•œ
+            ModifyActionPoints(actionPointRecoveryRate * 2 * Time.deltaTime);
         }
-        
+
         #endregion
     }
-    
+
     /// <summary>
-    /// ãƒãƒ¼ãƒ å®šç¾©
+    /// ƒ`[ƒ€’è‹`
     /// </summary>
     public enum Team
     {
