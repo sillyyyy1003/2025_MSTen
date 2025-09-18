@@ -2,14 +2,19 @@ using UnityEngine;
 
 public static class HexMetrics
 {
-	public const float outerRadius = 10f; // Hexagon outer radius	// half height
-	public const float innerRadius = outerRadius * 0.866025404f;    //Hexagon inner radius (sqrt(3)/2) half width
+	public const float outerToInner = 0.866025404f;
+	public const float innerToOuter = 1f / outerToInner;
+
+	public const float outerRadius = 10f;
+
+	public const float innerRadius = outerRadius * outerToInner;
+
 	public const float elevationStep = 3f;  // Height difference between two adjacent hex cells
 	public const int terracesPerSlope = 2;  // Number of terraces between two hex cells with different elevation
 	public const int terraceSteps = terracesPerSlope * 2 + 1;   // Total number of steps between two hex cells with different elevation
 	public const float horizontalTerraceStepSize = 1f / terraceSteps;   // Horizontal step size between two terrace steps
 	public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);   // Vertical step size between two terrace steps
-	public const float cellPerturbStrength = 4f;    //Strength setting to HexMetrics so we can scale the perturbations
+	public const float cellPerturbStrength = 0f;    //Strength setting to HexMetrics so we can scale the perturbations
 	public const float noiseScale = 0.003f;
 
 	public const float solidFactor = 0.8f;
@@ -18,6 +23,10 @@ public static class HexMetrics
 
 	public static Texture2D noiseSource;
 	public const int chunkSizeX = 5, chunkSizeZ = 5;//5 by 5 blocks
+
+	public const float streamBedElevationOffset = -1.75f;
+	//public const float riverSurfaceElevationOffset = -0.5f;
+	public const float waterElevationOffset = -0.5f;
 
 	static Vector3[] corners = {
 		new Vector3(0f, 0f, outerRadius),	// Top corner
@@ -90,5 +99,20 @@ public static class HexMetrics
 			position.x * noiseScale,
 			position.z * noiseScale
 		);
+	}
+
+	public static Vector3 GetSolidEdgeMiddle(HexDirection direction)
+	{
+		return
+			(corners[(int)direction] + corners[(int)direction + 1]) *
+			(0.5f * solidFactor);
+	}
+
+	public static Vector3 Perturb(Vector3 position)
+	{
+		Vector4 sample = SampleNoise(position);
+		position.x += (sample.x * 2f - 1f) * cellPerturbStrength;
+		position.z += (sample.z * 2f - 1f) * cellPerturbStrength;
+		return position;
 	}
 }

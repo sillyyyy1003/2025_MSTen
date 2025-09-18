@@ -10,10 +10,10 @@ public class HexGrid : MonoBehaviour
 
 	public HexCell cellPrefab;
 	HexCell[] cells;
-	public Text cellLabelPrefab;	// coordinate text
-	Canvas gridCanvas;				// canvas for ui
-	HexMesh hexMesh;				// triangle meshes
-	public Color defaultColor = Color.white;		// mesh color for default
+	public Text cellLabelPrefab;    // coordinate text
+	Canvas gridCanvas;              // canvas for ui
+	HexMesh hexMesh;                // triangle meshes
+	public Color defaultColor = Color.white;        // mesh color for default
 	public Texture2D noiseSource;
 	public int chunkCountX = 4, chunkCountZ = 3;
 	public HexGridChunk chunkPrefab;
@@ -62,7 +62,7 @@ public class HexGrid : MonoBehaviour
 
 	void Start()
 	{
-		hexMesh.Triangulate(cells);
+	
 	}
 
 	/// <summary>
