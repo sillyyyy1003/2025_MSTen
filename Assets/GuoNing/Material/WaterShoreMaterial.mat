@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: WaterMaterial
-  m_Shader: {fileID: 4800000, guid: 93421bfa0e27f7a41b934f2a5b619c7f, type: 3}
+  m_Name: WaterShoreMaterial
+  m_Shader: {fileID: 4800000, guid: 3756202d5f0ce9d44864d07b30a7cfd9, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -116,7 +116,7 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.4532307, g: 0.4532307, b: 0.990566, a: 0.19607843}
+    - _BaseColor: {r: 0.45490196, g: 0.45490196, b: 0.99215686, a: 0.16470589}
     - _Color: {r: 0, g: 0.74193525, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}

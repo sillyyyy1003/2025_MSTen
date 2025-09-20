@@ -1,40 +1,35 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.IO;
 
 public class HexMapEditor : MonoBehaviour
 {
 	public bool isActive = true;	// ¥”Û—LÁ
 
-	public Color[] colors;
 	public HexGrid hexGrid;
-
-	private Color activeColor;
 	private int activeElevation;
 	private int activeWaterLevel;
+	int activeUrbanLevel, activeFarmLevel, activePlantLevel;
 
-	bool applyColor;
+
 	bool applyElevation = true;
 	bool applyWaterLevel = true;
+	bool applyUrbanLevel, applyFarmLevel, applyPlantLevel;
 
 	int brushSize;
+
+	int activeTerrainTypeIndex;
 
 	enum OptionalToggle
 	{
 		Ignore, Yes, No
 	}
 
-	OptionalToggle riverMode;
+	OptionalToggle riverMode, roadMode;
 
 	bool isDrag;
 	HexDirection dragDirection;
 	HexCell previousCell;
-
-
-
-	void Awake()
-	{
-		SelectColor(0);
-	}
 
 	void Update()
 	{
@@ -98,9 +93,9 @@ public class HexMapEditor : MonoBehaviour
 	{
 		if (cell)
 		{
-			if (applyColor)
+			if (activeTerrainTypeIndex >= 0)
 			{
-				cell.Color = activeColor;
+				cell.TerrainTypeIndex = activeTerrainTypeIndex;
 			}
 			if (applyElevation)
 			{
@@ -110,19 +105,42 @@ public class HexMapEditor : MonoBehaviour
 			{
 				cell.WaterLevel = activeWaterLevel;
 			}
+			if (applyUrbanLevel)
+			{
+				cell.UrbanLevel = activeUrbanLevel;
+			}
+			if (applyFarmLevel)
+			{
+				cell.FarmLevel = activeFarmLevel;
+			}
+			if (applyPlantLevel)
+			{
+				cell.PlantLevel = activePlantLevel;
+			}
 			if (riverMode == OptionalToggle.No)
 			{
 				cell.RemoveRiver();
 			}
-			else if (isDrag && riverMode == OptionalToggle.Yes)
+			if (roadMode == OptionalToggle.No)
+			{
+				cell.RemoveRoads();
+			}
+			if (isDrag)
 			{
 				HexCell otherCell = cell.GetNeighbor(dragDirection.Opposite());
 				if (otherCell)
 				{
-					otherCell.SetOutgoingRiver(dragDirection);
-					Debug.Log("Set river");
+					if (riverMode == OptionalToggle.Yes)
+					{
+						otherCell.SetOutgoingRiver(dragDirection);
+					}
+					if (roadMode == OptionalToggle.Yes)
+					{
+						otherCell.AddRoad(dragDirection);
+					}
 				}
-			}
+			} 
+
 		}
 	}
 
@@ -147,15 +165,6 @@ public class HexMapEditor : MonoBehaviour
 		}
 	}
 
-	public void SelectColor(int index)
-	{
-		applyColor = index >= 0;
-		if (applyColor)
-		{
-			activeColor = colors[index];
-		}
-	}
-
 	public void SetElevation(float elevation)
 	{
 		activeElevation = (int)elevation;
@@ -177,6 +186,11 @@ public class HexMapEditor : MonoBehaviour
 		riverMode = (OptionalToggle)mode;
 	}
 
+	public void SetRoadMode(int mode)
+	{
+		roadMode = (OptionalToggle)mode;
+	}
+
 	public void SetActive(bool _isActive)
 	{
 		isActive = _isActive;
@@ -191,4 +205,74 @@ public class HexMapEditor : MonoBehaviour
 	{
 		activeWaterLevel = (int)level;
 	}
+
+	public void SetApplyUrbanLevel(bool toggle)
+	{
+		applyUrbanLevel = toggle;
+	}
+
+	public void SetUrbanLevel(float level)
+	{
+		activeUrbanLevel = (int)level;
+	}
+
+	public void SetApplyFarmLevel(bool toggle)
+	{
+		applyFarmLevel = toggle;
+	}
+
+	public void SetFarmLevel(float level)
+	{
+		activeFarmLevel = (int)level;
+	}
+
+	public void SetApplyPlantLevel(bool toggle)
+	{
+		applyPlantLevel = toggle;
+	}
+
+	public void SetPlantLevel(float level)
+	{
+		activePlantLevel = (int)level;
+	}
+
+	public void SetTerrainTypeIndex(int index)
+	{
+		activeTerrainTypeIndex = index;
+	}
+
+	/*
+	public void Save()
+	{
+		//C:/Users/58472/AppData/LocalLow/Ninonedo/Zolda
+		string path = Path.Combine(Application.persistentDataPath, "test.map");
+		using (
+			BinaryWriter writer =
+			new BinaryWriter(File.Open(path, FileMode.Create))
+		)
+		{
+			writer.Write(1);
+			hexGrid.Save(writer);
+		}
+
+	}
+
+	public void Load()
+	{
+		string path = Path.Combine(Application.persistentDataPath, "test.map");
+		using (BinaryReader reader = new BinaryReader(File.OpenRead(path)))
+		{
+			int header = reader.ReadInt32();
+			if (header <= 1)
+			{
+				hexGrid.Load(reader, header);
+				HexMapCamera.ValidatePosition();
+			}
+			else
+			{
+				Debug.LogWarning("Unknown map format " + header);
+			}
+		}
+	}*/
+
 }

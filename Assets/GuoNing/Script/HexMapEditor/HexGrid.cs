@@ -3,34 +3,60 @@ using System.Collections.Generic;
 using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.UI;
+using System.IO;
 
 public class HexGrid : MonoBehaviour
 {
-	int cellCountX, cellCountZ;
+	public int cellCountX = 20, cellCountZ = 15;
+	int chunkCountX, chunkCountZ;
 
 	public HexCell cellPrefab;
 	HexCell[] cells;
 	public Text cellLabelPrefab;    // coordinate text
 	Canvas gridCanvas;              // canvas for ui
 	HexMesh hexMesh;                // triangle meshes
-	public Color defaultColor = Color.white;        // mesh color for default
 	public Texture2D noiseSource;
-	public int chunkCountX = 4, chunkCountZ = 3;
 	public HexGridChunk chunkPrefab;
+
+	public int seed;
+	public Color[] colors;
 
 	HexGridChunk[] chunks;
 	void Awake()
 	{
 		HexMetrics.noiseSource = noiseSource;
+		HexMetrics.InitializeHashGrid(seed);
+		HexMetrics.colors = colors;
 
-		gridCanvas = GetComponentInChildren<Canvas>();
-		hexMesh = GetComponentInChildren<HexMesh>();
+		CreateMap(cellCountX, cellCountZ);
+	}
 
-		cellCountX = chunkCountX * HexMetrics.chunkSizeX;
-		cellCountZ = chunkCountZ * HexMetrics.chunkSizeZ;
 
+	public bool CreateMap(int x, int z)
+	{
+		if (
+			x <= 0 || x % HexMetrics.chunkSizeX != 0 ||
+			z <= 0 || z % HexMetrics.chunkSizeZ != 0
+		)
+		{
+			Debug.LogError("Unsupported map size.");
+			return false;
+		}
+		if (chunks != null)
+		{
+			for (int i = 0; i < chunks.Length; i++)
+			{
+				Destroy(chunks[i].gameObject);
+			}
+		}
+
+		cellCountX = x;
+		cellCountZ = z;
+		chunkCountX = cellCountX / HexMetrics.chunkSizeX;
+		chunkCountZ = cellCountZ / HexMetrics.chunkSizeZ;
 		CreateChunks();
 		CreateCells();
+		return true;
 	}
 
 	void CreateChunks()
@@ -120,7 +146,6 @@ public class HexGrid : MonoBehaviour
 		HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
 		cell.transform.localPosition = position;
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
-		cell.Color = defaultColor;
 
 		// Set cell neighbors in west direction
 		if (x > 0)
@@ -172,6 +197,51 @@ public class HexGrid : MonoBehaviour
 		chunk.AddCell(localX + localZ * HexMetrics.chunkSizeX, cell);
 	}
 
+	void OnEnable()
+	{
+		if (!HexMetrics.noiseSource)
+		{
+			HexMetrics.noiseSource = noiseSource;
+			HexMetrics.InitializeHashGrid(seed);
+			HexMetrics.colors = colors;
+		}
+	}
 
 
+	public void Save(BinaryWriter writer)
+	{
+		writer.Write(cellCountX);
+		writer.Write(cellCountZ);
+		for (int i = 0; i < cells.Length; i++)
+		{
+			cells[i].Save(writer);
+		}
+	}
+
+	public void Load(BinaryReader reader, int header)
+	{
+		int x = 20, z = 15;
+		if (header >= 1)
+		{
+			x = reader.ReadInt32();
+			z = reader.ReadInt32();
+		}
+
+		if (x != cellCountX || z != cellCountZ)
+		{
+			if (!CreateMap(x, z))
+			{
+				return;
+			}
+		}
+
+		for (int i = 0; i < cells.Length; i++)
+		{
+			cells[i].Load(reader);
+		}
+		for (int i = 0; i < chunks.Length; i++)
+		{
+			chunks[i].Refresh();
+		}
+	}
 }
