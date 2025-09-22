@@ -1,15 +1,20 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public static class HexMetrics
 {
-	public const float outerRadius = 10f; // Hexagon outer radius	// half height
-	public const float innerRadius = outerRadius * 0.866025404f;    //Hexagon inner radius (sqrt(3)/2) half width
+	public const float outerToInner = 0.866025404f;
+	public const float innerToOuter = 1f / outerToInner;
+
+	public const float outerRadius = 10f;	// 格子宽度/高度
+
+	public const float innerRadius = outerRadius * outerToInner;
+
 	public const float elevationStep = 3f;  // Height difference between two adjacent hex cells
 	public const int terracesPerSlope = 2;  // Number of terraces between two hex cells with different elevation
 	public const int terraceSteps = terracesPerSlope * 2 + 1;   // Total number of steps between two hex cells with different elevation
 	public const float horizontalTerraceStepSize = 1f / terraceSteps;   // Horizontal step size between two terrace steps
 	public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);   // Vertical step size between two terrace steps
-	public const float cellPerturbStrength = 4f;    //Strength setting to HexMetrics so we can scale the perturbations
+	public const float cellPerturbStrength = 0f;    //Strength setting to HexMetrics so we can scale the perturbations
 	public const float noiseScale = 0.003f;
 
 	public const float solidFactor = 0.8f;
@@ -18,6 +23,25 @@ public static class HexMetrics
 
 	public static Texture2D noiseSource;
 	public const int chunkSizeX = 5, chunkSizeZ = 5;//5 by 5 blocks
+
+	public const float streamBedElevationOffset = -1.75f;
+	//public const float riverSurfaceElevationOffset = -0.5f;
+	public const float waterElevationOffset = -0.5f;
+	public const float waterFactor = 0.6f;
+	public const float waterBlendFactor = 1f - waterFactor;
+	public const int hashGridSize = 256;
+	public const float hashGridScale = 0.25f;
+
+	public static Color[] colors;
+	static HexHash[] hashGrid;
+
+
+	static float[][] featureThresholds = {
+		new float[] {0.0f, 0.0f, 0.4f},
+		new float[] {0.0f, 0.4f, 0.6f},
+		new float[] {0.4f, 0.6f, 0.8f}
+	};
+
 
 	static Vector3[] corners = {
 		new Vector3(0f, 0f, outerRadius),	// Top corner
@@ -90,5 +114,68 @@ public static class HexMetrics
 			position.x * noiseScale,
 			position.z * noiseScale
 		);
+	}
+
+	public static Vector3 GetSolidEdgeMiddle(HexDirection direction)
+	{
+		return
+			(corners[(int)direction] + corners[(int)direction + 1]) *
+			(0.5f * solidFactor);
+	}
+
+	public static Vector3 Perturb(Vector3 position)
+	{
+		Vector4 sample = SampleNoise(position);
+		position.x += (sample.x * 2f - 1f) * cellPerturbStrength;
+		position.z += (sample.z * 2f - 1f) * cellPerturbStrength;
+		return position;
+	}
+
+	public static Vector3 GetFirstWaterCorner(HexDirection direction)
+	{
+		return corners[(int)direction] * waterFactor;
+	}
+
+	public static Vector3 GetSecondWaterCorner(HexDirection direction)
+	{
+		return corners[(int)direction + 1] * waterFactor;
+	}
+
+	public static Vector3 GetWaterBridge(HexDirection direction)
+	{
+		return (corners[(int)direction] + corners[(int)direction + 1]) *
+		       waterBlendFactor;
+	}
+
+	public static void InitializeHashGrid(int seed)
+	{
+		hashGrid = new HexHash[hashGridSize * hashGridSize];
+		Random.State currentState = Random.state;
+		Random.InitState(seed);
+		for (int i = 0; i < hashGrid.Length; i++)
+		{
+			hashGrid[i] = HexHash.Create();
+		}
+		Random.state = currentState;
+	}
+
+	public static HexHash SampleHashGrid(Vector3 position)
+	{
+		int x = (int)(position.x * hashGridScale) % hashGridSize;
+		if (x < 0)
+		{
+			x += hashGridSize;
+		}
+		int z = (int)(position.z * hashGridScale) % hashGridSize;
+		if (z < 0)
+		{
+			z += hashGridSize;
+		}
+		return hashGrid[x + z * hashGridSize];
+	}
+
+	public static float[] GetFeatureThresholds(int level)
+	{
+		return featureThresholds[level];
 	}
 }
