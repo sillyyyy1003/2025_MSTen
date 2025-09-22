@@ -9,12 +9,12 @@ public class HexMapEditor : MonoBehaviour
 	public HexGrid hexGrid;
 	private int activeElevation;
 	private int activeWaterLevel;
-	int activeUrbanLevel, activeFarmLevel, activePlantLevel;
+	int activeForestLevel, activeFarmLevel, activePlantLevel;
 
 
 	bool applyElevation = true;
 	bool applyWaterLevel = true;
-	bool applyUrbanLevel, applyFarmLevel, applyPlantLevel;
+	bool applyForestnLevel, applyFarmLevel, applyPlantLevel;
 
 	int brushSize;
 
@@ -105,9 +105,9 @@ public class HexMapEditor : MonoBehaviour
 			{
 				cell.WaterLevel = activeWaterLevel;
 			}
-			if (applyUrbanLevel)
+			if (applyForestnLevel)
 			{
-				cell.UrbanLevel = activeUrbanLevel;
+				cell.ForestLevel = activeForestLevel;
 			}
 			if (applyFarmLevel)
 			{
@@ -206,14 +206,14 @@ public class HexMapEditor : MonoBehaviour
 		activeWaterLevel = (int)level;
 	}
 
-	public void SetApplyUrbanLevel(bool toggle)
+	public void SetApplyForestLevel(bool toggle)
 	{
-		applyUrbanLevel = toggle;
+		applyForestnLevel = toggle;
 	}
 
-	public void SetUrbanLevel(float level)
+	public void SetForestLevel(float level)
 	{
-		activeUrbanLevel = (int)level;
+		activeForestLevel = (int)level;
 	}
 
 	public void SetApplyFarmLevel(bool toggle)

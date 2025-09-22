@@ -10,7 +10,7 @@ using UnityEngine;
 public class HexFeatureManager : MonoBehaviour
 {
 	public HexFeatureCollection[]
-		urbanCollections, farmCollections, plantCollections;
+		forestCollections, farmCollections, plantCollections;
 	Transform container;	// 防止刷新时特征重复
 
 
@@ -31,7 +31,7 @@ public class HexFeatureManager : MonoBehaviour
 	
 		HexHash hash = HexMetrics.SampleHashGrid(position);
 		Transform prefab = PickPrefab(
-			urbanCollections, cell.UrbanLevel, hash.a, hash.d
+			forestCollections, cell.ForestLevel, hash.a, hash.d
 		);
 		Transform otherPrefab = PickPrefab(
 			farmCollections, cell.FarmLevel, hash.b, hash.d
@@ -95,6 +95,7 @@ public class HexFeatureManager : MonoBehaviour
 				}
 			}
 		}
+		Debug.Log("feature not found");
 		return null;
 	}
 }

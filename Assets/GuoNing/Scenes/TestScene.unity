@@ -271,7 +271,7 @@ GameObject:
   - component: {fileID: 39768554}
   - component: {fileID: 39768553}
   m_Layer: 5
-  m_Name: Urban
+  m_Name: Forest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -794,6 +794,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hexGrid: {fileID: 545352692}
+  smallMapSize: {x: 20, y: 15}
+  mediumMapSize: {x: 40, y: 30}
+  largeMapSize: {x: 80, y: 60}
 --- !u!114 &186994732
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2623,7 +2626,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Urban
+  m_Text: Forest
 --- !u!222 &410281236
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2896,7 +2899,7 @@ GameObject:
   - component: {fileID: 441245375}
   - component: {fileID: 441245374}
   m_Layer: 5
-  m_Name: WaterPanel
+  m_Name: Water
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3257,7 +3260,7 @@ GameObject:
   - component: {fileID: 503566845}
   - component: {fileID: 503566846}
   m_Layer: 5
-  m_Name: UrbanSlider
+  m_Name: ForestSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3338,7 +3341,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 316748120}
         m_TargetAssemblyTypeName: HexMapEditor, Assembly-CSharp
-        m_MethodName: SetUrbanLevel
+        m_MethodName: SetForestLevel
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3445,7 +3448,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  m_IsOn: 1
+  m_IsOn: 0
 --- !u!1 &516430452
 GameObject:
   m_ObjectHideFlags: 0
@@ -3645,6 +3648,8 @@ MonoBehaviour:
   - {r: 1, g: 0.42745098, b: 0.03137255, a: 0}
   - {r: 0, g: 0.58431375, b: 1, a: 0}
   - {r: 1, g: 0.93333334, b: 0, a: 0}
+  - {r: 1, g: 0, b: 0.03393936, a: 0}
+  - {r: 0.08018869, g: 0, b: 1, a: 0}
 --- !u!4 &545352693
 Transform:
   m_ObjectHideFlags: 0
@@ -4479,7 +4484,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  m_IsOn: 1
+  m_IsOn: 0
 --- !u!1 &670721212
 GameObject:
   m_ObjectHideFlags: 0
@@ -6308,7 +6313,7 @@ GameObject:
   - component: {fileID: 968455981}
   - component: {fileID: 968455982}
   m_Layer: 5
-  m_Name: Urban
+  m_Name: Forest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6384,7 +6389,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 316748120}
         m_TargetAssemblyTypeName: HexMapEditor, Assembly-CSharp
-        m_MethodName: SetApplyUrbanLevel
+        m_MethodName: SetApplyForestLevel
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -7545,9 +7550,9 @@ MonoBehaviour:
   m_HandleRect: {fileID: 997951664}
   m_Direction: 0
   m_MinValue: 0
-  m_MaxValue: 6
+  m_MaxValue: 5
   m_WholeNumbers: 1
-  m_Value: 1
+  m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -9053,7 +9058,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1323858143}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 186994731}
+        m_TargetAssemblyTypeName: NewMapMenu, Assembly-CSharp
+        m_MethodName: CreateMediumMap
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1323858143
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9280,7 +9297,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1767006641}
   m_Direction: 0
   m_MinValue: 1
-  m_MaxValue: 5
+  m_MaxValue: 6
   m_WholeNumbers: 1
   m_Value: 1
   m_OnValueChanged:
@@ -11076,7 +11093,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1656275041}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 186994731}
+        m_TargetAssemblyTypeName: NewMapMenu, Assembly-CSharp
+        m_MethodName: CreateSmallMap
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1656275041
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13767,7 +13796,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2115290852}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 186994731}
+        m_TargetAssemblyTypeName: NewMapMenu, Assembly-CSharp
+        m_MethodName: CreateLargeMap
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2115290852
 MonoBehaviour:
   m_ObjectHideFlags: 0

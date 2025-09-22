@@ -645,11 +645,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9b9ccb5067872c4bb02aa980336bab5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  urbanCollections:
+  forestCollections:
+  - prefabs:
+    - {fileID: 6025196080578872011, guid: b1f0c425ecee650498e5dc54497534b0, type: 3}
   - prefabs:
     - {fileID: 7302144418432718751, guid: 3ae1f99fb64e86340b3300f8e122ff9c, type: 3}
-  - prefabs:
-    - {fileID: 5864669705876348027, guid: 1284c12cf87d1b64088c2d8fdcdb93a8, type: 3}
   - prefabs:
     - {fileID: 5864669705876348027, guid: 1284c12cf87d1b64088c2d8fdcdb93a8, type: 3}
   farmCollections:

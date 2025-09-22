@@ -89,6 +89,9 @@ public struct HexCoordinates
 	}
 }
 
+/// <summary>
+/// 棋子的方位/六角形是尖顶，因此没有南北
+/// </summary>
 public enum HexDirection
 {
 	NE,	// NorthEast 
@@ -99,13 +102,15 @@ public enum HexDirection
 	NW	// NorthWest
 }
 
-
+/// <summary>
+/// 棋子连结边缘的类型
+/// </summary>
 
 public enum HexEdgeType
 {
-	Flat,	
-	Slope, 
-	Cliff
+	Flat,	// 平坦
+	Slope,	// 缓坡
+	Cliff	// 陡坡
 }
 
 
@@ -171,12 +176,12 @@ public class HexCell : MonoBehaviour
 		{
 			isVacancy = value;
 		}
-
 	}
 
 	/// <summary>
 	/// 获取/设定档期按各自的水平面
 	/// </summary>
+	int waterLevel; // water level
 	public int WaterLevel
 	{
 		get
@@ -194,7 +199,7 @@ public class HexCell : MonoBehaviour
 			Refresh();
 		}
 	}
-	int waterLevel; // water level
+
 
 
 	/// <summary>
@@ -496,7 +501,6 @@ public class HexCell : MonoBehaviour
 
 	[SerializeField]
 	HexCell[] neighbors;    // 6 neighbors of this cell
-
 	/// <summary>
 	/// 获取某个方向上的邻居格子
 	/// </summary>
@@ -660,18 +664,18 @@ public class HexCell : MonoBehaviour
 	/// 1. 控制格子的视觉表现（草/树...)
 	/// 2. 0>> 该格子没有某类Feature
 	/// </summary>
-	int urbanLevel, farmLevel, plantLevel;  
-	public int UrbanLevel
+	int forestLevel, farmLevel, plantLevel;  
+	public int ForestLevel
 	{
 		get
 		{
-			return urbanLevel;
+			return forestLevel;
 		}
 		set
 		{
-			if (urbanLevel != value)
+			if (forestLevel != value)
 			{
-				urbanLevel = value;
+				forestLevel = value;
 				RefreshSelfOnly();
 			}
 		}
@@ -719,7 +723,7 @@ public class HexCell : MonoBehaviour
 		writer.Write((byte)terrainTypeIndex);
 		writer.Write((byte)elevation);
 		writer.Write((byte)waterLevel);
-		writer.Write((byte)urbanLevel);
+		writer.Write((byte)forestLevel);
 		writer.Write((byte)farmLevel);
 		writer.Write((byte)plantLevel);
 		//writer.Write(specialIndex);
@@ -766,7 +770,7 @@ public class HexCell : MonoBehaviour
 		elevation = reader.ReadByte();
 		RefreshPosition();
 		waterLevel = reader.ReadByte();	// 格子的水平面高度
-		urbanLevel = reader.ReadByte();	// 格子的urban level
+		forestLevel = reader.ReadByte();	// 格子的urban level
 		farmLevel = reader.ReadByte();	// 格子的farm level
 		plantLevel = reader.ReadByte(); // 格子的plant level
 										//specialIndex=reader.ReadByte();

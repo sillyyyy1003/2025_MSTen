@@ -1,11 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public static class HexMetrics
 {
 	public const float outerToInner = 0.866025404f;
 	public const float innerToOuter = 1f / outerToInner;
 
-	public const float outerRadius = 10f;
+	public const float outerRadius = 10f;	// 格子宽度/高度
 
 	public const float innerRadius = outerRadius * outerToInner;
 

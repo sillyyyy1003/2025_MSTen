@@ -7,14 +7,13 @@ using System.IO;
 
 public class HexGrid : MonoBehaviour
 {
-	public int cellCountX = 20, cellCountZ = 15;
+	public int cellCountX = 20, cellCountZ = 15;    // 棋盘大小 CellCountX: 横向格子数 cellCountZ：纵向格子数
 	int chunkCountX, chunkCountZ;
 
-	public HexCell cellPrefab;
+	public HexCell cellPrefab;		//单个格子的预制件
 	HexCell[] cells;
 	public Text cellLabelPrefab;    // coordinate text
 	Canvas gridCanvas;              // canvas for ui
-	HexMesh hexMesh;                // triangle meshes
 	public Texture2D noiseSource;
 	public HexGridChunk chunkPrefab;
 

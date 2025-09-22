@@ -4,6 +4,13 @@ public class NewMapMenu : MonoBehaviour
 {
 
 	public HexGrid hexGrid;
+	[SerializeField]
+	[Header("Map Size")]
+	public Vector2Int smallMapSize = new Vector2Int(20, 15);
+
+	public Vector2Int mediumMapSize = new Vector2Int(40, 30);
+	public Vector2Int largeMapSize = new Vector2Int(80, 60);
+
 
 	public void Open()
 	{
@@ -26,16 +33,19 @@ public class NewMapMenu : MonoBehaviour
 
 	public void CreateSmallMap()
 	{
-		CreateMap(20, 15);
+		//CreateMap(20, 15);
+		CreateMap(smallMapSize.x,smallMapSize.y);
 	}
 
 	public void CreateMediumMap()
 	{
-		CreateMap(40, 30);
+		//CreateMap(40, 30);
+		CreateMap(mediumMapSize.x, mediumMapSize.y);
 	}
 
 	public void CreateLargeMap()
 	{
-		CreateMap(80, 60);
+		//CreateMap(80, 60);
+		CreateMap(largeMapSize.x, largeMapSize.y);
 	}
 }
