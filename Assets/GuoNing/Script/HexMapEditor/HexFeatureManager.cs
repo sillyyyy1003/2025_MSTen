@@ -95,7 +95,7 @@ public class HexFeatureManager : MonoBehaviour
 				}
 			}
 		}
-		Debug.Log("feature not found");
+		//Debug.Log("feature not found");
 		return null;
 	}
 }

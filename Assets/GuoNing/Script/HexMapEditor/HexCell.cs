@@ -166,7 +166,10 @@ public class HexCell : MonoBehaviour
 
 	bool isVacancy; //whether this cell is vacant
 
-	public bool IsVacancy
+	// 25.9.23 RI add cell's Serial number
+	public int id { get; set; }
+
+    public bool IsVacancy
 	{
 		get
 		{

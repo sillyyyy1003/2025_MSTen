@@ -4,6 +4,7 @@ using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
+using Unity.VisualScripting;
 
 public class HexGrid : MonoBehaviour
 {
@@ -21,7 +22,7 @@ public class HexGrid : MonoBehaviour
 	public Color[] colors;
 
 	HexGridChunk[] chunks;
-	void Awake()
+	void Start()
 	{
 		HexMetrics.noiseSource = noiseSource;
 		HexMetrics.InitializeHashGrid(seed);
@@ -55,7 +56,14 @@ public class HexGrid : MonoBehaviour
 		chunkCountZ = cellCountZ / HexMetrics.chunkSizeZ;
 		CreateChunks();
 		CreateCells();
-		return true;
+
+        // 25.9.23 RI add GameStart
+        if (!GameManage.Instance.GameInit())
+        {
+            Debug.LogError("Game Init Failed!");
+        }
+
+        return true;
 	}
 
 	void CreateChunks()
@@ -85,10 +93,7 @@ public class HexGrid : MonoBehaviour
 		}
 	}
 
-	void Start()
-	{
-	
-	}
+
 
 	/// <summary>
 	/// find cell according to the given position (hit point)
@@ -146,8 +151,8 @@ public class HexGrid : MonoBehaviour
 		cell.transform.localPosition = position;
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
 
-		// Set cell neighbors in west direction
-		if (x > 0)
+        // Set cell neighbors in west direction
+        if (x > 0)
 		{
 			cell.SetNeighbor(HexDirection.W, cells[i - 1]);
 		}
@@ -182,10 +187,31 @@ public class HexGrid : MonoBehaviour
 		// Reset cell elevation
 		cell.Elevation = 0;
 
-		AddCellToChunk(x, z, cell);
-	}
+        // 25.9.23 RI add layer to each cell
+        cell.gameObject.layer = LayerMask.NameToLayer("Cell");
 
-	void AddCellToChunk(int x, int z, HexCell cell)
+        // 25.9.23 RI add cell's serial Number
+        cell.id = i;
+
+        // 25.9.23 RI set cell's initial infor
+        BoardInfor infor = new BoardInfor();
+
+		infor.Cells2DPos.x = x; 
+        infor.Cells2DPos.y= z; 
+        infor.Cells3DPos = position;
+        infor.id = i;
+
+		// 25.9.23 RI send cell's Infor to GameManage
+        GameManage.Instance.SetGameBoardInfor(infor);
+
+
+        AddCellToChunk(x, z, cell);
+
+       
+
+    }
+
+    void AddCellToChunk(int x, int z, HexCell cell)
 	{
 		int chunkX = x / HexMetrics.chunkSizeX;
 		int chunkZ = z / HexMetrics.chunkSizeZ;
@@ -232,6 +258,7 @@ public class HexGrid : MonoBehaviour
 			{
 				return;
 			}
+           
 		}
 
 		for (int i = 0; i < cells.Length; i++)
