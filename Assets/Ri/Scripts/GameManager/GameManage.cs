@@ -1,4 +1,4 @@
-using DG.Tweening;
+ï»¿using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,278 +6,279 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-// ÆåÅÌĞÅÏ¢½á¹¹Ìå
+// æ£‹ç›˜ä¿¡æ¯ç»“æ„ä½“
 public struct BoardInfor
 {
-  
-    // ÆåÅÌÔÚ¶şÎ¬Êı×éÖĞµÄ×ø±ê
-    public int2 Cells2DPos;
 
-    // ÆåÅÌÔÚÊÀ½çÖĞµÄ×ø±ê
-    public Vector3 Cells3DPos;
+	// æ£‹ç›˜åœ¨äºŒç»´æ•°ç»„ä¸­çš„åæ ‡
+	public int2 Cells2DPos;
+
+	// æ£‹ç›˜åœ¨ä¸–ç•Œä¸­çš„åæ ‡
+	public Vector3 Cells3DPos;
 
 
-    // µ±Ç°ÆåÅÌµÄĞòÁĞºÅ
-    public int id;
+	// å½“å‰æ£‹ç›˜çš„åºåˆ—å·
+	public int id;
 
 };
 
 public class GameManage : MonoBehaviour
 {
-    // µ¥Àı
-    public static GameManage Instance { get; private set; }
+	// å•ä¾‹
+	public static GameManage Instance { get; private set; }
 
-    // *************************
-    // ¡ª¡ª¡ª¡ªË½ÓĞÊôĞÔ¡ª¡ª¡ª¡ª
-    // *************************
-    private Camera GameCamera;
-    // ÉèÖÃÉäÏß¼ì²â²ã¼¶
-    private int RayTestLayerMask = 1 << 6;
+	// *************************
+	// â€”â€”â€”â€”ç§æœ‰å±æ€§â€”â€”â€”â€”
+	// *************************
+	private Camera GameCamera;
+	// è®¾ç½®å°„çº¿æ£€æµ‹å±‚çº§
+	private int RayTestLayerMask = 1 << 6;
 
-    // µ±Ç°µã»÷µ½µÄÆåÅÌĞòÁĞºÅ
-    private int ClickCellid;
+	// å½“å‰ç‚¹å‡»åˆ°çš„æ£‹ç›˜åºåˆ—å·
+	private int ClickCellid;
 
-    // ÊÇ·ñÔÚÓÎÏ·ÖĞ
-    private bool bIsInGaming;
+	// æ˜¯å¦åœ¨æ¸¸æˆä¸­
+	private bool bIsInGaming;
 
-    // µ±Ç°ÆåÅÌÉÏÊÇ·ñÓĞÍæ¼Ò¿ØÖÆµÄÆå×Ó
-    private bool[,] bIsHavePlayer;
+	// å½“å‰æ£‹ç›˜ä¸Šæ˜¯å¦æœ‰ç©å®¶æ§åˆ¶çš„æ£‹å­
+	private bool[,] bIsHavePlayer;
 
-    // µ±Ç°ÆåÅÌÉÏËùÓĞµÄÍæ¼ÒÆå×ÓÊı×é
-    private GameObject[,] AllUnits;
-    private GameObject SelectingUnit;
+	// å½“å‰æ£‹ç›˜ä¸Šæ‰€æœ‰çš„ç©å®¶æ£‹å­æ•°ç»„
+	private GameObject[,] AllUnits;
+	private GameObject SelectingUnit;
 
-    // ÉÏÒ»´ÎÑ¡ÖĞµÄÓµÓĞµ¥Î»µÄ¸ñ×Óid
-    private int LastPlayerID;
+	// ä¸Šä¸€æ¬¡é€‰ä¸­çš„æ‹¥æœ‰å•ä½çš„æ ¼å­id
+	private int LastPlayerID;
 
-    // Íæ¼ÒÆå×ÓµÄÆğÊ¼Î»ÖÃ
-    // ´ıÉè¶¨Íê³Éºó¸ü¸Ä
-    private List<int2> PlayerStartPos2D =   new List<int2>();
+	// ç©å®¶æ£‹å­çš„èµ·å§‹ä½ç½®
+	// å¾…è®¾å®šå®Œæˆåæ›´æ”¹
+	private List<int2> PlayerStartPos2D = new List<int2>();
 
-    // Íæ¼ÒÆå×ÓÔÚÓÎÏ·ÖĞµÄÎ»ÖÃ
-    private List<int2> PlayerGamingPos = new List<int2>();
+	// ç©å®¶æ£‹å­åœ¨æ¸¸æˆä¸­çš„ä½ç½®
+	private List<int2> PlayerGamingPos = new List<int2>();
 
-    // ±¾¾ÖµÄÆåÅÌĞÅÏ¢
-    private List<BoardInfor> GameBoardInfor=new List<BoardInfor>();
-    private Dictionary<int, BoardInfor> GameBoardInforDict=new Dictionary<int, BoardInfor>();
+	// æœ¬å±€çš„æ£‹ç›˜ä¿¡æ¯
+	private List<BoardInfor> GameBoardInfor = new List<BoardInfor>();
+	private Dictionary<int, BoardInfor> GameBoardInforDict = new Dictionary<int, BoardInfor>();
 
-    // ÊÇ·ñ¿É¼ÌĞø½øĞĞµã»÷²Ù×÷
-    private bool bCanContinue = true;
-
-
+	// æ˜¯å¦å¯ç»§ç»­è¿›è¡Œç‚¹å‡»æ“ä½œ
+	private bool bCanContinue = true;
 
 
-    // *************************
-    // ¡ª¡ª¡ª¡ª¹«ÓÃÊôĞÔ¡ª¡ª¡ª¡ª
-    // *************************
-
-    // ÉèÖÃÊÇ·ñÔÚÓÎÏ·ÖĞ
-    public void SetIsGamingOrNot(bool isGaming) { bIsInGaming = isGaming; }
-
-    // Æå×ÓÔ¤ÖÆÌå£¬´ıÆå×ÓÖÆ×÷Íê³Éºó¸ü»»
-    public GameObject Player;
 
 
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); 
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+	// *************************
+	// â€”â€”â€”â€”å…¬ç”¨å±æ€§â€”â€”â€”â€”
+	// *************************
 
-    }
- 
+	// è®¾ç½®æ˜¯å¦åœ¨æ¸¸æˆä¸­
+	public void SetIsGamingOrNot(bool isGaming) { bIsInGaming = isGaming; }
+
+	// æ£‹å­é¢„åˆ¶ä½“ï¼Œå¾…æ£‹å­åˆ¶ä½œå®Œæˆåæ›´æ¢
+	public GameObject Player;
 
 
-    // Update is called once per frame
-    void Update()
-    {
-        if (bIsInGaming)
-        {
-            // Êó±ê×ó¼üµã»÷
-            if (Input.GetMouseButtonDown(0) && bCanContinue)
-            {
-                Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit;
+	private void Awake()
+	{
+		if (Instance == null)
+		{
+			Instance = this;
+			DontDestroyOnLoad(gameObject);
+		}
+		else
+		{
+			Destroy(gameObject);
+		}
+
+	}
 
 
-                // ÅĞ¶Ïµã»÷µ½µÄÊÇ·ñÊÇ¸ñ×Ó
-                if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
-                {
-                    ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
 
-                    //Debug.Log("Cell's 2Dpos is "+ FindCell(ClickCellid).Cells2DPos.x+
-                    //    ","+FindCell(ClickCellid).Cells2DPos.y+
-                    //    "\nCell's 3Dpos is " + FindCell(ClickCellid).Cells3DPos);
-
-                    if (!FindPlayerOnCell(ClickCellid))
-                    {
-                        ReturnToDefault();
-                        SelectingUnit = null;
-                    }
-                    else
-                    {
-                        SelectingUnit = AllUnits[FindCell(ClickCellid).Cells2DPos.x, FindCell(ClickCellid).Cells2DPos.y];
-                        SelectingUnit.GetComponent<ChangeMaterial>().Outline();
-                        LastPlayerID = ClickCellid;
-                    }
-                }
-                else
-                {
-                    ReturnToDefault();
-                    Debug.Log("no object");
-                }
-            }
-            // Êó±êÓÒ¼üµã»÷
-            if (Input.GetMouseButtonDown(1) && bCanContinue)
-            {
-                Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit;
-
-                // ÅĞ¶Ïµã»÷µ½µÄÊÇ·ñÊÇ¸ñ×Ó
-                if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
-                {
-                    ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
-                    if (!FindPlayerOnCell(ClickCellid))
-                    {
-                        if(SelectingUnit!=null)
-                            MoveToSelectCell(ClickCellid);
-                    }
-                }
-            }
-        }
-    }
-
-    // ÓÎÏ·½áÊø
-    public bool GameOver()
-    {
-        PlayerStartPos2D.Clear(); 
-        PlayerGamingPos.Clear();
-
-        GameBoardInfor.Clear();
-        GameBoardInforDict.Clear();
+	// Update is called once per frame
+	void Update()
+	{
+		if (bIsInGaming)
+		{
+			// é¼ æ ‡å·¦é”®ç‚¹å‡»
+			if (Input.GetMouseButtonDown(0) && bCanContinue)
+			{
+				Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
+				RaycastHit hit;
 
 
-        SetIsGamingOrNot(false);
-        return true;
-    }
-    // *************************
-    // ¡ª¡ª¡ª¡ªË½ÓĞº¯Êı¡ª¡ª¡ª¡ª
-    // *************************
+				// åˆ¤æ–­ç‚¹å‡»åˆ°çš„æ˜¯å¦æ˜¯æ ¼å­
+				if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
+				{
+					ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
 
-    // ½øĞĞ±¾¾ÖÓÎÏ·µÄ³õÊ¼»¯
-    public bool GameInit()
-    {
-        // test
-        SetIsGamingOrNot(true);
+					//Debug.Log("Cell's 2Dpos is "+ FindCell(ClickCellid).Cells2DPos.x+
+					//    ","+FindCell(ClickCellid).Cells2DPos.y+
+					//    "\nCell's 3Dpos is " + FindCell(ClickCellid).Cells3DPos);
+
+					if (!FindPlayerOnCell(ClickCellid))
+					{
+						ReturnToDefault();
+						SelectingUnit = null;
+					}
+					else
+					{
+						SelectingUnit = AllUnits[FindCell(ClickCellid).Cells2DPos.x, FindCell(ClickCellid).Cells2DPos.y];
+						SelectingUnit.GetComponent<ChangeMaterial>().Outline();
+						LastPlayerID = ClickCellid;
+					}
+				}
+				else
+				{
+					ReturnToDefault();
+					Debug.Log("no object");
+				}
+			}
+			// é¼ æ ‡å³é”®ç‚¹å‡»
+			if (Input.GetMouseButtonDown(1) && bCanContinue)
+			{
+				Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
+				RaycastHit hit;
+
+				// åˆ¤æ–­ç‚¹å‡»åˆ°çš„æ˜¯å¦æ˜¯æ ¼å­
+				if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
+				{
+					ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
+					if (!FindPlayerOnCell(ClickCellid))
+					{
+						if (SelectingUnit != null)
+							MoveToSelectCell(ClickCellid);
+					}
+				}
+			}
+		}
+	}
+
+	// æ¸¸æˆç»“æŸ
+	public bool GameOver()
+	{
+		PlayerStartPos2D.Clear();
+		PlayerGamingPos.Clear();
+
+		GameBoardInfor.Clear();
+		GameBoardInforDict.Clear();
 
 
-        if (bIsInGaming)
-        {
-            GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();
-          
-            bIsHavePlayer = new bool[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x+1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
-            AllUnits=new GameObject[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
+		SetIsGamingOrNot(false);
+		return true;
+	}
+	// *************************
+	// â€”â€”â€”â€”ç§æœ‰å‡½æ•°â€”â€”â€”â€”
+	// *************************
+
+	// è¿›è¡Œæœ¬å±€æ¸¸æˆçš„åˆå§‹åŒ–
+	public bool GameInit()
+	{
+		// test
+		SetIsGamingOrNot(true);
 
 
-            // ³õÊ¼»¯Íæ¼Ò£¬´ıÉè¶¨Íê³Éºó¸ü¸Ä
-            CreatePlayerObjects();
-          
-            
-        }
-        return true;
-    }
+		if (bIsInGaming)
+		{
+			GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();
 
-    // ¸ù¾İĞòÁĞºÅ²éÕÒÄ³¸öÆåÅÌ
-    private BoardInfor FindCell(int id)
-    {
-        return GameBoardInforDict[id];
-    }
+			bIsHavePlayer = new bool[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
+			AllUnits = new GameObject[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
 
 
-    /// <summary>
-    /// ´´½¨Íæ¼ÒµÄµ¥Î»
-    /// </summary>
-    private void CreatePlayerObjects()
-    {
-        int2 start = new int2(0, 0);
-        PlayerStartPos2D.Add(start);
-        GameObject Player01 = Instantiate(Player,
-            FindCell(0).Cells3DPos,
-            Player.transform.rotation);
+			// åˆå§‹åŒ–ç©å®¶ï¼Œå¾…è®¾å®šå®Œæˆåæ›´æ”¹
+			CreatePlayerObjects();
 
-        Player01.transform.position = new Vector3(Player01.transform.position.x,
-            Player01.transform.position.y + 2.5f,
-            Player01.transform.position.z);
 
-        bIsHavePlayer[FindCell(0).Cells2DPos.x, FindCell(0).Cells2DPos.y] = true;
-        AllUnits[FindCell(0).Cells2DPos.x, FindCell(0).Cells2DPos.y] = Player01;
-    }
+		}
+		return true;
+	}
 
-    /// <summary>
-    /// Ñ°ÕÒÄ³¸ö¸ñ×ÓÉÏÊÇ·ñÓĞÍæ¼Òµ¥Î»´æÔÚ
-    /// </summary>
-    /// <param name="id">¸ñ×ÓµÄid</param>
-    /// <returns></returns>
-    private bool FindPlayerOnCell(int id)
-    {
-        if (bIsHavePlayer[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y])
-        {
-            return true;
-        }
-        return false;
-    }
+	// æ ¹æ®åºåˆ—å·æŸ¥æ‰¾æŸä¸ªæ£‹ç›˜
+	private BoardInfor FindCell(int id)
+	{
+		return GameBoardInforDict[id];
+	}
 
-    /// <summary>
-    /// ½«Íæ¼Òµ¥Î»ÉèÖÃÎªÎ´Ñ¡ÖĞ×´Ì¬
-    /// </summary>
-    private void ReturnToDefault()
-    {
-        if(SelectingUnit!=null)
-            SelectingUnit.GetComponent<ChangeMaterial>().Default();
-       
-    }
 
-    /// <summary>
-    /// ÒÆ¶¯µ½Ñ¡ÖĞµÄ¸ñ×Ó
-    /// </summary>
-    /// <param name="id">¸ñ×ÓµÄid</param>
-    private void MoveToSelectCell(int id)
-    {
-        bCanContinue = false;
-        Vector3 newPos = new Vector3(FindCell(id).Cells3DPos.x, FindCell(id).Cells3DPos.y+2.5f, FindCell(id).Cells3DPos.z); 
-        SelectingUnit.transform.DOMove(newPos, 1.0f).OnComplete(() => {
-            bCanContinue = true;
+	/// <summary>
+	/// åˆ›å»ºç©å®¶çš„å•ä½
+	/// </summary>
+	private void CreatePlayerObjects()
+	{
+		int2 start = new int2(0, 0);
+		PlayerStartPos2D.Add(start);
+		GameObject Player01 = Instantiate(Player,
+			FindCell(0).Cells3DPos,
+			Player.transform.rotation);
 
-            // ÎªĞÂÒÆ¶¯µÄ¸ñ×ÓÌí¼Ó×´Ì¬
-            bIsHavePlayer[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y] =true;
-            AllUnits[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y] = SelectingUnit;
+		Player01.transform.position = new Vector3(Player01.transform.position.x,
+			Player01.transform.position.y + 2.5f,
+			Player01.transform.position.z);
 
-            // ³õÊ¼»¯ÉÏÒ»´Î²Ù×÷µÄ¸ñ×ÓµÄ×´Ì¬
-            bIsHavePlayer[FindCell(LastPlayerID).Cells2DPos.x, FindCell(LastPlayerID).Cells2DPos.y] = false;
-            AllUnits[FindCell(LastPlayerID).Cells2DPos.x, FindCell(LastPlayerID).Cells2DPos.y] = null;
+		bIsHavePlayer[FindCell(0).Cells2DPos.x, FindCell(0).Cells2DPos.y] = true;
+		AllUnits[FindCell(0).Cells2DPos.x, FindCell(0).Cells2DPos.y] = Player01;
 
-            LastPlayerID = id;
-        }); ;
+	}
 
-    }
+	/// <summary>
+	/// å¯»æ‰¾æŸä¸ªæ ¼å­ä¸Šæ˜¯å¦æœ‰ç©å®¶å•ä½å­˜åœ¨
+	/// </summary>
+	/// <param name="id">æ ¼å­çš„id</param>
+	/// <returns></returns>
+	private bool FindPlayerOnCell(int id)
+	{
+		if (bIsHavePlayer[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y])
+		{
+			return true;
+		}
+		return false;
+	}
 
-    // *************************
-    // ¡ª¡ª¡ª¡ª¹«ÓÃº¯Êı¡ª¡ª¡ª¡ª
-    // *************************
+	/// <summary>
+	/// å°†ç©å®¶å•ä½è®¾ç½®ä¸ºæœªé€‰ä¸­çŠ¶æ€
+	/// </summary>
+	private void ReturnToDefault()
+	{
+		if (SelectingUnit != null)
+			SelectingUnit.GetComponent<ChangeMaterial>().Default();
 
-    /// <summary>
-    /// Ìí¼Ó¸ñ×ÓĞÅÏ¢£¬ÓÉ HexGrid½Å±¾ÖĞµÄ CreateCell() º¯Êıµ÷ÓÃ
-    /// </summary>
-    /// <param name="infor">¸ñ×ÓĞÅÏ¢½á¹¹Ìå</param>
-    public void SetGameBoardInfor(BoardInfor infor)
-    {
-        GameBoardInfor.Add(infor);
-        GameBoardInforDict.Add(infor.id, infor);
-    }
+	}
+
+	/// <summary>
+	/// ç§»åŠ¨åˆ°é€‰ä¸­çš„æ ¼å­
+	/// </summary>
+	/// <param name="id">æ ¼å­çš„id</param>
+	private void MoveToSelectCell(int id)
+	{
+		bCanContinue = false;
+		Vector3 newPos = new Vector3(FindCell(id).Cells3DPos.x, FindCell(id).Cells3DPos.y + 2.5f, FindCell(id).Cells3DPos.z);
+		SelectingUnit.transform.DOMove(newPos, 1.0f).OnComplete(() => {
+			bCanContinue = true;
+
+			// ä¸ºæ–°ç§»åŠ¨çš„æ ¼å­æ·»åŠ çŠ¶æ€
+			bIsHavePlayer[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y] = true;
+			AllUnits[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y] = SelectingUnit;
+
+			// åˆå§‹åŒ–ä¸Šä¸€æ¬¡æ“ä½œçš„æ ¼å­çš„çŠ¶æ€
+			bIsHavePlayer[FindCell(LastPlayerID).Cells2DPos.x, FindCell(LastPlayerID).Cells2DPos.y] = false;
+			AllUnits[FindCell(LastPlayerID).Cells2DPos.x, FindCell(LastPlayerID).Cells2DPos.y] = null;
+
+			LastPlayerID = id;
+		}); ;
+
+	}
+
+	// *************************
+	// â€”â€”â€”â€”å…¬ç”¨å‡½æ•°â€”â€”â€”â€”
+	// *************************
+
+	/// <summary>
+	/// æ·»åŠ æ ¼å­ä¿¡æ¯ï¼Œç”± HexGridè„šæœ¬ä¸­çš„ CreateCell() å‡½æ•°è°ƒç”¨
+	/// </summary>
+	/// <param name="infor">æ ¼å­ä¿¡æ¯ç»“æ„ä½“</param>
+	public void SetGameBoardInfor(BoardInfor infor)
+	{
+		GameBoardInfor.Add(infor);
+		GameBoardInforDict.Add(infor.id, infor);
+	}
 }
