@@ -6,75 +6,76 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-// ÆåÅÌĞÅÏ¢½á¹¹Ìå
+// æ£‹ç›˜æ¯ä¸ªæ ¼å­ä¿¡æ¯çš„ç»“æ„ä½“
 public struct BoardInfor
 {
   
-    // ÆåÅÌÔÚ¶şÎ¬Êı×éÖĞµÄ×ø±ê
+    // æ¯ä¸ªæ ¼å­çš„äºŒç»´åæ ‡
     public int2 Cells2DPos;
 
-    // ÆåÅÌÔÚÊÀ½çÖĞµÄ×ø±ê
+    // æ¯ä¸ªæ ¼å­çš„ä¸–ç•Œåæ ‡
     public Vector3 Cells3DPos;
 
 
-    // µ±Ç°ÆåÅÌµÄĞòÁĞºÅ
+    // æ¯ä¸ªæ ¼å­çš„id
     public int id;
 
 };
 
 public class GameManage : MonoBehaviour
 {
-    // µ¥Àı
+    // å•ä¾‹
     public static GameManage Instance { get; private set; }
 
     // *************************
-    // ¡ª¡ª¡ª¡ªË½ÓĞÊôĞÔ¡ª¡ª¡ª¡ª
+    //          ç§æœ‰å±æ€§
     // *************************
     private Camera GameCamera;
-    // ÉèÖÃÉäÏß¼ì²â²ã¼¶
+    // å°„çº¿æ£€æµ‹æŒ‡å®šä¸ºcellå±‚çº§
     private int RayTestLayerMask = 1 << 6;
 
-    // µ±Ç°µã»÷µ½µÄÆåÅÌĞòÁĞºÅ
+    // ç‚¹å‡»åˆ°çš„æ ¼å­çš„id
     private int ClickCellid;
 
-    // ÊÇ·ñÔÚÓÎÏ·ÖĞ
+    // æ˜¯å¦åœ¨æ¸¸æˆä¸­
     private bool bIsInGaming;
 
-    // µ±Ç°ÆåÅÌÉÏÊÇ·ñÓĞÍæ¼Ò¿ØÖÆµÄÆå×Ó
+    // å½“å‰æ ¼å­ä¸Šæ˜¯å¦æœ‰ç©å®¶æ§åˆ¶çš„å•ä½
     private bool[,] bIsHavePlayer;
 
-    // µ±Ç°ÆåÅÌÉÏËùÓĞµÄÍæ¼ÒÆå×ÓÊı×é
+    // ç©å®¶æ‰€æœ‰å•ä½çš„GameOnject
     private GameObject[,] AllUnits;
+    // å½“å‰é€‰æ‹©çš„å•ä½
     private GameObject SelectingUnit;
 
-    // ÉÏÒ»´ÎÑ¡ÖĞµÄÓµÓĞµ¥Î»µÄ¸ñ×Óid
-    private int LastPlayerID;
+    // ä¸Šä¸€æ¬¡é€‰æ‹©åˆ°çš„æ ¼å­çš„id
+    private int LastSelectingCellID;
 
-    // Íæ¼ÒÆå×ÓµÄÆğÊ¼Î»ÖÃ
-    // ´ıÉè¶¨Íê³Éºó¸ü¸Ä
+    // ç©å®¶çš„èµ·å§‹ä½ç½®
+    // ç©å®¶èµ·å§‹ä½ç½®äºŒç»´æ•°ç»„çš„åˆ—è¡¨
     private List<int2> PlayerStartPos2D =   new List<int2>();
 
-    // Íæ¼ÒÆå×ÓÔÚÓÎÏ·ÖĞµÄÎ»ÖÃ
+    // ç©å®¶èµ·å§‹ä¸–ç•Œä½ç½®çš„åˆ—è¡¨
     private List<int2> PlayerGamingPos = new List<int2>();
 
-    // ±¾¾ÖµÄÆåÅÌĞÅÏ¢
+    // æ£‹ç›˜ä¿¡æ¯Listä¸Dictionary
     private List<BoardInfor> GameBoardInfor=new List<BoardInfor>();
     private Dictionary<int, BoardInfor> GameBoardInforDict=new Dictionary<int, BoardInfor>();
 
-    // ÊÇ·ñ¿É¼ÌĞø½øĞĞµã»÷²Ù×÷
+    // æ˜¯å¦å¯è¿›è¡Œæ“ä½œ
     private bool bCanContinue = true;
 
 
 
 
     // *************************
-    // ¡ª¡ª¡ª¡ª¹«ÓÃÊôĞÔ¡ª¡ª¡ª¡ª
+    //         å…¬æœ‰å±æ€§
     // *************************
 
-    // ÉèÖÃÊÇ·ñÔÚÓÎÏ·ÖĞ
+    // è®¾ç½®å½“å‰æ˜¯å¦åœ¨æ¸¸æˆä¸­
     public void SetIsGamingOrNot(bool isGaming) { bIsInGaming = isGaming; }
 
-    // Æå×ÓÔ¤ÖÆÌå£¬´ıÆå×ÓÖÆ×÷Íê³Éºó¸ü»»
+    // ç©å®¶çš„é¢„åˆ¶ä½“ï¼Œåç»­æ›´æ”¹
     public GameObject Player;
 
 
@@ -99,14 +100,14 @@ public class GameManage : MonoBehaviour
     {
         if (bIsInGaming)
         {
-            // Êó±ê×ó¼üµã»÷
+            // å·¦é”®ç‚¹å‡»
             if (Input.GetMouseButtonDown(0) && bCanContinue)
             {
                 Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit;
 
 
-                // ÅĞ¶Ïµã»÷µ½µÄÊÇ·ñÊÇ¸ñ×Ó
+                // å°„çº¿æ£€æµ‹
                 if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
                 {
                     ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
@@ -124,7 +125,7 @@ public class GameManage : MonoBehaviour
                     {
                         SelectingUnit = AllUnits[FindCell(ClickCellid).Cells2DPos.x, FindCell(ClickCellid).Cells2DPos.y];
                         SelectingUnit.GetComponent<ChangeMaterial>().Outline();
-                        LastPlayerID = ClickCellid;
+                        LastSelectingCellID = ClickCellid;
                     }
                 }
                 else
@@ -133,13 +134,13 @@ public class GameManage : MonoBehaviour
                     Debug.Log("no object");
                 }
             }
-            // Êó±êÓÒ¼üµã»÷
+            // å³é”®ç‚¹å‡»
             if (Input.GetMouseButtonDown(1) && bCanContinue)
             {
                 Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit;
 
-                // ÅĞ¶Ïµã»÷µ½µÄÊÇ·ñÊÇ¸ñ×Ó
+                // å°„çº¿æ£€æµ‹
                 if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
                 {
                     ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
@@ -153,7 +154,7 @@ public class GameManage : MonoBehaviour
         }
     }
 
-    // ÓÎÏ·½áÊø
+    // æ¸¸æˆç»“æŸ
     public bool GameOver()
     {
         PlayerStartPos2D.Clear(); 
@@ -167,33 +168,12 @@ public class GameManage : MonoBehaviour
         return true;
     }
     // *************************
-    // ¡ª¡ª¡ª¡ªË½ÓĞº¯Êı¡ª¡ª¡ª¡ª
+    //         ç§æœ‰å‡½æ•°
     // *************************
 
-    // ½øĞĞ±¾¾ÖÓÎÏ·µÄ³õÊ¼»¯
-    public bool GameInit()
-    {
-        // test
-        SetIsGamingOrNot(true);
+  
 
-
-        if (bIsInGaming)
-        {
-            GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();
-          
-            bIsHavePlayer = new bool[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x+1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
-            AllUnits=new GameObject[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
-
-
-            // ³õÊ¼»¯Íæ¼Ò£¬´ıÉè¶¨Íê³Éºó¸ü¸Ä
-            CreatePlayerObjects();
-          
-            
-        }
-        return true;
-    }
-
-    // ¸ù¾İĞòÁĞºÅ²éÕÒÄ³¸öÆåÅÌ
+    // æ ¹æ®æ ¼å­idå¾—åˆ°å…¶å…·ä½“ä¿¡æ¯
     private BoardInfor FindCell(int id)
     {
         return GameBoardInforDict[id];
@@ -201,7 +181,7 @@ public class GameManage : MonoBehaviour
 
 
     /// <summary>
-    /// ´´½¨Íæ¼ÒµÄµ¥Î»
+    /// åˆ›å»ºç©å®¶å•ä½
     /// </summary>
     private void CreatePlayerObjects()
     {
@@ -220,9 +200,9 @@ public class GameManage : MonoBehaviour
     }
 
     /// <summary>
-    /// Ñ°ÕÒÄ³¸ö¸ñ×ÓÉÏÊÇ·ñÓĞÍæ¼Òµ¥Î»´æÔÚ
+    /// æŸ¥æ‰¾æŸä¸ªç»™å­ä¸Šæ˜¯å¦æœ‰ç©å®¶çš„å•ä½
     /// </summary>
-    /// <param name="id">¸ñ×ÓµÄid</param>
+    /// <param name="id">æ ¼å­id</param>
     /// <returns></returns>
     private bool FindPlayerOnCell(int id)
     {
@@ -234,7 +214,7 @@ public class GameManage : MonoBehaviour
     }
 
     /// <summary>
-    /// ½«Íæ¼Òµ¥Î»ÉèÖÃÎªÎ´Ñ¡ÖĞ×´Ì¬
+    /// å–æ¶ˆé€‰æ‹©å•ä½çš„æè¾¹
     /// </summary>
     private void ReturnToDefault()
     {
@@ -244,9 +224,9 @@ public class GameManage : MonoBehaviour
     }
 
     /// <summary>
-    /// ÒÆ¶¯µ½Ñ¡ÖĞµÄ¸ñ×Ó
+    /// ç§»åŠ¨åˆ°é€‰æ‹©çš„æ£‹ç›˜
     /// </summary>
-    /// <param name="id">¸ñ×ÓµÄid</param>
+    /// <param name="id">æ£‹ç›˜id</param>
     private void MoveToSelectCell(int id)
     {
         bCanContinue = false;
@@ -254,27 +234,49 @@ public class GameManage : MonoBehaviour
         SelectingUnit.transform.DOMove(newPos, 1.0f).OnComplete(() => {
             bCanContinue = true;
 
-            // ÎªĞÂÒÆ¶¯µÄ¸ñ×ÓÌí¼Ó×´Ì¬
+            // å¯¹å°†è¦ç§»åŠ¨åˆ°çš„æ£‹ç›˜è¿›è¡Œè®¾ç½®
             bIsHavePlayer[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y] =true;
             AllUnits[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y] = SelectingUnit;
 
-            // ³õÊ¼»¯ÉÏÒ»´Î²Ù×÷µÄ¸ñ×ÓµÄ×´Ì¬
-            bIsHavePlayer[FindCell(LastPlayerID).Cells2DPos.x, FindCell(LastPlayerID).Cells2DPos.y] = false;
-            AllUnits[FindCell(LastPlayerID).Cells2DPos.x, FindCell(LastPlayerID).Cells2DPos.y] = null;
+            // å°†ç§»åŠ¨å‰çš„æ£‹ç›˜åˆå§‹åŒ–
+            bIsHavePlayer[FindCell(LastSelectingCellID).Cells2DPos.x, FindCell(LastSelectingCellID).Cells2DPos.y] = false;
+            AllUnits[FindCell(LastSelectingCellID).Cells2DPos.x, FindCell(LastSelectingCellID).Cells2DPos.y] = null;
 
-            LastPlayerID = id;
+            LastSelectingCellID = id;
         }); ;
 
     }
 
     // *************************
-    // ¡ª¡ª¡ª¡ª¹«ÓÃº¯Êı¡ª¡ª¡ª¡ª
+    //        å…¬æœ‰å‡½æ•°
     // *************************
 
+    // æ¸¸æˆåˆå§‹åŒ–
+    public bool GameInit()
+    {
+        // test
+        SetIsGamingOrNot(true);
+
+
+        if (bIsInGaming)
+        {
+            GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();
+
+            bIsHavePlayer = new bool[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
+            AllUnits = new GameObject[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
+
+
+            // åˆ›å»ºç©å®¶æ‹¥æœ‰çš„å•ä½
+            CreatePlayerObjects();
+
+
+        }
+        return true;
+    }
     /// <summary>
-    /// Ìí¼Ó¸ñ×ÓĞÅÏ¢£¬ÓÉ HexGrid½Å±¾ÖĞµÄ CreateCell() º¯Êıµ÷ÓÃ
+    /// è®¾ç½®æ£‹ç›˜ç»“æ„ä½“ä¿¡æ¯
     /// </summary>
-    /// <param name="infor">¸ñ×ÓĞÅÏ¢½á¹¹Ìå</param>
+    /// <param name="infor">æ ¼å­id</param>
     public void SetGameBoardInfor(BoardInfor infor)
     {
         GameBoardInfor.Add(infor);
