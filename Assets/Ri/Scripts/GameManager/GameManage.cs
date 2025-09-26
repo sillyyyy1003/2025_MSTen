@@ -1,9 +1,10 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+
 using UnityEngine.UIElements;
 
 // 棋盘每个格子信息的结构体
@@ -19,6 +20,7 @@ public struct BoardInfor
 
     // 每个格子的id
     public int id;
+
 
 };
 
