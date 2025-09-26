@@ -148,6 +148,26 @@ public static class HexDirectionExtensions
 }
 
 
+public enum TerrainType
+{
+	Forest,		// 森林 可通过不可占领
+ 	Mountain,	// 山地 不可通过 不可占领 
+    Water, 		// 水 不可通过 不可占领
+	Plain		// 平原 可通过 可占领
+}
+
+
+/// <summary>
+/// 每个格子的内容信息
+/// </summary>
+public struct CellInfo
+{
+	public bool isPassalbe;		// 是否可以通过
+	public bool isCapturable;   // 是否可以占领
+
+	public TerrainType type;	// 当前的Feature
+
+}
 
 public class HexCell : MonoBehaviour
 {
@@ -166,7 +186,23 @@ public class HexCell : MonoBehaviour
 
 	bool isVacancy; //whether this cell is vacant
 
-	public bool IsVacancy
+	public enum TerrainColor 
+	{
+		White = 0,
+		Green = 1,
+		Orange = 2,
+		Cyan = 3,
+		Yellow = 4,
+		Player1 = 5,
+		Player2 = 6
+	}
+
+
+
+	// 25.9.23 RI add cell's Serial number
+	public int id { get; set; }
+
+    public bool IsVacancy
 	{
 		get
 		{
@@ -294,10 +330,21 @@ public class HexCell : MonoBehaviour
 		{
 			return HexMetrics.colors[terrainTypeIndex];
 		}
-		
 	}
 
+	/// <summary>
+	/// 改变某个格子的颜色/ todo: 鉴于之后terrainTypeIndex应该会变成纹理索引。这个地方需要改成在纹理的基础上修改颜色
+	/// </summary>
+	/// <param name="color"></param>
+	public void SetCellColor(TerrainColor color)
+	{
+		terrainTypeIndex = (int)color;
+		Refresh();
+	}
+
+
 	int terrainTypeIndex;
+
 	/// <summary>
 	/// 返回这个格子的颜色
 	/// </summary>
@@ -431,7 +478,9 @@ public class HexCell : MonoBehaviour
 		neighbor.RefreshSelfOnly();
 	}
 
-	//Refresh chunk
+	/// <summary>
+	/// 忽略对格子周围的影响，只更新该格子
+	/// </summary>
 	void RefreshSelfOnly()
 	{
 		chunk.Refresh();
@@ -557,6 +606,7 @@ public class HexCell : MonoBehaviour
 		}
 	}
 
+	
 
 	/// <summary>
 	/// 河床的Y轴高度
@@ -572,9 +622,9 @@ public class HexCell : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 更新Chunk的格子信息
+	/// 更新Chunk的格子信息/更新格子及其周遭格子的信息
 	/// </summary>
-	void Refresh()
+	public void Refresh()
 	{
 		if (chunk) //error check
 		{
@@ -587,8 +637,6 @@ public class HexCell : MonoBehaviour
 					neighbor.chunk.Refresh();
 				}
 			}
-	
-
 		}
 	}
 
@@ -769,12 +817,12 @@ public class HexCell : MonoBehaviour
 		terrainTypeIndex = reader.ReadByte();
 		elevation = reader.ReadByte();
 		RefreshPosition();
-		waterLevel = reader.ReadByte();	// 格子的水平面高度
+		waterLevel = reader.ReadByte();		// 格子的水平面高度
 		forestLevel = reader.ReadByte();	// 格子的urban level
-		farmLevel = reader.ReadByte();	// 格子的farm level
-		plantLevel = reader.ReadByte(); // 格子的plant level
-										//specialIndex=reader.ReadByte();
-										//walled=reader.ReadByte();
+		farmLevel = reader.ReadByte();		// 格子的farm level
+		plantLevel = reader.ReadByte();		// 格子的plant level
+											// specialIndex=reader.ReadByte();
+											// walled=reader.ReadByte();
 		byte riverData = reader.ReadByte();
 		if (riverData >= 128)
 		{
@@ -803,6 +851,7 @@ public class HexCell : MonoBehaviour
 		{
 			roads[i] = (roadFlags & (1 << i)) != 0;
 		}
+
 	}
 
 	/// <summary>
