@@ -6,6 +6,8 @@ using UnityEngine.UI;
 using System.IO;
 using Unity.VisualScripting;
 
+
+
 public class HexGrid : MonoBehaviour
 {
 	public int cellCountX = 20, cellCountZ = 15;    // 棋盘大小 CellCountX: 横向格子数 cellCountZ：纵向格子数
@@ -121,7 +123,7 @@ public class HexGrid : MonoBehaviour
 			return null;
 		}
 		return cells[x + z * cellCountX];
-
+		
 	}
 
 	public void ShowUI(bool visible)
@@ -264,6 +266,43 @@ public class HexGrid : MonoBehaviour
 		for (int i = 0; i < cells.Length; i++)
 		{
 			cells[i].Load(reader);
+			
+			// 该格子的类型，是否可通过，是否可占领的信息
+			CellInfo cellInfo = new CellInfo();
+
+			// 判断是否有水
+			if (cells[i].IsUnderwater)
+			{
+				cellInfo.isCapturable = false; // 不可占领
+				cellInfo.isPassalbe = false; // 不可通过
+				cellInfo.type = TerrainType.Water;
+			}
+			else
+			{
+				// 如果有高度
+				if (cells[i].Elevation > 2)
+				{
+					cellInfo.isCapturable = false; // 不可占领
+					cellInfo.isPassalbe = false; // 不可通过
+					cellInfo.type = TerrainType.Mountain;
+
+				}
+				else
+				{
+					if (cells[i].ForestLevel > 0)
+					{
+						cellInfo.isCapturable = false;
+						cellInfo.isPassalbe = true;
+						cellInfo.type = TerrainType.Forest;
+					}
+					else
+					{
+						cellInfo.isCapturable = true;
+						cellInfo.isPassalbe = true;
+						cellInfo.type = TerrainType.Plain;
+					}
+				}
+			}
 		}
 		for (int i = 0; i < chunks.Length; i++)
 		{
