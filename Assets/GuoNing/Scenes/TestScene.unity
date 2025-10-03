@@ -173,6 +173,7 @@ MonoBehaviour:
   useColors: 0
   useUVCoordinates: 0
   useUV2Coordinates: 0
+  useTerrainTypes: 0
 --- !u!23 &22347502
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3642,14 +3643,6 @@ MonoBehaviour:
   chunkPrefab: {fileID: 100083073583928104, guid: b9cdec4e2737898499891c641ed27d35,
     type: 3}
   seed: 1234
-  colors:
-  - {r: 1, g: 1, b: 1, a: 0}
-  - {r: 0, g: 1, b: 0.05882353, a: 0}
-  - {r: 1, g: 0.42745098, b: 0.03137255, a: 0}
-  - {r: 0, g: 0.58431375, b: 1, a: 0}
-  - {r: 1, g: 0.93333334, b: 0, a: 0}
-  - {r: 1, g: 0, b: 0.03393936, a: 0}
-  - {r: 0.08018869, g: 0, b: 1, a: 0}
 --- !u!4 &545352693
 Transform:
   m_ObjectHideFlags: 0

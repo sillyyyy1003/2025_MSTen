@@ -32,7 +32,7 @@ public static class HexMetrics
 	public const int hashGridSize = 256;
 	public const float hashGridScale = 0.25f;
 
-	public static Color[] colors;
+	//public static Color[] colors;
 	static HexHash[] hashGrid;
 
 
