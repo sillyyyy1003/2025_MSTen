@@ -139,8 +139,7 @@ public class HexMapEditor : MonoBehaviour
 						otherCell.AddRoad(dragDirection);
 					}
 				}
-			} 
-
+			}
 		}
 	}
 
@@ -241,38 +240,6 @@ public class HexMapEditor : MonoBehaviour
 		activeTerrainTypeIndex = index;
 	}
 
-	/*
-	public void Save()
-	{
-		//C:/Users/58472/AppData/LocalLow/Ninonedo/Zolda
-		string path = Path.Combine(Application.persistentDataPath, "test.map");
-		using (
-			BinaryWriter writer =
-			new BinaryWriter(File.Open(path, FileMode.Create))
-		)
-		{
-			writer.Write(1);
-			hexGrid.Save(writer);
-		}
 
-	}
-
-	public void Load()
-	{
-		string path = Path.Combine(Application.persistentDataPath, "test.map");
-		using (BinaryReader reader = new BinaryReader(File.OpenRead(path)))
-		{
-			int header = reader.ReadInt32();
-			if (header <= 1)
-			{
-				hexGrid.Load(reader, header);
-				HexMapCamera.ValidatePosition();
-			}
-			else
-			{
-				Debug.LogWarning("Unknown map format " + header);
-			}
-		}
-	}*/
 
 }

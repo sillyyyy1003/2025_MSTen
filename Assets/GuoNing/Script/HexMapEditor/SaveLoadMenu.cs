@@ -59,6 +59,7 @@ public class SaveLoadMenu : MonoBehaviour
 	public void Action()
 	{
 		string path = GetSelectedPath();
+
 		if (path == null)
 		{
 			return;

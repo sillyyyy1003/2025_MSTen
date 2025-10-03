@@ -28,7 +28,6 @@ public class HexFeatureManager : MonoBehaviour
 
 	public void AddFeature(HexCell cell, Vector3 position)
 	{
-	
 		HexHash hash = HexMetrics.SampleHashGrid(position);
 		Transform prefab = PickPrefab(
 			forestCollections, cell.ForestLevel, hash.a, hash.d
@@ -95,7 +94,7 @@ public class HexFeatureManager : MonoBehaviour
 				}
 			}
 		}
-		Debug.Log("feature not found");
+		
 		return null;
 	}
 }
