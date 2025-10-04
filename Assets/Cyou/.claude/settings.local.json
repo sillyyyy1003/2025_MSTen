@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\Derived Cl/**)",
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\Base Cl/**)",
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\Factory/**)",
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\SO Data/**)",
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\Derived Cl/**)",
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\Base Cl/**)",
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\Derived Cl/**)",
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\Base Cl/**)",
+      "Read(/E:\\2025_MSTen\\Assets\\Cyou\\Script\\Base Cl/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
