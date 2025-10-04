@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 
 public class GameCamera : MonoBehaviour
 {
+
     [Header("缩放设置")]
     public float zoomSpeed = 50f;         // 滚轮缩放速度
     public float minZoomDistance = 10f;   // 最近高度
@@ -25,7 +26,7 @@ public class GameCamera : MonoBehaviour
     float zoom = 0.5f;    // 当前缩放 (0~1)
     float yaw;            // 水平旋转角
     float pitch = 45f;    // 固定一个俯视角（RTS 常用）
-
+  
     void Start()
     {
         yaw = transform.eulerAngles.y;
@@ -40,6 +41,15 @@ public class GameCamera : MonoBehaviour
         HandleMovement();
       
     }
+
+    /// <summary>
+    /// 得到玩家位置
+    /// </summary>
+    public void GetPlayerPosition(Vector3 playerPos)
+    {
+        this.transform.position = new Vector3(playerPos.x, 30, playerPos.z-21);
+    }
+
 
     void HandleZoom()
     {

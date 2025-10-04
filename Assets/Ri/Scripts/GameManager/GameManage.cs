@@ -53,12 +53,20 @@ public class GameManage : MonoBehaviour
     // 上一次选择到的格子的id
     private int LastSelectingCellID;
 
-    // 玩家的起始位置
-    // 玩家起始位置二维数组的列表
+    // 玩家的位置列表
+    // 玩家A起始位置二维数组的列表
     private List<int2> PlayerStartPos2D =   new List<int2>();
 
     // 玩家起始世界位置的列表
     private List<int2> PlayerGamingPos = new List<int2>();
+
+    // A玩家拥有单位的格子列表
+    private List<int2> PlayerAPos2D = new List<int2>();
+
+    // B玩家拥有单位的格子列表
+    private List<int2> PlayerBPos2D = new List<int2>();
+
+
 
     // 棋盘信息List与Dictionary
     private List<BoardInfor> GameBoardInfor=new List<BoardInfor>();
@@ -266,6 +274,8 @@ public class GameManage : MonoBehaviour
 
             bIsHavePlayer = new bool[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
             AllUnits = new GameObject[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
+
+            //GameCamera.GetComponent<GameCamera>().GetPlayerPosition(FindCell(0).Cells3DPos);
 
 
             // 创建玩家拥有的单位

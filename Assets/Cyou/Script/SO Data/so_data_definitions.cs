@@ -14,23 +14,29 @@ namespace GameData
         [Header("基本属性")]
         public string buildingName;
         public int maxHp = 100;
-        public int startBuildActionCost; // 建築開始に必要な行動力
-        public int buildActionCost; // 建築過程に必要な行動力
-        public int resourceGenerationInterval; // 資源生成間隔（ターン数）
+        public int buildStartAPCost; // 建築開始に必要な行動力
+        public int buildingAPCost; // 建築過程に必要な行動力
+        public int resourceGenInterval; // 資源生成間隔（ターン数）
         
         [Header("特殊建物属性")]
         public bool isSpecialBuilding; // バフ効果を持つ特別な建物か
-        public int maxSkillSlots; // 駒を配置可能なスロット数
+        public int maxUnitCapacity; // 駒を配置可能なスロット数
         
         [Header("生産設定")]
         public ResourceGenerationType generationType;
         public int baseProductionAmount;
+        public int apCostperTurn;//資源生成する際毎ターン消耗する農民のAP
         public float productionMultiplier = 1.0f;
         
         [Header("ビジュアル")]
         public Sprite buildingSprite;
+        
+        public Mesh buildingMesh;
+        public Material buildingMaterial;
+        
         public GameObject buildingPrefab;
         public Color buildingColor = Color.white;
+        public RuntimeAnimatorController animatorController;
     }
     
     /// <summary>
@@ -42,23 +48,28 @@ namespace GameData
         [Header("基本パラメータ")]
         public string pieceName;
         public float maxHP = 100f;
-        public int populationCost = 1;
-        public int resourceCost = 10;
+        public int populationCost = 1;//コマ一つの人口消費量
+        public int resourceCost = 10;//資源消費量
         
         [Header("行動力パラメータ")]
-        public float maxActionPoints = 100f;
-        public float actionPointRecoveryRate = 10f; // 毎秒の回復量
-        public float moveActionCost = 10f;
+        public float maxAP = 100f;
+        public float aPRecoveryRate = 10f; // 毎turnの行動力回復量
+        public float moveAPCost = 10f;
+        public float moveSpeed = 1.0f;//移動速度？
         
         [Header("戦闘パラメータ")]
         public bool canAttack = false;
         public float attackPower = 0f;
         public float attackRange = 0f;
         public float attackCooldown = 1f;
-        public float attackActionCost = 20f;
+        public float attackAPCost = 20f;
         
         [Header("ビジュアル")]
         public Sprite pieceSprite;
+
+        public Mesh pieceMesh;
+        public Material pieceMaterial;
+        
         public GameObject piecePrefab;
         public RuntimeAnimatorController animatorController;
     }
@@ -70,12 +81,11 @@ namespace GameData
     public class FarmerDataSO : PieceDataSO
     {
         [Header("建築能力")]
-        public BuildingDataSO[] buildableBuildings; // 建築可能な建物リスト
+        public BuildingDataSO[] Buildings; // 建築可能な建物リスト
         public float buildingSpeedModifier = 1.0f; // 建築速度修正値
         
-        [Header("農民特有パラメータ")]
-        public float workEfficiency = 1.0f; // 作業効率
-        public int carryCapacity = 10; // 運搬能力
+        [Header("資源生産効率")]
+        public float productEfficiency = 1.0f; // 作業効率
         
         [Header("スキルレベル設定")]
         public int maxSkillLevel = 10; // 最大スキルレベル
@@ -89,7 +99,7 @@ namespace GameData
             {
                 pieceName = "農民";
                 maxHP = 150f;
-                maxActionPoints = 100f;
+                maxAP = 100f;
                 canAttack = false;
             }
         }
@@ -128,7 +138,7 @@ namespace GameData
     {
         public string skillName;
         public string description;
-        public float actionPointCost;
+        public float aPCost;
         public float cooldown;
         public float effectValue;
         public SkillType skillType;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Newtonsoft.Json;
+using Unity.VisualScripting.FullSerializer;
 
 // 简化的消息类型
 public enum MessageType
@@ -31,7 +32,7 @@ public class NetworkMessage
 }
 
 // 简化的客户端
-public class SimpleNetworkClient
+public class NetGameSystem
 {
     private UdpClient udpClient;
     private IPEndPoint serverEndPoint;
@@ -70,7 +71,7 @@ public class SimpleNetworkClient
         }
         catch (Exception ex)
         {
-            Debug.LogError($"连接失败: {ex.Message}");
+            Debug.LogError($"Connect Failed: {ex.Message}");
             return false;
         }
     }
@@ -101,7 +102,7 @@ public class SimpleNetworkClient
         }
         catch (Exception ex)
         {
-            Debug.LogError($"发送消息失败: {ex.Message}");
+            Debug.LogError($"Send Message Failed: {ex.Message}");
         }
     }
 
@@ -129,7 +130,7 @@ public class SimpleNetworkClient
             catch (Exception ex)
             {
                 if (!cancellationToken.Token.IsCancellationRequested)
-                    Debug.LogError($"接收消息失败: {ex.Message}");
+                    Debug.LogError($"Get Message Failed: {ex.Message}");
             }
         }
     }
@@ -141,6 +142,20 @@ public class SimpleNetworkClient
         receiveThread?.Join(1000);
         udpClient?.Close();
         MainThreadDispatcher.Enqueue(() => OnDisconnected?.Invoke());
+    }
+
+    public void SetServerIPAndPort(string ip,int port)
+    {
+
+    }
+    public void SetAsServer()
+    {
+
+    }
+
+    public void SetAsClient()
+    {
+
     }
 }
 
@@ -176,12 +191,12 @@ public class SimpleNetworkServer
             serverThread = new Thread(ServerLoop) { IsBackground = true };
             serverThread.Start();
 
-            Debug.Log($"服务器启动，端口: {port}");
+            Debug.Log($"Server Start!  Port: {port}");
             return true;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"服务器启动失败: {ex.Message}");
+            Debug.LogError($"Server Start Failed!  {ex.Message}");
             return false;
         }
     }
@@ -202,7 +217,7 @@ public class SimpleNetworkServer
             catch (Exception ex)
             {
                 if (isRunning)
-                    Debug.LogError($"服务器错误: {ex.Message}");
+                    Debug.LogError($"Server Error : {ex.Message}");
             }
         }
     }
@@ -222,7 +237,7 @@ public class SimpleNetworkServer
 
             SendMessageToClient(clientId, response);
             OnClientConnected?.Invoke(clientId);
-            Debug.Log($"客户端 {clientId} 已连接");
+            Debug.Log($"Client {clientId} Has Connected");
         }
         else if (message.Type == MessageType.GameData)
         {
@@ -281,7 +296,7 @@ public class SimpleNetworkServer
             }
             catch (Exception ex)
             {
-                Debug.LogError($"发送消息到客户端 {clientId} 失败: {ex.Message}");
+                Debug.LogError($"Send Message To Client {clientId} Failed: {ex.Message}");
             }
         }
     }
@@ -302,7 +317,7 @@ public class SimpleNetworkServer
         cancellationToken?.Cancel();
         serverThread?.Join(1000);
         udpServer?.Close();
-        Debug.Log("服务器已停止");
+        Debug.Log("Server Is Stopped");
     }
 }
 
