@@ -1,4 +1,4 @@
-﻿Shader "Custom/URPWaterWaves"
+﻿Shader "Custom/URP_WaterWaves"
 {
     Properties
     {

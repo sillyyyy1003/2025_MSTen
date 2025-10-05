@@ -7,13 +7,15 @@ public class HexMesh : MonoBehaviour
 {
 	Mesh hexMesh;           // Mesh Render
 
-	[NonSerialized] List<Vector3> vertices;
+	[NonSerialized] List<Vector3> vertices, terrainTypes;
 	[NonSerialized] List<Color> colors;
 	[NonSerialized] List<int> triangles;
+
 
 	MeshCollider meshCollider;  // mesh collider for click 
 
 	public bool useCollider, useColors, useUVCoordinates, useUV2Coordinates;
+	public bool useTerrainTypes;
 
 	[NonSerialized] List<Vector2> uvs, uv2s;
 
@@ -45,6 +47,10 @@ public class HexMesh : MonoBehaviour
 		{
 			uv2s = ListPool<Vector2>.Get();
 		}
+		if (useTerrainTypes)
+		{
+			terrainTypes = ListPool<Vector3>.Get();
+		}
 		triangles = ListPool<int>.Get();
 	}
 
@@ -75,6 +81,12 @@ public class HexMesh : MonoBehaviour
 			ListPool<Vector2>.Add(uv2s);
 		}
 
+		// use texture type
+		if (useTerrainTypes)
+		{
+			hexMesh.SetUVs(2, terrainTypes);
+			ListPool<Vector3>.Add(terrainTypes);
+		}
 		// triangulate
 		hexMesh.SetTriangles(triangles, 0);
 		ListPool<int>.Add(triangles);
@@ -87,6 +99,12 @@ public class HexMesh : MonoBehaviour
 	}
 
 
+	public void AddTriangleTerrainTypes(Vector3 types)
+	{
+		terrainTypes.Add(types);
+		terrainTypes.Add(types);
+		terrainTypes.Add(types);
+	}
 
 	public void AddTriangle(Vector3 v1, Vector3 v2, Vector3 v3)
 	{
@@ -113,6 +131,13 @@ public class HexMesh : MonoBehaviour
 		colors.Add(color);
 	}
 
+	public void AddQuadTerrainTypes(Vector3 types)
+	{
+		terrainTypes.Add(types);
+		terrainTypes.Add(types);
+		terrainTypes.Add(types);
+		terrainTypes.Add(types);
+	}
 	public void AddQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
 	{
 		int vertexIndex = vertices.Count;

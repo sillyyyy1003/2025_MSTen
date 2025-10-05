@@ -1,4 +1,4 @@
-﻿Shader "Custom/URPWaterShore"
+﻿Shader "Custom/URP_WaterShore"
 {
     Properties
     {
