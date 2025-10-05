@@ -97,6 +97,7 @@ public class GameManage : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
+		
 		if (bIsInGaming)
 		{
 			// 鼠标左键点击
@@ -151,6 +152,7 @@ public class GameManage : MonoBehaviour
 				}
 			}
 		}
+		
 	}
 
 	// 游戏结束

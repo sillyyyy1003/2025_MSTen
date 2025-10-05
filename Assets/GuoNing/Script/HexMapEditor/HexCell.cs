@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 
 [System.Serializable]
 public struct HexCoordinates
@@ -87,6 +88,18 @@ public struct HexCoordinates
 
 		return new HexCoordinates(iX, iZ);
 	}
+
+	/// <summary>
+	/// 计算单元格之间的距离
+	/// </summary>
+	/// <param name="other"></param>
+	/// <returns></returns>
+	public int DistanceTo(HexCoordinates other)
+	{
+		return ((x < other.x ? other.x - x : x - other.x) +
+		        (Y < other.Y ? other.Y - Y : Y - other.Y) +
+		        (z < other.z ? other.z - z : z - other.z)) / 2;//返回 X 坐标之间的绝对差值。
+	}
 }
 
 /// <summary>
@@ -171,25 +184,26 @@ public struct CellInfo
 
 public class HexCell : MonoBehaviour
 {
-	public HexCoordinates coordinates;  // Hex coordinate(https://catlikecoding.com/unity/tutorials/hex-map/part-1/hexagonal-coordinates/cube-coordinates.png)
-
+	public HexCoordinates coordinates; // Hex coordinate(https://catlikecoding.com/unity/tutorials/hex-map/part-1/hexagonal-coordinates/cube-coordinates.png)
 	public RectTransform uiRect;
 	public HexGridChunk chunk;
 
-
-	[SerializeField]
-	bool hasIncomingRiver, hasOutgoingRiver;    // has river 
-	HexDirection incomingRiver, outgoingRiver;  // river direction
-	[SerializeField]
-	bool[] roads;
-
+	[SerializeField] bool hasIncomingRiver, hasOutgoingRiver; // has river 
+	HexDirection incomingRiver, outgoingRiver; // river direction
+	[SerializeField] bool[] roads;
 
 	bool isVacancy; //whether this cell is vacant
+	private int distance; // 该单元格和目标单元格的距离
 
-	public enum TerrainColor 
+	public HexCell PathFrom { get; set; }   // 储存路径
+	public int SearchHeuristic { get; set; }// 启发式搜索值
+
+	public HexCell NextWithSamePriority { get; set; }	//追踪有相同优先级的单元格
+	// todo: 之后要修改 因为不存在Terrain颜色 取而代之的是纹理
+	public enum TerrainColor
 	{
-		White = 0,
-		Green = 1,
+		White = 0, // NULL TEXTURE
+		Green = 1, // 
 		Orange = 2,
 		Cyan = 3,
 		Yellow = 4,
@@ -198,38 +212,30 @@ public class HexCell : MonoBehaviour
 	}
 
 
-
 	// 25.9.23 RI add cell's Serial number
 	public int id { get; set; }
 
-    public bool IsVacancy
+	public bool IsVacancy
 	{
-		get
-		{
-			return isVacancy;
-		}
-		set
-		{
-			isVacancy = value;
-		}
+		get { return isVacancy; }
+		set { isVacancy = value; }
 	}
 
 	/// <summary>
 	/// 获取/设定档期按各自的水平面
 	/// </summary>
 	int waterLevel; // water level
+
 	public int WaterLevel
 	{
-		get
-		{
-			return waterLevel;
-		}
+		get { return waterLevel; }
 		set
 		{
 			if (waterLevel == value)
 			{
 				return;
 			}
+
 			waterLevel = value;
 			ValidateRivers();
 			Refresh();
@@ -243,10 +249,7 @@ public class HexCell : MonoBehaviour
 	/// </summary>
 	public bool IsUnderwater //whether this hex cell is underwater according to elevation and water level
 	{
-		get
-		{
-			return waterLevel > elevation;
-		}
+		get { return waterLevel > elevation; }
 	}
 
 	public bool HasRoadThroughEdge(HexDirection direction)
@@ -269,6 +272,7 @@ public class HexCell : MonoBehaviour
 					return true;
 				}
 			}
+
 			return false;
 		}
 	}
@@ -310,7 +314,7 @@ public class HexCell : MonoBehaviour
 		neighbors[index].RefreshSelfOnly();
 		RefreshSelfOnly();
 	}
-	
+
 	/// <summary>
 	/// 获取该格子和某个方向的临近格子之间的高度差
 	/// </summary>
@@ -322,15 +326,6 @@ public class HexCell : MonoBehaviour
 		int difference = elevation - GetNeighbor(direction).elevation;
 		return difference >= 0 ? difference : -difference;
 	}
-
-
-	//public Color Color		//cell color
-	//{
-	//	get
-	//	{
-	//		return HexMetrics.colors[terrainTypeIndex];
-	//	}
-	//}
 
 	/// <summary>
 	/// 改变某个格子的颜色/ todo: 鉴于之后terrainTypeIndex应该会变成纹理索引。这个地方需要改成在纹理的基础上修改颜色
@@ -350,10 +345,7 @@ public class HexCell : MonoBehaviour
 	/// </summary>
 	public int TerrainTypeIndex
 	{
-		get
-		{
-			return terrainTypeIndex;
-		}
+		get { return terrainTypeIndex; }
 		set
 		{
 			if (terrainTypeIndex != value)
@@ -369,16 +361,14 @@ public class HexCell : MonoBehaviour
 	/// </summary>
 	public int Elevation
 	{
-		get
-		{
-			return elevation;
-		}
+		get { return elevation; }
 		set
 		{
 			if (elevation == value)
 			{
 				return;
 			}
+
 			elevation = value;
 			RefreshPosition();
 
@@ -394,40 +384,28 @@ public class HexCell : MonoBehaviour
 				}
 			}
 
-			Refresh();  // Refresh the chunk this cell belongs to
+			Refresh(); // Refresh the chunk this cell belongs to
 		}
 	}
 
 	public bool HasIncomingRiver
 	{
-		get
-		{
-			return hasIncomingRiver;
-		}
+		get { return hasIncomingRiver; }
 	}
 
 	public bool HasOutgoingRiver
 	{
-		get
-		{
-			return hasOutgoingRiver;
-		}
+		get { return hasOutgoingRiver; }
 	}
 
 	public HexDirection IncomingRiver
 	{
-		get
-		{
-			return incomingRiver;
-		}
+		get { return incomingRiver; }
 	}
 
 	public HexDirection OutgoingRiver
 	{
-		get
-		{
-			return outgoingRiver;
-		}
+		get { return outgoingRiver; }
 	}
 
 	/// <summary>
@@ -435,10 +413,7 @@ public class HexCell : MonoBehaviour
 	/// </summary>
 	public bool HasRiver
 	{
-		get
-		{
-			return hasIncomingRiver || hasOutgoingRiver;
-		}
+		get { return hasIncomingRiver || hasOutgoingRiver; }
 	}
 
 	/// <summary>
@@ -446,10 +421,7 @@ public class HexCell : MonoBehaviour
 	/// </summary>
 	public bool HasRiverBeginOrEnd
 	{
-		get
-		{
-			return hasIncomingRiver != hasOutgoingRiver;
-		}
+		get { return hasIncomingRiver != hasOutgoingRiver; }
 	}
 
 	// has river through edge
@@ -495,6 +467,7 @@ public class HexCell : MonoBehaviour
 		{
 			return;
 		}
+
 		hasIncomingRiver = false;
 		RefreshSelfOnly();
 
@@ -521,6 +494,7 @@ public class HexCell : MonoBehaviour
 		{
 			return;
 		}
+
 		// get neighbor if neighbor is higher than this cell do nothing
 		HexCell neighbor = GetNeighbor(direction);
 		if (!IsValidRiverDestination(neighbor))
@@ -546,10 +520,10 @@ public class HexCell : MonoBehaviour
 		SetRoad((int)direction, false);
 	}
 
-	public int elevation = int.MinValue;    // hex height
+	public int elevation = int.MinValue; // hex height
 
-	[SerializeField]
-	HexCell[] neighbors;    // 6 neighbors of this cell
+	[SerializeField] HexCell[] neighbors; // 6 neighbors of this cell
+
 	/// <summary>
 	/// 获取某个方向上的邻居格子
 	/// </summary>
@@ -600,13 +574,10 @@ public class HexCell : MonoBehaviour
 	/// </summary>
 	public Vector3 Position
 	{
-		get
-		{
-			return transform.localPosition;
-		}
+		get { return transform.localPosition; }
 	}
 
-	
+
 
 	/// <summary>
 	/// 河床的Y轴高度
@@ -668,10 +639,7 @@ public class HexCell : MonoBehaviour
 
 	public HexDirection RiverBeginOrEndDirection
 	{
-		get
-		{
-			return hasIncomingRiver ? incomingRiver : outgoingRiver;
-		}
+		get { return hasIncomingRiver ? incomingRiver : outgoingRiver; }
 	}
 
 	/// <summary>
@@ -698,6 +666,7 @@ public class HexCell : MonoBehaviour
 		{
 			RemoveOutgoingRiver();
 		}
+
 		if (
 			hasIncomingRiver &&
 			!GetNeighbor(incomingRiver).IsValidRiverDestination(this)
@@ -712,13 +681,11 @@ public class HexCell : MonoBehaviour
 	/// 1. 控制格子的视觉表现（草/树...)
 	/// 2. 0>> 该格子没有某类Feature
 	/// </summary>
-	int forestLevel, farmLevel, plantLevel;  
+	int forestLevel, farmLevel, plantLevel;
+
 	public int ForestLevel
 	{
-		get
-		{
-			return forestLevel;
-		}
+		get { return forestLevel; }
 		set
 		{
 			if (forestLevel != value)
@@ -731,10 +698,7 @@ public class HexCell : MonoBehaviour
 
 	public int FarmLevel
 	{
-		get
-		{
-			return farmLevel;
-		}
+		get { return farmLevel; }
 		set
 		{
 			if (farmLevel != value)
@@ -750,10 +714,7 @@ public class HexCell : MonoBehaviour
 	/// </summary>
 	public int PlantLevel
 	{
-		get
-		{
-			return plantLevel;
-		}
+		get { return plantLevel; }
 		set
 		{
 			if (plantLevel != value)
@@ -804,6 +765,7 @@ public class HexCell : MonoBehaviour
 				roadFlags |= 1 << i;
 			}
 		}
+
 		writer.Write((byte)roadFlags);
 	}
 
@@ -813,16 +775,16 @@ public class HexCell : MonoBehaviour
 	/// <param name="reader"></param>
 	public void Load(BinaryReader reader)
 	{
-	
+
 		terrainTypeIndex = reader.ReadByte();
 		elevation = reader.ReadByte();
 		RefreshPosition();
-		waterLevel = reader.ReadByte();		// 格子的水平面高度
-		forestLevel = reader.ReadByte();	// 格子的urban level
-		farmLevel = reader.ReadByte();		// 格子的farm level
-		plantLevel = reader.ReadByte();		// 格子的plant level
-											// specialIndex=reader.ReadByte();
-											// walled=reader.ReadByte();
+		waterLevel = reader.ReadByte(); // 格子的水平面高度
+		forestLevel = reader.ReadByte(); // 格子的urban level
+		farmLevel = reader.ReadByte(); // 格子的farm level
+		plantLevel = reader.ReadByte(); // 格子的plant level
+		// specialIndex=reader.ReadByte();
+		// walled=reader.ReadByte();
 		byte riverData = reader.ReadByte();
 		if (riverData >= 128)
 		{
@@ -869,6 +831,50 @@ public class HexCell : MonoBehaviour
 		Vector3 uiPosition = uiRect.localPosition;
 		uiPosition.z = -position.y;
 		uiRect.localPosition = uiPosition;
+	}
+
+	/// <summary>
+	/// 更新Text标签
+	/// </summary>
+	void UpdateDistanceLabel()
+	{
+		Text label = uiRect.GetComponent<Text>();
+		label.text = distance == int.MaxValue ? "" : distance.ToString();
+	}
+
+	/// <summary>
+	/// HexCell距离
+	/// </summary>
+	public int Distance
+	{
+		get { return distance; }
+		set
+		{
+			distance = value;
+			UpdateDistanceLabel();
+		}
+	}
+
+	public void DisableHighlight()
+	{
+		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+		highlight.enabled = false;
+	}
+
+	public void EnableHighlight(Color color)
+	{
+		Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+		highlight.color = color;
+		highlight.enabled = true;
+	}
+
+	// 搜索优先级
+	public int SearchPriority
+	{
+		get
+		{
+			return distance + SearchHeuristic;
+		}
 	}
 }
 
