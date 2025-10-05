@@ -20,17 +20,21 @@ public class HexGrid : MonoBehaviour
 	public Texture2D noiseSource;
 	public HexGridChunk chunkPrefab;
 
+
+
 	public int seed;
-	public Color[] colors;
+	//public Color[] colors;
 
 	HexGridChunk[] chunks;
+	HexCellPriorityQueue searchFrontier;	// 搜索优先队列
+
+
 	void Start()
 	{
 		HexMetrics.noiseSource = noiseSource;
 		HexMetrics.InitializeHashGrid(seed);
-		HexMetrics.colors = colors;
-
 		CreateMap(cellCountX, cellCountZ);
+		
 	}
 
 
@@ -58,9 +62,12 @@ public class HexGrid : MonoBehaviour
 		chunkCountZ = cellCountZ / HexMetrics.chunkSizeZ;
 		CreateChunks();
 		CreateCells();
+		
+		ShowUI(false);
 
-        // 25.9.23 RI add GameStart
-        if (!GameManage.Instance.GameInit())
+
+		// 25.9.23 RI add GameStart
+		if (!GameManage.Instance.GameInit())
         {
             Debug.LogError("Game Init Failed!");
         }
@@ -183,7 +190,7 @@ public class HexGrid : MonoBehaviour
 		Text label = Instantiate<Text>(cellLabelPrefab);
 		label.rectTransform.anchoredPosition =
 			new Vector2(position.x, position.z);
-		label.text = cell.coordinates.ToStringOnSeparateLines();
+		//label.text = cell.coordinates.ToStringOnSeparateLines();
 		cell.uiRect = label.rectTransform;
 
 		// Reset cell elevation
@@ -230,7 +237,6 @@ public class HexGrid : MonoBehaviour
 		{
 			HexMetrics.noiseSource = noiseSource;
 			HexMetrics.InitializeHashGrid(seed);
-			HexMetrics.colors = colors;
 		}
 	}
 
@@ -247,6 +253,7 @@ public class HexGrid : MonoBehaviour
 
 	public void Load(BinaryReader reader, int header)
 	{
+		StopAllCoroutines();	// 加载地图时 停止协程
 		int x = 20, z = 15;
 		if (header >= 1)
 		{
@@ -307,6 +314,122 @@ public class HexGrid : MonoBehaviour
 		for (int i = 0; i < chunks.Length; i++)
 		{
 			chunks[i].Refresh();
+		}
+	}
+
+	/// <summary>
+	/// 寻找从某个单元格到另一个单元格的路径
+	/// </summary>
+	/// <param name="fromCell">起始单元格</param>
+	/// <param name="toCell">目标单元格</param>
+	public void FindPath(HexCell fromCell, HexCell toCell)
+	{
+		StopAllCoroutines();
+		StartCoroutine(Search(fromCell, toCell));
+	}
+
+
+	/// <summary>
+	/// 寻找从某个单元格到另一个单元格的距离
+	/// </summary>
+	/// <param name="fromCell">起始单元格</param>
+	/// <param name="toCell">目标单元格</param>
+	/// <returns></returns>
+	IEnumerator Search(HexCell fromCell, HexCell toCell)
+	{
+		if (searchFrontier == null)
+		{
+			searchFrontier = new HexCellPriorityQueue();
+		}
+		else
+		{
+			searchFrontier.Clear();
+		}
+
+		//广度优先搜索
+		for (int i = 0; i < cells.Length; i++)
+		{
+			cells[i].Distance = int.MaxValue;
+			cells[i].DisableHighlight();//禁用高亮
+		}
+
+		fromCell.EnableHighlight(Color.blue);// 起点高亮 蓝
+		toCell.EnableHighlight(Color.red);	// 重点高亮 红
+
+		WaitForSeconds delay = new WaitForSeconds(1 / 60f);
+		fromCell.Distance = 0;
+		searchFrontier.Enqueue(fromCell);
+
+		while (searchFrontier.Count > 0)
+		{
+			yield return delay;
+			HexCell current = searchFrontier.Dequeue();
+
+			//当前单元格是目标单元格 中止搜索
+			if (current == toCell)
+			{
+				current = current.PathFrom;
+				while (current != fromCell)
+				{
+					current.EnableHighlight(Color.white);	//高亮路径 白色
+					current = current.PathFrom;
+				}
+			}
+
+			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+			{
+				HexCell neighbor = current.GetNeighbor(d);
+				
+				if (neighbor == null)
+				{
+					continue;
+				}
+
+				// 水域不考虑
+				if (neighbor.IsUnderwater)
+				{
+					continue;
+				}
+
+				// 山地不考虑
+				HexEdgeType edgeType = current.GetEdgeType(neighbor);
+				if (edgeType == HexEdgeType.Cliff)
+				{
+					continue;
+				}
+
+				int distance = current.Distance;
+				if (current.HasRoadThroughEdge(d))
+				{
+					distance += 1;
+				}
+				else
+				{
+					// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
+					distance += edgeType == HexEdgeType.Flat ? 1 :2;
+					int ForestEffecetor=1, FarmEffecetor=1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
+
+					distance += neighbor.ForestLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
+					            neighbor.PlantLevel * PlantEffecetor;
+				}
+
+				if (neighbor.Distance == int.MaxValue)
+				{
+					neighbor.Distance = distance;
+					neighbor.PathFrom = current;
+					neighbor.SearchHeuristic =
+						neighbor.coordinates.DistanceTo(toCell.coordinates);
+					searchFrontier.Enqueue(neighbor);
+				}
+				else if (distance < neighbor.Distance)
+				{
+					int oldPriority = neighbor.SearchPriority;
+					neighbor.Distance = distance;
+					neighbor.PathFrom = current;
+					searchFrontier.Change(neighbor, oldPriority);
+				}
+
+			}
 		}
 	}
 }
