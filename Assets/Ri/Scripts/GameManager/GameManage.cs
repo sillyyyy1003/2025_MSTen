@@ -4,21 +4,23 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+
 using UnityEngine.UIElements;
 
-// 棋盘信息结构体
+// 棋盘每个格子信息的结构体
 public struct BoardInfor
 {
+  
+    // 每个格子的二维坐标
+    public int2 Cells2DPos;
 
-	// 棋盘在二维数组中的坐标
-	public int2 Cells2DPos;
-
-	// 棋盘在世界中的坐标
-	public Vector3 Cells3DPos;
+    // 每个格子的世界坐标
+    public Vector3 Cells3DPos;
 
 
-	// 当前棋盘的序列号
-	public int id;
+    // 每个格子的id
+    public int id;
+
 
 };
 
