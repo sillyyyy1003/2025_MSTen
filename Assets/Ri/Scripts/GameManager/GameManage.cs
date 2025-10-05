@@ -58,7 +58,7 @@ public class GameManage : MonoBehaviour
     private List<int2> PlayerStartPos2D =   new List<int2>();
 
     // 玩家起始世界位置的列表
-    private List<int2> PlayerGamingPos = new List<int2>();
+    private List<int2> PlayerGamingPos3D = new List<int2>();
 
     // A玩家拥有单位的格子列表
     private List<int2> PlayerAPos2D = new List<int2>();
@@ -168,7 +168,7 @@ public class GameManage : MonoBehaviour
     public bool GameOver()
     {
         PlayerStartPos2D.Clear(); 
-        PlayerGamingPos.Clear();
+        PlayerGamingPos3D.Clear();
 
         GameBoardInfor.Clear();
         GameBoardInforDict.Clear();
