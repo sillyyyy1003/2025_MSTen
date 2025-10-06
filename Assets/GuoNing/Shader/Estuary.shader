@@ -1,4 +1,4 @@
-﻿Shader "Custom/URPEstuary"
+﻿Shader "Custom/URP_Estuary"
 {
     Properties
     {

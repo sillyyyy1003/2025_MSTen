@@ -1,24 +1,27 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using System.IO;
 
 public class HexMapEditor : MonoBehaviour
 {
-	public bool isActive = true;	// ���ۗL��
-
+	public bool isActive = true;	// 是否有效
 	public HexGrid hexGrid;
+	public Material terrainMaterial;	// 网格材质->这个之后会需要加入系统 显示网格
+
 	private int activeElevation;
 	private int activeWaterLevel;
 	int activeForestLevel, activeFarmLevel, activePlantLevel;
 
 
-	bool applyElevation = true;
-	bool applyWaterLevel = true;
+	bool applyElevation;
+	bool applyWaterLevel;
 	bool applyForestnLevel, applyFarmLevel, applyPlantLevel;
 
 	int brushSize;
 
 	int activeTerrainTypeIndex;
+
+	
 
 	enum OptionalToggle
 	{
@@ -28,8 +31,15 @@ public class HexMapEditor : MonoBehaviour
 	OptionalToggle riverMode, roadMode;
 
 	bool isDrag;
+	bool editMode ;	// 是否是编辑模式
 	HexDirection dragDirection;
-	HexCell previousCell;
+	HexCell previousCell, searchFromCell, searchToCell;
+
+	void Awake()
+	{
+		terrainMaterial.DisableKeyword("GRID_ON");
+
+	}
 
 	void Update()
 	{
@@ -49,7 +59,6 @@ public class HexMapEditor : MonoBehaviour
 
 	void HandleInput()
 	{
-
 		Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 		RaycastHit hit;
 		if (Physics.Raycast(inputRay, out hit))
@@ -63,7 +72,34 @@ public class HexMapEditor : MonoBehaviour
 			{
 				isDrag = false;
 			}
-			EditCells(currentCell);
+
+			if (editMode)
+			{
+				//如果是编辑模式 编辑单元格
+				EditCells(currentCell);
+			}
+			else if (Input.GetKey(KeyCode.LeftShift) && searchToCell != currentCell)
+			{
+				// 选中某个单元格 显示所有的路径
+				if (searchFromCell)
+				{
+					searchFromCell.DisableHighlight();
+				}
+				searchFromCell = currentCell;
+				searchFromCell.EnableHighlight(Color.blue);
+
+				if (searchToCell)
+				{
+					hexGrid.FindPath(searchFromCell, searchToCell);
+				}
+			}
+			else if (searchFromCell && searchFromCell != currentCell)
+			{
+				// 选中目标单元格和起始单元格
+				searchToCell = currentCell;
+				hexGrid.FindPath(searchFromCell, searchToCell);
+			}
+
 			previousCell = currentCell;
 		}
 		else
@@ -143,6 +179,26 @@ public class HexMapEditor : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// 是否是编辑模式
+	/// </summary>
+	/// <param name="toggle"></param>
+	public void SetEditMode(bool toggle)
+	{
+		editMode = toggle;
+		hexGrid.ShowUI(!toggle);
+	}
+
+	/// <summary>
+	/// 是否显示网格 
+	/// </summary>
+	/// <param name="visible"></param>
+	public void ShowGrid(bool visible)
+	{
+		if(visible)terrainMaterial.EnableKeyword("GRID_ON");
+		else terrainMaterial.DisableKeyword("GRID_ON");
+	}
+
 	void EditCells(HexCell center)
 	{
 		int centerX = center.coordinates.X;
@@ -176,10 +232,7 @@ public class HexMapEditor : MonoBehaviour
 	{
 		brushSize = (int)size;
 	}
-	public void ShowUI(bool visible)
-	{
-		hexGrid.ShowUI(visible);
-	}
+
 	public void SetRiverMode(int mode)
 	{
 		riverMode = (OptionalToggle)mode;
