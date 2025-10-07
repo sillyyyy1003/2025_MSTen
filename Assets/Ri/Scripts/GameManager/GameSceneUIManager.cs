@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,30 +6,30 @@ using TMPro;
 
 public class GameSceneUIManager : MonoBehaviour
 {
-    // µ¥Àı
+    // å•ä¾‹
     public static GameSceneUIManager Instance { get; private set; }
 
-    // °´Å¥
+    // æŒ‰é’®
 
-    // ´´½¨´«½ÌÊ¿
+    // åˆ›å»ºä¼ æ•™å£«
     private Button EndTurn;
 
-    // ´´½¨Å©Ãñ
+    // åˆ›å»ºå†œæ°‘
     private Button CreateFramer;
 
-    // ´´½¨Ê¿±ø
+    // åˆ›å»ºå£«å…µ
     private Button CreateSoldier;
 
-    // ´´½¨´«½ÌÊ¿
+    // åˆ›å»ºä¼ æ•™å£«
     private Button CreateMissionary;
 
-    // µ¹¼ÆÊ±ÏÔÊ¾
+    // å€’è®¡æ—¶æ˜¾ç¤º
     private TextMeshProUGUI CountdownTime;
 
-    // ×ÊÔ´ÏÔÊ¾
+    // èµ„æºæ˜¾ç¤º
     private TextMeshProUGUI Resources;
 
-    // ×ÊÔ´Êı
+    // èµ„æºæ•°
     private int ResourcesCount=100;
 
     private float CountdownTimeCount=100;
@@ -54,7 +54,7 @@ public class GameSceneUIManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // °´Å¥ÊÂ¼ş³õÊ¼»¯
+        // æŒ‰é’®äº‹ä»¶åˆå§‹åŒ–
         EndTurn = GameObject.Find("EndTurn").GetComponent<Button>();
         CreateFramer = GameObject.Find("CreateFramer").GetComponent<Button>();
         CreateSoldier = GameObject.Find("CreateSoldier").GetComponent<Button>();
