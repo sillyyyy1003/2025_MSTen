@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.EventSystems;
 using DG.Tweening;
@@ -57,12 +56,25 @@ public class CardExpand : MonoBehaviour, IPointerClickHandler
         isExpanded = true;
     }
 
-    private void Collapse()
+    public void Collapse()
     {
         textGroup.DOFade(0f, textFadeDuration);
         background.DOSizeDelta(new Vector2(collapsedWidth, background.sizeDelta.y), duration)
                   .SetEase(Ease.InOutSine);
         isExpanded = false;
         if (expandedCard == this) expandedCard = null;
+    }
+
+    public void SetDimmed(bool dimmed)
+    {
+        // 例: CanvasGroupで透明度を変える場合
+        var cg = GetComponent<CanvasGroup>();
+        if (cg != null)
+        {
+            cg.alpha = dimmed ? 0.5f : 1f;
+            cg.interactable = !dimmed;
+            cg.blocksRaycasts = !dimmed;
+        }
+        // もしくは色変更など、UIに合わせて実装
     }
 }
