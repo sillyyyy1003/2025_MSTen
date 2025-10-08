@@ -20,9 +20,8 @@ public struct BoardInfor
 
     // 每个格子的id
     public int id;
-
-
 };
+
 
 public struct AllPlayerInfor
 {
@@ -33,8 +32,6 @@ public struct AllPlayerInfor
 
     // 当前格子上是否有玩家控制的单位
     private bool[,] bIsHavePlayer;
-
-
 };
 
 public class GameManage : MonoBehaviour
@@ -46,8 +43,6 @@ public class GameManage : MonoBehaviour
     //          私有属性
     // *************************
  
-   
-
     // 是否在游戏中
     private bool bIsInGaming;
 
@@ -75,19 +70,22 @@ public class GameManage : MonoBehaviour
 
     // 棋盘信息List与Dictionary
     private List<BoardInfor> GameBoardInfor=new List<BoardInfor>();
-    private Dictionary<int, BoardInfor> GameBoardInforDict=new Dictionary<int, BoardInfor>(); 
-    // 返回棋盘信息
-    public Dictionary<int, BoardInfor> GetPlayerBoardInfor(){return GameBoardInforDict; }
-
-
-    // 通过获取实例方式得到脚本
-    public PlayerOperationManager _PlayerOperation;
-
+    private Dictionary<int, BoardInfor> GameBoardInforDict=new Dictionary<int, BoardInfor>();
 
     // *************************
     //         公有属性
     // *************************
 
+    public List<int> PlayerStartPos;
+    // 返回棋盘信息
+    public Dictionary<int, BoardInfor> GetPlayerBoardInfor(){return GameBoardInforDict; }
+
+  
+    // 通过获取实例方式得到脚本
+    public PlayerOperationManager _PlayerOperation;
+
+
+    
     // 设置当前是否在游戏中
     public void SetIsGamingOrNot(bool isGaming) { bIsInGaming = isGaming; }
     public bool GetIsGamingOrNot() {return bIsInGaming; }
@@ -146,9 +144,13 @@ public class GameManage : MonoBehaviour
         {
             bIsHavePlayer = new bool[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
             AllPlayerUnits = new GameObject[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
-          
+
+            // 添加玩家初始格子位置的id，后续更改
+            PlayerStartPos.Add(0);
+            PlayerStartPos.Add(GameBoardInforDict.Count - 1);
+
             // 初始化本机玩家数据
-            _PlayerOperation.InitPlayer();
+            _PlayerOperation.InitPlayer(0);
         }
         return true;
     }

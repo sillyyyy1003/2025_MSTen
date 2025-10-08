@@ -119,7 +119,11 @@ public class PlayerOperationManager : MonoBehaviour
     //         公有函数
     // *************************
 
-    public void InitPlayer()
+    /// <summary>
+    /// 创建玩家
+    /// </summary>
+    /// <param name="boardID">玩家初始位置格子id</param>
+    public void InitPlayer(int boardID)
     {
         //bIsHavePlayer = new bool[GameManage.Instance.GetBoardInfor(GameManage.Instance.GetBoardCount() - 1).Cells2DPos.x + 1,
         //   GameManage.Instance.GetBoardInfor(GameManage.Instance.GetBoardCount() - 1).Cells2DPos.y + 1];
