@@ -299,7 +299,11 @@ public class PlayerOperationManager : MonoBehaviour
     // 更新其他玩家的显示
     public void UpdateOtherPlayerDisplay(int playerId, PlayerData data)
     {
-        if (playerId == localPlayerId) return;
+        if (playerId == localPlayerId)
+        {
+            Debug.Log($"playerId 为自己");
+            return;
+        };
 
         Debug.Log($"更新玩家 {playerId} 的显示");
 
