@@ -720,14 +720,14 @@ public class NetGameSystem : MonoBehaviour
 
                 if (gameManage == null)
                 {
-                    // ✅ 如果还是 null，尝试 FindObjectOfType
-                    gameManage = FindObjectOfType<GameManage>();
+                    //  如果还是 null，尝试 FindObjectOfType
+                    gameManage = GameObject.Find("GameManager").GetComponent<GameManage>();
                     Debug.Log($"使用 FindObjectOfType 查找: {gameManage != null}");
                 }
 
                 if (gameManage == null)
                 {
-                    Debug.LogError("❌ 找不到 GameManage，延迟 0.5 秒后重试");
+                    Debug.LogError(" 找不到 GameManage，延迟 0.5 秒后重试");
 
                     // 延迟重试
                     StartCoroutine(RetryHandleTurnStart(message, 0.5f));
