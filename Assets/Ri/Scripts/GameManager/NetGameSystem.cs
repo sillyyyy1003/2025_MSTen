@@ -642,10 +642,31 @@ public class NetGameSystem : MonoBehaviour
             
             gameManage = GameManage.Instance;
             if (gameManage != null)
+                {
+                    gameManage.StartTurn(data.PlayerId);
+                }
+        }
+
+            // 在主线程执行回合开始
+            MainThreadDispatcher.Enqueue(() =>
             {
+                Debug.Log($"执行回合开始: 玩家 {data.PlayerId}");
                 gameManage.StartTurn(data.PlayerId);
-            }
-            }
+
+                // 强制刷新当前玩家数据显示
+                if (data.PlayerId == localClientId)
+                {
+                    Debug.Log("这是本地玩家的回合，刷新界面");
+                    // 触发UI更新
+                    GameSceneUIManager.Instance?.SetTurnText(true);
+                }
+                else
+                {
+                    Debug.Log("这是其他玩家的回合");
+                    GameSceneUIManager.Instance?.SetTurnText(false);
+                }
+            });
+
         }
         catch (System.Exception ex)
         {
@@ -720,7 +741,19 @@ public class NetGameSystem : MonoBehaviour
             else
             {
                 Debug.LogError("playerDataManager 为 null!");
+                playerDataManager = PlayerDataManager.Instance;
+                playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
             }
+
+            // 重要：通知 GameManage 更新显示
+            if (gameManage != null)
+            {
+                // 调用 PlayerOperationManager 更新其他玩家显示
+                gameManage.GetComponent<PlayerOperationManager>()?
+                    .UpdateOtherPlayerDisplay(data.PlayerId, playerData);
+                Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
+            }
+
         }
 
         // 如果是服务器,切换到下一个回合
@@ -792,6 +825,11 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
         }
+        else
+        {
+            playerDataManager = PlayerDataManager.Instance;
+            playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+        }
     }
 
     // 单位添加
@@ -808,6 +846,12 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager.AddUnit(data.PlayerId, unitType, pos);
         }
+        else
+        {
+
+            playerDataManager = PlayerDataManager.Instance;
+            playerDataManager.AddUnit(data.PlayerId, unitType, pos);
+        }
     }
 
     // 单位移除
@@ -821,6 +865,11 @@ public class NetGameSystem : MonoBehaviour
 
         if (playerDataManager != null)
         {
+            playerDataManager.RemoveUnit(data.PlayerId, pos);
+        }
+        else
+        {
+            playerDataManager = PlayerDataManager.Instance;
             playerDataManager.RemoveUnit(data.PlayerId, pos);
         }
     }

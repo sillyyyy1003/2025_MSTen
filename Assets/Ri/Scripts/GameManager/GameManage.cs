@@ -427,6 +427,28 @@ public class GameManage : MonoBehaviour
     }
 
 
+    // 同步玩家数据的方法
+    public void SyncPlayerData(int playerId, PlayerData data)
+    {
+        Debug.Log($"同步玩家 {playerId} 的数据，单位数: {data.GetUnitCount()}");
+
+        // 更新数据管理器
+        _PlayerDataManager.UpdatePlayerData(playerId, data);
+
+        // 更新显示
+        if (playerId != LocalPlayerID)
+        {
+            _PlayerOperation.UpdateOtherPlayerDisplay(playerId, data);
+            Debug.Log($"已更新玩家 {playerId} 的显示");
+        }
+        else
+        {
+            Debug.Log($"这是本地玩家的数据，不需要更新显示");
+        }
+    }
+
+
+
     // *************************
     //        数据查询函数
     // *************************

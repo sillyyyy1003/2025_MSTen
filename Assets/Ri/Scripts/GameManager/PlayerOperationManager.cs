@@ -317,6 +317,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 创建新的单位显示
         foreach (var unit in data.PlayerUnits)
         {
+            Debug.Log($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y})");
             CreateEnemyUnit(playerId, unit);
         }
     }
