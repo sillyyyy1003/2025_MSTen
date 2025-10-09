@@ -184,6 +184,18 @@ public class NetGameSystem : MonoBehaviour
     private void Start()
     {
 
+        // 延迟启动网络,确保所有单例初始化完成
+        StartCoroutine(DelayedNetworkStart());
+    }
+
+    private IEnumerator DelayedNetworkStart()
+    {
+        // 等待一帧,确保所有 Awake 执行完成
+        yield return null;
+
+        // 获取 GameManage 引用
+        GetGameManage();
+
         // 自动启动网络
         if (isServer)
         {
@@ -194,7 +206,6 @@ public class NetGameSystem : MonoBehaviour
             ConnectToServer();
         }
     }
-
     private void OnDestroy()
     {
         Shutdown();
@@ -206,8 +217,30 @@ public class NetGameSystem : MonoBehaviour
     public void GetGameManage()
     {
         Debug.Log("获取gamemanage");
+
+        // 多重尝试获取
         gameManage = GameManage.Instance;
+
+        if (gameManage == null)
+        {
+            gameManage = FindObjectOfType<GameManage>();
+        }
+
+        if (gameManage == null)
+        {
+            Debug.LogError("无法找到 GameManage!");
+        }
+        else
+        {
+            Debug.Log($"成功获取 GameManage,对象名: {gameManage.gameObject.name}");
+        }
+
         playerDataManager = PlayerDataManager.Instance;
+
+        if (playerDataManager == null)
+        {
+            Debug.LogError("无法找到 PlayerDataManager!");
+        }
     }
 
 
