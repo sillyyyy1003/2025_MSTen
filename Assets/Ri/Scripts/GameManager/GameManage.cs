@@ -378,6 +378,7 @@ public class GameManage : MonoBehaviour
         }
         else
         {
+           
             Debug.LogError("NetGameSystem 为 null，无法发送消息!");
         }
 

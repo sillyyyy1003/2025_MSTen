@@ -571,6 +571,8 @@ public class NetGameSystem : MonoBehaviour
     {
         try
         {
+            Debug.Log($"发送到服务" );
+
             string jsonData = JsonConvert.SerializeObject(message);
             byte[] data = Encoding.UTF8.GetBytes(jsonData);
             udpClient.Send(data, data.Length, serverEndPoint);
@@ -599,6 +601,7 @@ public class NetGameSystem : MonoBehaviour
 
     private void BroadcastToClients(NetworkMessage message, uint excludeClientId)
     {
+        Debug.Log("广播消息到客户端");
         if (!isServer) return;
 
         foreach (var kvp in clients)
