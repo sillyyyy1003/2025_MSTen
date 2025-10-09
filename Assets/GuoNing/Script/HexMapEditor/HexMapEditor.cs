@@ -28,7 +28,7 @@ public class HexMapEditor : MonoBehaviour
 		Ignore, Yes, No
 	}
 
-	OptionalToggle riverMode, roadMode;
+	OptionalToggle riverMode, roadMode,wallMode;
 
 	bool isDrag;
 	bool editMode ;	// 是否是编辑模式
@@ -38,7 +38,6 @@ public class HexMapEditor : MonoBehaviour
 	void Awake()
 	{
 		terrainMaterial.DisableKeyword("GRID_ON");
-
 	}
 
 	void Update()
@@ -77,6 +76,7 @@ public class HexMapEditor : MonoBehaviour
 			{
 				//如果是编辑模式 编辑单元格
 				EditCells(currentCell);
+				
 			}
 			else if (Input.GetKey(KeyCode.LeftShift) && searchToCell != currentCell)
 			{

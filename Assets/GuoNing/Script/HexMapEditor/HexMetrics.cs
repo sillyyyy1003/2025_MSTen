@@ -14,7 +14,7 @@ public static class HexMetrics
 	public const int terraceSteps = terracesPerSlope * 2 + 1;   // Total number of steps between two hex cells with different elevation
 	public const float horizontalTerraceStepSize = 1f / terraceSteps;   // Horizontal step size between two terrace steps
 	public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);   // Vertical step size between two terrace steps
-	public const float cellPerturbStrength = 0f;    //Strength setting to HexMetrics so we can scale the perturbations
+	public const float cellPerturbStrength = 1f;    //Strength setting to HexMetrics so we can scale the perturbations
 	public const float noiseScale = 0.003f;
 
 	public const float solidFactor = 0.8f;
