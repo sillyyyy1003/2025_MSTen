@@ -216,7 +216,6 @@ public class NetGameSystem : MonoBehaviour
     // *************************
     public void GetGameManage()
     {
-        Debug.Log("获取gamemanage");
 
         // 多重尝试获取
         gameManage = GameManage.Instance;
