@@ -136,9 +136,11 @@ public class GameManage : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject); 
         }
-        else
+        else if (Instance != this)
         {
+            Debug.LogWarning($"GameManage 单例已存在，销毁重复对象: {gameObject.name}");
             Destroy(gameObject);
+            return;
         }
 
         // 获取PlayerDataManager引用

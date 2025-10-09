@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using Newtonsoft.Json;
+using System.Collections;
 
 
 
@@ -705,42 +706,54 @@ public class NetGameSystem : MonoBehaviour
     {
         try
         {
-            Debug.Log($"=== 客户端收到 TURN_START 消息 ===");
+            Debug.Log($"=== HandleTurnStart 被调用 ===");
             Debug.Log($"消息内容: {message.JsonData}");
-            Debug.Log($"发送者: {message.SenderId}");
 
             var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
             Debug.Log($"NetGameSystem: 接收到回合开始消息: 玩家 {data.PlayerId}");
 
-            // 确保在主线程执行
-            MainThreadDispatcher.Enqueue(() =>
+            // 确保 GameManage 引用有效
+            if (gameManage == null)
             {
-                Debug.Log($"NetGameSystem: 在主线程处理回合开始");
+                Debug.LogWarning("gameManage 为 null，尝试重新获取");
+                gameManage = GameManage.Instance;
 
-                // 确保 GameManage 引用有效
                 if (gameManage == null)
                 {
-                    gameManage = GameManage.Instance;
-                    Debug.Log($"重新获取 GameManage 实例: {gameManage != null}");
+                    // ✅ 如果还是 null，尝试 FindObjectOfType
+                    gameManage = FindObjectOfType<GameManage>();
+                    Debug.Log($"使用 FindObjectOfType 查找: {gameManage != null}");
                 }
 
-                if (gameManage != null)
+                if (gameManage == null)
                 {
-                    Debug.Log($"调用 GameManage.StartTurn({data.PlayerId})");
-                    gameManage.StartTurn(data.PlayerId);
+                    Debug.LogError("❌ 找不到 GameManage，延迟 0.5 秒后重试");
+
+                    // 延迟重试
+                    StartCoroutine(RetryHandleTurnStart(message, 0.5f));
+                    return;
                 }
-                else
-                {
-                    Debug.LogError("GameManage 实例为 null，无法开始回合!");
-                }
-            });
+            }
+
+            Debug.Log($" 调用 GameManage.StartTurn({data.PlayerId})");
+            gameManage.StartTurn(data.PlayerId);
+            Debug.Log($" StartTurn 调用完成");
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"处理回合开始消息时出错: {ex.Message}\n{ex.StackTrace}");
+            Debug.LogError($"❌ 处理回合开始消息时出错: {ex.Message}\n{ex.StackTrace}");
         }
     }
 
+
+    // 添加重试协程
+    private IEnumerator RetryHandleTurnStart(NetworkMessage message, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        Debug.Log("=== 重试 HandleTurnStart ===");
+        HandleTurnStart(message);
+    }
 
     // 连接确认
     private void HandleConnected(NetworkMessage message)
