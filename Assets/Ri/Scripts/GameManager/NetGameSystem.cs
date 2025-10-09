@@ -584,7 +584,11 @@ public class NetGameSystem : MonoBehaviour
 
     private void SendToClient(uint clientId, NetworkMessage message)
     {
-        if (!clients.ContainsKey(clientId)) return;
+        if (!clients.ContainsKey(clientId))
+        {
+            Debug.LogError($"clients 字典中不存在 clientId: {clientId}");
+            return;
+        }
 
         try
         {
