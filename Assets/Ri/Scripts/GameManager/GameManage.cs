@@ -216,13 +216,18 @@ public class GameManage : MonoBehaviour
             int localPlayerIndex = AllPlayerIds.IndexOf(LocalPlayerID);
             Debug.Log($"本地玩家索引: {localPlayerIndex}");
 
+            if (localPlayerIndex >= 0 && localPlayerIndex < PlayerStartPositions.Count)
+            {
+                int startPos = PlayerStartPositions[localPlayerIndex];
+                Debug.Log($"本地玩家起始位置: {startPos}");
 
-            int startPos = PlayerStartPositions[localPlayerIndex];
-            Debug.Log($"本地玩家起始位置: {startPos}");
-
-
-            // 初始化本地玩家
-            _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+                // 使用正确的起始位置初始化
+                _PlayerOperation.InitPlayer(_LocalPlayerID, startPos);
+            }
+            else
+            {
+                Debug.LogError($"无法找到本地玩家的起始位置! Index: {localPlayerIndex}");
+            }
         }
 
         // 触发游戏开始事件
@@ -331,25 +336,27 @@ public class GameManage : MonoBehaviour
         // 获取本地玩家数据
         PlayerData localData = _PlayerDataManager.GetPlayerData(LocalPlayerID);
 
-        // 创建回合结束数据
-        TurnEndData turnData = new TurnEndData
+        // 创建回合结束消息
+        TurnEndMessage turnEndMsg = new TurnEndMessage
         {
             PlayerId = LocalPlayerID,
-            UpdatedPlayerData = localData
+            PlayerDataJson = JsonUtility.ToJson(localData)
         };
 
         // 发送到网络
         if (_NetGameSystem != null)
         {
-            string jsonData = JsonUtility.ToJson(turnData);
-            //_NetGameSystem.SendData(jsonData);
+            _NetGameSystem.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
+            Debug.Log($" 已发送回合结束消息");
+        }
+        else
+        {
+            Debug.LogError("NetGameSystem 为 null，无法发送消息!");
         }
 
         // 触发回合结束事件
         OnTurnEnded?.Invoke(LocalPlayerID);
 
-        // 本地立即切换到下一个回合 (服务器会验证)
-        NextTurn();
     }
 
     /// <summary>

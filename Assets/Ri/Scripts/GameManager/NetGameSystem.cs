@@ -18,7 +18,7 @@ public enum NetworkMessageType
     CONNECT,
     CONNECTED,
     PLAYER_JOINED,
-    PLAYER_LEFT,
+    PLAYER_LEFT, 
 
     // 游戏流程
     GAME_START,
@@ -210,16 +210,17 @@ public class NetGameSystem : MonoBehaviour
     {
         messageHandlers = new Dictionary<NetworkMessageType, Action<NetworkMessage>>
         {
-            { NetworkMessageType.CONNECT, HandleConnect },
-            { NetworkMessageType.CONNECTED, HandleConnected },
-            { NetworkMessageType.PLAYER_JOINED, HandlePlayerJoined },
-            { NetworkMessageType.GAME_START, HandleGameStart },
-            { NetworkMessageType.TURN_END, HandleTurnEnd },
-            { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
-            { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
-            { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
-            { NetworkMessageType.PING, HandlePing },
-            { NetworkMessageType.PONG, HandlePong }
+                { NetworkMessageType.CONNECT, HandleConnect },
+                { NetworkMessageType.CONNECTED, HandleConnected },
+                { NetworkMessageType.PLAYER_JOINED, HandlePlayerJoined },
+                { NetworkMessageType.GAME_START, HandleGameStart },
+                { NetworkMessageType.TURN_START, HandleTurnStart },  
+                { NetworkMessageType.TURN_END, HandleTurnEnd },
+                { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
+                { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
+                { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
+                { NetworkMessageType.PING, HandlePing },
+                { NetworkMessageType.PONG, HandlePong }
         };
     }
 
@@ -263,7 +264,6 @@ public class NetGameSystem : MonoBehaviour
     {
         while (isRunning)
         {
-            Debug.Log("Server is Running");
             try
             {
                 IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -622,6 +622,25 @@ public class NetGameSystem : MonoBehaviour
         Debug.LogWarning("[客户端] 收到CONNECT消息,这不应该发生");
     }
 
+
+    // 添加回合开始消息
+    private void HandleTurnStart(NetworkMessage message)
+    {
+        var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
+
+        Debug.Log($"接收到回合开始消息: 玩家 {data.PlayerId}");
+
+        if (gameManage != null)
+        {
+            gameManage.StartTurn(data.PlayerId);
+        }
+        else
+        {
+            Debug.LogError("gameManage 为 null!");
+        }
+    }
+
+
     // 连接确认
     private void HandleConnected(NetworkMessage message)
     {
@@ -678,34 +697,71 @@ public class NetGameSystem : MonoBehaviour
         if (!string.IsNullOrEmpty(data.PlayerDataJson))
         {
             PlayerData playerData = JsonUtility.FromJson<PlayerData>(data.PlayerDataJson);
-
+           
+            Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
             // 更新数据
             if (playerDataManager != null)
             {
                 playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
+            }
+            else
+            {
+                Debug.LogError("playerDataManager 为 null!");
             }
         }
 
         // 如果是服务器,切换到下一个回合
         if (isServer && gameManage != null)
         {
-            // 找到下一个玩家
-            int currentIndex = connectedPlayers.IndexOf((uint)data.PlayerId);
+            Debug.Log("[服务器] 处理回合切换...");
+
+            // 找到下一个玩家 - 正确的类型转换
+            int currentPlayerId = data.PlayerId;
+
+            // 在 connectedPlayers 中找到当前玩家的索引
+            int currentIndex = -1;
+            for (int i = 0; i < connectedPlayers.Count; i++)
+            {
+                if ((int)connectedPlayers[i] == currentPlayerId)
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            if (currentIndex == -1)
+            {
+                Debug.LogError($"找不到玩家 {currentPlayerId} 在connectedPlayers中");
+                Debug.LogError($"connectedPlayers: {string.Join(", ", connectedPlayers)}");
+                return;
+            }
+
             int nextIndex = (currentIndex + 1) % connectedPlayers.Count;
-            uint nextPlayerId = connectedPlayers[nextIndex];
+            int nextPlayerId = (int)connectedPlayers[nextIndex];
+
+            Debug.Log($"[服务器] 切换回合: 玩家 {currentPlayerId} -> 玩家 {nextPlayerId}");
+            
+            // 通知所有人开始下一个回合
+            TurnStartMessage turnStartData = new TurnStartMessage
+            {
+                PlayerId = nextPlayerId
+            };
+
 
             // 通知所有人开始下一个回合
             NetworkMessage turnStartMsg = new NetworkMessage
             {
                 MessageType = NetworkMessageType.TURN_START,
                 SenderId = 0,
-                JsonData = JsonConvert.SerializeObject(new { PlayerId = (int)nextPlayerId })
+                JsonData = JsonConvert.SerializeObject(new { PlayerId = nextPlayerId })
             };
 
             BroadcastToClients(turnStartMsg, 0);
 
             // 服务器自己也处理
-            gameManage.StartTurn((int)nextPlayerId);
+            gameManage.StartTurn(nextPlayerId);
+
+            Debug.Log($"[服务器]  回合切换完成");
         }
     }
 
