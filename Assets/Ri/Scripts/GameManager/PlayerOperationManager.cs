@@ -305,7 +305,7 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         };
 
-        Debug.Log($"更新玩家 {playerId} 的显示");
+        Debug.LogWarning($"更新玩家 {playerId} 的显示");
 
         // 如果没有这个玩家的字典,创建一个
         if (!otherPlayersUnits.ContainsKey(playerId))
@@ -313,18 +313,25 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
         }
 
+        
+
         // 清除旧的单位显示
         foreach (var unit in otherPlayersUnits[playerId].Values)
         {
             if (unit != null)
+            {
+
                 Destroy(unit);
+                Debug.Log("unit is " + unit.name);
+            }
+
         }
         otherPlayersUnits[playerId].Clear();
 
         // 创建新的单位显示
         foreach (var unit in data.PlayerUnits)
         {
-            Debug.Log($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y})");
+            Debug.LogWarning($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y})");
             CreateEnemyUnit(playerId, unit);
         }
     }

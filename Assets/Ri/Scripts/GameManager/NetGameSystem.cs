@@ -560,8 +560,6 @@ public class NetGameSystem : MonoBehaviour
                 string jsonData = Encoding.UTF8.GetString(data);
 
                 Debug.Log($"=== 客户端收到原始网络数据 ===");
-                Debug.Log($"数据长度: {data.Length}");
-                Debug.Log($"原始JSON: {jsonData}");
 
                 NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
 
@@ -717,10 +715,8 @@ public class NetGameSystem : MonoBehaviour
         // 主要处理器
         if (messageHandlers.ContainsKey(message.MessageType))
         {
-            Debug.Log($"找到主要处理器，准备调用处理函数");
             messageHandlers[message.MessageType]?.Invoke(message);
             handled = true;
-            Debug.Log($"主要处理器调用完成");
         }
         else
         {
