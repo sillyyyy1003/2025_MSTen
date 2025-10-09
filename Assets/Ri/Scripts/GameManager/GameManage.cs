@@ -376,15 +376,16 @@ public class GameManage : MonoBehaviour
             _NetGameSystem.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             Debug.Log($" 已发送回合结束消息");
         }
-        else
-        {
-           
-            Debug.LogError("NetGameSystem 为 null，无法发送消息!");
-        }
 
         // 触发回合结束事件
         OnTurnEnded?.Invoke(LocalPlayerID);
 
+        // 服务器立即切换到下一回合
+        if (_NetGameSystem != null && _NetGameSystem.IsServer)
+        {
+            Debug.Log("[服务器] 执行回合切换...");
+            NextTurn();  // 调用 NextTurn() 方法
+        }
     }
 
     /// <summary>
@@ -395,6 +396,20 @@ public class GameManage : MonoBehaviour
         int currentIndex = AllPlayerIds.IndexOf(CurrentTurnPlayerID);
         int nextIndex = (currentIndex + 1) % AllPlayerIds.Count;
         int nextPlayerId = AllPlayerIds[nextIndex];
+
+        Debug.Log($"[服务器] 切换到玩家 {nextPlayerId}");
+
+        // 如果是服务器，广播 TURN_START
+        if (_NetGameSystem != null && _NetGameSystem.IsServer)
+        {
+            TurnStartMessage turnStartData = new TurnStartMessage
+            {
+                PlayerId = nextPlayerId
+            };
+
+            _NetGameSystem.SendMessage(NetworkMessageType.TURN_START, turnStartData);
+            Debug.Log($"[服务器] 已广播 TURN_START 消息");
+        }
 
         StartTurn(nextPlayerId);
     }
