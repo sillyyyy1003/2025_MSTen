@@ -854,7 +854,7 @@ public class NetGameSystem : MonoBehaviour
             // 广播给所有客户端
             if (clients != null && clients.Count > 0)
             {
-                BroadcastToClients(turnStartMsg, 0);
+                BroadcastToClients(turnStartMsg, uint.MaxValue);
                 Debug.Log($"[服务器] 已广播 TURN_START 消息给 {clients.Count} 个客户端");
             }
             else
@@ -867,7 +867,6 @@ public class NetGameSystem : MonoBehaviour
 
             Debug.Log($"[服务器]  回合切换完成");
         }
-      
     }
 
     // 单位移动
