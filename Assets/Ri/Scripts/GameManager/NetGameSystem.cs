@@ -189,11 +189,11 @@ public class NetGameSystem : MonoBehaviour
         // 自动启动网络
         if (isServer)
         {
-            //StartServer();
+            StartServer();
         }
         else
         {
-            //ConnectToServer();
+            ConnectToServer();
         }
     }
 

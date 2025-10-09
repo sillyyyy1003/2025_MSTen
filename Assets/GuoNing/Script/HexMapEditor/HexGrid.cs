@@ -132,7 +132,15 @@ public class HexGrid : MonoBehaviour
 		
 	}
 
-	public void ShowUI(bool visible)
+    //25.10.9 Add Find Cell By ID
+    public HexCell GetCell(int id)
+    {
+		return cells[id];
+
+    }
+
+
+    public void ShowUI(bool visible)
 	{
 		for (int i = 0; i < chunks.Length; i++)
 		{

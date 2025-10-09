@@ -349,7 +349,7 @@ MonoBehaviour:
   edgeScrollSpeed: 5
   edgeSize: 30
   rotationSpeed: 100
-  grid: {fileID: 1913528995}
+  grid: {fileID: 0}
 --- !u!114 &332689580
 MonoBehaviour:
   m_ObjectHideFlags: 0

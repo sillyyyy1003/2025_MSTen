@@ -400,7 +400,6 @@ public class GameManage : MonoBehaviour
         Debug.LogWarning($"找不到格子ID: {id}");
         return default;
     }
-
     public int GetBoardCount()
     {
         return GameBoardInforDict.Count;
