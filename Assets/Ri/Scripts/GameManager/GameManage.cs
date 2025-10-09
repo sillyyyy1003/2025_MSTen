@@ -233,6 +233,9 @@ public class GameManage : MonoBehaviour
             }
         }
 
+        _NetGameSystem.GetGameManage();
+
+
         // 触发游戏开始事件
         OnGameStarted?.Invoke();
 

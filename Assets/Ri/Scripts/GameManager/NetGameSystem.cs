@@ -183,9 +183,6 @@ public class NetGameSystem : MonoBehaviour
 
     private void Start()
     {
-        // 获取管理器引用
-        gameManage = GameManage.Instance;
-        playerDataManager = PlayerDataManager.Instance;
 
         // 自动启动网络
         if (isServer)
@@ -206,6 +203,13 @@ public class NetGameSystem : MonoBehaviour
     // *************************
     //         初始化
     // *************************
+    public void GetGameManage()
+    {
+        Debug.Log("获取gamemanage");
+        gameManage = GameManage.Instance;
+        playerDataManager = PlayerDataManager.Instance;
+    }
+
 
     private void InitializeMessageHandlers()
     {
@@ -741,7 +745,7 @@ public class NetGameSystem : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"❌ 处理回合开始消息时出错: {ex.Message}\n{ex.StackTrace}");
+            Debug.LogError($" 处理回合开始消息时出错: {ex.Message}\n{ex.StackTrace}");
         }
     }
 
