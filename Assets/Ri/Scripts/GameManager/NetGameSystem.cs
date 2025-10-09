@@ -222,6 +222,10 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.PING, HandlePing },
                 { NetworkMessageType.PONG, HandlePong }
         };
+
+        Debug.Log($"=== 消息处理器注册完成 ===");
+        Debug.Log($"共注册 {messageHandlers.Count} 个处理器");
+        Debug.Log($"TURN_START 处理器注册状态: {messageHandlers.ContainsKey(NetworkMessageType.TURN_START)}");
     }
 
     // *************************
@@ -741,6 +745,10 @@ public class NetGameSystem : MonoBehaviour
         {
             gameManage = GameManage.Instance;
         }
+        if (playerDataManager == null)
+        {
+            playerDataManager = PlayerDataManager.Instance;
+        }
             TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
 
         Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
@@ -751,19 +759,16 @@ public class NetGameSystem : MonoBehaviour
             PlayerData playerData = JsonUtility.FromJson<PlayerData>(data.PlayerDataJson);
            
             Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
+          
+            
             // 更新数据
             if (playerDataManager != null)
             {
                 playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
             }
-            else
-            {
-                Debug.LogError("playerDataManager 为 null!");
-                playerDataManager = PlayerDataManager.Instance;
-                playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
-            }
+           
 
-            // 重要：通知 GameManage 更新显示
+            // 通知 GameManage 更新显示
             if (gameManage != null)
             {
                 // 调用 PlayerOperationManager 更新其他玩家显示
@@ -820,7 +825,16 @@ public class NetGameSystem : MonoBehaviour
                 JsonData = JsonConvert.SerializeObject(turnStartData)
             };
 
-            BroadcastToClients(turnStartMsg, 0);
+            // 广播给所有客户端
+            if (clients != null && clients.Count > 0)
+            {
+                BroadcastToClients(turnStartMsg, 0);
+                Debug.Log($"[服务器] 已广播 TURN_START 消息给 {clients.Count} 个客户端");
+            }
+            else
+            {
+                Debug.LogError($"[服务器] 没有客户端可以广播消息!");
+            }
 
             // 服务器自己也处理
             gameManage.StartTurn(nextPlayerId);
