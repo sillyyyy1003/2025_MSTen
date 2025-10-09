@@ -660,6 +660,11 @@ public class NetGameSystem : MonoBehaviour
         {
             gameManage.InitGameWithNetworkData(data);
         }
+        else
+        {
+            gameManage = GameManage.Instance;
+            gameManage.InitGameWithNetworkData(data);
+        }
     }
 
     // 回合结束
