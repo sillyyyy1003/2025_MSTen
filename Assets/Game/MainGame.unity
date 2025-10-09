@@ -722,6 +722,7 @@ MonoBehaviour:
   port: 8888
   maxPlayers: 2
   playerName: Player
+  gameManage: {fileID: 2129018805}
 --- !u!4 &787177570
 Transform:
   m_ObjectHideFlags: 0
@@ -2288,6 +2289,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b138e65e88b578d4c83051eafae7a95a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2129018805 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 394826096900480221, guid: 1b65887858d25d24eadb8dd6e3b72863,
+    type: 3}
+  m_PrefabInstance: {fileID: 1838421396}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2129018801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41ee9edd5cd1be54088450c1332ea1a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &2136062208
