@@ -509,11 +509,16 @@ public class NetGameSystem : MonoBehaviour
                 byte[] data = udpClient.Receive(ref remoteEndPoint);
                 string jsonData = Encoding.UTF8.GetString(data);
 
+                Debug.Log($"=== 客户端收到原始网络数据 ===");
+                Debug.Log($"数据长度: {data.Length}");
+                Debug.Log($"原始JSON: {jsonData}");
+
                 NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
 
                 // 在主线程处理消息
                 MainThreadDispatcher.Enqueue(() =>
                 {
+                    Debug.Log($"主线程准备处理消息: {message.MessageType}");
                     ProcessMessage(message);
                 });
             }
@@ -604,16 +609,35 @@ public class NetGameSystem : MonoBehaviour
 
     private void ProcessMessage(NetworkMessage message)
     {
-        OnMessageReceived?.Invoke(message);
+        Debug.Log($"=== ProcessMessage: 开始处理消息类型 {message.MessageType} ===");
 
+        // 触发事件
+        OnMessageReceived?.Invoke(message);
+        Debug.Log($"已触发 OnMessageReceived 事件");
+
+        bool handled = false;
+
+        // 主要处理器
         if (messageHandlers.ContainsKey(message.MessageType))
         {
+            Debug.Log($"找到主要处理器，准备调用处理函数");
             messageHandlers[message.MessageType]?.Invoke(message);
+            handled = true;
+            Debug.Log($"主要处理器调用完成");
         }
         else
         {
-            Debug.LogWarning($"未处理的消息类型: {message.MessageType}");
+            Debug.LogWarning($"未找到消息类型 {message.MessageType} 的主要处理器");
         }
+
+        // 如果没有被处理，使用备用处理器
+        if (!handled)
+        {
+            Debug.Log($"消息 {message.MessageType} 未被主要处理器处理，使用备用处理器");
+     
+        }
+
+        Debug.Log($"消息处理完成: {message.MessageType}");
     }
 
     // 连接消息(客户端不应该收到此消息)
@@ -628,6 +652,10 @@ public class NetGameSystem : MonoBehaviour
     {
         try
         {
+            Debug.Log($"=== 客户端收到 TURN_START 消息 ===");
+            Debug.Log($"消息内容: {message.JsonData}");
+            Debug.Log($"发送者: {message.SenderId}");
+
             var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
             Debug.Log($"NetGameSystem: 接收到回合开始消息: 玩家 {data.PlayerId}");
 
@@ -709,7 +737,11 @@ public class NetGameSystem : MonoBehaviour
     // 回合结束
     private void HandleTurnEnd(NetworkMessage message)
     {
-        TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+            TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
 
         Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
 
@@ -946,7 +978,7 @@ public class NetGameSystem : MonoBehaviour
 }
 
 // *************************
-//   主线程调度器 (已有但为了完整性再写一次)
+//   主线程调度器 
 // *************************
 public class MainThreadDispatcher : MonoBehaviour
 {
