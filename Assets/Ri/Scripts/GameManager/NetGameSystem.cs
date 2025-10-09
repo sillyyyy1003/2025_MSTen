@@ -115,6 +115,13 @@ public class TurnEndMessage
     public string PlayerDataJson; // PlayerData序列化
 }
 
+// 辅助消息类
+[Serializable]
+public class TurnStartMessage
+{
+    public int PlayerId;
+}
+
 
 // *************************
 //      主要网络系统

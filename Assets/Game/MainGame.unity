@@ -1186,7 +1186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f826cc867a904d87bd0b0d7efdc88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _PlayerOpManager: {fileID: 0}
+  _PlayerOpManager: {fileID: 291931288}
   sPlayerTurn: Your Turn
   sEnemyTurn: Enemy's Turn
 --- !u!1 &1006675385

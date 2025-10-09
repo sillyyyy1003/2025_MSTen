@@ -40,12 +40,7 @@ public class TurnEndData
     public PlayerData UpdatedPlayerData;
 }
 
-// 辅助消息类
-[Serializable]
-public class TurnStartMessage
-{
-    public int PlayerId;
-}
+
 
 [Serializable]
 public class PlayerDataSyncMessage
@@ -381,6 +376,8 @@ public class GameManage : MonoBehaviour
         {
             _NetGameSystem.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             Debug.Log($" 已发送回合结束消息");
+
+            NextTurn();
         }
 
         // 触发回合结束事件
