@@ -262,9 +262,9 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = false;
 
         // 取消当前选择
+        HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
         ReturnToDefault();
         SelectingUnit = null;
-        ChooseEmptyCell(selectCellID);
        
 
 

@@ -847,13 +847,6 @@ public class NetGameSystem : MonoBehaviour
 
             Debug.Log($"[服务器]  回合切换完成");
         }
-        else
-        {
-            if (!isServer)
-                Debug.LogWarning($"[服务器] 当前不是服务器模式，isServer: {isServer}");
-            if (gameManage == null)
-                Debug.LogError($"[服务器] gameManage 为 null");
-        }
     }
 
     // 单位移动
