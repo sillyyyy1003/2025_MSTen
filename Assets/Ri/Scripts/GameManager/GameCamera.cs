@@ -149,7 +149,7 @@ public class GameCamera : MonoBehaviour
         float zMax = (grid.cellCountZ-1)*10+10;
         float zMin = -15 ;
 
-        // 如果你的地图原点不是 (0,0)，把 origin 加进来
+        // 如果地图原点不是 (0,0)，把 origin 加进来
         float xMinWorld = origin.x+xMin;
         float xMaxWorld = origin.x + xMax;
 
