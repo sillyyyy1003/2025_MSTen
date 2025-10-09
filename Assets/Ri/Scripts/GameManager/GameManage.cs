@@ -487,7 +487,10 @@ public class GameManage : MonoBehaviour
             Debug.Log($"这是本地玩家的数据，不需要更新显示");
         }
     }
-
+    public void UpdateOtherPlayerShow(int playerId, PlayerData data)
+    {
+        _PlayerOperation.UpdateOtherPlayerDisplay(playerId,data);
+    }
 
 
     // *************************
