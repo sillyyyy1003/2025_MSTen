@@ -9,6 +9,7 @@ public class HexGridChunk : MonoBehaviour
 	public HexMesh terrain, rivers, roads, water, waterShore, estuaries;
 	public HexFeatureManager features;
 	Canvas gridCanvas;
+	
 
 	static Color color1 = new Color(1f, 0f, 0f);
 	static Color color2 = new Color(0f, 1f, 0f);
@@ -129,7 +130,6 @@ public class HexGridChunk : MonoBehaviour
 			}
 		}
 
-
 		if (direction <= HexDirection.SE)
 		{
 			TriangulateConnection(direction, cell, e);
@@ -153,8 +153,6 @@ public class HexGridChunk : MonoBehaviour
 		HexDirection direction, HexCell cell, Vector3 center, EdgeVertices e
 	)
 	{
-		//TriangulateEdgeFan(center, e, cell.Color);
-		//TriangulateEdgeFan(center, e, color1);
 		TriangulateEdgeFan(center, e, cell.TerrainTypeIndex);
 
 		if (cell.HasRoads)

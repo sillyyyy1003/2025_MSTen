@@ -328,7 +328,7 @@ public class HexCell : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 改变某个格子的颜色/ todo: 鉴于之后terrainTypeIndex应该会变成纹理索引。这个地方需要改成在纹理的基础上修改颜色
+	/// 改变某个格子的颜色
 	/// </summary>
 	/// <param name="color"></param>
 	public void SetCellColor(TerrainColor color)
@@ -355,6 +355,34 @@ public class HexCell : MonoBehaviour
 			}
 		}
 	}
+
+
+	
+
+
+
+
+	/// <summary>
+	/// 是否被有围墙
+	/// </summary>
+	public bool Walled
+	{
+		get
+		{
+			return walled;
+		}
+		set
+		{
+			if (walled != value)
+			{
+				walled = value;
+				Refresh();
+			}
+		}
+	}
+
+	bool walled;
+
 
 	/// <summary>
 	/// 获得该格子的高度
@@ -876,5 +904,6 @@ public class HexCell : MonoBehaviour
 			return distance + SearchHeuristic;
 		}
 	}
+
 }
 

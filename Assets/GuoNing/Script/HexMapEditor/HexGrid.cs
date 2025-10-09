@@ -16,7 +16,6 @@ public class HexGrid : MonoBehaviour
 	public HexCell cellPrefab;		//单个格子的预制件
 	HexCell[] cells;
 	public Text cellLabelPrefab;    // coordinate text
-	Canvas gridCanvas;              // canvas for ui
 	public Texture2D noiseSource;
 	public HexGridChunk chunkPrefab;
 
@@ -63,8 +62,8 @@ public class HexGrid : MonoBehaviour
 		CreateChunks();
 		CreateCells();
 		
-		ShowUI(false);
-
+		//ShowUI(false);
+		ShowUI(true);
 
 		// 25.9.23 RI add GameStart
 		if (!GameManage.Instance.GameInit())
@@ -192,6 +191,8 @@ public class HexGrid : MonoBehaviour
 			new Vector2(position.x, position.z);
 		//label.text = cell.coordinates.ToStringOnSeparateLines();
 		cell.uiRect = label.rectTransform;
+		//2025/10/9 disable all highlight
+		cell.DisableHighlight();
 
 		// Reset cell elevation
 		cell.Elevation = 0;
