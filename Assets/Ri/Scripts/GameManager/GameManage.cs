@@ -385,12 +385,7 @@ public class GameManage : MonoBehaviour
         // 触发回合结束事件
         OnTurnEnded?.Invoke(LocalPlayerID);
 
-        // 服务器立即切换到下一回合
-        if (_NetGameSystem != null && _NetGameSystem.IsServer)
-        {
-            Debug.Log("[服务器] 执行回合切换...");
-            NextTurn();  // 调用 NextTurn() 方法
-        }
+       
     }
 
     /// <summary>

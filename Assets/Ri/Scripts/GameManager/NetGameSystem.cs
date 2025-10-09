@@ -711,12 +711,20 @@ public class NetGameSystem : MonoBehaviour
         try
         {
             Debug.Log($"=== HandleTurnStart 被调用 ===");
-            Debug.Log($"消息内容: {message.JsonData}");
+            Debug.Log($"当前是服务器: {isServer}");
+            Debug.Log($"消息发送者: {message.SenderId}");
+
+            //  如果是服务器，并且消息是服务器自己发的，忽略
+            if (isServer && message.SenderId == 0)
+            {
+                Debug.Log("[服务器] 忽略自己发出的 TURN_START 消息（已在 NextTurn 中处理）");
+                return;
+            }
 
             var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
             Debug.Log($"NetGameSystem: 接收到回合开始消息: 玩家 {data.PlayerId}");
 
-            // 确保 GameManage 引用有效
+            // 多重查找 GameManage
             if (gameManage == null)
             {
                 Debug.LogWarning("gameManage 为 null，尝试重新获取");
@@ -724,16 +732,13 @@ public class NetGameSystem : MonoBehaviour
 
                 if (gameManage == null)
                 {
-                    //  如果还是 null，尝试 FindObjectOfType
-                    gameManage = GameObject.Find("GameManager").GetComponent<GameManage>();
-                    Debug.Log($"使用 FindObjectOfType 查找: {gameManage != null}");
+                    gameManage = GameObject.Find("GameManager")?.GetComponent<GameManage>();
+                    Debug.Log($"使用 GameObject.Find 查找: {gameManage != null}");
                 }
 
                 if (gameManage == null)
                 {
-                    Debug.LogError(" 找不到 GameManage，延迟 0.5 秒后重试");
-
-                    // 延迟重试
+                    Debug.LogError("找不到 GameManage，延迟 0.5 秒后重试");
                     StartCoroutine(RetryHandleTurnStart(message, 0.5f));
                     return;
                 }
@@ -741,13 +746,12 @@ public class NetGameSystem : MonoBehaviour
 
             Debug.Log($" 调用 GameManage.StartTurn({data.PlayerId})");
             gameManage.StartTurn(data.PlayerId);
-            Debug.Log($" StartTurn 调用完成");
         }
         catch (System.Exception ex)
         {
             Debug.LogError($" 处理回合开始消息时出错: {ex.Message}\n{ex.StackTrace}");
         }
-    }
+    } 
 
 
     // 添加重试协程
@@ -785,22 +789,43 @@ public class NetGameSystem : MonoBehaviour
     // 游戏开始
     private void HandleGameStart(NetworkMessage message)
     {
-        GameStartData data = JsonConvert.DeserializeObject<GameStartData>(message.JsonData);
-
-        Debug.Log($"游戏开始! 玩家数: {data.PlayerIds.Length}");
-
-        isGameStarted = true;
-        OnGameStarted?.Invoke();
-
-        // 通知GameManage初始化游戏
-        if (gameManage != null)
+        try
         {
-            gameManage.InitGameWithNetworkData(data);
+            Debug.Log($"=== HandleTurnStart 被调用 ===");
+            var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
+            Debug.Log($"目标玩家: {data.PlayerId}");
+
+            // 多重查找
+            if (gameManage == null)
+            {
+                gameManage = GameManage.Instance;
+            }
+
+            if (gameManage == null)
+            {
+                // 尝试通过 GameObject 名称查找
+                GameObject gmObj = GameObject.Find("GameManager");
+                if (gmObj != null)
+                {
+                    gameManage = gmObj.GetComponent<GameManage>();
+                    Debug.Log($" 通过 GameObject.Find 找到 GameManage");
+                }
+            }
+
+            if (gameManage != null)
+            {
+                Debug.Log($" 调用 StartTurn({data.PlayerId})");
+                gameManage.StartTurn(data.PlayerId);
+            }
+            else
+            {
+                Debug.LogError("❌ 无法找到 GameManage，延迟重试");
+                StartCoroutine(RetryHandleTurnStart(message, 0.5f));
+            }
         }
-        else
+        catch (Exception ex)
         {
-            gameManage = GameManage.Instance;
-            gameManage.InitGameWithNetworkData(data);
+            Debug.LogError($"处理回合开始消息出错: {ex.Message}");
         }
     }
 
