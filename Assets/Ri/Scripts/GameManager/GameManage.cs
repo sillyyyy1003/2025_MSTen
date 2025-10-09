@@ -1,5 +1,4 @@
-﻿
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,7 +10,7 @@ using UnityEngine.UIElements;
 // 棋盘每个格子信息的结构体
 public struct BoardInfor
 {
-  
+
     // 每个格子的二维坐标
     public int2 Cells2DPos;
 
@@ -58,7 +57,7 @@ public class GameManage : MonoBehaviour
     // *************************
     //          私有属性
     // *************************
- 
+
     // 是否在游戏中
     private bool bIsInGaming;
 
@@ -76,8 +75,8 @@ public class GameManage : MonoBehaviour
 
 
     // 棋盘信息List与Dictionary
-    private List<BoardInfor> GameBoardInfor=new List<BoardInfor>();
-    private Dictionary<int, BoardInfor> GameBoardInforDict=new Dictionary<int, BoardInfor>();
+    private List<BoardInfor> GameBoardInfor = new List<BoardInfor>();
+    private Dictionary<int, BoardInfor> GameBoardInforDict = new Dictionary<int, BoardInfor>();
 
 
     // 每个格子上的GameObject (所有玩家)
@@ -147,13 +146,13 @@ public class GameManage : MonoBehaviour
             _PlayerDataManager = pdm.AddComponent<PlayerDataManager>();
         }
     }
- 
+
 
 
     // Update is called once per frame
     void Update()
     {
-       
+
     }
 
     // *************************
@@ -172,7 +171,7 @@ public class GameManage : MonoBehaviour
         CellObjects.Clear();
 
         // 设置游戏状态
-        SetIsGamingOrNot(true); 
+        SetIsGamingOrNot(true);
         Debug.Log($"游戏状态已设置: {bIsInGaming}");
 
         // 保存玩家信息
@@ -193,8 +192,7 @@ public class GameManage : MonoBehaviour
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
         if (_NetGameSystem != null && !_NetGameSystem.IsServer)
         {
-            _LocalPlayerID = (int)_NetGameSystem.LocalClientId; 
-            
+            _LocalPlayerID = (int)_NetGameSystem.LocalClientId;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
             // 临时方案: 假设第一个玩家是本地玩家
@@ -239,21 +237,8 @@ public class GameManage : MonoBehaviour
         // 开始第一个玩家的回合
         StartTurn(data.FirstTurnPlayerId);
 
-        // 如果是服务器，同步初始数据
-        if (_NetGameSystem != null && _NetGameSystem.IsServer)
-        {
-            // 延迟一帧同步数据，确保所有玩家初始化完成
-            StartCoroutine(DelayedInitialSync());
-        }
-
         return true;
     }
-    private IEnumerator DelayedInitialSync()
-    {
-        yield return null;
-        SyncAllPlayersData();
-    }
-
 
     // 游戏初始化 (测试用)
     public bool GameInit()
@@ -391,13 +376,15 @@ public class GameManage : MonoBehaviour
             _NetGameSystem.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             Debug.Log($" 已发送回合结束消息");
 
+
+
             NextTurn();
         }
 
         // 触发回合结束事件
         OnTurnEnded?.Invoke(LocalPlayerID);
 
-       
+
     }
 
     /// <summary>
@@ -414,42 +401,17 @@ public class GameManage : MonoBehaviour
         // 如果是服务器，广播 TURN_START
         if (_NetGameSystem != null && _NetGameSystem.IsServer)
         {
-            SyncAllPlayersData();
+            TurnStartMessage turnStartData = new TurnStartMessage
+            {
+                PlayerId = nextPlayerId
+            };
 
-            // 短暂延迟后发送回合开始消息，确保数据同步先完成
-            StartCoroutine(DelayedTurnStart(nextPlayerId));
-            //TurnStartMessage turnStartData = new TurnStartMessage
-            //{ 
-            //    PlayerId = nextPlayerId
-            //};
-
-            //_NetGameSystem.SendMessage(NetworkMessageType.TURN_START, turnStartData);
-            //Debug.Log($"[服务器] 已广播 TURN_START 消息");
+            _NetGameSystem.SendMessage(NetworkMessageType.TURN_START, turnStartData);
+            Debug.Log($"[服务器] 已广播 TURN_START 消息");
         }
 
-        else
-        {
-            StartTurn(nextPlayerId);
-        }
-    }
-    private IEnumerator DelayedTurnStart(int nextPlayerId)
-    {
-        // 等待一帧确保数据同步消息先发送
-        yield return null;
-
-        // 发送回合开始消息
-        TurnStartMessage turnStartData = new TurnStartMessage
-        {
-            PlayerId = nextPlayerId
-        };
-
-        _NetGameSystem.SendMessage(NetworkMessageType.TURN_START, turnStartData);
-        Debug.Log($"[服务器] 已广播 TURN_START 消息");
-
-        // 服务器自己也开始回合
         StartTurn(nextPlayerId);
     }
-
 
     // *************************
     //        网络消息处理
@@ -522,58 +484,10 @@ public class GameManage : MonoBehaviour
         }
         else
         {
-            _PlayerOperation.RefreshLocalPlayerDisplay(data);
+            Debug.Log($"这是本地玩家的数据，不需要更新显示");
         }
     }
 
-    // 同步所有玩家数据的方法
-    public void SyncAllPlayersData()
-    {
-        if (_NetGameSystem != null && _NetGameSystem.IsServer)
-        {
-            Debug.Log($"[服务器] 开始同步所有玩家数据...");
-
-            // 服务器同步所有玩家数据给所有客户端
-            foreach (var playerId in AllPlayerIds)
-            {
-                PlayerData playerData = _PlayerDataManager.GetPlayerData(playerId);
-
-                PlayerDataSyncMessage syncMsg = new PlayerDataSyncMessage
-                {
-                    PlayerId = playerId,
-                    PlayerData = playerData
-                };
-
-                _NetGameSystem.SendMessage(NetworkMessageType.SYNC_DATA, syncMsg);
-                Debug.Log($"[服务器] 已发送玩家 {playerId} 的同步数据，单位数: {playerData.GetUnitCount()}");
-            }
-
-            Debug.Log($"[服务器] 所有玩家数据同步完成，共 {AllPlayerIds.Count} 个玩家");
-        }
-        else if (!_NetGameSystem.IsServer)
-        {
-            Debug.Log("[客户端] 请求同步所有玩家数据...");
-            // 客户端可以请求服务器同步数据
-            _NetGameSystem.SendMessage(NetworkMessageType.SYNC_DATA, new { RequestSync = true });
-        }
-    }
-
-    // 添加处理数据同步消息的方法
-    public void HandlePlayerDataSync(NetworkMessage message)
-    {
-        try
-        {
-            PlayerDataSyncMessage data = JsonUtility.FromJson<PlayerDataSyncMessage>(message.JsonData);
-            Debug.Log($"接收到玩家 {data.PlayerId} 的数据同步，单位数: {data.PlayerData.GetUnitCount()}");
-
-            // 使用现有的 SyncPlayerData 方法
-            SyncPlayerData(data.PlayerId, data.PlayerData);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"处理玩家数据同步失败: {ex.Message}\n{ex.StackTrace}");
-        }
-    }
 
 
     // *************************
@@ -669,4 +583,3 @@ public class GameManage : MonoBehaviour
         //}
     }
 }
-

@@ -19,7 +19,7 @@ public enum NetworkMessageType
     CONNECT,
     CONNECTED,
     PLAYER_JOINED,
-    PLAYER_LEFT, 
+    PLAYER_LEFT,
 
     // 游戏流程
     GAME_START,
@@ -171,9 +171,6 @@ public class NetGameSystem : MonoBehaviour
     private GameManage gameManage;
     private PlayerDataManager playerDataManager;
 
-    // Json支持
-    private JsonSerializerSettings jsonSettings;
-
     // *************************
     //      Unity生命周期
     // *************************
@@ -186,15 +183,6 @@ public class NetGameSystem : MonoBehaviour
             GameObject dispatcherObj = new GameObject("MainThreadDispatcher");
             dispatcherObj.AddComponent<MainThreadDispatcher>();
         }
-
-        // 初始化 JSON 序列化设置
-        jsonSettings = new JsonSerializerSettings
-        {
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-            NullValueHandling = NullValueHandling.Ignore,
-            Formatting = Formatting.None
-        };
-
 
         // 初始化消息处理器
         InitializeMessageHandlers();
@@ -270,14 +258,13 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.CONNECTED, HandleConnected },
                 { NetworkMessageType.PLAYER_JOINED, HandlePlayerJoined },
                 { NetworkMessageType.GAME_START, HandleGameStart },
-                { NetworkMessageType.TURN_START, HandleTurnStart },  
+                { NetworkMessageType.TURN_START, HandleTurnStart },
                 { NetworkMessageType.TURN_END, HandleTurnEnd },
                 { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
                 { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
                 { NetworkMessageType.PING, HandlePing },
-                { NetworkMessageType.PONG, HandlePong },
-                { NetworkMessageType.SYNC_DATA, HandlePlayerDataSync }
+                { NetworkMessageType.PONG, HandlePong }
         };
 
         Debug.Log($"=== 消息处理器注册完成 ===");
@@ -331,10 +318,10 @@ public class NetGameSystem : MonoBehaviour
                 string jsonData = Encoding.UTF8.GetString(data);
 
                 NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
-              
+
                 Debug.Log($"[服务器] 消息类型: {message.MessageType}");
                 Debug.Log($"[服务器] 发送者ID: {message.SenderId}");
-              
+
                 if (message.MessageType == NetworkMessageType.CONNECT)
                 {
                     // 处理新客户端连接
@@ -400,7 +387,7 @@ public class NetGameSystem : MonoBehaviour
         {
             MessageType = NetworkMessageType.CONNECTED,
             SenderId = 0,
-            JsonData = JsonConvert.SerializeObject(connectedMsg, jsonSettings)
+            JsonData = JsonConvert.SerializeObject(connectedMsg)
         };
 
         SendToClient(newClientId, response);
@@ -416,7 +403,7 @@ public class NetGameSystem : MonoBehaviour
         {
             MessageType = NetworkMessageType.PLAYER_JOINED,
             SenderId = 0,
-            JsonData = JsonConvert.SerializeObject(joinedMsg, jsonSettings) 
+            JsonData = JsonConvert.SerializeObject(joinedMsg)
         };
 
         BroadcastToClients(joinedMessage, newClientId);
@@ -475,7 +462,7 @@ public class NetGameSystem : MonoBehaviour
         {
             MessageType = NetworkMessageType.GAME_START,
             SenderId = 0,
-            JsonData = JsonConvert.SerializeObject(gameData, jsonSettings)
+            JsonData = JsonConvert.SerializeObject(gameData)
         };
 
         // 广播给所有客户端
@@ -544,7 +531,7 @@ public class NetGameSystem : MonoBehaviour
             {
                 MessageType = NetworkMessageType.CONNECT,
                 SenderId = 0,
-                JsonData = JsonConvert.SerializeObject(connectMsg, jsonSettings)
+                JsonData = JsonConvert.SerializeObject(connectMsg)
             };
 
             SendToServer(message);
@@ -610,7 +597,7 @@ public class NetGameSystem : MonoBehaviour
         {
             MessageType = type,
             SenderId = localClientId,
-            JsonData = JsonConvert.SerializeObject(data, jsonSettings) // 使用设置
+            JsonData = JsonConvert.SerializeObject(data)
         };
 
         if (isServer)
@@ -627,7 +614,7 @@ public class NetGameSystem : MonoBehaviour
     {
         try
         {
-            Debug.Log($"发送到服务" );
+            Debug.Log($"发送到服务");
 
             string jsonData = JsonConvert.SerializeObject(message);
             byte[] data = Encoding.UTF8.GetBytes(jsonData);
@@ -723,7 +710,7 @@ public class NetGameSystem : MonoBehaviour
 
         // 触发事件
         OnMessageReceived?.Invoke(message);
-        Debug.Log($"已触发 OnMessageReceived 事件");
+        //Debug.Log($"已触发 OnMessageReceived 事件");
 
         bool handled = false;
 
@@ -744,7 +731,7 @@ public class NetGameSystem : MonoBehaviour
         if (!handled)
         {
             Debug.Log($"消息 {message.MessageType} 未被主要处理器处理，使用备用处理器");
-     
+
         }
 
         Debug.Log($"消息处理完成: {message.MessageType}");
@@ -766,7 +753,7 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log($"当前是服务器: {isServer}");
             Debug.Log($"消息发送者ID: {message.SenderId}");
 
-            TurnStartMessage data = JsonUtility.FromJson<TurnStartMessage>(message.JsonData);
+            var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
             Debug.Log($"目标玩家: {data.PlayerId}");
 
             // 多重查找 GameManage
@@ -920,7 +907,7 @@ public class NetGameSystem : MonoBehaviour
             playerDataManager = PlayerDataManager.Instance;
         }
 
-        TurnEndMessage data = JsonUtility.FromJson<TurnEndMessage>(message.JsonData);
+        TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
 
         Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
 
@@ -1008,7 +995,7 @@ public class NetGameSystem : MonoBehaviour
             {
                 MessageType = NetworkMessageType.TURN_START,
                 SenderId = 0,
-                JsonData = JsonConvert.SerializeObject(turnStartData, jsonSettings)
+                JsonData = JsonConvert.SerializeObject(turnStartData)
             };
 
             Debug.Log($"[服务器] 已创建 TURN_START 消息");
@@ -1047,8 +1034,8 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
         }
     }
-        // 单位移动
-        private void HandleUnitMove(NetworkMessage message)
+    // 单位移动
+    private void HandleUnitMove(NetworkMessage message)
     {
         UnitMoveMessage data = JsonConvert.DeserializeObject<UnitMoveMessage>(message.JsonData);
 
@@ -1110,27 +1097,7 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
-
-    private void HandlePlayerDataSync(NetworkMessage message)
-    {
-        Debug.Log($"=== HandlePlayerDataSync 被调用 ===");
-        Debug.Log($"消息内容: {message.JsonData}");
-
-        if (gameManage == null)
-        {
-            gameManage = GameManage.Instance;
-            if (gameManage == null)
-            {
-                Debug.LogError("无法找到 GameManage!");
-                return;
-            }
-        }
-
-        gameManage.HandlePlayerDataSync(message);
-    }
-
-
-    // Ping/Pong
+    // Ping/Pong(心跳检测)
     private void HandlePing(NetworkMessage message)
     {
         NetworkMessage pong = new NetworkMessage
