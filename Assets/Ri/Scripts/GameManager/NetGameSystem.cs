@@ -225,7 +225,6 @@ public class NetGameSystem : MonoBehaviour
 
         Debug.Log($"=== 消息处理器注册完成 ===");
         Debug.Log($"共注册 {messageHandlers.Count} 个处理器");
-        Debug.Log($"TURN_START 处理器注册状态: {messageHandlers.ContainsKey(NetworkMessageType.TURN_START)}");
     }
 
     // *************************
@@ -604,13 +603,30 @@ public class NetGameSystem : MonoBehaviour
         Debug.Log("广播消息到客户端");
         if (!isServer) return;
 
+        int broadcastCount = 0;
         foreach (var kvp in clients)
         {
-            if (kvp.Key != excludeClientId)
+            // 如果 excludeClientId 是 uint.MaxValue，不排除任何客户端
+            if (excludeClientId == uint.MaxValue || kvp.Key != excludeClientId)
             {
-                SendToClient(kvp.Key, message);
+                try
+                {
+                    Debug.Log($"[服务器] 发送消息给客户端 {kvp.Key}，地址: {kvp.Value}");
+                    SendToClient(kvp.Key, message);
+                    broadcastCount++;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[服务器] 发送消息给客户端 {kvp.Key} 失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.Log($"[服务器] 跳过排除的客户端: {excludeClientId}");
             }
         }
+
+        Debug.Log($"[服务器] 广播完成，共发送给 {broadcastCount} 个客户端");
     }
 
     // *************************
@@ -755,6 +771,7 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager = PlayerDataManager.Instance;
         }
+
         TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
 
         Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
@@ -850,6 +867,7 @@ public class NetGameSystem : MonoBehaviour
 
             Debug.Log($"[服务器]  回合切换完成");
         }
+      
     }
 
     // 单位移动
