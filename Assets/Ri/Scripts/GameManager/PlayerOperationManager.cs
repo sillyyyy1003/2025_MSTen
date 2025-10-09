@@ -264,6 +264,9 @@ public class PlayerOperationManager : MonoBehaviour
         // 取消当前选择
         ReturnToDefault();
         SelectingUnit = null;
+        ChooseEmptyCell(selectCellID);
+       
+
 
         // 隐藏结束回合按钮
         GameSceneUIManager.Instance.SetEndTurn(false);

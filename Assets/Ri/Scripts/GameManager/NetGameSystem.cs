@@ -275,7 +275,10 @@ public class NetGameSystem : MonoBehaviour
                 string jsonData = Encoding.UTF8.GetString(data);
 
                 NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
-
+              
+                Debug.Log($"[服务器] 消息类型: {message.MessageType}");
+                Debug.Log($"[服务器] 发送者ID: {message.SenderId}");
+              
                 if (message.MessageType == NetworkMessageType.CONNECT)
                 {
                     // 处理新客户端连接
@@ -749,7 +752,7 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager = PlayerDataManager.Instance;
         }
-            TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
+        TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
 
         Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
 
@@ -786,11 +789,14 @@ public class NetGameSystem : MonoBehaviour
 
             // 找到下一个玩家 - 正确的类型转换
             int currentPlayerId = data.PlayerId;
+            Debug.Log($"[服务器] 当前结束回合的玩家: {currentPlayerId}");
+
 
             // 在 connectedPlayers 中找到当前玩家的索引
             int currentIndex = -1;
             for (int i = 0; i < connectedPlayers.Count; i++)
             {
+                Debug.Log($"[服务器] 检查玩家 {connectedPlayers[i]} (类型: {connectedPlayers[i].GetType()})");
                 if ((int)connectedPlayers[i] == currentPlayerId)
                 {
                     currentIndex = i;
@@ -840,6 +846,13 @@ public class NetGameSystem : MonoBehaviour
             gameManage.StartTurn(nextPlayerId);
 
             Debug.Log($"[服务器]  回合切换完成");
+        }
+        else
+        {
+            if (!isServer)
+                Debug.LogWarning($"[服务器] 当前不是服务器模式，isServer: {isServer}");
+            if (gameManage == null)
+                Debug.LogError($"[服务器] gameManage 为 null");
         }
     }
 
