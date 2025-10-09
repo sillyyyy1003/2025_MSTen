@@ -629,48 +629,34 @@ public class NetGameSystem : MonoBehaviour
         try
         {
             var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
+            Debug.Log($"NetGameSystem: 接收到回合开始消息: 玩家 {data.PlayerId}");
 
-        Debug.Log($"接收到回合开始消息: 玩家 {data.PlayerId}");
-
-        if (gameManage != null)
-        {
-            gameManage.StartTurn(data.PlayerId);
-        }
-        else
-        {
-            Debug.LogError("gameManage 为 null!"); 
-            
-            gameManage = GameManage.Instance;
-            if (gameManage != null)
-                {
-                    gameManage.StartTurn(data.PlayerId);
-                }
-        }
-
-            // 在主线程执行回合开始
+            // 确保在主线程执行
             MainThreadDispatcher.Enqueue(() =>
             {
-                Debug.Log($"执行回合开始: 玩家 {data.PlayerId}");
-                gameManage.StartTurn(data.PlayerId);
+                Debug.Log($"NetGameSystem: 在主线程处理回合开始");
 
-                // 强制刷新当前玩家数据显示
-                if (data.PlayerId == localClientId)
+                // 确保 GameManage 引用有效
+                if (gameManage == null)
                 {
-                    Debug.Log("这是本地玩家的回合，刷新界面");
-                    // 触发UI更新
-                    GameSceneUIManager.Instance?.SetTurnText(true);
+                    gameManage = GameManage.Instance;
+                    Debug.Log($"重新获取 GameManage 实例: {gameManage != null}");
+                }
+
+                if (gameManage != null)
+                {
+                    Debug.Log($"调用 GameManage.StartTurn({data.PlayerId})");
+                    gameManage.StartTurn(data.PlayerId);
                 }
                 else
                 {
-                    Debug.Log("这是其他玩家的回合");
-                    GameSceneUIManager.Instance?.SetTurnText(false);
+                    Debug.LogError("GameManage 实例为 null，无法开始回合!");
                 }
             });
-
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"处理回合开始消息时出错: {ex.Message}");
+            Debug.LogError($"处理回合开始消息时出错: {ex.Message}\n{ex.StackTrace}");
         }
     }
 

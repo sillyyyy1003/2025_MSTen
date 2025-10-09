@@ -311,15 +311,41 @@ public class GameManage : MonoBehaviour
         // 触发回合开始事件
         OnTurnStarted?.Invoke(playerId);
 
+        // 确保 PlayerOperationManager 引用有效
+        if (_PlayerOperation == null)
+        {
+            Debug.LogError("PlayerOperationManager 引用为 null!");
+            // 尝试重新获取引用
+            _PlayerOperation = FindObjectOfType<PlayerOperationManager>();
+            if (_PlayerOperation == null)
+            {
+                Debug.LogError("无法找到 PlayerOperationManager!");
+                return;
+            }
+        }
         if (IsMyTurn)
         {
             // 本地玩家回合
             _PlayerOperation.TurnStart();
+
+            // 更新UI
+            if (GameSceneUIManager.Instance != null)
+            {
+                GameSceneUIManager.Instance.SetTurnText(true);
+                GameSceneUIManager.Instance.SetEndTurn(true);
+            }
         }
         else
         {
             // 其他玩家回合,禁用输入
             _PlayerOperation.DisableInput();
+
+            // 更新UI
+            if (GameSceneUIManager.Instance != null)
+            {
+                GameSceneUIManager.Instance.SetTurnText(false);
+                GameSceneUIManager.Instance.SetEndTurn(false);
+            }
         }
     }
 
