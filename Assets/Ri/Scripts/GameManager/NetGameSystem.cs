@@ -767,6 +767,11 @@ public class NetGameSystem : MonoBehaviour
     // 回合结束
     private void HandleTurnEnd(NetworkMessage message)
     {
+        Debug.Log($"=== HandleTurnEnd 被调用 ===");
+        Debug.Log($"当前是服务器: {isServer}");
+        Debug.Log($"gameManage 是否为空: {gameManage == null}");
+
+
         if (gameManage == null)
         {
             gameManage = GameManage.Instance;
@@ -784,16 +789,16 @@ public class NetGameSystem : MonoBehaviour
         if (!string.IsNullOrEmpty(data.PlayerDataJson))
         {
             PlayerData playerData = JsonUtility.FromJson<PlayerData>(data.PlayerDataJson);
-           
+
             Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
-          
-            
+
+
             // 更新数据
             if (playerDataManager != null)
             {
                 playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
             }
-           
+
 
             // 通知 GameManage 更新显示
             if (gameManage != null)
@@ -807,9 +812,20 @@ public class NetGameSystem : MonoBehaviour
         }
 
         // 如果是服务器,切换到下一个回合
-        if (isServer && gameManage != null)
+        if (isServer)
         {
             Debug.Log("[服务器] 处理回合切换...");
+
+            if (gameManage == null)
+            {
+                Debug.LogError("[服务器] gameManage 为 null!");
+                gameManage = GameManage.Instance;
+                if (gameManage == null)
+                {
+                    Debug.LogError("[服务器] 无法获取 GameManage.Instance!");
+                    return;
+                }
+            }
 
             // 找到下一个玩家 - 正确的类型转换
             int currentPlayerId = data.PlayerId;
@@ -820,10 +836,11 @@ public class NetGameSystem : MonoBehaviour
             int currentIndex = -1;
             for (int i = 0; i < connectedPlayers.Count; i++)
             {
-                Debug.Log($"[服务器] 检查玩家 {connectedPlayers[i]} (类型: {connectedPlayers[i].GetType()})");
+                Debug.Log($"[服务器] 检查 connectedPlayers[{i}] = {connectedPlayers[i]}");
                 if ((int)connectedPlayers[i] == currentPlayerId)
                 {
                     currentIndex = i;
+                    Debug.Log($"[服务器] 找到当前玩家索引: {currentIndex}");
                     break;
                 }
             }
@@ -838,16 +855,16 @@ public class NetGameSystem : MonoBehaviour
             int nextIndex = (currentIndex + 1) % connectedPlayers.Count;
             int nextPlayerId = (int)connectedPlayers[nextIndex];
 
+            Debug.Log($"[服务器] 下一个玩家索引: {nextIndex}");
+            Debug.Log($"[服务器] 下一个玩家ID: {nextPlayerId}");
             Debug.Log($"[服务器] 切换回合: 玩家 {currentPlayerId} -> 玩家 {nextPlayerId}");
-            
-            // 通知所有人开始下一个回合
+
+            // 创建回合开始消息
             TurnStartMessage turnStartData = new TurnStartMessage
             {
                 PlayerId = nextPlayerId
             };
 
-
-            // 通知所有人开始下一个回合
             NetworkMessage turnStartMsg = new NetworkMessage
             {
                 MessageType = NetworkMessageType.TURN_START,
@@ -855,26 +872,44 @@ public class NetGameSystem : MonoBehaviour
                 JsonData = JsonConvert.SerializeObject(turnStartData)
             };
 
+            Debug.Log($"[服务器] 已创建 TURN_START 消息");
+            Debug.Log($"[服务器] 消息内容: {turnStartMsg.JsonData}");
+            Debug.Log($"[服务器] clients 字典状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
+
             // 广播给所有客户端
             if (clients != null && clients.Count > 0)
             {
+                Debug.Log($"[服务器] 准备广播消息给 {clients.Count} 个客户端");
+
+                // 列出所有客户端
+                foreach (var client in clients)
+                {
+                    Debug.Log($"[服务器] 客户端 {client.Key}: {client.Value}");
+                }
+
+                // 广播（不排除任何客户端）
                 BroadcastToClients(turnStartMsg, uint.MaxValue);
-                Debug.Log($"[服务器] 已广播 TURN_START 消息给 {clients.Count} 个客户端");
+
+                Debug.Log($"[服务器]  BroadcastToClients 调用完成");
             }
             else
             {
-                Debug.LogError($"[服务器] 没有客户端可以广播消息!");
+                Debug.LogError($"[服务器]  clients 为空或没有客户端! clients={(clients == null ? "null" : $"Count={clients.Count}")}");
             }
 
-            // 服务器自己也处理
+            // 服务器自己也开始回合
+            Debug.Log($"[服务器] 服务器自己开始回合: {nextPlayerId}");
             gameManage.StartTurn(nextPlayerId);
 
             Debug.Log($"[服务器]  回合切换完成");
         }
+        else
+        {
+            Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
+        }
     }
-
-    // 单位移动
-    private void HandleUnitMove(NetworkMessage message)
+        // 单位移动
+        private void HandleUnitMove(NetworkMessage message)
     {
         UnitMoveMessage data = JsonConvert.DeserializeObject<UnitMoveMessage>(message.JsonData);
 
