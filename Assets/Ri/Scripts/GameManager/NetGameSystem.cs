@@ -604,35 +604,58 @@ public class NetGameSystem : MonoBehaviour
 
     private void BroadcastToClients(NetworkMessage message, uint excludeClientId)
     {
-        Debug.Log("广播消息到客户端");
-        if (!isServer) return;
+        Debug.Log($"=== BroadcastToClients 开始 ===");
+        Debug.Log($"消息类型: {message.MessageType}");
+        Debug.Log($"排除ID: {excludeClientId}");
+        Debug.Log($"当前是服务器: {isServer}");
+        Debug.Log($"clients 状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
+
+
+        if (!isServer)
+        {
+            Debug.LogWarning("不是服务器，无法广播");
+            return;
+        }
+
+        if (clients == null)
+        {
+            Debug.LogError("clients 字典为 null!");
+            return;
+        }
+
+        if (clients.Count == 0)
+        {
+            Debug.LogError("clients 字典为空，没有客户端!");
+            return;
+        }
 
         int broadcastCount = 0;
         foreach (var kvp in clients)
         {
-            // 如果 excludeClientId 是 uint.MaxValue，不排除任何客户端
+            Debug.Log($"[广播] 检查客户端 {kvp.Key}");
+
             if (excludeClientId == uint.MaxValue || kvp.Key != excludeClientId)
             {
                 try
                 {
-                    Debug.Log($"[服务器] 发送消息给客户端 {kvp.Key}，地址: {kvp.Value}");
+                    Debug.Log($"[广播] 发送给客户端 {kvp.Key}");
                     SendToClient(kvp.Key, message);
                     broadcastCount++;
+                    Debug.Log($"[广播]  发送成功");
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[服务器] 发送消息给客户端 {kvp.Key} 失败: {ex.Message}");
+                    Debug.LogError($"[广播]  发送失败: {ex.Message}");
                 }
             }
             else
             {
-                Debug.Log($"[服务器] 跳过排除的客户端: {excludeClientId}");
+                Debug.Log($"[广播] 跳过客户端 {kvp.Key} (被排除)");
             }
         }
 
-        Debug.Log($"[服务器] 广播完成，共发送给 {broadcastCount} 个客户端");
+        Debug.Log($"=== BroadcastToClients 完成，共发送 {broadcastCount} 条 ===");
     }
-
     // *************************
     //      消息处理
     // *************************
