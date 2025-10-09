@@ -9,6 +9,7 @@ public class GameSceneUIManager : MonoBehaviour
     // 单例
     public static GameSceneUIManager Instance { get; private set; }
 
+    public PlayerOperationManager _PlayerOpManager;
     // 按钮
 
     // 创建传教士
@@ -127,8 +128,10 @@ public class GameSceneUIManager : MonoBehaviour
 
     private void OnEndTurnButtonPressed()
     {
-
+        _PlayerOpManager.TurnEnd();
     }
+
+
     private void OnCreateFramerButtonPressed()
     {
         if(ResourcesCount-10<=0)
