@@ -161,39 +161,44 @@ public class GameManage : MonoBehaviour
     //        游戏流程函数
     // *************************
 
-    /// 游戏初始化 (由网络系统调用,传入游戏开始数据)
+    // 游戏初始化 (由网络系统调用,传入游戏开始数据)
     public bool InitGameWithNetworkData(GameStartData data)
     {
         Debug.Log("GameManage: 开始初始化游戏...");
-
+        Debug.Log($"接收到玩家数: {data.PlayerIds.Length}");
+        Debug.Log($"起始位置数: {data.StartPositions.Length}");
         // 清空之前的数据
         AllPlayerIds.Clear();
         PlayerStartPositions.Clear();
         CellObjects.Clear();
 
         // 设置游戏状态
-        SetIsGamingOrNot(true);
+        SetIsGamingOrNot(true); 
+        Debug.Log($"游戏状态已设置: {bIsInGaming}");
 
         // 保存玩家信息
         foreach (var playerId in data.PlayerIds)
         {
             AllPlayerIds.Add(playerId);
             _PlayerDataManager.CreatePlayer(playerId);
+            Debug.Log($"创建玩家数据: {playerId}");
         }
 
         // 保存起始位置
         foreach (var pos in data.StartPositions)
         {
             PlayerStartPositions.Add(pos);
+            Debug.Log($"添加起始位置: {pos}");
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
         if (_NetGameSystem != null && !_NetGameSystem.IsServer)
         {
+            _LocalPlayerID = (int)_NetGameSystem.LocalClientId;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
             // 临时方案: 假设第一个玩家是本地玩家
-            _LocalPlayerID = data.PlayerIds[0];
+            //_LocalPlayerID = data.PlayerIds[0];
         }
         else
         {
@@ -201,10 +206,21 @@ public class GameManage : MonoBehaviour
         }
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
+        Debug.Log($"棋盘格子数: {GameBoardInforDict.Count}");
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
         {
+            Debug.Log("开始初始化本地玩家...");
+            // 找到本地玩家的起始位置
+            int localPlayerIndex = AllPlayerIds.IndexOf(LocalPlayerID);
+            Debug.Log($"本地玩家索引: {localPlayerIndex}");
+
+
+            int startPos = PlayerStartPositions[localPlayerIndex];
+            Debug.Log($"本地玩家起始位置: {startPos}");
+
+
             // 初始化本地玩家
             _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
         }
@@ -400,6 +416,7 @@ public class GameManage : MonoBehaviour
         Debug.LogWarning($"找不到格子ID: {id}");
         return default;
     }
+
     public int GetBoardCount()
     {
         return GameBoardInforDict.Count;

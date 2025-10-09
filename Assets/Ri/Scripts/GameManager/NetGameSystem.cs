@@ -263,6 +263,7 @@ public class NetGameSystem : MonoBehaviour
     {
         while (isRunning)
         {
+            Debug.Log("Server is Running");
             try
             {
                 IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -792,6 +793,8 @@ public class NetGameSystem : MonoBehaviour
 
     public void Shutdown()
     {
+        Debug.Log("Server Over!");
+
         isRunning = false;
 
         if (networkThread != null && networkThread.IsAlive)
