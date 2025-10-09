@@ -926,8 +926,8 @@ public class NetGameSystem : MonoBehaviour
             if (gameManage != null)
             {
                 // 调用 PlayerOperationManager 更新其他玩家显示
-                gameManage.GetComponent<PlayerOperationManager>()?
-                    .UpdateOtherPlayerDisplay(data.PlayerId, playerData);
+                GameObject.Find("PlayerOperationManager").GetComponent<PlayerOperationManager>().UpdateOtherPlayerDisplay(data.PlayerId, playerData);
+
                 Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
             }
 
