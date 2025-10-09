@@ -161,7 +161,7 @@ public class NetGameSystem : MonoBehaviour
     public int PlayerCount => connectedPlayers.Count;
 
     // 引用
-    public GameManage gameManage;
+    private GameManage gameManage;
     private PlayerDataManager playerDataManager;
 
     // *************************
