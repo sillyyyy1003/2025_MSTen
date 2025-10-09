@@ -443,7 +443,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             LastSelectingCellID = targetCellId;
 
-            Debug.Log($"移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+            //Debug.Log($"移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
         });
     }
 
