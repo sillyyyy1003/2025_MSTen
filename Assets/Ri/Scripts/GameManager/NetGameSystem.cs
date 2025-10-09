@@ -626,7 +626,9 @@ public class NetGameSystem : MonoBehaviour
     // 添加回合开始消息
     private void HandleTurnStart(NetworkMessage message)
     {
-        var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
+        try
+        {
+            var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
 
         Debug.Log($"接收到回合开始消息: 玩家 {data.PlayerId}");
 
@@ -636,7 +638,18 @@ public class NetGameSystem : MonoBehaviour
         }
         else
         {
-            Debug.LogError("gameManage 为 null!");
+            Debug.LogError("gameManage 为 null!"); 
+            
+            gameManage = GameManage.Instance;
+            if (gameManage != null)
+            {
+                gameManage.StartTurn(data.PlayerId);
+            }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"处理回合开始消息时出错: {ex.Message}");
         }
     }
 
@@ -753,7 +766,7 @@ public class NetGameSystem : MonoBehaviour
             {
                 MessageType = NetworkMessageType.TURN_START,
                 SenderId = 0,
-                JsonData = JsonConvert.SerializeObject(new { PlayerId = nextPlayerId })
+                JsonData = JsonConvert.SerializeObject(turnStartData)
             };
 
             BroadcastToClients(turnStartMsg, 0);

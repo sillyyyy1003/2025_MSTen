@@ -1,4 +1,5 @@
 ﻿
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -407,6 +408,21 @@ public class GameManage : MonoBehaviour
         if (data.PlayerId != LocalPlayerID)
         {
             _PlayerOperation.UpdateOtherPlayerDisplay(data.PlayerId, data.PlayerData);
+        }
+    }
+
+    public void HandleNetworkTurnStart(NetworkMessage message)
+    {
+        try
+        {
+            // 使用 Newtonsoft.Json 反序列化
+            TurnStartMessage data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
+            Debug.Log($"GameManage: 接收到网络回合开始消息，玩家 {data.PlayerId}");
+            StartTurn(data.PlayerId);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"处理回合开始消息失败: {ex.Message}");
         }
     }
 
