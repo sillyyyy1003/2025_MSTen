@@ -29,6 +29,11 @@ public class GameSceneUIManager : MonoBehaviour
     // 资源显示
     private TextMeshProUGUI Resources;
 
+    // 回合显示
+    private TextMeshProUGUI TurnText;
+    public string sPlayerTurn = "Your Turn";
+    public string sEnemyTurn = "Enemy's Turn";
+
     // 资源数
     private int ResourcesCount=100;
 
@@ -54,6 +59,7 @@ public class GameSceneUIManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Debug.Log("ui");
         // 按钮事件初始化
         EndTurn = GameObject.Find("EndTurn").GetComponent<Button>();
         CreateFramer = GameObject.Find("CreateFramer").GetComponent<Button>();
@@ -61,6 +67,7 @@ public class GameSceneUIManager : MonoBehaviour
         CreateMissionary = GameObject.Find("CreateMissionary").GetComponent<Button>();
         CountdownTime = GameObject.Find("Time").GetComponent<TextMeshProUGUI>();
         Resources = GameObject.Find("Resources").GetComponent<TextMeshProUGUI>();
+        TurnText= GameObject.Find("ShowWhosTurn").GetComponent<TextMeshProUGUI>();
 
 
         EndTurn.onClick.AddListener(() => OnEndTurnButtonPressed());
@@ -69,6 +76,8 @@ public class GameSceneUIManager : MonoBehaviour
         CreateMissionary.onClick.AddListener(() => OnCreateMissionaryButtonPressed());
 
         SetResourcesCount(ResourcesCount);
+        // test
+        SetTurnText(true);
     }
     void Update()
     {
@@ -83,11 +92,39 @@ public class GameSceneUIManager : MonoBehaviour
                 CountdownTime.color = Color.red;
         }
     }
+    // *************************
+    //         公有函数
+    // *************************
 
     public void GetCountdownTime(int time)
     {
         CountdownTimeCount = time;
     }
+
+    public void SetTurnText(bool playerTurn)
+    {
+        if(playerTurn)
+        {
+            TurnText.text = sPlayerTurn;
+        }
+        else
+        {
+
+            TurnText.text = sEnemyTurn;
+        }
+    }
+
+    // 设置结束回合按钮是否可用(自己回合外不可用)
+    public void SetEndTurn(bool canUse)
+    {
+            EndTurn.interactable=canUse;
+    }    
+    
+    // *************************;
+    //         私有函数
+    // *************************
+
+
     private void OnEndTurnButtonPressed()
     {
 

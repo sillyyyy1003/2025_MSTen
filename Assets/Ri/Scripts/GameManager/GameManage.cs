@@ -22,17 +22,37 @@ public struct BoardInfor
     public int id;
 };
 
-
-public struct AllPlayerInfor
+// 游戏开始数据
+[Serializable]
+public class GameStartData
 {
-    int PlayerID;
+    public int[] PlayerIds;
+    public int[] StartPositions;
+    public int FirstTurnPlayerId;
+}
 
-    // 玩家所有单位的GameOnject
-    private GameObject[,] AllPlayerUnits;
+// 回合结束数据
+[Serializable]
+public class TurnEndData
+{
+    public int PlayerId;
+    public PlayerData UpdatedPlayerData;
+}
 
-    // 当前格子上是否有玩家控制的单位
-    private bool[,] bIsHavePlayer;
-};
+// 辅助消息类
+[Serializable]
+public class TurnStartMessage
+{
+    public int PlayerId;
+}
+
+[Serializable]
+public class PlayerDataSyncMessage
+{
+    public int PlayerId;
+    public PlayerData PlayerData;
+}
+
 
 public class GameManage : MonoBehaviour
 {
@@ -46,52 +66,67 @@ public class GameManage : MonoBehaviour
     // 是否在游戏中
     private bool bIsInGaming;
 
-    // 玩家所有单位的GameOnject
-    private GameObject[,] AllPlayerUnits;
+    // 当前回合玩家ID
+    private int _CurrentTurnPlayerID = -1;
 
-    // 当前格子上是否有玩家控制的单位
-    private bool[,] bIsHavePlayer;
+    // 本地玩家ID
+    private int _LocalPlayerID = -1;
 
+    // 游戏中的所有玩家ID列表
+    private List<int> AllPlayerIds = new List<int>();
 
-    // 玩家的位置列表
-    // 玩家A起始位置二维数组的列表
-    private List<int2> PlayerStartPos2D =   new List<int2>();
-
-    // 玩家起始世界位置的列表
-    private List<int2> PlayerGamingPos3D = new List<int2>();
-
-    // A玩家拥有单位的格子列表
-    private List<int2> PlayerAPos2D = new List<int2>();
-
-    // B玩家拥有单位的格子列表
-    private List<int2> PlayerBPos2D = new List<int2>();
-
+    // 玩家起始位置ID列表
+    private List<int> PlayerStartPositions = new List<int>();
 
 
     // 棋盘信息List与Dictionary
     private List<BoardInfor> GameBoardInfor=new List<BoardInfor>();
     private Dictionary<int, BoardInfor> GameBoardInforDict=new Dictionary<int, BoardInfor>();
 
+
+    // 每个格子上的GameObject (所有玩家)
+    private Dictionary<int2, GameObject> CellObjects = new Dictionary<int2, GameObject>();
+
     // *************************
     //         公有属性
     // *************************
 
-    public List<int> PlayerStartPos;
-    // 返回棋盘信息
-    public Dictionary<int, BoardInfor> GetPlayerBoardInfor(){return GameBoardInforDict; }
 
-  
-    // 通过获取实例方式得到脚本
+    // 网络系统引用 (在Inspector中赋值或通过代码获取)
+    public NetGameSystem _NetGameSystem;
+
+    // 玩家操作管理器
     public PlayerOperationManager _PlayerOperation;
+    // 玩家数据管理器引用
+    private PlayerDataManager _PlayerDataManager;
+
+    // 事件: 回合开始
+    public event Action<int> OnTurnStarted;
+
+    // 事件: 回合结束
+    public event Action<int> OnTurnEnded;
+
+    // 事件: 游戏开始
+    public event Action OnGameStarted;
+
+    // 事件: 游戏结束
+    public event Action<int> OnGameEnded;
 
 
-    
+    // *************************
+    //        属性访问器
+    // *************************
+
+    public int LocalPlayerID => _LocalPlayerID;
+    public int CurrentTurnPlayerID => _CurrentTurnPlayerID;
+    public bool IsMyTurn => _CurrentTurnPlayerID == _LocalPlayerID;
+    public Dictionary<int, BoardInfor> GetPlayerBoardInfor() { return GameBoardInforDict; }
+
     // 设置当前是否在游戏中
     public void SetIsGamingOrNot(bool isGaming) { bIsInGaming = isGaming; }
-    public bool GetIsGamingOrNot() {return bIsInGaming; }
 
- 
-
+    // 得到游戏是否在运行
+    public bool GetIsGamingOrNot() { return bIsInGaming; }
 
     private void Awake()
     {
@@ -105,6 +140,13 @@ public class GameManage : MonoBehaviour
             Destroy(gameObject);
         }
 
+        // 获取PlayerDataManager引用
+        _PlayerDataManager = PlayerDataManager.Instance;
+        if (_PlayerDataManager == null)
+        {
+            GameObject pdm = new GameObject("PlayerDataManager");
+            _PlayerDataManager = pdm.AddComponent<PlayerDataManager>();
+        }
     }
  
 
@@ -115,114 +157,328 @@ public class GameManage : MonoBehaviour
        
     }
 
-    
-
-
-
     // *************************
-    //         私有函数
+    //        游戏流程函数
     // *************************
 
-
-
-
-
-  
-    
-
-    // *************************
-    //        公有函数
-    // *************************
-
-    // 游戏初始化
-    public bool GameInit()
+    /// 游戏初始化 (由网络系统调用,传入游戏开始数据)
+    public bool InitGameWithNetworkData(GameStartData data)
     {
-        // test
+        Debug.Log("GameManage: 开始初始化游戏...");
+
+        // 清空之前的数据
+        AllPlayerIds.Clear();
+        PlayerStartPositions.Clear();
+        CellObjects.Clear();
+
+        // 设置游戏状态
         SetIsGamingOrNot(true);
 
-        if (bIsInGaming)
+        // 保存玩家信息
+        foreach (var playerId in data.PlayerIds)
         {
-            bIsHavePlayer = new bool[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
-            AllPlayerUnits = new GameObject[FindCell(GameBoardInforDict.Count - 1).Cells2DPos.x + 1, FindCell(GameBoardInforDict.Count - 1).Cells2DPos.y + 1];
+            AllPlayerIds.Add(playerId);
+            _PlayerDataManager.CreatePlayer(playerId);
+        }
 
-            // 添加玩家初始格子位置的id，后续更改
-            PlayerStartPos.Add(0);
-            PlayerStartPos.Add(GameBoardInforDict.Count - 1);
+        // 保存起始位置
+        foreach (var pos in data.StartPositions)
+        {
+            PlayerStartPositions.Add(pos);
+        }
 
-            // 初始化本机玩家数据
-            _PlayerOperation.InitPlayer(0);
+        // 确定本地玩家ID (如果是客户端,从网络系统获取)
+        if (_NetGameSystem != null && !_NetGameSystem.IsServer)
+        {
+            // 这里需要NetGameSystem提供本地客户端ID
+            // localPlayerID = netGameSystem.GetLocalClientId();
+            // 临时方案: 假设第一个玩家是本地玩家
+            _LocalPlayerID = data.PlayerIds[0];
+        }
+        else
+        {
+            _LocalPlayerID = 0; // 服务器默认是玩家0
+        }
+
+        Debug.Log($"本地玩家ID: {LocalPlayerID}");
+
+        // 初始化棋盘数据 (如果还没有初始化)
+        if (GameBoardInforDict.Count > 0)
+        {
+            // 初始化本地玩家
+            _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+        }
+
+        // 触发游戏开始事件
+        OnGameStarted?.Invoke();
+
+        // 开始第一个玩家的回合
+        StartTurn(data.FirstTurnPlayerId);
+
+        return true;
+    }
+
+    // 游戏初始化 (测试用)
+    public bool GameInit()
+    {
+        Debug.Log("GameManage: 本地测试模式初始化...");
+
+        SetIsGamingOrNot(true);
+
+        if (bIsInGaming && GameBoardInforDict.Count > 0)
+        {
+            // 添加默认玩家
+            _LocalPlayerID = 0;
+            AllPlayerIds.Add(0);
+            AllPlayerIds.Add(1);
+
+            _PlayerDataManager.CreatePlayer(0);
+            _PlayerDataManager.CreatePlayer(1);
+
+            // 添加玩家初始格子位置的id
+            PlayerStartPositions.Add(0);
+            PlayerStartPositions.Add(GameBoardInforDict.Count - 1);
+
+            // 初始化本机玩家
+            _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+
+            // 开始第一个回合
+            StartTurn(0);
         }
         return true;
     }
 
     // 游戏结束
-    public bool GameOver()
+    public bool GameOver(int winnerPlayerId = -1)
     {
-        PlayerStartPos2D.Clear();
-        PlayerGamingPos3D.Clear();
+        Debug.Log($"游戏结束! 胜者: {(winnerPlayerId == -1 ? "平局" : $"玩家{winnerPlayerId}")}");
 
+        // 清空数据
+        AllPlayerIds.Clear();
+        PlayerStartPositions.Clear();
+        CellObjects.Clear();
+
+        // 清空棋盘信息
         GameBoardInfor.Clear();
         GameBoardInforDict.Clear();
 
+        // 清空玩家数据
+        _PlayerDataManager.ClearAllPlayers();
 
         SetIsGamingOrNot(false);
+        _CurrentTurnPlayerID = -1;
+
+        // 触发游戏结束事件
+        OnGameEnded?.Invoke(winnerPlayerId);
+
         return true;
     }
 
 
+    // *************************
+    //        回合管理函数
+    // *************************
+
+    // 开始回合
+    public void StartTurn(int playerId)
+    {
+        _CurrentTurnPlayerID = playerId;
+
+        Debug.Log($"回合开始: 玩家 {playerId}" + (IsMyTurn ? " (你的回合)" : " (等待中)"));
+
+        // 触发回合开始事件
+        OnTurnStarted?.Invoke(playerId);
+
+        if (IsMyTurn)
+        {
+            // 本地玩家回合
+            _PlayerOperation.TurnStart();
+        }
+        else
+        {
+            // 其他玩家回合,禁用输入
+            _PlayerOperation.DisableInput();
+        }
+    }
+
+    // 结束回合 (由本地玩家操作管理器调用)
+    public void EndTurn()
+    {
+        if (!IsMyTurn)
+        {
+            Debug.LogWarning("不是你的回合,无法结束!");
+            return;
+        }
+
+        Debug.Log($"玩家 {LocalPlayerID} 结束回合");
+
+        // 获取本地玩家数据
+        PlayerData localData = _PlayerDataManager.GetPlayerData(LocalPlayerID);
+
+        // 创建回合结束数据
+        TurnEndData turnData = new TurnEndData
+        {
+            PlayerId = LocalPlayerID,
+            UpdatedPlayerData = localData
+        };
+
+        // 发送到网络
+        if (_NetGameSystem != null)
+        {
+            string jsonData = JsonUtility.ToJson(turnData);
+            //_NetGameSystem.SendData(jsonData);
+        }
+
+        // 触发回合结束事件
+        OnTurnEnded?.Invoke(LocalPlayerID);
+
+        // 本地立即切换到下一个回合 (服务器会验证)
+        NextTurn();
+    }
+
+    /// <summary>
+    /// 切换到下一个玩家回合
+    /// </summary>
+    private void NextTurn()
+    {
+        int currentIndex = AllPlayerIds.IndexOf(CurrentTurnPlayerID);
+        int nextIndex = (currentIndex + 1) % AllPlayerIds.Count;
+        int nextPlayerId = AllPlayerIds[nextIndex];
+
+        StartTurn(nextPlayerId);
+    }
+
+    // *************************
+    //        网络消息处理
+    // *************************
+
+    private void OnReceiveGameStart(GameStartData data)
+    {
+        InitGameWithNetworkData(data);
+    }
+
+    private void OnReceiveTurnStart(int playerId)
+    {
+        StartTurn(playerId);
+    }
+
+    private void OnReceiveTurnEnd(TurnEndData data)
+    {
+        Debug.Log($"接收到玩家 {data.PlayerId} 的回合结束数据");
+
+        // 更新该玩家的数据
+        _PlayerDataManager.UpdatePlayerData(data.PlayerId, data.UpdatedPlayerData);
+
+        // 如果不是本地玩家,需要更新显示
+        if (data.PlayerId != LocalPlayerID)
+        {
+            _PlayerOperation.UpdateOtherPlayerDisplay(data.PlayerId, data.UpdatedPlayerData);
+        }
+    }
+
+    private void OnReceivePlayerDataSync(PlayerDataSyncMessage data)
+    {
+        // 同步所有玩家数据
+        _PlayerDataManager.UpdatePlayerData(data.PlayerId, data.PlayerData);
+
+        if (data.PlayerId != LocalPlayerID)
+        {
+            _PlayerOperation.UpdateOtherPlayerDisplay(data.PlayerId, data.PlayerData);
+        }
+    }
+
+
+    // *************************
+    //        数据查询函数
+    // *************************
+
     public BoardInfor GetBoardInfor(int id)
     {
-        return GameBoardInforDict[id];
+        if (GameBoardInforDict.ContainsKey(id))
+            return GameBoardInforDict[id];
+
+        Debug.LogWarning($"找不到格子ID: {id}");
+        return default;
     }
+
     public int GetBoardCount()
     {
         return GameBoardInforDict.Count;
     }
 
-    public GameObject GetSelectGameObject(int playerID,int2 pos)
-    {
-        return AllPlayerUnits[pos.x, pos.y];
-    }
-
-
-    // 得到其他玩家的数据并同步
-    public void SetPlayersData(int playerID)
-    {
-
-    }
-   
-
-
-
-    // 根据格子id得到其具体信息
     public BoardInfor FindCell(int id)
     {
-        return GameBoardInforDict[id];
+        return GetBoardInfor(id);
     }
 
-    /// <summary>
-    /// 查找某个格子上是否有玩家的单位
-    /// </summary>
-    /// <param name="id">格子id</param>
-    /// <returns></returns>
-    public bool FindPlayerOnCell(int id)
+    // 查找某个格子上是否有单位
+    public bool FindUnitOnCell(int2 pos)
     {
-        if (bIsHavePlayer[FindCell(id).Cells2DPos.x, FindCell(id).Cells2DPos.y])
-        {
-            return true;
-        }
-        return false;
+        return CellObjects.ContainsKey(pos) && CellObjects[pos] != null;
     }
 
+    // 查找某个格子上是否有指定玩家的单位
+    public bool FindPlayerUnitOnCell(int playerId, int2 pos)
+    {
+        PlayerData data = _PlayerDataManager.GetPlayerData(playerId);
+        return data.FindUnitAt(pos) != null;
+    }
 
+    // 获取格子上的GameObject
+    public GameObject GetCellObject(int2 pos)
+    {
+        if (CellObjects.ContainsKey(pos))
+            return CellObjects[pos];
+        return null;
+    }
 
-    /// <summary>
-    /// 设置棋盘结构体信息
-    /// </summary>
-    /// <param name="infor">格子id</param>
+    // 设置格子上的GameObject
+    public void SetCellObject(int2 pos, GameObject obj)
+    {
+        if (obj == null)
+            CellObjects.Remove(pos);
+        else
+            CellObjects[pos] = obj;
+    }
+
+    // 移动格子上的对象
+    public void MoveCellObject(int2 fromPos, int2 toPos)
+    {
+        if (CellObjects.ContainsKey(fromPos))
+        {
+            GameObject obj = CellObjects[fromPos];
+            CellObjects.Remove(fromPos);
+            CellObjects[toPos] = obj;
+        }
+    }
+
+    // 设置棋盘结构体信息
     public void SetGameBoardInfor(BoardInfor infor)
     {
         GameBoardInfor.Add(infor);
         GameBoardInforDict.Add(infor.id, infor);
     }
+
+    // 获取所有玩家ID
+    public List<int> GetAllPlayerIds()
+    {
+        return new List<int>(AllPlayerIds);
+    }
+
+    // 获取玩家数据
+    public PlayerData GetPlayerData(int playerId)
+    {
+        return _PlayerDataManager.GetPlayerData(playerId);
+    }
+
+    private void OnDestroy()
+    {
+        // 取消订阅网络事件
+        //if (_NetGameSystem != null)
+        //{
+        //    _NetGameSystem.OnDataReceived -= HandleNetworkData;
+        //    _NetGameSystem.OnConnected -= OnConnectedToServer;
+        //}
+    }
 }
+
