@@ -264,7 +264,8 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
                 { NetworkMessageType.PING, HandlePing },
-                { NetworkMessageType.PONG, HandlePong }
+                { NetworkMessageType.PONG, HandlePong },
+                { NetworkMessageType.SYNC_DATA, HandlePlayerDataSync }
         };
 
         Debug.Log($"=== 消息处理器注册完成 ===");
@@ -1097,7 +1098,27 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
-    // Ping/Pong(心跳检测)
+
+    private void HandlePlayerDataSync(NetworkMessage message)
+    {
+        Debug.Log($"=== HandlePlayerDataSync 被调用 ===");
+        Debug.Log($"消息内容: {message.JsonData}");
+
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+            if (gameManage == null)
+            {
+                Debug.LogError("无法找到 GameManage!");
+                return;
+            }
+        }
+
+        gameManage.HandlePlayerDataSync(message);
+    }
+
+
+    // Ping/Pong
     private void HandlePing(NetworkMessage message)
     {
         NetworkMessage pong = new NetworkMessage

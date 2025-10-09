@@ -324,6 +324,93 @@ public class PlayerOperationManager : MonoBehaviour
             CreateEnemyUnit(playerId, unit);
         }
     }
+    // 添加刷新本地玩家显示的方法
+    public void RefreshLocalPlayerDisplay(PlayerData data)
+    {
+        Debug.Log($"刷新本地玩家 {localPlayerId} 显示，单位数: {data.GetUnitCount()}");
+
+        // 清空现有单位
+        foreach (var unit in localPlayerUnits.Values)
+        {
+            if (unit != null)
+                Destroy(unit);
+        }
+        localPlayerUnits.Clear();
+
+        // 重新创建所有单位
+        foreach (var unitData in data.PlayerUnits)
+        {
+            CreateLocalUnit(unitData);
+        }
+
+        // 更新本地玩家数据引用
+        localPlayerData = data;
+
+        Debug.Log($"本地玩家显示刷新完成，现有单位: {localPlayerUnits.Count}");
+    }
+    // 修改 CreateLocalUnit 方法（如果还没有的话）
+    private void CreateLocalUnit(PlayerUnitData unitData)
+    {
+        if (PlayerBoardInforDict == null || PlayerBoardInforDict.Count == 0)
+        {
+            Debug.LogWarning("棋盘信息未初始化");
+            return;
+        }
+
+        // 找到对应位置的世界坐标
+        Vector3 worldPos = Vector3.zero;
+        bool found = false;
+
+        foreach (var board in PlayerBoardInforDict.Values)
+        {
+            if (board.Cells2DPos.Equals(unitData.Position))
+            {
+                worldPos = board.Cells3DPos;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            Debug.LogWarning($"找不到位置 ({unitData.Position.x},{unitData.Position.y}) 对应的世界坐标");
+            return;
+        }
+
+        // 选择预制体
+        GameObject prefab = GetUnitPrefab(unitData.UnitType, true);
+        if (prefab == null)
+        {
+            Debug.LogError($"找不到单位类型 {unitData.UnitType} 的预制体");
+            return;
+        }
+
+        GameObject unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
+        unit.transform.position = new Vector3(
+            worldPos.x,
+            worldPos.y + 2.5f,
+            worldPos.z
+        );
+
+        // 保存引用
+        localPlayerUnits[unitData.Position] = unit;
+        GameManage.Instance.SetCellObject(unitData.Position, unit);
+
+        Debug.Log($"创建本地单位: {unitData.UnitType} at ({unitData.Position.x},{unitData.Position.y})");
+    }
+
+    // 辅助方法：获取单位预制体
+    private GameObject GetUnitPrefab(PlayerUnitType unitType, bool isLocalPlayer)
+    {
+        if (isLocalPlayer)
+        {
+            return unitType == PlayerUnitType.Farmer ? FarmerPrefab : SoldierPrefab;
+        }
+        else
+        {
+            return unitType == PlayerUnitType.Farmer ? EnemyFarmerPrefab : EnemySoldierPrefab;
+        }
+    }
 
     // *************************
     //        私有函数
