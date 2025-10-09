@@ -31,6 +31,21 @@ public struct PlayerUnitData
         UnitType = type;
         Position = pos;
     }
+
+    // 添加序列化辅助属性
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public int PosX
+    {
+        get => Position.x;
+        set => Position = new int2(value, Position.y);
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public int PosY
+    {
+        get => Position.y;
+        set => Position = new int2(Position.x, value);
+    }
 }
 
 

@@ -565,7 +565,7 @@ public class GameManage : MonoBehaviour
     {
         try
         {
-            PlayerDataSyncMessage data = JsonConvert.DeserializeObject<PlayerDataSyncMessage>(message.JsonData);
+            PlayerDataSyncMessage data = JsonUtility.FromJson<PlayerDataSyncMessage>(message.JsonData);
             Debug.Log($"接收到玩家 {data.PlayerId} 的数据同步，单位数: {data.PlayerData.GetUnitCount()}");
 
             // 使用现有的 SyncPlayerData 方法
