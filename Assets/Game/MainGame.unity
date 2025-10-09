@@ -287,6 +287,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf0dceec8b94510428f47cbe81d29346, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  HexGrid: {fileID: 1913528994}
   FarmerPrefab: {fileID: 4191758143791935301, guid: 6fdbad61250fdc24cbaa93dac1aa16c7,
     type: 3}
   SoldierPrefab: {fileID: 4191758143791935301, guid: 6fdbad61250fdc24cbaa93dac1aa16c7,
@@ -349,7 +350,7 @@ MonoBehaviour:
   edgeScrollSpeed: 5
   edgeSize: 30
   rotationSpeed: 100
-  grid: {fileID: 0}
+  grid: {fileID: 1913528995}
 --- !u!114 &332689580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -717,7 +718,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isServer: 0
-  serverIP: 127.0.0.1
+  serverIP: 192.168.3.16
   port: 8888
   maxPlayers: 2
   playerName: Player
@@ -1126,6 +1127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f826cc867a904d87bd0b0d7efdc88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PlayerOpManager: {fileID: 0}
   sPlayerTurn: Your Turn
   sEnemyTurn: Enemy's Turn
 --- !u!1 &1006675385
