@@ -217,7 +217,7 @@ public class HexGrid : MonoBehaviour
 
         AddCellToChunk(x, z, cell);
 
-       
+		Debug.Log(cell.Position);
 
     }
 
