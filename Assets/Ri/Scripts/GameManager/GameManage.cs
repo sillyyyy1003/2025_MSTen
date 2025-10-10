@@ -333,6 +333,7 @@ public class GameManage : MonoBehaviour
             {
                 GameSceneUIManager.Instance.SetTurnText(true);
                 GameSceneUIManager.Instance.SetEndTurn(true);
+                GameSceneUIManager.Instance.StartTurn();
             }
         }
         else

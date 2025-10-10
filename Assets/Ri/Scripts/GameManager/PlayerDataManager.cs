@@ -15,9 +15,7 @@ public enum PlayerUnitType
 }
 
 
-/// <summary>
-/// 玩家单位的数据，种类与坐标一一对应
-/// </summary>
+// 玩家单位的数据，种类与坐标一一对应
 [Serializable]
 public struct PlayerUnitData
 {
@@ -34,9 +32,7 @@ public struct PlayerUnitData
 }
 
 
-/// <summary>
-/// 玩家数据
-/// </summary>
+// 玩家数据
 [Serializable]
 public struct PlayerData
 {

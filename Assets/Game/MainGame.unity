@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028352, g: 0.22571376, b: 0.3069224, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -776,8 +776,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d815fc20daeb44f40b65cc274d11adca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isServer: 0
-  serverIP: 192.168.3.16
+  isServer: 1
+  serverIP: 192.168.1.100
   port: 8888
   maxPlayers: 2
   playerName: Player
@@ -1078,6 +1078,7 @@ GameObject:
   - component: {fileID: 976076155}
   - component: {fileID: 976076154}
   - component: {fileID: 976076158}
+  - component: {fileID: 976076159}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -1189,6 +1190,22 @@ MonoBehaviour:
   _PlayerOpManager: {fileID: 291931288}
   sPlayerTurn: Your Turn
   sEnemyTurn: Enemy's Turn
+--- !u!114 &976076159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976076153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 958f6c6960663bd4e94106d21ffbb0fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeLimitEveryTurn: 20
+  timePool: 30
+  timeText: {fileID: 0}
+  timePoolText: {fileID: 0}
 --- !u!1 &1006675385
 GameObject:
   m_ObjectHideFlags: 0
@@ -1751,8 +1768,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
