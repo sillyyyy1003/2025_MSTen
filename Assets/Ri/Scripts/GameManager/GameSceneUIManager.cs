@@ -9,6 +9,7 @@ public class GameSceneUIManager : MonoBehaviour
     // 单例
     public static GameSceneUIManager Instance { get; private set; }
 
+    public PlayerOperationManager _PlayerOpManager;
     // 按钮
 
     // 创建传教士
@@ -38,6 +39,7 @@ public class GameSceneUIManager : MonoBehaviour
     private int ResourcesCount=100;
 
     private float CountdownTimeCount=100;
+    private float CountdownTimePoolCount = 100;
 
     private bool bIsPlayerTurn=true;
 
@@ -78,29 +80,52 @@ public class GameSceneUIManager : MonoBehaviour
         SetResourcesCount(ResourcesCount);
         // test
         SetTurnText(true);
+
+        //GetComponent<Timer>().StartTurn();
     }
     void Update()
     {
         if(bIsPlayerTurn)
         {
-            CountdownTimeCount -= Time.deltaTime;
-            int seconds = Mathf.CeilToInt(CountdownTimeCount);
-            CountdownTime.text ="Time:"+ seconds.ToString()+" s";
-            if (seconds <= 30)
-                CountdownTime.color = Color.yellow;
-            if(seconds<=10)
-                CountdownTime.color = Color.red;
+            this.GetComponent<Timer>().SetTime();
+
+
+            CountdownTime.text = "Time:" + CountdownTimeCount.ToString() + " s"
+                + "  TimePool:" + CountdownTimePoolCount.ToString() + " s";
+            ////if (seconds <= 30)
+            ////    CountdownTime.color = Color.yellow;
+            ////if(seconds<=10)
+            ////    CountdownTime.color = Color.red;
         }
     }
     // *************************
     //         公有函数
     // *************************
 
-    public void GetCountdownTime(int time)
+    // Timer相关
+    public void StartTurn()
+    {
+        GetComponent<Timer>().StartTurn();
+    }
+
+    // 设置回合结束时间
+    public void SetCountdownTime(int time)
     {
         CountdownTimeCount = time;
     }
+    public void SetCountdownTimePool(int time)
+    {
+        CountdownTimePoolCount = time;
+    }
 
+    // 时间结束
+    public void TimeIsOut()
+    {
+        OnEndTurnButtonPressed();
+    }
+
+
+    // 设置回合文本
     public void SetTurnText(bool playerTurn)
     {
         if(playerTurn)
@@ -120,6 +145,13 @@ public class GameSceneUIManager : MonoBehaviour
             EndTurn.interactable=canUse;
     }    
     
+    // 设置玩家资源
+    public void SetPlayerResource(int res)
+    {
+        ResourcesCount = res;
+    }
+
+
     // *************************;
     //         私有函数
     // *************************
@@ -127,8 +159,10 @@ public class GameSceneUIManager : MonoBehaviour
 
     private void OnEndTurnButtonPressed()
     {
-
+        _PlayerOpManager.TurnEnd();
     }
+
+
     private void OnCreateFramerButtonPressed()
     {
         if(ResourcesCount-10<=0)
@@ -169,10 +203,7 @@ public class GameSceneUIManager : MonoBehaviour
     {
         Resources.text = "Resources: " + count.ToString();
     }
-    private void SetCountdownCount(int time)
-    {
-        CountdownTimeCount=time;
-    }
+ 
     private void ShowNotEnough()
     {
     }

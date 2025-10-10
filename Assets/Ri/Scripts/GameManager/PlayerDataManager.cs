@@ -15,9 +15,7 @@ public enum PlayerUnitType
 }
 
 
-/// <summary>
-/// 玩家单位的数据，种类与坐标一一对应
-/// </summary>
+// 玩家单位的数据，种类与坐标一一对应
 [Serializable]
 public struct PlayerUnitData
 {
@@ -34,9 +32,7 @@ public struct PlayerUnitData
 }
 
 
-/// <summary>
-/// 玩家数据
-/// </summary>
+// 玩家数据
 [Serializable]
 public struct PlayerData
 {
@@ -45,14 +41,14 @@ public struct PlayerData
 
     // 玩家拥有的单位
     public List<PlayerUnitData> PlayerUnits;
-    
+
     // 玩家资源 
     public int Resources;
 
     public PlayerData(int playerId)
     {
         PlayerID = playerId;
-        PlayerUnits = new List<PlayerUnitData>(); 
+        PlayerUnits = new List<PlayerUnitData>();
         Resources = 0;
     }
 
@@ -80,9 +76,9 @@ public struct PlayerData
             {
                 PlayerUnitData movedUnit = PlayerUnits[i];
                 movedUnit.Position = endPos;
-                PlayerUnits[i] = movedUnit; 
-                
-                Debug.Log($"玩家 {PlayerID} 移动单位: ({startPos.x},{startPos.y}) -> ({endPos.x},{endPos.y})");
+                PlayerUnits[i] = movedUnit;
+
+                //Debug.Log($"玩家 {PlayerID} 移动单位: ({startPos.x},{startPos.y}) -> ({endPos.x},{endPos.y})");
                 return true;
             }
         }
@@ -97,13 +93,13 @@ public struct PlayerData
             if (PlayerUnits[i].Position.x == position.x && PlayerUnits[i].Position.y == position.y)
             {
                 PlayerUnits.RemoveAt(i);
-                return true; 
+                return true;
             }
         }
-        return false; 
+        return false;
     }
 
-   
+
 
     // 查找单位
     public PlayerUnitData? FindUnitAt(int2 position)

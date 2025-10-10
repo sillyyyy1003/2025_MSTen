@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using Newtonsoft.Json;
+using System.Collections;
 
 
 
@@ -114,6 +115,13 @@ public class TurnEndMessage
     public string PlayerDataJson; // PlayerData序列化
 }
 
+// 辅助消息类
+[Serializable]
+public class TurnStartMessage
+{
+    public int PlayerId;
+}
+
 
 // *************************
 //      主要网络系统
@@ -182,21 +190,29 @@ public class NetGameSystem : MonoBehaviour
 
     private void Start()
     {
-        // 获取管理器引用
-        gameManage = GameManage.Instance;
-        playerDataManager = PlayerDataManager.Instance;
+
+        // 延迟启动网络,确保所有单例初始化完成
+        StartCoroutine(DelayedNetworkStart());
+    }
+
+    private IEnumerator DelayedNetworkStart()
+    {
+        // 等待一帧,确保所有 Awake 执行完成
+        yield return 0.1f;
+
+        // 获取 GameManage 引用
+        GetGameManage();
 
         // 自动启动网络
         if (isServer)
         {
-            //StartServer();
+            StartServer();
         }
         else
         {
-            //ConnectToServer();
+            ConnectToServer();
         }
     }
-
     private void OnDestroy()
     {
         Shutdown();
@@ -205,22 +221,54 @@ public class NetGameSystem : MonoBehaviour
     // *************************
     //         初始化
     // *************************
+    public void GetGameManage()
+    {
+
+        // 多重尝试获取
+        gameManage = GameManage.Instance;
+
+        if (gameManage == null)
+        {
+            gameManage = GameObject.Find("GameManager").GetComponent<GameManage>();
+        }
+
+        if (gameManage == null)
+        {
+            Debug.LogError("无法找到 GameManage!");
+        }
+        else
+        {
+            Debug.Log($"成功获取 GameManage,对象名: {gameManage.gameObject.name}");
+        }
+
+        playerDataManager = PlayerDataManager.Instance;
+
+        if (playerDataManager == null)
+        {
+            Debug.LogError("无法找到 PlayerDataManager!");
+        }
+    }
+
 
     private void InitializeMessageHandlers()
     {
         messageHandlers = new Dictionary<NetworkMessageType, Action<NetworkMessage>>
         {
-            { NetworkMessageType.CONNECT, HandleConnect },
-            { NetworkMessageType.CONNECTED, HandleConnected },
-            { NetworkMessageType.PLAYER_JOINED, HandlePlayerJoined },
-            { NetworkMessageType.GAME_START, HandleGameStart },
-            { NetworkMessageType.TURN_END, HandleTurnEnd },
-            { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
-            { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
-            { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
-            { NetworkMessageType.PING, HandlePing },
-            { NetworkMessageType.PONG, HandlePong }
+                { NetworkMessageType.CONNECT, HandleConnect },
+                { NetworkMessageType.CONNECTED, HandleConnected },
+                { NetworkMessageType.PLAYER_JOINED, HandlePlayerJoined },
+                { NetworkMessageType.GAME_START, HandleGameStart },
+                { NetworkMessageType.TURN_START, HandleTurnStart },
+                { NetworkMessageType.TURN_END, HandleTurnEnd },
+                { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
+                { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
+                { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
+                { NetworkMessageType.PING, HandlePing },
+                { NetworkMessageType.PONG, HandlePong }
         };
+
+        Debug.Log($"=== 消息处理器注册完成 ===");
+        Debug.Log($"共注册 {messageHandlers.Count} 个处理器");
     }
 
     // *************************
@@ -270,6 +318,9 @@ public class NetGameSystem : MonoBehaviour
                 string jsonData = Encoding.UTF8.GetString(data);
 
                 NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
+
+                Debug.Log($"[服务器] 消息类型: {message.MessageType}");
+                Debug.Log($"[服务器] 发送者ID: {message.SenderId}");
 
                 if (message.MessageType == NetworkMessageType.CONNECT)
                 {
@@ -508,11 +559,14 @@ public class NetGameSystem : MonoBehaviour
                 byte[] data = udpClient.Receive(ref remoteEndPoint);
                 string jsonData = Encoding.UTF8.GetString(data);
 
+                Debug.Log($"=== 客户端收到原始网络数据 ===");
+
                 NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
 
                 // 在主线程处理消息
                 MainThreadDispatcher.Enqueue(() =>
                 {
+                    Debug.Log($"主线程准备处理消息: {message.MessageType}");
                     ProcessMessage(message);
                 });
             }
@@ -558,6 +612,8 @@ public class NetGameSystem : MonoBehaviour
     {
         try
         {
+            Debug.Log($"发送到服务");
+
             string jsonData = JsonConvert.SerializeObject(message);
             byte[] data = Encoding.UTF8.GetBytes(jsonData);
             udpClient.Send(data, data.Length, serverEndPoint);
@@ -570,7 +626,11 @@ public class NetGameSystem : MonoBehaviour
 
     private void SendToClient(uint clientId, NetworkMessage message)
     {
-        if (!clients.ContainsKey(clientId)) return;
+        if (!clients.ContainsKey(clientId))
+        {
+            Debug.LogError($"clients 字典中不存在 clientId: {clientId}");
+            return;
+        }
 
         try
         {
@@ -586,39 +646,192 @@ public class NetGameSystem : MonoBehaviour
 
     private void BroadcastToClients(NetworkMessage message, uint excludeClientId)
     {
-        if (!isServer) return;
+        Debug.Log($"=== BroadcastToClients 开始 ===");
+        Debug.Log($"消息类型: {message.MessageType}");
+        Debug.Log($"排除ID: {excludeClientId}");
+        Debug.Log($"当前是服务器: {isServer}");
+        Debug.Log($"clients 状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
 
+
+        if (!isServer)
+        {
+            Debug.LogWarning("不是服务器，无法广播");
+            return;
+        }
+
+        if (clients == null)
+        {
+            Debug.LogError("clients 字典为 null!");
+            return;
+        }
+
+        if (clients.Count == 0)
+        {
+            Debug.LogError("clients 字典为空，没有客户端!");
+            return;
+        }
+
+        int broadcastCount = 0;
         foreach (var kvp in clients)
         {
-            if (kvp.Key != excludeClientId)
+            Debug.Log($"[广播] 检查客户端 {kvp.Key}");
+
+            if (excludeClientId == uint.MaxValue || kvp.Key != excludeClientId)
             {
-                SendToClient(kvp.Key, message);
+                try
+                {
+                    Debug.Log($"[广播] 发送给客户端 {kvp.Key}");
+                    SendToClient(kvp.Key, message);
+                    broadcastCount++;
+                    Debug.Log($"[广播]  发送成功");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[广播]  发送失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.Log($"[广播] 跳过客户端 {kvp.Key} (被排除)");
             }
         }
-    }
 
+        Debug.Log($"=== BroadcastToClients 完成，共发送 {broadcastCount} 条 ===");
+    }
     // *************************
     //      消息处理
     // *************************
 
     private void ProcessMessage(NetworkMessage message)
     {
-        OnMessageReceived?.Invoke(message);
+        Debug.Log($"=== ProcessMessage: 开始处理消息类型 {message.MessageType} ===");
 
+        // 触发事件
+        OnMessageReceived?.Invoke(message);
+        //Debug.Log($"已触发 OnMessageReceived 事件");
+
+        bool handled = false;
+
+        // 主要处理器
         if (messageHandlers.ContainsKey(message.MessageType))
         {
             messageHandlers[message.MessageType]?.Invoke(message);
+            handled = true;
         }
         else
         {
-            Debug.LogWarning($"未处理的消息类型: {message.MessageType}");
+            Debug.LogWarning($"未找到消息类型 {message.MessageType} 的主要处理器");
         }
+
+        // 如果没有被处理，使用备用处理器
+        if (!handled)
+        {
+            Debug.Log($"消息 {message.MessageType} 未被主要处理器处理，使用备用处理器");
+
+        }
+
+        Debug.Log($"消息处理完成: {message.MessageType}");
     }
 
     // 连接消息(客户端不应该收到此消息)
     private void HandleConnect(NetworkMessage message)
     {
         Debug.LogWarning("[客户端] 收到CONNECT消息,这不应该发生");
+    }
+
+
+    // 添加回合开始消息
+    private void HandleTurnStart(NetworkMessage message)
+    {
+        try
+        {
+            Debug.Log($"=== HandleTurnStart 被调用 ===");
+            Debug.Log($"当前是服务器: {isServer}");
+            Debug.Log($"消息发送者ID: {message.SenderId}");
+
+            var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
+            Debug.Log($"目标玩家: {data.PlayerId}");
+
+            // 多重查找 GameManage
+            if (gameManage == null)
+            {
+                Debug.Log("gameManage 为 null，尝试查找...");
+                gameManage = GameManage.Instance;
+            }
+
+            if (gameManage == null)
+            {
+                Debug.Log("尝试通过 GameObject.Find 查找...");
+                GameObject gmObj = GameObject.Find("GameManager");
+                if (gmObj != null)
+                {
+                    gameManage = gmObj.GetComponent<GameManage>();
+                    Debug.Log($" 通过 GameObject.Find 找到 GameManage");
+                }
+                else
+                {
+                    Debug.LogError("GameObject.Find 未找到 'GameManager' 对象");
+                }
+            }
+
+            if (gameManage != null)
+            {
+                Debug.Log($" 调用 StartTurn({data.PlayerId})");
+                gameManage.StartTurn(data.PlayerId);
+                Debug.Log($" StartTurn 调用完成");
+            }
+            else
+            {
+                Debug.LogError(" 无法找到 GameManage，延迟重试");
+
+                // 列出场景中所有对象（调试用）
+                GameObject[] allObjects = FindObjectsOfType<GameObject>();
+                Debug.Log($"场景中共有 {allObjects.Length} 个 GameObject");
+
+                bool foundGameManage = false;
+                foreach (var obj in allObjects)
+                {
+                    if (obj.name.Contains("GameManage") || obj.name.Contains("GameManager"))
+                    {
+                        Debug.Log($"找到可能的对象: {obj.name}, 激活: {obj.activeInHierarchy}");
+                        var gm = obj.GetComponent<GameManage>();
+                        if (gm != null)
+                        {
+                            Debug.Log($" 这个对象有 GameManage 组件!");
+                            gameManage = gm;
+                            foundGameManage = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!foundGameManage)
+                {
+                    Debug.LogError("场景中完全找不到 GameManage 组件!");
+                    StartCoroutine(RetryHandleTurnStart(message, 0.5f));
+                }
+                else
+                {
+                    // 找到了，再次尝试调用
+                    Debug.Log($" 通过遍历找到 GameManage，调用 StartTurn({data.PlayerId})");
+                    gameManage.StartTurn(data.PlayerId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($" 处理回合开始消息出错: {ex.Message}\n{ex.StackTrace}");
+        }
+    }
+
+
+    // 添加重试协程
+    private IEnumerator RetryHandleTurnStart(NetworkMessage message, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        Debug.Log("=== 重试 HandleTurnStart ===");
+        HandleTurnStart(message);
     }
 
     // 连接确认
@@ -659,11 +872,37 @@ public class NetGameSystem : MonoBehaviour
         {
             gameManage.InitGameWithNetworkData(data);
         }
+        else
+        {
+            gameManage = GameManage.Instance;
+            if (gameManage != null)
+            {
+                gameManage.InitGameWithNetworkData(data);
+            }
+            else
+            {
+                Debug.LogError("无法找到 GameManage 来初始化游戏!");
+            }
+        }
     }
 
     // 回合结束
     private void HandleTurnEnd(NetworkMessage message)
     {
+        Debug.Log($"=== HandleTurnEnd 被调用 ===");
+        Debug.Log($"当前是服务器: {isServer}");
+        Debug.Log($"gameManage 是否为空: {gameManage == null}");
+
+
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+        if (playerDataManager == null)
+        {
+            playerDataManager = PlayerDataManager.Instance;
+        }
+
         TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
 
         Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
@@ -673,36 +912,123 @@ public class NetGameSystem : MonoBehaviour
         {
             PlayerData playerData = JsonUtility.FromJson<PlayerData>(data.PlayerDataJson);
 
+            Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
+
+
             // 更新数据
             if (playerDataManager != null)
             {
                 playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
             }
+
+
+            // 通知 GameManage 更新显示
+            if (gameManage != null)
+            {
+                // 调用 PlayerOperationManager 更新其他玩家显示
+                gameManage.UpdateOtherPlayerShow(data.PlayerId, playerData);
+                Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
+            }
+
         }
 
         // 如果是服务器,切换到下一个回合
-        if (isServer && gameManage != null)
+        if (isServer)
         {
-            // 找到下一个玩家
-            int currentIndex = connectedPlayers.IndexOf((uint)data.PlayerId);
-            int nextIndex = (currentIndex + 1) % connectedPlayers.Count;
-            uint nextPlayerId = connectedPlayers[nextIndex];
+            Debug.Log("[服务器] 处理回合切换...");
 
-            // 通知所有人开始下一个回合
+            if (gameManage == null)
+            {
+                Debug.LogError("[服务器] gameManage 为 null!");
+                gameManage = GameManage.Instance;
+                if (gameManage == null)
+                {
+                    Debug.LogError("[服务器] 无法获取 GameManage.Instance!");
+                    return;
+                }
+            }
+
+            // 找到下一个玩家 - 正确的类型转换
+            int currentPlayerId = data.PlayerId;
+            Debug.Log($"[服务器] 当前结束回合的玩家: {currentPlayerId}");
+
+
+            // 在 connectedPlayers 中找到当前玩家的索引
+            int currentIndex = -1;
+            for (int i = 0; i < connectedPlayers.Count; i++)
+            {
+                Debug.Log($"[服务器] 检查 connectedPlayers[{i}] = {connectedPlayers[i]}");
+                if ((int)connectedPlayers[i] == currentPlayerId)
+                {
+                    currentIndex = i;
+                    Debug.Log($"[服务器] 找到当前玩家索引: {currentIndex}");
+                    break;
+                }
+            }
+
+            if (currentIndex == -1)
+            {
+                Debug.LogError($"找不到玩家 {currentPlayerId} 在connectedPlayers中");
+                Debug.LogError($"connectedPlayers: {string.Join(", ", connectedPlayers)}");
+                return;
+            }
+
+            int nextIndex = (currentIndex + 1) % connectedPlayers.Count;
+            int nextPlayerId = (int)connectedPlayers[nextIndex];
+
+            Debug.Log($"[服务器] 下一个玩家索引: {nextIndex}");
+            Debug.Log($"[服务器] 下一个玩家ID: {nextPlayerId}");
+            Debug.Log($"[服务器] 切换回合: 玩家 {currentPlayerId} -> 玩家 {nextPlayerId}");
+
+            // 创建回合开始消息
+            TurnStartMessage turnStartData = new TurnStartMessage
+            {
+                PlayerId = nextPlayerId
+            };
+
             NetworkMessage turnStartMsg = new NetworkMessage
             {
                 MessageType = NetworkMessageType.TURN_START,
                 SenderId = 0,
-                JsonData = JsonConvert.SerializeObject(new { PlayerId = (int)nextPlayerId })
+                JsonData = JsonConvert.SerializeObject(turnStartData)
             };
 
-            BroadcastToClients(turnStartMsg, 0);
+            Debug.Log($"[服务器] 已创建 TURN_START 消息");
+            Debug.Log($"[服务器] 消息内容: {turnStartMsg.JsonData}");
+            Debug.Log($"[服务器] clients 字典状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
 
-            // 服务器自己也处理
-            gameManage.StartTurn((int)nextPlayerId);
+            // 广播给所有客户端
+            if (clients != null && clients.Count > 0)
+            {
+                Debug.Log($"[服务器] 准备广播消息给 {clients.Count} 个客户端");
+
+                // 列出所有客户端
+                foreach (var client in clients)
+                {
+                    Debug.Log($"[服务器] 客户端 {client.Key}: {client.Value}");
+                }
+
+                // 广播（不排除任何客户端）
+                BroadcastToClients(turnStartMsg, uint.MaxValue);
+
+                Debug.Log($"[服务器]  BroadcastToClients 调用完成");
+            }
+            else
+            {
+                Debug.LogError($"[服务器]  clients 为空或没有客户端! clients={(clients == null ? "null" : $"Count={clients.Count}")}");
+            }
+
+            // 服务器自己也开始回合
+            Debug.Log($"[服务器] 服务器自己开始回合: {nextPlayerId}");
+            gameManage.StartTurn(nextPlayerId);
+
+            Debug.Log($"[服务器]  回合切换完成");
+        }
+        else
+        {
+            Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
         }
     }
-
     // 单位移动
     private void HandleUnitMove(NetworkMessage message)
     {
@@ -715,6 +1041,11 @@ public class NetGameSystem : MonoBehaviour
 
         if (playerDataManager != null)
         {
+            playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+        }
+        else
+        {
+            playerDataManager = PlayerDataManager.Instance;
             playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
         }
     }
@@ -733,6 +1064,12 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager.AddUnit(data.PlayerId, unitType, pos);
         }
+        else
+        {
+
+            playerDataManager = PlayerDataManager.Instance;
+            playerDataManager.AddUnit(data.PlayerId, unitType, pos);
+        }
     }
 
     // 单位移除
@@ -746,6 +1083,11 @@ public class NetGameSystem : MonoBehaviour
 
         if (playerDataManager != null)
         {
+            playerDataManager.RemoveUnit(data.PlayerId, pos);
+        }
+        else
+        {
+            playerDataManager = PlayerDataManager.Instance;
             playerDataManager.RemoveUnit(data.PlayerId, pos);
         }
     }
@@ -792,6 +1134,8 @@ public class NetGameSystem : MonoBehaviour
 
     public void Shutdown()
     {
+        Debug.Log("Server Over!");
+
         isRunning = false;
 
         if (networkThread != null && networkThread.IsAlive)
@@ -834,7 +1178,7 @@ public class NetGameSystem : MonoBehaviour
 }
 
 // *************************
-//   主线程调度器 (已有但为了完整性再写一次)
+//   主线程调度器 
 // *************************
 public class MainThreadDispatcher : MonoBehaviour
 {

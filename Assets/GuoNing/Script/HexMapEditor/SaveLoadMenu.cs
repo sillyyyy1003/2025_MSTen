@@ -129,9 +129,11 @@ public class SaveLoadMenu : MonoBehaviour
 			if (header <= 1)
 			{
 				hexGrid.Load(reader, header);
-				HexMapCamera.ValidatePosition();
-			}
-			else
+
+                // 25.10.10 RI 删除Camera相关避免loadMap出错
+                //HexMapCamera.ValidatePosition();
+            }
+            else
 			{
 				Debug.LogWarning("Unknown map format " + header);
 			}

@@ -1,4 +1,4 @@
-﻿
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 // 棋盘每个格子信息的结构体
 public struct BoardInfor
 {
-  
+
     // 每个格子的二维坐标
     public int2 Cells2DPos;
 
@@ -39,12 +39,7 @@ public class TurnEndData
     public PlayerData UpdatedPlayerData;
 }
 
-// 辅助消息类
-[Serializable]
-public class TurnStartMessage
-{
-    public int PlayerId;
-}
+
 
 [Serializable]
 public class PlayerDataSyncMessage
@@ -62,7 +57,7 @@ public class GameManage : MonoBehaviour
     // *************************
     //          私有属性
     // *************************
- 
+
     // 是否在游戏中
     private bool bIsInGaming;
 
@@ -80,8 +75,8 @@ public class GameManage : MonoBehaviour
 
 
     // 棋盘信息List与Dictionary
-    private List<BoardInfor> GameBoardInfor=new List<BoardInfor>();
-    private Dictionary<int, BoardInfor> GameBoardInforDict=new Dictionary<int, BoardInfor>();
+    private List<BoardInfor> GameBoardInfor = new List<BoardInfor>();
+    private Dictionary<int, BoardInfor> GameBoardInforDict = new Dictionary<int, BoardInfor>();
 
 
     // 每个格子上的GameObject (所有玩家)
@@ -133,11 +128,14 @@ public class GameManage : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); 
+            DontDestroyOnLoad(gameObject);
+            Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
         }
-        else
+        else if (Instance != this)
         {
+            Debug.LogWarning($"GameManage 单例已存在，销毁重复对象: {gameObject.name}");
             Destroy(gameObject);
+            return;
         }
 
         // 获取PlayerDataManager引用
@@ -148,24 +146,25 @@ public class GameManage : MonoBehaviour
             _PlayerDataManager = pdm.AddComponent<PlayerDataManager>();
         }
     }
- 
+
 
 
     // Update is called once per frame
     void Update()
     {
-       
+
     }
 
     // *************************
     //        游戏流程函数
     // *************************
 
-    /// 游戏初始化 (由网络系统调用,传入游戏开始数据)
+    // 游戏初始化 (由网络系统调用,传入游戏开始数据)
     public bool InitGameWithNetworkData(GameStartData data)
     {
         Debug.Log("GameManage: 开始初始化游戏...");
-
+        Debug.Log($"接收到玩家数: {data.PlayerIds.Length}");
+        Debug.Log($"起始位置数: {data.StartPositions.Length}");
         // 清空之前的数据
         AllPlayerIds.Clear();
         PlayerStartPositions.Clear();
@@ -173,27 +172,31 @@ public class GameManage : MonoBehaviour
 
         // 设置游戏状态
         SetIsGamingOrNot(true);
+        Debug.Log($"游戏状态已设置: {bIsInGaming}");
 
         // 保存玩家信息
         foreach (var playerId in data.PlayerIds)
         {
             AllPlayerIds.Add(playerId);
             _PlayerDataManager.CreatePlayer(playerId);
+            Debug.Log($"创建玩家数据: {playerId}");
         }
 
         // 保存起始位置
         foreach (var pos in data.StartPositions)
         {
             PlayerStartPositions.Add(pos);
+            Debug.Log($"添加起始位置: {pos}");
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
         if (_NetGameSystem != null && !_NetGameSystem.IsServer)
         {
+            _LocalPlayerID = (int)_NetGameSystem.LocalClientId;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
             // 临时方案: 假设第一个玩家是本地玩家
-            _LocalPlayerID = data.PlayerIds[0];
+            //_LocalPlayerID = data.PlayerIds[0];
         }
         else
         {
@@ -201,13 +204,32 @@ public class GameManage : MonoBehaviour
         }
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
+        Debug.Log($"棋盘格子数: {GameBoardInforDict.Count}");
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
         {
-            // 初始化本地玩家
-            _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+            Debug.Log("开始初始化本地玩家...");
+            // 找到本地玩家的起始位置
+            int localPlayerIndex = AllPlayerIds.IndexOf(LocalPlayerID);
+            Debug.Log($"本地玩家索引: {localPlayerIndex}");
+
+            if (localPlayerIndex >= 0 && localPlayerIndex < PlayerStartPositions.Count)
+            {
+                int startPos = PlayerStartPositions[localPlayerIndex];
+                Debug.Log($"本地玩家起始位置: {startPos}");
+
+                // 使用正确的起始位置初始化
+                _PlayerOperation.InitPlayer(_LocalPlayerID, startPos);
+            }
+            else
+            {
+                Debug.LogError($"无法找到本地玩家的起始位置! Index: {localPlayerIndex}");
+            }
         }
+
+        _NetGameSystem.GetGameManage();
+
 
         // 触发游戏开始事件
         OnGameStarted?.Invoke();
@@ -289,15 +311,42 @@ public class GameManage : MonoBehaviour
         // 触发回合开始事件
         OnTurnStarted?.Invoke(playerId);
 
+        // 确保 PlayerOperationManager 引用有效
+        if (_PlayerOperation == null)
+        {
+            Debug.LogError("PlayerOperationManager 引用为 null!");
+            // 尝试重新获取引用
+            _PlayerOperation = FindObjectOfType<PlayerOperationManager>();
+            if (_PlayerOperation == null)
+            {
+                Debug.LogError("无法找到 PlayerOperationManager!");
+                return;
+            }
+        }
         if (IsMyTurn)
         {
             // 本地玩家回合
             _PlayerOperation.TurnStart();
+
+            // 更新UI
+            if (GameSceneUIManager.Instance != null)
+            {
+                GameSceneUIManager.Instance.SetTurnText(true);
+                GameSceneUIManager.Instance.SetEndTurn(true);
+                GameSceneUIManager.Instance.StartTurn();
+            }
         }
         else
         {
             // 其他玩家回合,禁用输入
             _PlayerOperation.DisableInput();
+
+            // 更新UI
+            if (GameSceneUIManager.Instance != null)
+            {
+                GameSceneUIManager.Instance.SetTurnText(false);
+                GameSceneUIManager.Instance.SetEndTurn(false);
+            }
         }
     }
 
@@ -315,25 +364,28 @@ public class GameManage : MonoBehaviour
         // 获取本地玩家数据
         PlayerData localData = _PlayerDataManager.GetPlayerData(LocalPlayerID);
 
-        // 创建回合结束数据
-        TurnEndData turnData = new TurnEndData
+        // 创建回合结束消息
+        TurnEndMessage turnEndMsg = new TurnEndMessage
         {
             PlayerId = LocalPlayerID,
-            UpdatedPlayerData = localData
+            PlayerDataJson = JsonUtility.ToJson(localData)
         };
 
         // 发送到网络
         if (_NetGameSystem != null)
         {
-            string jsonData = JsonUtility.ToJson(turnData);
-            //_NetGameSystem.SendData(jsonData);
+            _NetGameSystem.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
+            Debug.Log($" 已发送回合结束消息");
+
+
+
+            NextTurn();
         }
 
         // 触发回合结束事件
         OnTurnEnded?.Invoke(LocalPlayerID);
 
-        // 本地立即切换到下一个回合 (服务器会验证)
-        NextTurn();
+
     }
 
     /// <summary>
@@ -344,6 +396,20 @@ public class GameManage : MonoBehaviour
         int currentIndex = AllPlayerIds.IndexOf(CurrentTurnPlayerID);
         int nextIndex = (currentIndex + 1) % AllPlayerIds.Count;
         int nextPlayerId = AllPlayerIds[nextIndex];
+
+        Debug.Log($"[服务器] 切换到玩家 {nextPlayerId}");
+
+        // 如果是服务器，广播 TURN_START
+        if (_NetGameSystem != null && _NetGameSystem.IsServer)
+        {
+            TurnStartMessage turnStartData = new TurnStartMessage
+            {
+                PlayerId = nextPlayerId
+            };
+
+            _NetGameSystem.SendMessage(NetworkMessageType.TURN_START, turnStartData);
+            Debug.Log($"[服务器] 已广播 TURN_START 消息");
+        }
 
         StartTurn(nextPlayerId);
     }
@@ -385,6 +451,46 @@ public class GameManage : MonoBehaviour
         {
             _PlayerOperation.UpdateOtherPlayerDisplay(data.PlayerId, data.PlayerData);
         }
+    }
+
+    public void HandleNetworkTurnStart(NetworkMessage message)
+    {
+        try
+        {
+            // 使用 Newtonsoft.Json 反序列化
+            TurnStartMessage data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
+            Debug.Log($"GameManage: 接收到网络回合开始消息，玩家 {data.PlayerId}");
+            StartTurn(data.PlayerId);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"处理回合开始消息失败: {ex.Message}");
+        }
+    }
+
+
+    // 同步玩家数据的方法
+    public void SyncPlayerData(int playerId, PlayerData data)
+    {
+        Debug.Log($"同步玩家 {playerId} 的数据，单位数: {data.GetUnitCount()}");
+
+        // 更新数据管理器
+        _PlayerDataManager.UpdatePlayerData(playerId, data);
+
+        // 更新显示
+        if (playerId != LocalPlayerID)
+        {
+            _PlayerOperation.UpdateOtherPlayerDisplay(playerId, data);
+            Debug.Log($"已更新玩家 {playerId} 的显示");
+        }
+        else
+        {
+            Debug.Log($"这是本地玩家的数据，不需要更新显示");
+        }
+    }
+    public void UpdateOtherPlayerShow(int playerId, PlayerData data)
+    {
+        _PlayerOperation.UpdateOtherPlayerDisplay(playerId,data);
     }
 
 
@@ -481,4 +587,3 @@ public class GameManage : MonoBehaviour
         //}
     }
 }
-

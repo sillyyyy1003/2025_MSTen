@@ -10,8 +10,12 @@ using Newtonsoft.Json.Bson;
 /// </summary>
 public class PlayerOperationManager : MonoBehaviour
 {
-    private Camera GameCamera; 
-    
+    // HexGrid的引用
+    public GameObject HexGrid;
+
+
+    private Camera GameCamera;
+
     // 是否可进行操作
     private bool bCanContinue = true;
 
@@ -19,8 +23,8 @@ public class PlayerOperationManager : MonoBehaviour
     private bool isMyTurn = false;
 
     // 点击到的格子的id
-    private int ClickCellid;   
-    
+    private int ClickCellid;
+
     // 射线检测指定为cell层级
     private int RayTestLayerMask = 1 << 6;
 
@@ -47,6 +51,8 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 玩家数据管理器引用
     private PlayerDataManager playerDataManager;
+
+    private int selectCellID;
 
     // *************************
     //         公有属性
@@ -77,8 +83,8 @@ public class PlayerOperationManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();   
-        
+        GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();
+
         // 获取PlayerDataManager引用
         playerDataManager = PlayerDataManager.Instance;
 
@@ -94,61 +100,7 @@ public class PlayerOperationManager : MonoBehaviour
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
             HandleMouseInput();
-            // 左键点击
-            //if (Input.GetMouseButtonDown(0) && bCanContinue)
-            //    {
-            //        Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
-            //        RaycastHit hit;
 
-
-            //        // 射线检测
-            //        if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
-            //        {
-            //            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
-
-            //            //Debug.Log("Cell's 2Dpos is "+ FindCell(ClickCellid).Cells2DPos.x+
-            //            //    ","+FindCell(ClickCellid).Cells2DPos.y+
-            //            //    "\nCell's 3Dpos is " + FindCell(ClickCellid).Cells3DPos);
-
-            //            if (!GameManage.Instance.FindPlayerOnCell(ClickCellid))
-            //            {
-            //                ReturnToDefault();
-            //                SelectingUnit = null;
-            //            }
-            //            else
-            //            {
-            //                int2 clickPos =new int2(GameManage.Instance.FindCell(ClickCellid).Cells2DPos.x,
-            //                GameManage.Instance.FindCell(ClickCellid).Cells2DPos.y);
-
-            //                SelectingUnit = GameManage.Instance.GetSelectGameObject(0, clickPos);
-            //                SelectingUnit.GetComponent<ChangeMaterial>().Outline();
-            //                LastSelectingCellID = ClickCellid;
-            //            }
-            //        }
-            //        else
-            //        {
-            //            ReturnToDefault();
-            //            Debug.Log("no object");
-            //        }
-            //    }
-            //    // 右键点击
-            //    if (Input.GetMouseButtonDown(1) && bCanContinue)
-            //    {
-            //        Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
-            //        RaycastHit hit;
-
-            //        // 射线检测
-            //        if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
-            //        {
-            //            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
-            //            if (!GameManage.Instance.FindPlayerOnCell(ClickCellid))
-            //            {
-            //                if (SelectingUnit != null)
-            //                    MoveToSelectCell(ClickCellid);
-            //            }
-            //        }
-            //    }
-            //}
         }
     }
 
@@ -162,12 +114,14 @@ public class PlayerOperationManager : MonoBehaviour
         // 左键点击 - 选择单位
         if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
+            HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
             HandleLeftClick();
         }
 
         // 右键点击 - 移动/攻击
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
+            HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
         }
     }
@@ -200,6 +154,8 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 // 点击了空地或其他玩家单位
                 ReturnToDefault();
+                ChooseEmptyCell(ClickCellid);
+                selectCellID = ClickCellid;
                 SelectingUnit = null;
             }
         }
@@ -306,8 +262,11 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = false;
 
         // 取消当前选择
+        HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
         ReturnToDefault();
         SelectingUnit = null;
+
+
 
         // 隐藏结束回合按钮
         GameSceneUIManager.Instance.SetEndTurn(false);
@@ -340,9 +299,13 @@ public class PlayerOperationManager : MonoBehaviour
     // 更新其他玩家的显示
     public void UpdateOtherPlayerDisplay(int playerId, PlayerData data)
     {
-        if (playerId == localPlayerId) return;
+        if (playerId == localPlayerId)
+        {
+            Debug.Log($"playerId 为自己");
+            return;
+        };
 
-        Debug.Log($"更新玩家 {playerId} 的显示");
+        Debug.LogWarning($"更新玩家 {playerId} 的显示");
 
         // 如果没有这个玩家的字典,创建一个
         if (!otherPlayersUnits.ContainsKey(playerId))
@@ -350,17 +313,25 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
         }
 
+        
+
         // 清除旧的单位显示
         foreach (var unit in otherPlayersUnits[playerId].Values)
         {
             if (unit != null)
+            {
+
                 Destroy(unit);
+                Debug.Log("unit is " + unit.name);
+            }
+
         }
         otherPlayersUnits[playerId].Clear();
 
         // 创建新的单位显示
         foreach (var unit in data.PlayerUnits)
         {
+            Debug.LogWarning($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y})");
             CreateEnemyUnit(playerId, unit);
         }
     }
@@ -393,7 +364,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         unit.transform.position = new Vector3(
             unit.transform.position.x,
-            unit.transform.position.y + 2.5f,
+            unit.transform.position.y + 8.5f,
             unit.transform.position.z
         );
 
@@ -461,7 +432,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         Vector3 targetWorldPos = new Vector3(
             PlayerBoardInforDict[targetCellId].Cells3DPos.x,
-            PlayerBoardInforDict[targetCellId].Cells3DPos.y + 2.5f,
+            PlayerBoardInforDict[targetCellId].Cells3DPos.y + 8.5f,
             PlayerBoardInforDict[targetCellId].Cells3DPos.z
         );
 
@@ -483,7 +454,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             LastSelectingCellID = targetCellId;
 
-            Debug.Log($"移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+            //Debug.Log($"移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
         });
     }
 
@@ -497,7 +468,12 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 changeMaterial.Default();
             }
+            Debug.Log("unit name: " + SelectingUnit.name);
         }
+    }
+    private void ChooseEmptyCell(int cell)
+    {
+        HexGrid.GetComponent<HexGrid>().GetCell(cell).EnableHighlight(Color.red);
     }
 
     //// 攻击单位(示例实现)

@@ -27,8 +27,11 @@ public class NewMapMenu : MonoBehaviour
 	void CreateMap(int x, int z)
 	{
 		hexGrid.CreateMap(x, z);
-		HexMapCamera.ValidatePosition();
-		Close();
+
+        // 25.10.10 RI 删除Camera相关避免loadMap出错
+        //HexMapCamera.ValidatePosition();
+
+        Close();
 	}
 
 	public void CreateSmallMap()

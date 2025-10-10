@@ -67,11 +67,12 @@ public class HexGrid : MonoBehaviour
 
 		// 25.9.23 RI add GameStart
 		if (!GameManage.Instance.GameInit())
-        {
-            Debug.LogError("Game Init Failed!");
-        }
+		{
+			Debug.LogError("Game Init Failed!");
+		}
 
-        return true;
+
+		return true;
 	}
 
 	void CreateChunks()
@@ -132,7 +133,15 @@ public class HexGrid : MonoBehaviour
 		
 	}
 
-	public void ShowUI(bool visible)
+    //25.10.9 Add Find Cell By ID
+    public HexCell GetCell(int id)
+    {
+		return cells[id];
+
+    }
+
+
+    public void ShowUI(bool visible)
 	{
 		for (int i = 0; i < chunks.Length; i++)
 		{
