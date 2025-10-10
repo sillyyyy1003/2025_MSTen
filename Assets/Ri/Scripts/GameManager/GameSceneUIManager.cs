@@ -80,6 +80,8 @@ public class GameSceneUIManager : MonoBehaviour
         SetResourcesCount(ResourcesCount);
         // test
         SetTurnText(true);
+
+        //GetComponent<Timer>().StartTurn();
     }
     void Update()
     {
@@ -115,6 +117,14 @@ public class GameSceneUIManager : MonoBehaviour
     {
         CountdownTimePoolCount = time;
     }
+
+    // 时间结束
+    public void TimeIsOut()
+    {
+        OnEndTurnButtonPressed();
+    }
+
+
     // 设置回合文本
     public void SetTurnText(bool playerTurn)
     {

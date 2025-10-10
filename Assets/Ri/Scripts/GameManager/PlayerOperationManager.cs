@@ -364,7 +364,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         unit.transform.position = new Vector3(
             unit.transform.position.x,
-            unit.transform.position.y + 2.5f,
+            unit.transform.position.y + 8.5f,
             unit.transform.position.z
         );
 
@@ -432,7 +432,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         Vector3 targetWorldPos = new Vector3(
             PlayerBoardInforDict[targetCellId].Cells3DPos.x,
-            PlayerBoardInforDict[targetCellId].Cells3DPos.y + 2.5f,
+            PlayerBoardInforDict[targetCellId].Cells3DPos.y + 8.5f,
             PlayerBoardInforDict[targetCellId].Cells3DPos.z
         );
 

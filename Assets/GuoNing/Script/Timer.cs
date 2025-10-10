@@ -67,7 +67,7 @@ public class Timer : MonoBehaviour
 
 	public void StartTurn()
 	{
-		if (m_isTimeOut) return;
+		Debug.Log("turn time is"+ timeLimitEveryTurn);
 		m_currentTurnTime = timeLimitEveryTurn;	// 重置时间
 		m_isRunning = true;						// 开始计时
 
@@ -76,7 +76,8 @@ public class Timer : MonoBehaviour
 	public void EndTurn()
 	{
 		m_isRunning = false;	// 停止计时
-		m_currentTurnTime = 0;	// 当前回合时间归零
+		m_currentTurnTime = 0;  // 当前回合时间归零
+		GameSceneUIManager.Instance.TimeIsOut();
 	}
 
 	public void InitTimer()

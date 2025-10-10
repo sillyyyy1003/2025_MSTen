@@ -66,13 +66,13 @@ public class HexGrid : MonoBehaviour
 		ShowUI(true);
 
 		// 25.9.23 RI add GameStart
-		//if (!GameManage.Instance.GameInit())
-		//{
-		//	Debug.LogError("Game Init Failed!");
-		//}
+		if (!GameManage.Instance.GameInit())
+		{
+			Debug.LogError("Game Init Failed!");
+		}
 
 
-        return true;
+		return true;
 	}
 
 	void CreateChunks()
