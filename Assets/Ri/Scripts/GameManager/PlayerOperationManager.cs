@@ -4,6 +4,7 @@ using UnityEngine;
 using DG.Tweening;
 using Unity.Mathematics;
 using Newtonsoft.Json.Bson;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// 玩家操作管理，负责处理因玩家操作导致的数据变动
@@ -32,7 +33,10 @@ public class PlayerOperationManager : MonoBehaviour
     private GameObject SelectingUnit;
 
     // 上一次选择到的格子的id
-    private int LastSelectingCellID;
+    private int LastSelectingCellID; 
+    
+    // 当前选择的空格子ID（用于创建单位）
+    private int SelectedEmptyCellID = -1;
 
     // 本机玩家保存的棋盘信息
     private Dictionary<int, BoardInfor> PlayerBoardInforDict = new Dictionary<int, BoardInfor>();
@@ -111,6 +115,12 @@ public class PlayerOperationManager : MonoBehaviour
 
     private void HandleMouseInput()
     {
+        // 检查鼠标是否在UI上，如果是则不处理游戏场景输入
+        if (IsPointerOverUIElement())
+        {
+            return;
+        }
+
         // 左键点击 - 选择单位
         if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
@@ -124,6 +134,34 @@ public class PlayerOperationManager : MonoBehaviour
             HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
         }
+    }
+
+    // 检测鼠标指针是否在UI元素上（更精确的版本）
+    private bool IsPointerOverUIElement()
+    {
+        if (EventSystem.current == null)
+            return false;
+
+        // 创建指针事件数据
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Input.mousePosition;
+
+        // 射线检测所有UI元素
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        // 过滤掉非激活的UI元素
+        foreach (var result in results)
+        {
+            if (result.gameObject.activeInHierarchy)
+            {
+                // 调试日志（可选）
+                //Debug.Log($"鼠标在UI上: {result.gameObject.name}");
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void HandleLeftClick()
@@ -142,6 +180,8 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 // 取消之前的选择
                 ReturnToDefault();
+                SelectedEmptyCellID = -1; // 清除空格子选择
+
 
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
@@ -154,15 +194,30 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 // 点击了空地或其他玩家单位
                 ReturnToDefault();
-                ChooseEmptyCell(ClickCellid);
-                selectCellID = ClickCellid;
+                //ChooseEmptyCell(ClickCellid);
+                //selectCellID = ClickCellid;
                 SelectingUnit = null;
+
+                // 检查是否是空格子
+                if (!playerDataManager.IsPositionOccupied(clickPos))
+                {
+                    ChooseEmptyCell(ClickCellid);
+                    selectCellID = ClickCellid;
+                    SelectedEmptyCellID = ClickCellid; // 保存选中的空格子
+                    Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
+                }
+                else
+                {
+                    SelectedEmptyCellID = -1; // 清除选择
+                    Debug.Log("该格子已有单位");
+                }
             }
         }
         else
         {
             ReturnToDefault();
-            SelectingUnit = null;
+            SelectingUnit = null; 
+            SelectedEmptyCellID = -1;
         }
     }
     private void HandleRightClick()
@@ -207,6 +262,99 @@ public class PlayerOperationManager : MonoBehaviour
     //         公有函数
     // *************************
 
+   
+    // 尝试在当前选中的空格子创建单位
+    public bool TryCreateUnit(PlayerUnitType unitType)
+    {
+        Debug.Log("empty cell id is "+SelectedEmptyCellID);
+        // 检查是否选中了空格子
+        if (SelectedEmptyCellID == -1)
+        {
+            Debug.LogWarning("未选中任何空格子");
+            return false;
+        }
+
+        // 获取选中格子的信息
+        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
+        int2 cellPos = cellInfo.Cells2DPos;
+
+        // 再次确认该位置是空的
+        if (playerDataManager.IsPositionOccupied(cellPos))
+        {
+            Debug.LogWarning("该格子已有单位");
+            SelectedEmptyCellID = -1;
+            return false;
+        }
+
+        // 创建单位
+        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
+
+        // 清除选择
+        HexGrid.GetComponent<HexGrid>().GetCell(SelectedEmptyCellID).DisableHighlight();
+        SelectedEmptyCellID = -1;
+
+        return true;
+    }
+
+
+    // 在指定位置创建单位
+    private void CreateUnitAtPosition(PlayerUnitType unitType, int cellId)
+    {
+        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(cellId);
+        int2 position = cellInfo.Cells2DPos;
+        Vector3 worldPos = cellInfo.Cells3DPos;
+
+        // 选择对应的预制体
+        GameObject prefab = null;
+        switch (unitType)
+        {
+            case PlayerUnitType.Farmer:
+                prefab = FarmerPrefab;
+                break;
+            case PlayerUnitType.Soldier:
+                prefab = SoldierPrefab;
+                break;
+            default:
+                Debug.LogError($"未知的单位类型: {unitType}");
+                return;
+        }
+
+        if (prefab == null)
+        {
+            Debug.LogError($"预制体为空: {unitType}");
+            return;
+        }
+
+        // 创建GameObject
+        GameObject unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
+        unit.transform.position = new Vector3(
+            unit.transform.position.x,
+            unit.transform.position.y + 6.5f,
+            unit.transform.position.z
+        );
+
+        // 添加到数据管理器
+        playerDataManager.AddUnit(localPlayerId, unitType, position);
+
+        // 保存本地引用
+        localPlayerUnits[position] = unit;
+        GameManage.Instance.SetCellObject(position, unit);
+
+        Debug.Log($"在 ({position.x},{position.y}) 创建了 {unitType}");
+
+        // 发送网络消息
+        if (GameManage.Instance._NetGameSystem != null)
+        {
+            UnitAddMessage msg = new UnitAddMessage
+            {
+                PlayerId = localPlayerId,
+                UnitType = (int)unitType,
+                PosX = position.x,
+                PosY = position.y
+            };
+            GameManage.Instance._NetGameSystem.SendMessage(NetworkMessageType.UNIT_ADD, msg);
+        }
+    }
 
     /// <summary>
     /// 初始化玩家
@@ -265,6 +413,7 @@ public class PlayerOperationManager : MonoBehaviour
         HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
         ReturnToDefault();
         SelectingUnit = null;
+        SelectedEmptyCellID = -1;
 
 
 
@@ -289,6 +438,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 取消选择
         ReturnToDefault();
         SelectingUnit = null;
+        SelectedEmptyCellID = -1;
 
         // 隐藏结束回合按钮
         GameSceneUIManager.Instance.SetEndTurn(false);
@@ -313,14 +463,11 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
         }
 
-        
-
         // 清除旧的单位显示
         foreach (var unit in otherPlayersUnits[playerId].Values)
         {
             if (unit != null)
             {
-
                 Destroy(unit);
                 Debug.Log("unit is " + unit.name);
             }

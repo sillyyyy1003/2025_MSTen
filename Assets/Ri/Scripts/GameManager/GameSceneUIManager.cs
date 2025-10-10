@@ -142,15 +142,20 @@ public class GameSceneUIManager : MonoBehaviour
     // 设置结束回合按钮是否可用(自己回合外不可用)
     public void SetEndTurn(bool canUse)
     {
-            EndTurn.interactable=canUse;
+        EndTurn.interactable=canUse;
     }    
     
     // 设置玩家资源
     public void SetPlayerResource(int res)
     {
         ResourcesCount = res;
+        SetResourcesCount(ResourcesCount);
     }
 
+    public int GetPlayerResource()
+    {
+        return ResourcesCount;
+    }
 
     // *************************;
     //         私有函数
@@ -165,39 +170,59 @@ public class GameSceneUIManager : MonoBehaviour
 
     private void OnCreateFramerButtonPressed()
     {
-        if(ResourcesCount-10<=0)
+        int cost = 10;
+        if (ResourcesCount < cost)
         {
             ShowNotEnough();
+            return;
+        }
+
+        // 尝试创建单位
+        if (_PlayerOpManager.TryCreateUnit(PlayerUnitType.Farmer))
+        {
+            ResourcesCount -= cost;
+            SetResourcesCount(ResourcesCount);
+            Debug.Log("成功创建农民");
         }
         else
         {
-            ResourcesCount -= 10;
-            SetResourcesCount(ResourcesCount);
+            Debug.LogWarning("创建农民失败 - 请先选择一个空格子");
+            ShowNoSelectedCell();
         }
     }
     private void OnCreateSoldierButtonPressed()
     {
-        if (ResourcesCount - 20 <= 0)
+        int cost = 20;
+        if (ResourcesCount < cost)
         {
             ShowNotEnough();
+            return;
+        }
+
+        // 尝试创建单位
+        if (_PlayerOpManager.TryCreateUnit(PlayerUnitType.Soldier))
+        {
+            ResourcesCount -= cost;
+            SetResourcesCount(ResourcesCount);
+            Debug.Log("成功创建士兵");
         }
         else
         {
-            ResourcesCount -= 20;
-            SetResourcesCount(ResourcesCount);
+            Debug.LogWarning("创建士兵失败 - 请先选择一个空格子");
+            ShowNoSelectedCell();
         }
     }
     private void OnCreateMissionaryButtonPressed()
     {
-        if (ResourcesCount - 30 <= 0)
+        int cost = 30;
+        if (ResourcesCount < cost)
         {
             ShowNotEnough();
+            return;
         }
-        else
-        {
-            ResourcesCount -= 30;
-            SetResourcesCount(ResourcesCount);
-        }
+
+        // TODO: 添加传教士类型到 PlayerUnitType 枚举后实现
+        Debug.Log("传教士功能尚未实现");
     }
     private void SetResourcesCount(int count)
     {
@@ -206,5 +231,11 @@ public class GameSceneUIManager : MonoBehaviour
  
     private void ShowNotEnough()
     {
+        // ui
+    }
+    private void ShowNoSelectedCell()
+    {
+        Debug.LogWarning("请先用鼠标左键选择一个空格子!");
+        // TODO: 显示UI提示
     }
 }

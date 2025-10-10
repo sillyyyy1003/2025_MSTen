@@ -11,6 +11,7 @@ public enum PlayerUnitType
 {
     Soldier,    //士兵
     Farmer,     //农民
+    Missionary, // 传教士
     // 后续添加
 }
 
