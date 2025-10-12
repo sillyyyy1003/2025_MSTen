@@ -106,6 +106,8 @@ public class Farmer : Piece
 
     /// <summary>
     /// 既存の建築中建物の建築を継続
+    /// 複数の農民を選択してこれを実行させることが必要だと思うが
+    /// それはGMに任せる
     /// </summary>
     public bool ContinueConstruction(Building building)
     {
