@@ -172,11 +172,83 @@ namespace GameData
         Heal,
         Summon
     }
-    
+
     public enum Team
     {
         Player,
         Enemy,
         Neutral
     }
+
+    public enum PieceType
+    {
+        None,Military,Farmer,Missionary,Pope
+    }
+
+    public enum Religion
+    {
+        None,A,B,C,D,E,F,G,H
+    }
+
+    /// <summary>
+    /// 教皇のデータ定義
+    /// </summary>
+    [CreateAssetMenu(fileName = "PopeData", menuName = "GameData/Pieces/PopeData")]
+    public class PopeDataSO : PieceDataSO
+    {
+        [Header("位置交換能力")]
+        public float swapCooldown = 5f; // 位置交換のクールタイム（ターン数）
+
+        private void OnEnable()
+        {
+            if (string.IsNullOrEmpty(pieceName))
+            {
+                pieceName = "教皇";
+                maxHP = 200f;
+                maxAP = 0f; // 位置交換は行動力を消費しない
+                canAttack = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 宣教師のデータ定義
+    /// </summary>
+    [CreateAssetMenu(fileName = "MissionaryData", menuName = "GameData/Pieces/MissionaryData")]
+    public class MissionaryDataSO : PieceDataSO
+    {
+
+        //[Header("移動設定")]（）廃止
+        //public int maxMoveRangeOutsideTerritory = 1; // 領地外での最大移動マス数
+
+        [Header("占領設定")]
+        public float occupyAPCost = 30f; // 占領試行のAP消費量
+        //public float occupyDuration = 5f; // 占領判定までの時間(秒)（廃止）
+        public float baseOccupySuccessRate = 0.5f; // 基礎占領成功確率
+
+        [Header("特殊攻撃設定")]
+        public float baseConversionAttackChance = 0.3f; // 基礎攻撃時変換確率
+        public float conversionDuration = 10f; // 変換した駒が敵に戻るまでのターン数
+
+        [Header("特殊防御設定")]
+        public float baseConversionDefenseChance = 0.2f; // 基礎防御時変換確率
+
+        [Header("スキルレベル設定")]
+        public int maxSkillLevel = 10; // 最大スキルレベル
+        public float skillSuccessRateBonus = 0.05f; // スキルレベルごとの成功率ボーナス（5%）
+
+        private void OnEnable()
+        {
+            if (string.IsNullOrEmpty(pieceName))
+            {
+                pieceName = "宣教師";
+                maxHP = 120f;
+                maxAP = 100f;
+                canAttack = true;
+                attackAPCost = 25f;
+            }
+        }
+    }
+
+   
 }
