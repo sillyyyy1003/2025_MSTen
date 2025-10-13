@@ -27,13 +27,11 @@ public class SaveLoadMenu : MonoBehaviour
 
 		FillList();
 		gameObject.SetActive(true);
-		HexMapCamera.Locked = true;
 	}
 
 	public void Close()
 	{
 		gameObject.SetActive(false);
-		HexMapCamera.Locked = false;
 	}
 
 	public void SelectItem(string name)
@@ -46,6 +44,7 @@ public class SaveLoadMenu : MonoBehaviour
 		string path = GetSelectedPath();
 		if (path == null)
 		{
+			Debug.Log("Error path!");
 			return;
 		}
 		if (File.Exists(path))

@@ -258,5 +258,7 @@ public class HexMesh : MonoBehaviour
 		uv2s.Add(new Vector2(uMin, vMax));
 		uv2s.Add(new Vector2(uMax, vMax));
 	}
+
+
 }
 
