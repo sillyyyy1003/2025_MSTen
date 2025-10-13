@@ -19,14 +19,16 @@ public class HexGrid : MonoBehaviour
 	public Texture2D noiseSource;
 	public HexGridChunk chunkPrefab;
 
-
+	int searchFrontierPhase;
 
 	public int seed;
 	//public Color[] colors;
 
 	HexGridChunk[] chunks;
-	HexCellPriorityQueue searchFrontier;	// 搜索优先队列
+	HexCellPriorityQueue searchFrontier;    // 搜索优先队列
 
+	HexCell currentPathFrom, currentPathTo;	// 当前搜索起点和终点
+	bool currentPathExists;	// 是否存在路径
 
 	void Start()
 	{
@@ -47,6 +49,9 @@ public class HexGrid : MonoBehaviour
 			Debug.LogError("Unsupported map size.");
 			return false;
 		}
+
+		ClearPath();
+
 		if (chunks != null)
 		{
 			for (int i = 0; i < chunks.Length; i++)
@@ -61,15 +66,13 @@ public class HexGrid : MonoBehaviour
 		chunkCountZ = cellCountZ / HexMetrics.chunkSizeZ;
 		CreateChunks();
 		CreateCells();
-		
-		//ShowUI(false);
 		ShowUI(true);
 
 		// 25.9.23 RI add GameStart
-		if (!GameManage.Instance.GameInit())
-		{
-			Debug.LogError("Game Init Failed!");
-		}
+		//if (!GameManage.Instance.GameInit())
+		//{
+		//	Debug.LogError("Game Init Failed!");
+		//}
 
 
 		return true;
@@ -164,6 +167,7 @@ public class HexGrid : MonoBehaviour
 		position.z = z * (HexMetrics.outerRadius * 1.5f);
 
 		// Create cell from coordinates
+		
 		HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
 		cell.transform.localPosition = position;
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
@@ -198,8 +202,10 @@ public class HexGrid : MonoBehaviour
 		Text label = Instantiate<Text>(cellLabelPrefab);
 		label.rectTransform.anchoredPosition =
 			new Vector2(position.x, position.z);
+		
 		//label.text = cell.coordinates.ToStringOnSeparateLines();
 		cell.uiRect = label.rectTransform;
+		
 		//2025/10/9 disable all highlight
 		cell.DisableHighlight();
 
@@ -208,6 +214,8 @@ public class HexGrid : MonoBehaviour
 
         // 25.9.23 RI add layer to each cell
         cell.gameObject.layer = LayerMask.NameToLayer("Cell");
+
+		
 
         // 25.9.23 RI add cell's serial Number
         cell.id = i;
@@ -223,10 +231,7 @@ public class HexGrid : MonoBehaviour
 		// 25.9.23 RI send cell's Infor to GameManage
         GameManage.Instance.SetGameBoardInfor(infor);
 
-
         AddCellToChunk(x, z, cell);
-
-		Debug.Log(cell.Position);
 
     }
 
@@ -251,6 +256,7 @@ public class HexGrid : MonoBehaviour
 	}
 
 
+
 	public void Save(BinaryWriter writer)
 	{
 		writer.Write(cellCountX);
@@ -263,7 +269,7 @@ public class HexGrid : MonoBehaviour
 
 	public void Load(BinaryReader reader, int header)
 	{
-		StopAllCoroutines();	// 加载地图时 停止协程
+		ClearPath();
 		int x = 20, z = 15;
 		if (header >= 1)
 		{
@@ -338,6 +344,195 @@ public class HexGrid : MonoBehaviour
 		StartCoroutine(Search(fromCell, toCell));
 	}
 
+	public void FindPath(HexCell fromCell, HexCell toCell, int speed)
+	{
+		ClearPath();
+		currentPathFrom = fromCell;
+		currentPathTo = toCell;
+		currentPathExists = Search(fromCell, toCell, speed);
+		ShowPath(speed);
+	}
+	
+	public HexCell GetCell (Ray ray) {
+		RaycastHit hit;
+		if (Physics.Raycast(ray, out hit)) {
+			return GetCell(hit.point);
+		}
+		return null;
+	}
+
+
+	/// <summary>
+	/// 寻路函数
+	/// </summary>
+	/// <param name="fromCell">起点</param>
+	/// <param name="toCell">终点</param>
+	/// <param name="speed">行动力</param>
+	/// <returns></returns>
+	bool Search(HexCell fromCell, HexCell toCell, int speed)
+	{
+		searchFrontierPhase += 2;
+		if (searchFrontier == null)
+		{
+			searchFrontier = new HexCellPriorityQueue();
+		}
+		else
+		{
+			searchFrontier.Clear();
+		}
+
+		//广度优先搜索
+		fromCell.SearchPhase = searchFrontierPhase;
+		fromCell.Distance = 0;
+		searchFrontier.Enqueue(fromCell);
+
+		while (searchFrontier.Count > 0)
+		{
+			HexCell current = searchFrontier.Dequeue();
+			current.SearchPhase += 1;
+			//当前单元格是目标单元格 中止搜索
+			if (current == toCell)
+			{
+				return true;
+			}
+
+			int currentTurn =current.Distance / speed;
+
+			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+			{
+				HexCell neighbor = current.GetNeighbor(d);
+
+				if (neighbor == null ||
+				    neighbor.SearchPhase > searchFrontierPhase)
+				{
+					continue;
+				}
+
+				// 水域不考虑 且不考虑有单位的格子
+				if (neighbor.IsUnderwater || neighbor.Unit)
+				{
+					continue;
+				}
+
+				// 山地不考虑
+				HexEdgeType edgeType = current.GetEdgeType(neighbor);
+				if (edgeType == HexEdgeType.Cliff)
+				{
+					continue;
+				}
+
+				int moveCost;	
+				if (current.HasRoadThroughEdge(d))
+				{
+					moveCost = 1;
+				}
+				else
+				{
+					// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
+					moveCost = edgeType == HexEdgeType.Flat ?2 : 4;
+
+					int ForestEffecetor = 1, FarmEffecetor = 1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
+					moveCost += neighbor.ForestLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
+					            neighbor.PlantLevel * PlantEffecetor;
+					
+				}
+
+				int distance = current.Distance + moveCost;
+				int turn = distance / speed;
+				if (turn > currentTurn)
+				{
+					distance = turn * speed + moveCost;
+				}
+
+				if (neighbor.SearchPhase < searchFrontierPhase)
+				{
+					neighbor.SearchPhase = searchFrontierPhase;
+					neighbor.Distance = distance;
+					neighbor.SetLabel(turn.ToString());
+					neighbor.PathFrom = current;
+					neighbor.SearchHeuristic =
+						neighbor.coordinates.DistanceTo(toCell.coordinates);
+					searchFrontier.Enqueue(neighbor);
+				}
+				else if (distance < neighbor.Distance)
+				{
+					int oldPriority = neighbor.SearchPriority;
+					neighbor.Distance = distance;
+					neighbor.SetLabel(turn.ToString());
+					neighbor.PathFrom = current;
+					searchFrontier.Change(neighbor, oldPriority);
+				}
+
+			}
+		}
+
+		return false;
+	}
+	
+	/// <summary>
+	/// 是否存在路径
+	/// </summary>
+	public bool HasPath
+	{
+		get
+		{
+			return currentPathExists;
+		}
+	}
+
+
+	/// <summary>
+	/// 目标单元格是否为有效的目的地
+	/// </summary>
+	/// <param name="cell"></param>
+	/// <returns></returns>
+	public bool IsValidDestination(HexCell cell)
+	{
+		return !cell.IsUnderwater && !cell.Unit && cell.Elevation < 2;
+	}
+
+	/// <summary>
+	/// 显示路径
+	/// </summary>
+	/// <param name="speed">当前的行动力</param>
+	void ShowPath(int speed)
+	{
+		if (currentPathExists)
+		{
+			HexCell current = currentPathTo;
+			while (current != currentPathFrom)
+			{
+				int turn = current.Distance / speed;
+				current.SetLabel(turn.ToString());
+				current.EnableHighlight(Color.white);
+				current = current.PathFrom;
+			}
+		}
+		currentPathFrom.EnableHighlight(Color.blue);
+		currentPathTo.EnableHighlight(Color.red);
+	}
+
+	void ClearPath()
+	{
+		if (currentPathExists)
+		{
+			HexCell current = currentPathTo;
+			while (current != currentPathFrom)
+			{
+				current.SetLabel(null);
+				current.DisableHighlight();
+				current = current.PathFrom;
+			}
+			current.DisableHighlight();
+			currentPathExists = false;
+		}
+		else if (currentPathFrom)
+		{
+			currentPathFrom.DisableHighlight();
+			currentPathTo.DisableHighlight();
+		}
+		currentPathFrom = currentPathTo = null;
+	}
 
 	/// <summary>
 	/// 寻找从某个单元格到另一个单元格的距离
