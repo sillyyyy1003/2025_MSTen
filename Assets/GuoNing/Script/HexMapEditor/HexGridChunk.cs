@@ -9,6 +9,7 @@ public class HexGridChunk : MonoBehaviour
 	public HexMesh terrain, rivers, roads, water, waterShore, estuaries;
 	public HexFeatureManager features;
 	Canvas gridCanvas;
+	
 
 	static Color color1 = new Color(1f, 0f, 0f);
 	static Color color2 = new Color(0f, 1f, 0f);
@@ -18,7 +19,6 @@ public class HexGridChunk : MonoBehaviour
 	{
 		gridCanvas = GetComponentInChildren<Canvas>();
 		cells = new HexCell[HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ];
-	
 	}
 
 
@@ -129,7 +129,6 @@ public class HexGridChunk : MonoBehaviour
 			}
 		}
 
-
 		if (direction <= HexDirection.SE)
 		{
 			TriangulateConnection(direction, cell, e);
@@ -153,8 +152,6 @@ public class HexGridChunk : MonoBehaviour
 		HexDirection direction, HexCell cell, Vector3 center, EdgeVertices e
 	)
 	{
-		//TriangulateEdgeFan(center, e, cell.Color);
-		//TriangulateEdgeFan(center, e, color1);
 		TriangulateEdgeFan(center, e, cell.TerrainTypeIndex);
 
 		if (cell.HasRoads)
@@ -664,9 +661,10 @@ public class HexGridChunk : MonoBehaviour
 			e1.v5 + bridge
 		);
 
+		bool hasRiver = cell.HasRiverThroughEdge(direction);
 		bool hasRoad = cell.HasRoadThroughEdge(direction);
 
-		if (cell.HasRiverThroughEdge(direction))
+		if (hasRiver)
 		{
 			e2.v3.y = neighbor.StreamBedY;
 			if (!cell.IsUnderwater)
@@ -699,12 +697,15 @@ public class HexGridChunk : MonoBehaviour
 		}
 		else
 		{
-			//TriangulateEdgeStrip(e1, color1, e2, color2, hasRoad);
+			
 			TriangulateEdgeStrip(
 				e1, color1, cell.TerrainTypeIndex,
 				e2, color2, neighbor.TerrainTypeIndex, hasRoad
 			);
 		}
+
+		// Add features
+		features.AddWall(e1, cell, e2, neighbor, hasRiver, hasRoad);
 
 		HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
 		if (direction <= HexDirection.E && nextNeighbor != null)
@@ -852,6 +853,8 @@ public class HexGridChunk : MonoBehaviour
 			types.z = rightCell.TerrainTypeIndex;
 			terrain.AddTriangleTerrainTypes(types);
 		}
+
+		features.AddWall(bottom, bottomCell, left, leftCell, right, rightCell);
 	}
 
 	void TriangulateCornerTerraces(
@@ -1103,6 +1106,8 @@ public class HexGridChunk : MonoBehaviour
 		}
 		return interpolators;
 	}
+
+
 }
 
 

@@ -12,8 +12,6 @@ public class Timer : MonoBehaviour
 	private bool m_isTimeOut; // 是否超时
 	[SerializeField] private float timeLimitEveryTurn = 30f; // 每回合都会刷新的时间限制
 	[SerializeField] private float timePool;	// 每局游戏玩家可以使用的时间池
-	[SerializeField] private Text timeText;		// 显示时间的文本
-	[SerializeField] private Text timePoolText; // 显示时间池的文本
 	private float m_currentTurnTime;	// 当前回合剩余时间
 	private float m_currentTimePool;	// 本局游戏剩余时间池
 	private bool m_isRunning;			// 计时器是否运行
@@ -30,9 +28,9 @@ public class Timer : MonoBehaviour
 	}
 
 	// Update is called once per frame
-	void Update()
+	public void SetTime()
 	{
-		if (!m_isRunning || m_isTimeOut) return;
+		//if (!m_isRunning || m_isTimeOut) return;
 
 		if (m_currentTurnTime > 0)
 		{
@@ -53,15 +51,10 @@ public class Timer : MonoBehaviour
 		OnTimeChanged?.Invoke(m_currentTurnTime, m_currentTimePool);
 
 		// 更新UI
-		if (timeText)
-		{
-			timeText.text = $"{m_currentTurnTime:F0}s";
-		}
 
-		if (timePoolText)
-		{
-			timePoolText.text= $"{m_currentTimePool:F0}s";
-		}
+        GameSceneUIManager.Instance.SetCountdownTime((int)m_currentTurnTime);
+	
+        GameSceneUIManager.Instance.SetCountdownTimePool((int)m_currentTimePool);
 
 		// 如果时间池和当前时间都用完了，则超时
 		if (m_currentTurnTime <= 0 && timePool <= 0)
@@ -74,7 +67,7 @@ public class Timer : MonoBehaviour
 
 	public void StartTurn()
 	{
-		if (m_isTimeOut) return;
+		Debug.Log("turn time is"+ timeLimitEveryTurn);
 		m_currentTurnTime = timeLimitEveryTurn;	// 重置时间
 		m_isRunning = true;						// 开始计时
 
@@ -83,7 +76,8 @@ public class Timer : MonoBehaviour
 	public void EndTurn()
 	{
 		m_isRunning = false;	// 停止计时
-		m_currentTurnTime = 0;	// 当前回合时间归零
+		m_currentTurnTime = 0;  // 当前回合时间归零
+		GameSceneUIManager.Instance.TimeIsOut();
 	}
 
 	public void InitTimer()

@@ -30,6 +30,14 @@ public static class PieceFactory
         {
             piece = pieceObj.GetComponent<MilitaryUnit>() ?? pieceObj.AddComponent<MilitaryUnit>();
         }
+        else if (data is MissionaryDataSO)
+        {
+            piece=pieceObj.GetComponent<Missionary>()??pieceObj.AddComponent<Missionary>();
+        }
+        else if(data is PopeDataSO)
+        {
+            piece = pieceObj.GetComponent <Pope>()?? pieceObj.AddComponent<Pope>();
+        }
         else
         {
             Debug.LogError("未知の駒データタイプ");

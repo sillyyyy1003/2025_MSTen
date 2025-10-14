@@ -24,8 +24,11 @@ public class HexMapReader : MonoBehaviour
 			if (header <= 1)
 			{
 				hexGrid.Load(reader, header);
-				HexMapCamera.ValidatePosition();
-				Debug.Log($"地图加载成功: {path}");
+
+                // 25.10.10 RI 删除Camera相关避免loadMap出错
+                //HexMapCamera.ValidatePosition();
+
+                Debug.Log($"地图加载成功: {path}");
 			}
 			else
 			{

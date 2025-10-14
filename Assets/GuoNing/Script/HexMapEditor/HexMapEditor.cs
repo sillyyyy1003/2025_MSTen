@@ -18,7 +18,6 @@ public class HexMapEditor : MonoBehaviour
 	bool applyForestnLevel, applyFarmLevel, applyPlantLevel;
 
 	int brushSize;
-
 	int activeTerrainTypeIndex;
 
 	
@@ -28,22 +27,20 @@ public class HexMapEditor : MonoBehaviour
 		Ignore, Yes, No
 	}
 
-	OptionalToggle riverMode, roadMode;
+	OptionalToggle riverMode, roadMode,walledMode;
 
 	bool isDrag;
-	bool editMode ;	// 是否是编辑模式
 	HexDirection dragDirection;
-	HexCell previousCell, searchFromCell, searchToCell;
+	HexCell previousCell;
 
 	void Awake()
 	{
 		terrainMaterial.DisableKeyword("GRID_ON");
-
+		SetEditMode(false);
 	}
 
 	void Update()
 	{
-		if (!isActive) return;
 		if (
 			Input.GetMouseButton(0) &&
 			!EventSystem.current.IsPointerOverGameObject()
@@ -73,33 +70,8 @@ public class HexMapEditor : MonoBehaviour
 				isDrag = false;
 			}
 
-			if (editMode)
-			{
-				//如果是编辑模式 编辑单元格
-				EditCells(currentCell);
-			}
-			else if (Input.GetKey(KeyCode.LeftShift) && searchToCell != currentCell)
-			{
-				// 选中某个单元格 显示所有的路径
-				if (searchFromCell)
-				{
-					searchFromCell.DisableHighlight();
-				}
-				searchFromCell = currentCell;
-				searchFromCell.EnableHighlight(Color.blue);
-
-				if (searchToCell)
-				{
-					hexGrid.FindPath(searchFromCell, searchToCell);
-				}
-			}
-			else if (searchFromCell && searchFromCell != currentCell)
-			{
-				// 选中目标单元格和起始单元格
-				searchToCell = currentCell;
-				hexGrid.FindPath(searchFromCell, searchToCell);
-			}
-
+	
+			EditCells(currentCell);
 			previousCell = currentCell;
 		}
 		else
@@ -140,6 +112,10 @@ public class HexMapEditor : MonoBehaviour
 			if (applyWaterLevel)
 			{
 				cell.WaterLevel = activeWaterLevel;
+			}
+			if (walledMode != OptionalToggle.Ignore)
+			{
+				cell.Walled = walledMode == OptionalToggle.Yes;
 			}
 			if (applyForestnLevel)
 			{
@@ -185,8 +161,7 @@ public class HexMapEditor : MonoBehaviour
 	/// <param name="toggle"></param>
 	public void SetEditMode(bool toggle)
 	{
-		editMode = toggle;
-		hexGrid.ShowUI(!toggle);
+		enabled = toggle;
 	}
 
 	/// <summary>
@@ -293,6 +268,15 @@ public class HexMapEditor : MonoBehaviour
 		activeTerrainTypeIndex = index;
 	}
 
+	public void SetWalledMode(int mode)
+	{
+		walledMode = (OptionalToggle)mode;
+	}
 
+	HexCell GetCellUnderCursor()
+	{
+		return
+			hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
+	}
 
 }
