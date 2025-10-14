@@ -1,13 +1,17 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class HandManager : MonoBehaviour
 {
     public static HandManager Instance { get; private set; }
 
-    // èD‚Æ‚µ‚ÄŠÇ—‚·‚éƒJ[ƒh
     private readonly List<CardExpand> handCards = new List<CardExpand>();
-    private CardExpand activeCard = null;
+    private readonly Dictionary<CardExpand, Vector3> originalPositions = new Dictionary<CardExpand, Vector3>();
+
+    [SerializeField] private float firstOffset = 10f;      // 1æšç›®å³å´ã‚«ãƒ¼ãƒ‰ã®é–“éš”
+    [SerializeField] private float overlapHalf = 80f;      // 2æšç›®ä»¥é™ã®åŠé‡ãªã‚Šå¹…
+    [SerializeField] private float tweenDuration = 0.3f;
 
     private void Awake()
     {
@@ -15,83 +19,73 @@ public class HandManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    /// <summary>
-    /// èD‚ÉƒJ[ƒh‚ğ’Ç‰Á
-    /// </summary>
     public void RegisterCard(CardExpand card)
     {
         if (!handCards.Contains(card))
-            handCards.Add(card);
-    }
-
-    /// <summary>
-    /// èD‚©‚çƒJ[ƒh‚ğíœ
-    /// </summary>
-    public void UnregisterCard(CardExpand card)
-    {
-        if (handCards.Contains(card))
-            handCards.Remove(card);
-    }
-
-    /// <summary>
-    /// ƒJ[ƒh‚ª“WŠJ‚³‚ê‚½‚Æ‚«ŒÄ‚Ño‚·
-    /// </summary>
-    public void OnCardExpanded(CardExpand card)
-    {
-        foreach (var c in handCards)
         {
-            if (c == card) continue;
-            c.Collapse(); // ‘¼‚ÌƒJ[ƒh‚Í•Â‚¶‚é
-            c.SetDimmed(true); // ”ñƒAƒNƒeƒBƒuƒJ[ƒh‚ğˆÃ‚­‚·‚é
+            handCards.Add(card);
+            originalPositions[card] = card.GetComponent<RectTransform>().localPosition;
         }
-        activeCard = card;
     }
 
-    /// <summary>
-    /// ƒJ[ƒh‚ª•Â‚¶‚ç‚ê‚½‚Æ‚«ŒÄ‚Ño‚·
-    /// </summary>
+    public void OnCardExpanded(CardExpand expandedCard, Vector3 expandedRightEdgeLocal)
+    {
+        // å³å´ã‚«ãƒ¼ãƒ‰ã‚’æŠ½å‡º
+        List<RectTransform> rightCards = new List<RectTransform>();
+        foreach (var card in handCards)
+        {
+            if (card == expandedCard) continue;
+            var rt = card.GetComponent<RectTransform>();
+            if (rt != null && rt.localPosition.x > expandedCard.GetComponent<RectTransform>().localPosition.x)
+            {
+                rightCards.Add(rt);
+            }
+        }
+
+        // å·¦ã‹ã‚‰å³ã«ã‚½ãƒ¼ãƒˆï¼ˆå·¦ç«¯åŸºæº–ï¼‰
+        rightCards.Sort((a, b) =>
+        {
+            float aLeft = a.localPosition.x - a.rect.width * a.pivot.x;
+            float bLeft = b.localPosition.x - b.rect.width * b.pivot.x;
+            return aLeft.CompareTo(bLeft);
+        });
+
+        float currentX = expandedRightEdgeLocal.x + firstOffset;
+
+        for (int i = 0; i < rightCards.Count; i++)
+        {
+            var rt = rightCards[i];
+            rt.GetComponent<CardExpand>().Collapse(false);
+
+            float targetX;
+            if (i == 0)
+            {
+                // 1æšç›®ï¼šå±•é–‹ã‚«ãƒ¼ãƒ‰å³ç«¯ï¼‹é–“éš”
+                targetX = currentX + rt.rect.width * rt.pivot.x;
+            }
+            else
+            {
+                // 2æšç›®ä»¥é™ï¼šå‰ã®ã‚«ãƒ¼ãƒ‰ã«åŠé‡ãªã‚Š
+                targetX = currentX + overlapHalf;
+            }
+
+            Vector3 targetPos = new Vector3(targetX, rt.localPosition.y, rt.localPosition.z);
+            rt.DOLocalMove(targetPos, tweenDuration).SetEase(Ease.OutSine);
+            rt.SetAsLastSibling();
+
+            currentX = targetX; // æ¬¡ã‚«ãƒ¼ãƒ‰ã®åŸºæº–ä½ç½®æ›´æ–°
+        }
+    }
+
     public void OnCardCollapsed(CardExpand card)
     {
-        if (activeCard == card)
-            activeCard = null;
-
         foreach (var c in handCards)
         {
-            c.SetDimmed(false);
-        }
-    }
-
-    /// <summary>
-    /// èD‚ÌƒJ[ƒh‚ğ®—ñi—áF‰¡•À‚Ñj
-    /// </summary>
-    public void ArrangeHand(float startX, float spacing)
-    {
-        for (int i = 0; i < handCards.Count; i++)
-        {
-            var card = handCards[i];
-            var rt = card.GetComponent<RectTransform>();
-            if (rt != null)
+            var rt = c.GetComponent<RectTransform>();
+            if (rt != null && originalPositions.ContainsKey(c))
             {
-                rt.anchoredPosition = new Vector2(startX + i * spacing, rt.anchoredPosition.y);
+                rt.DOLocalMove(originalPositions[c], tweenDuration).SetEase(Ease.OutSine);
             }
         }
     }
-
-    /// <summary>
-    /// èD‚ğ‘S‚Ä•Â‚¶‚é
-    /// </summary>
-    public void CollapseAll()
-    {
-        foreach (var c in handCards)
-        {
-            c.Collapse();
-            c.SetDimmed(false);
-        }
-        activeCard = null;
-    }
-
-    /// <summary>
-    /// èD‚ÌƒJ[ƒhˆê——‚ğæ“¾
-    /// </summary>
-    public IReadOnlyList<CardExpand> GetHandCards() => handCards.AsReadOnly();
 }
