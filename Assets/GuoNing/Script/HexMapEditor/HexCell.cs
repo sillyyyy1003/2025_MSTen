@@ -211,9 +211,14 @@ public class HexCell : MonoBehaviour
 		Player2 = 6
 	}
 
-
 	// 25.9.23 RI add cell's Serial number
 	public int id { get; set; }
+
+	// 当前格子所属的玩家ID
+	public int playerId { get; set; }
+	// 当前格子是否有棋子
+	public GameObject Unit { get; set; }
+
 
 	public bool IsVacancy
 	{
@@ -753,7 +758,7 @@ public class HexCell : MonoBehaviour
 		}
 	}
 
-
+	public int SearchPhase { get; set; }
 
 	public void Save(BinaryWriter writer)
 	{
@@ -861,14 +866,6 @@ public class HexCell : MonoBehaviour
 		uiRect.localPosition = uiPosition;
 	}
 
-	/// <summary>
-	/// 更新Text标签
-	/// </summary>
-	void UpdateDistanceLabel()
-	{
-		Text label = uiRect.GetComponent<Text>();
-		label.text = distance == int.MaxValue ? "" : distance.ToString();
-	}
 
 	/// <summary>
 	/// HexCell距离
@@ -879,8 +876,13 @@ public class HexCell : MonoBehaviour
 		set
 		{
 			distance = value;
-			UpdateDistanceLabel();
 		}
+	}
+
+	public void SetLabel(string text)
+	{
+		UnityEngine.UI.Text label = uiRect.GetComponent<Text>();
+		label.text = text;
 	}
 
 	public void DisableHighlight()

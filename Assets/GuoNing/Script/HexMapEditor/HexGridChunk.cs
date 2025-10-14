@@ -19,7 +19,6 @@ public class HexGridChunk : MonoBehaviour
 	{
 		gridCanvas = GetComponentInChildren<Canvas>();
 		cells = new HexCell[HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ];
-	
 	}
 
 
@@ -662,9 +661,10 @@ public class HexGridChunk : MonoBehaviour
 			e1.v5 + bridge
 		);
 
+		bool hasRiver = cell.HasRiverThroughEdge(direction);
 		bool hasRoad = cell.HasRoadThroughEdge(direction);
 
-		if (cell.HasRiverThroughEdge(direction))
+		if (hasRiver)
 		{
 			e2.v3.y = neighbor.StreamBedY;
 			if (!cell.IsUnderwater)
@@ -697,12 +697,15 @@ public class HexGridChunk : MonoBehaviour
 		}
 		else
 		{
-			//TriangulateEdgeStrip(e1, color1, e2, color2, hasRoad);
+			
 			TriangulateEdgeStrip(
 				e1, color1, cell.TerrainTypeIndex,
 				e2, color2, neighbor.TerrainTypeIndex, hasRoad
 			);
 		}
+
+		// Add features
+		features.AddWall(e1, cell, e2, neighbor, hasRiver, hasRoad);
 
 		HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
 		if (direction <= HexDirection.E && nextNeighbor != null)
@@ -850,6 +853,8 @@ public class HexGridChunk : MonoBehaviour
 			types.z = rightCell.TerrainTypeIndex;
 			terrain.AddTriangleTerrainTypes(types);
 		}
+
+		features.AddWall(bottom, bottomCell, left, leftCell, right, rightCell);
 	}
 
 	void TriangulateCornerTerraces(
@@ -1101,6 +1106,8 @@ public class HexGridChunk : MonoBehaviour
 		}
 		return interpolators;
 	}
+
+
 }
 
 
