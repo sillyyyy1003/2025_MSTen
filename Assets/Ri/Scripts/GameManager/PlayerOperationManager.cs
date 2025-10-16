@@ -165,7 +165,6 @@ public class PlayerOperationManager : MonoBehaviour
                     result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
                     result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
                 {
-                    Debug.Log($"点击了UI组件: {result.gameObject.name}");
                     return true;
                 }
             }
