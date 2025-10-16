@@ -338,6 +338,9 @@ public class PlayerOperationManager : MonoBehaviour
     // 回合开始
     public void TurnStart()
     {
+        // 开始倒计时
+        GameSceneUIManager.Instance.StartTurn();
+
         isMyTurn = true;
         bCanContinue = true;
 

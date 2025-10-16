@@ -41,7 +41,9 @@ public class GameSceneUIManager : MonoBehaviour
     private float CountdownTimeCount=100;
     private float CountdownTimePoolCount = 100;
 
-    private bool bIsPlayerTurn=true;
+    private bool bIsPlayerTurn=true; 
+    
+    private Timer timer;
 
     private void Awake()
     {
@@ -81,21 +83,33 @@ public class GameSceneUIManager : MonoBehaviour
         // test
         SetTurnText(true);
 
-        //GetComponent<Timer>().StartTurn();
+        timer = GetComponent<Timer>();
+        if (timer != null)
+        {
+            timer.OnTimeOut += TimeIsOut;
+            timer.OnTimePoolStarted += () => Debug.Log("开始使用倒计时池");
+        }
     }
     void Update()
     {
         if(bIsPlayerTurn)
         {
-            this.GetComponent<Timer>().SetTime();
+            float turnTime = timer.GetTurnTime();
+            float poolTime = timer.GetTimePool();
+            bool usingPool = timer.IsUsingTimePool();
 
+            // 更新显示
+            string turnTimeStr = FormatTime(turnTime);
+            string poolTimeStr = FormatTime(poolTime);
 
-            CountdownTime.text = "Time:" + CountdownTimeCount.ToString() + " s"
-                + "  TimePool:" + CountdownTimePoolCount.ToString() + " s";
-            ////if (seconds <= 30)
-            ////    CountdownTime.color = Color.yellow;
-            ////if(seconds<=10)
-            ////    CountdownTime.color = Color.red;
+            if (usingPool)
+            {
+                CountdownTime.text = $"Time: <color=orange>0:00</color>  TimePool: {poolTimeStr}";
+            }
+            else
+            {
+                CountdownTime.text = $"Time: {turnTimeStr}  TimePool: {poolTimeStr}";
+            }
         }
     }
     // *************************
@@ -105,9 +119,14 @@ public class GameSceneUIManager : MonoBehaviour
     // Timer相关
     public void StartTurn()
     {
-        GetComponent<Timer>().StartTurn();
+        bIsPlayerTurn = true;
+        timer?.StartTurn();
     }
-
+    public void StopTimer()
+    {
+        bIsPlayerTurn = false;
+        timer?.StopTimer();
+    }
     // 设置回合结束时间
     public void SetCountdownTime(int time)
     {
@@ -242,5 +261,13 @@ public class GameSceneUIManager : MonoBehaviour
     private void ShowNoSelectedCell()
     {
         Debug.LogWarning("请先用鼠标左键选择一个空格子!");
+    }
+
+    // 格式化时间显示（分:秒）
+    private string FormatTime(float timeInSeconds)
+    {
+        int minutes = Mathf.FloorToInt(timeInSeconds / 60);  // 计算分钟数
+        int seconds = Mathf.FloorToInt(timeInSeconds % 60);  // 计算秒数
+        return $"{minutes}:{seconds:D2}";  // 返回格式化字符串
     }
 }

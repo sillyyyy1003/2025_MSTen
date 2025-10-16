@@ -1290,8 +1290,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 958f6c6960663bd4e94106d21ffbb0fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  timeLimitEveryTurn: 20
-  timePool: 30
+  turnTimeLimit: 30
+  timePoolInitial: 60
 --- !u!1 &1006675385
 GameObject:
   m_ObjectHideFlags: 0
