@@ -150,6 +150,10 @@ public class GameSceneUIManager : MonoBehaviour
     {
         ResourcesCount = res;
     }
+    public int GetPlayerResource()
+    {
+        return ResourcesCount;
+    }
 
 
     // *************************;
@@ -165,14 +169,23 @@ public class GameSceneUIManager : MonoBehaviour
 
     private void OnCreateFramerButtonPressed()
     {
-        if(ResourcesCount-10<=0)
+        if (ResourcesCount < 10)
         {
             ShowNotEnough();
+            return;
         }
-        else
+
+        // 尝试创建单位
+        if (_PlayerOpManager.TryCreateUnit(PlayerUnitType.Farmer))
         {
             ResourcesCount -= 10;
             SetResourcesCount(ResourcesCount);
+            Debug.Log("成功创建农民");
+        }
+        else
+        {
+            Debug.LogWarning("创建农民失败 - 请先选择一个空格子");
+            ShowNoSelectedCell();
         }
     }
     private void OnCreateSoldierButtonPressed()
@@ -180,31 +193,54 @@ public class GameSceneUIManager : MonoBehaviour
         if (ResourcesCount - 20 <= 0)
         {
             ShowNotEnough();
+            return;
         }
-        else
+        // 尝试创建单位
+        if (_PlayerOpManager.TryCreateUnit(PlayerUnitType.Soldier))
         {
             ResourcesCount -= 20;
             SetResourcesCount(ResourcesCount);
+            Debug.Log("成功创建士兵");
+        }
+        else
+        {
+            Debug.LogWarning("创建士兵失败 - 请先选择一个空格子");
+            ShowNoSelectedCell();
         }
     }
     private void OnCreateMissionaryButtonPressed()
     {
-        if (ResourcesCount - 30 <= 0)
+        if (ResourcesCount <30)
         {
             ShowNotEnough();
+            return;
         }
-        else
-        {
-            ResourcesCount -= 30;
-            SetResourcesCount(ResourcesCount);
-        }
+
+        //// 尝试创建传教士
+        //if (_PlayerOpManager.TryCreateUnit(PlayerUnitType.Missionary))
+        //{
+        //    ResourcesCount -= 30;
+        //    SetResourcesCount(ResourcesCount);
+        //    Debug.Log("成功创建传教士");
+        //}
+        //else
+        //{
+        //    Debug.LogWarning("创建传教士失败 - 请先选择一个空格子");
+        //    ShowNoSelectedCell();
+        //}
     }
     private void SetResourcesCount(int count)
     {
         Resources.text = "Resources: " + count.ToString();
     }
- 
+
     private void ShowNotEnough()
     {
+        Debug.LogWarning("资源不足!");
+    }
+
+    private void ShowNoSelectedCell()
+    {
+        Debug.LogWarning("请先用鼠标左键选择一个空格子!");
     }
 }
