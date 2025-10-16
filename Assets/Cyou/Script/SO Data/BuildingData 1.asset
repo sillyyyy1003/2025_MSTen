@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98c6e751d3c95124688ef11dd7f8915a, type: 3}
+  m_Name: BuildingData 1
+  m_EditorClassIdentifier: 
+  buildingName: 
+  maxHp: 100
+  buildStartAPCost: 0
+  buildingAPCost: 0
+  resourceGenInterval: 0
+  isSpecialBuilding: 0
+  maxUnitCapacity: 0
+  generationType: 0
+  baseProductionAmount: 0
+  apCostperTurn: 0
+  productionMultiplier: 1
+  maxHpByLevel: 190000001e0000002d000000
+  attackRangeByLevel: 000000000100000002000000
+  maxSlotsByLevel: 030000000300000005000000
+  buildingAPCostByLevel: 190000001900000014000000
+  buildingSprite: {fileID: 0}
+  buildingMesh: {fileID: 0}
+  buildingMaterial: {fileID: 0}
+  buildingPrefab: {fileID: 0}
+  buildingColor: {r: 1, g: 1, b: 1, a: 1}
+  animatorController: {fileID: 0}
