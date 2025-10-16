@@ -202,13 +202,7 @@ public class HexCell : MonoBehaviour
 	// todo: 之后要修改 因为不存在Terrain颜色 取而代之的是纹理
 	public enum TerrainColor
 	{
-		White = 0, // NULL TEXTURE
-		Green = 1, // 
-		Orange = 2,
-		Cyan = 3,
-		Yellow = 4,
-		Player1 = 5,
-		Player2 = 6
+	sand=0, grass=1,mud=2,stone=3,snow=4
 	}
 
 	// 25.9.23 RI add cell's Serial number
@@ -763,7 +757,8 @@ public class HexCell : MonoBehaviour
 	public void Save(BinaryWriter writer)
 	{
 		writer.Write((byte)terrainTypeIndex);
-		writer.Write((byte)elevation);
+		//writer.Write((byte)elevation);
+		writer.Write((byte)(elevation + 127));
 		writer.Write((byte)waterLevel);
 		writer.Write((byte)forestLevel);
 		writer.Write((byte)farmLevel);
@@ -806,11 +801,16 @@ public class HexCell : MonoBehaviour
 	/// 读取单个格子的信息
 	/// </summary>
 	/// <param name="reader"></param>
-	public void Load(BinaryReader reader)
+	public void Load(BinaryReader reader, int header)
 	{
 
 		terrainTypeIndex = reader.ReadByte();
 		elevation = reader.ReadByte();
+		if (header >= 4)
+		{
+			elevation -= 127;
+		}
+
 		RefreshPosition();
 		waterLevel = reader.ReadByte(); // 格子的水平面高度
 		forestLevel = reader.ReadByte(); // 格子的urban level
@@ -818,6 +818,7 @@ public class HexCell : MonoBehaviour
 		plantLevel = reader.ReadByte(); // 格子的plant level
 		// specialIndex=reader.ReadByte();
 		// walled=reader.ReadByte();
+		
 		byte riverData = reader.ReadByte();
 		if (riverData >= 128)
 		{

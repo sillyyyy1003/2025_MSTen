@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class NewMapMenu : MonoBehaviour
 {
@@ -10,11 +10,17 @@ public class NewMapMenu : MonoBehaviour
 	public Vector2Int mediumMapSize = new Vector2Int(40, 30);
 	public Vector2Int largeMapSize = new Vector2Int(80, 60);
 
+	bool generateMaps = true;
+
+	public void ToggleMapGeneration(bool toggle)
+	{
+		generateMaps = toggle;
+	}
+	public HexMapGenerator mapGenerator;	 // 地图生成器
 
 	public void Open()
 	{
 		gameObject.SetActive(true);
-		//HexMapCamera.Locked = true;
 	}
 
 	public void Close()
@@ -24,10 +30,19 @@ public class NewMapMenu : MonoBehaviour
 
 	void CreateMap(int x, int z)
 	{
-		hexGrid.CreateMap(x, z);
+		if (generateMaps)
+		{
+			mapGenerator.GenerateMap(x, z);
+		}
+		else
+		{
+			hexGrid.CreateMap(x, z);
+		}
 
-        Close();
+		Close();
 	}
+
+
 
 	public void CreateSmallMap()
 	{
