@@ -1048,25 +1048,20 @@ public class NetGameSystem : MonoBehaviour
         Unity.Mathematics.int2 fromPos = new Unity.Mathematics.int2(data.FromX, data.FromY);
         Unity.Mathematics.int2 toPos = new Unity.Mathematics.int2(data.ToX, data.ToY);
 
-        Debug.Log($"玩家 {data.PlayerId} 移动单位: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+        Debug.Log($"[网络] 玩家 {data.PlayerId} 移动单位: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
 
-        if (playerDataManager != null)
+        // 确保管理器存在
+        if (gameManage == null)
         {
-            playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
-        }
-        else
-        {
-            playerDataManager = PlayerDataManager.Instance;
-            playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+            gameManage = GameManage.Instance;
         }
 
-        // 通知 PlayerOperationManager 处理视觉效果
+        // 只通知 PlayerOperationManager 处理视觉效果
         if (gameManage != null && gameManage._PlayerOperation != null)
         {
             gameManage._PlayerOperation.HandleNetworkMove(data);
         }
     }
-
     // 单位添加
     private void HandleUnitAdd(NetworkMessage message)
     {
@@ -1075,20 +1070,14 @@ public class NetGameSystem : MonoBehaviour
         Unity.Mathematics.int2 pos = new Unity.Mathematics.int2(data.PosX, data.PosY);
         PlayerUnitType unitType = (PlayerUnitType)data.UnitType;
 
-        Debug.Log($"玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
+        Debug.Log($"[网络] 玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
 
-        if (playerDataManager != null)
+        if (gameManage == null)
         {
-            playerDataManager.AddUnit(data.PlayerId, unitType, pos);
-        }
-        else
-        {
-
-            playerDataManager = PlayerDataManager.Instance;
-            playerDataManager.AddUnit(data.PlayerId, unitType, pos);
+            gameManage = GameManage.Instance;
         }
 
-        // 通知 PlayerOperationManager 处理视觉效果
+        // 只通知 PlayerOperationManager 处理
         if (gameManage != null && gameManage._PlayerOperation != null)
         {
             gameManage._PlayerOperation.HandleNetworkAddUnit(data);
@@ -1126,38 +1115,12 @@ public class NetGameSystem : MonoBehaviour
         Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
 
         // 确保管理器存在
-        if (playerDataManager == null)
-        {
-            playerDataManager = PlayerDataManager.Instance;
-        }
-
         if (gameManage == null)
         {
             gameManage = GameManage.Instance;
         }
 
-        // 移除被攻击的单位
-        if (playerDataManager != null)
-        {
-            bool removed = playerDataManager.RemoveUnit(data.TargetPlayerId, targetPos);
-            if (removed)
-            {
-                Debug.Log($"[网络] 成功移除玩家 {data.TargetPlayerId} 在 ({targetPos.x},{targetPos.y}) 的单位");
-            }
-            else
-            {
-                Debug.LogWarning($"[网络] 未能移除单位，可能已经被移除");
-            }
-
-            // 移动攻击者到目标位置
-            bool moved = playerDataManager.MoveUnit(data.AttackerPlayerId, attackerPos, targetPos);
-            if (moved)
-            {
-                Debug.Log($"[网络] 成功移动攻击者到 ({targetPos.x},{targetPos.y})");
-            }
-        }
-
-        // 通知 PlayerOperationManager 处理视觉效果
+        // 通知 PlayerOperationManager 处理
         if (gameManage != null && gameManage._PlayerOperation != null)
         {
             gameManage._PlayerOperation.HandleNetworkAttack(data);

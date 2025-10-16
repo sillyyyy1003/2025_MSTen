@@ -776,10 +776,9 @@ public class PlayerOperationManager : MonoBehaviour
     // 处理来自网络的攻击消息（其他玩家的攻击）
     public void HandleNetworkAttack(UnitAttackMessage msg)
     {
-        // 如果是自己的攻击，已经在 AttackUnit 中处理过了
         if (msg.AttackerPlayerId == localPlayerId)
         {
-            Debug.Log("这是本地玩家的攻击，已处理");
+            Debug.Log("[网络攻击] 这是本地玩家的攻击，已处理");
             return;
         }
 
@@ -787,6 +786,16 @@ public class PlayerOperationManager : MonoBehaviour
         int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
 
         Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
+
+        // 先更新数据
+        if (playerDataManager != null)
+        {
+            // 移除被攻击的单位
+            playerDataManager.RemoveUnit(msg.TargetPlayerId, targetPos);
+            // 移动攻击者
+            playerDataManager.MoveUnit(msg.AttackerPlayerId, attackerPos, targetPos);
+            Debug.Log($"[网络攻击] 已更新数据管理器");
+        }
 
         // 获取攻击者和目标的GameObject
         GameObject attackerUnit = null;
@@ -940,13 +949,36 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[网络移动] 玩家 {msg.PlayerId} 移动: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
 
-        // 获取移动的单位
+        // 先更新数据（不触发事件，因为我们自己处理视觉）
+        if (playerDataManager != null)
+        {
+            playerDataManager.MoveUnit(msg.PlayerId, fromPos, toPos);
+            Debug.Log($"[网络移动] 已更新数据管理器");
+        }
+
+        // 获取移动的单位GameObject
         GameObject movingUnit = null;
 
         if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
             otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
         {
             movingUnit = otherPlayersUnits[msg.PlayerId][fromPos];
+            Debug.Log($"[网络移动] 找到移动单位");
+        }
+        else
+        {
+            Debug.LogWarning($"[网络移动] 找不到移动的单位 at ({fromPos.x},{fromPos.y})");
+
+            // 打印当前玩家的所有单位位置
+            if (otherPlayersUnits.ContainsKey(msg.PlayerId))
+            {
+                Debug.Log($"[网络移动] 玩家 {msg.PlayerId} 当前单位位置：");
+                foreach (var kvp in otherPlayersUnits[msg.PlayerId])
+                {
+                    Debug.Log($"  - ({kvp.Key.x},{kvp.Key.y})");
+                }
+            }
+            return;
         }
 
         if (movingUnit != null)
@@ -966,13 +998,17 @@ public class PlayerOperationManager : MonoBehaviour
                 }
             }
 
-            // 先立即更新字典，防止回合结束同步时出现问题
+            Debug.Log($"[网络移动] 开始更新引用和执行动画");
+
+            // 立即更新字典引用（在动画之前）
             otherPlayersUnits[msg.PlayerId].Remove(fromPos);
             otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
 
-            // 更新GameManage（立即清理旧位置）
+            // 更新GameManage的格子对象
             GameManage.Instance.SetCellObject(fromPos, null);
             GameManage.Instance.SetCellObject(toPos, movingUnit);
+
+            Debug.Log($"[网络移动] 字典已更新，开始动画");
 
             // 执行移动动画
             movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
@@ -980,23 +1016,11 @@ public class PlayerOperationManager : MonoBehaviour
                 Debug.Log($"[网络移动] 动画完成");
             });
         }
-        else
-        {
-            Debug.LogWarning($"[网络移动] 找不到移动的单位 at ({fromPos.x},{fromPos.y})");
-
-            // 尝试在目标位置查找是否已经有单位（可能是重复消息）
-            if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
-                otherPlayersUnits[msg.PlayerId].ContainsKey(toPos))
-            {
-                Debug.Log($"[网络移动] 单位已在目标位置，可能是重复消息");
-            }
-        }
     }
 
     // 处理来自网络的创建单位消息
     public void HandleNetworkAddUnit(UnitAddMessage msg)
     {
-        // 如果是自己的创建，已经在本地处理过了
         if (msg.PlayerId == localPlayerId)
         {
             Debug.Log("[网络创建] 这是本地玩家的创建，已处理");
@@ -1007,6 +1031,13 @@ public class PlayerOperationManager : MonoBehaviour
         PlayerUnitType unitType = (PlayerUnitType)msg.UnitType;
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
+
+        // 先更新数据
+        if (playerDataManager != null)
+        {
+            playerDataManager.AddUnit(msg.PlayerId, unitType, pos);
+            Debug.Log($"[网络创建] 已更新数据管理器");
+        }
 
         // 创建单位数据
         PlayerUnitData unitData = new PlayerUnitData(unitType, pos);
