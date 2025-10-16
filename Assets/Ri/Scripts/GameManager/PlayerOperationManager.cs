@@ -5,6 +5,7 @@ using DG.Tweening;
 using Unity.Mathematics;
 using Newtonsoft.Json.Bson;
 using UnityEngine.EventSystems;
+using System.Dynamic;
 
 /// <summary>
 /// 玩家操作管理，负责处理因玩家操作导致的数据变动
@@ -12,7 +13,7 @@ using UnityEngine.EventSystems;
 public class PlayerOperationManager : MonoBehaviour
 {
     // HexGrid的引用
-    public GameObject _HexGrid;
+    public HexGrid _HexGrid;
 
 
     private Camera GameCamera;
@@ -124,14 +125,14 @@ public class PlayerOperationManager : MonoBehaviour
         // 左键点击 - 选择单位
         if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
-            _HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
+            _HexGrid.GetCell(selectCellID).DisableHighlight();
             HandleLeftClick();
         }
 
         // 右键点击 - 移动/攻击
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
-            _HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
+            _HexGrid.GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
         }
     }
@@ -246,9 +247,9 @@ public class PlayerOperationManager : MonoBehaviour
                 if (ownerId != localPlayerId)
                 {
                     // 攻击敌方单位
-                    Debug.Log("攻击功能尚未实现");
+                    //Debug.Log("攻击功能尚未实现");
                     // TODO: 实现攻击逻辑
-                    // AttackUnit(targetPos);
+                    AttackUnit(targetPos, ClickCellid);
                 }
                 else
                 {
@@ -298,7 +299,7 @@ public class PlayerOperationManager : MonoBehaviour
         CreateUnitAtPosition(unitType, SelectedEmptyCellID);
 
         // 清除选择
-        _HexGrid.GetComponent<HexGrid>().GetCell(SelectedEmptyCellID).DisableHighlight();
+        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
         SelectedEmptyCellID = -1;
 
         return true;
@@ -361,7 +362,7 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = false;
 
         // 取消当前选择
-        _HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
+        _HexGrid.GetCell(selectCellID).DisableHighlight();
         ReturnToDefault();
         SelectingUnit = null;
         SelectedEmptyCellID = -1;
@@ -595,34 +596,49 @@ public class PlayerOperationManager : MonoBehaviour
         int2 fromPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
         int2 toPos = PlayerBoardInforDict[targetCellId].Cells2DPos;
 
-        _HexGrid.GetComponent<HexGrid>().FindPath(LastSelectingCellID, targetCellId,10);
-
-        Vector3 targetWorldPos = new Vector3(
-            PlayerBoardInforDict[targetCellId].Cells3DPos.x,
-            PlayerBoardInforDict[targetCellId].Cells3DPos.y + 6.5f,
-            PlayerBoardInforDict[targetCellId].Cells3DPos.z
-        );
-
-        // 执行移动动画
-        SelectingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
+        _HexGrid.FindPath(LastSelectingCellID, targetCellId,10);
+        if(_HexGrid.HasPath)
         {
-            // 动画完成后更新数据
+            List<HexCell> listCellPos = _HexGrid.GetPath();
+
+            Sequence moveSequence = DOTween.Sequence();
+            for (int i = 0; i < listCellPos.Count; i++)
+            {
+                // 根据路径坐标找到对应的格子信息
+                Vector3 waypoint = new Vector3(
+                   listCellPos[i].Position.x,
+                   listCellPos[i].Position.y +2.5f,
+                    listCellPos[i].Position.z
+                    );
+                moveSequence.Append(SelectingUnit.transform.DOMove(waypoint, MoveSpeed)
+                  .SetEase(Ease.Linear));
+                Debug.Log("2Dpos is " + PlayerBoardInforDict[i].Cells2DPos+
+                    "3Dpos is "+ PlayerBoardInforDict[i].Cells3DPos);
+            }
+            moveSequence.OnComplete(() =>
+            {
+                // 动画完成后更新数据
+                bCanContinue = true;
+
+                     // 更新本地数据
+                     playerDataManager.MoveUnit(localPlayerId, fromPos, toPos);
+
+                     // 更新本地引用
+                     localPlayerUnits.Remove(fromPos);
+                     localPlayerUnits[toPos] = SelectingUnit;
+
+                     // 更新GameManage的格子对象
+                     GameManage.Instance.MoveCellObject(fromPos, toPos);
+
+                     LastSelectingCellID = targetCellId;
+                 });
+        }
+        else
+        {
+            _HexGrid.ClearPath(); 
             bCanContinue = true;
+        }
 
-            // 更新本地数据
-            playerDataManager.MoveUnit(localPlayerId, fromPos, toPos);
-
-            // 更新本地引用
-            localPlayerUnits.Remove(fromPos);
-            localPlayerUnits[toPos] = SelectingUnit;
-
-            // 更新GameManage的格子对象
-            GameManage.Instance.MoveCellObject(fromPos, toPos);
-
-            LastSelectingCellID = targetCellId;
-
-            //Debug.Log($"移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
-        });
     }
 
     // 取消选择单位的描边
@@ -640,36 +656,254 @@ public class PlayerOperationManager : MonoBehaviour
     }
     private void ChooseEmptyCell(int cell)
     {
-        _HexGrid.GetComponent<HexGrid>().GetCell(cell).EnableHighlight(Color.red);
+        _HexGrid.GetCell(cell).EnableHighlight(Color.red);
     }
 
-    //// 攻击单位(示例实现)
-    //private void AttackUnit(int2 targetPos)
-    //{
-    //    // 1. 获取目标单位
-    //    int targetPlayerId = playerDataManager.GetUnitOwner(targetPos);
-    //    PlayerUnitData? targetUnit = playerDataManager.FindUnit(targetPlayerId, targetPos);
+    // 攻击单位(示例实现)
+    private void AttackUnit(int2 targetPos, int targetCellId)
+    {
+        if (SelectingUnit == null) return;
 
-    //    if (!targetUnit.HasValue) return;
+        bCanContinue = false;
 
-    //    // 2. 获取攻击者单位
-    //    int2 attackerPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
-    //    PlayerUnitData? attacker = playerDataManager.FindUnit(localPlayerId, attackerPos);
+        // 获取攻击者位置
+        int2 attackerPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
 
-    //    if (!attacker.HasValue) return;
+        // 获取目标单位的拥有者
+        int targetOwnerId = playerDataManager.GetUnitOwner(targetPos);
 
-    //    // 3. 计算伤害
-    //    int damage = attacker.Value.Attack;
-    //    int newHealth = targetUnit.Value.Health - damage;
+        if (targetOwnerId == -1)
+        {
+            Debug.LogWarning("目标位置没有单位");
+            bCanContinue = true;
+            return;
+        }
 
-    //    // 4. 更新目标血量
-    //    playerDataManager.UpdateUnitHealth(targetPlayerId, targetPos, newHealth);
+        // 获取目标单位的GameObject
+        GameObject targetUnit = null;
+        if (otherPlayersUnits.ContainsKey(targetOwnerId) &&
+            otherPlayersUnits[targetOwnerId].ContainsKey(targetPos))
+        {
+            targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
+        }
 
-    //    // 5. 播放攻击动画
-    //    // TODO: 实现攻击动画
+        Debug.Log($"攻击敌方单位: 玩家{targetOwnerId} at ({targetPos.x},{targetPos.y})");
 
-    //    Debug.Log($"攻击! 造成 {damage} 伤害, 目标剩余血量: {newHealth}");
-    //}
+        // 获取目标世界坐标
+        Vector3 targetWorldPos = new Vector3(
+            PlayerBoardInforDict[targetCellId].Cells3DPos.x,
+            PlayerBoardInforDict[targetCellId].Cells3DPos.y + 6.5f,
+            PlayerBoardInforDict[targetCellId].Cells3DPos.z
+        );
+
+        // 创建攻击动画序列
+        Sequence attackSequence = DOTween.Sequence();
+
+        // 1. 向前冲刺
+        Vector3 attackPos = Vector3.Lerp(SelectingUnit.transform.position, targetWorldPos, 0.7f);
+        attackSequence.Append(SelectingUnit.transform.DOMove(attackPos, MoveSpeed * 0.3f));
+
+        // 2. 目标单位消失效果
+        if (targetUnit != null)
+        {
+            attackSequence.Join(targetUnit.transform.DOScale(0f, 0.2f));
+            attackSequence.Join(targetUnit.transform.DORotate(new Vector3(0, 360, 0), 0.2f, RotateMode.FastBeyond360));
+        }
+
+        // 3. 移动到目标位置
+        attackSequence.Append(SelectingUnit.transform.DOMove(targetWorldPos, MoveSpeed * 0.3f));
+
+        // 4. 完成后的处理
+        attackSequence.OnComplete(() =>
+        {
+            // 移除敌方单位数据
+            playerDataManager.RemoveUnit(targetOwnerId, targetPos);
+
+            // 移动攻击者数据
+            playerDataManager.MoveUnit(localPlayerId, attackerPos, targetPos);
+
+            // 更新本地引用
+            localPlayerUnits.Remove(attackerPos);
+            localPlayerUnits[targetPos] = SelectingUnit;
+
+            // 更新GameManage的格子对象
+            GameManage.Instance.MoveCellObject(attackerPos, targetPos);
+
+            LastSelectingCellID = targetCellId;
+
+            bCanContinue = true;
+
+            Debug.Log($"攻击并移动完成: ({attackerPos.x},{attackerPos.y}) -> ({targetPos.x},{targetPos.y})");
+        });
+
+        // 发送网络消息
+        if (GameManage.Instance._NetGameSystem != null)
+        {
+            UnitAttackMessage attackMsg = new UnitAttackMessage
+            {
+                AttackerPlayerId = localPlayerId,
+                AttackerPosX = attackerPos.x,
+                AttackerPosY = attackerPos.y,
+                TargetPlayerId = targetOwnerId,
+                TargetPosX = targetPos.x,
+                TargetPosY = targetPos.y
+            };
+            GameManage.Instance._NetGameSystem.SendMessage(NetworkMessageType.UNIT_ATTACK, attackMsg);
+            Debug.Log($"[本地] 已发送攻击消息到网络");
+        }
+    }
+
+    // 处理来自网络的攻击消息（其他玩家的攻击）
+    public void HandleNetworkAttack(UnitAttackMessage msg)
+    {
+        // 如果是自己的攻击，已经在 AttackUnit 中处理过了
+        if (msg.AttackerPlayerId == localPlayerId)
+        {
+            Debug.Log("这是本地玩家的攻击，已处理");
+            return;
+        }
+
+        int2 attackerPos = new int2(msg.AttackerPosX, msg.AttackerPosY);
+        int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
+
+        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
+
+        // 获取攻击者和目标的GameObject
+        GameObject attackerUnit = null;
+        GameObject targetUnit = null;
+
+        // 查找攻击者单位
+        if (msg.AttackerPlayerId == localPlayerId)
+        {
+            if (localPlayerUnits.ContainsKey(attackerPos))
+            {
+                attackerUnit = localPlayerUnits[attackerPos];
+            }
+        }
+        else
+        {
+            if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId) &&
+                otherPlayersUnits[msg.AttackerPlayerId].ContainsKey(attackerPos))
+            {
+                attackerUnit = otherPlayersUnits[msg.AttackerPlayerId][attackerPos];
+            }
+        }
+
+        // 查找目标单位
+        if (msg.TargetPlayerId == localPlayerId)
+        {
+            if (localPlayerUnits.ContainsKey(targetPos))
+            {
+                targetUnit = localPlayerUnits[targetPos];
+            }
+        }
+        else
+        {
+            if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId) &&
+                otherPlayersUnits[msg.TargetPlayerId].ContainsKey(targetPos))
+            {
+                targetUnit = otherPlayersUnits[msg.TargetPlayerId][targetPos];
+            }
+        }
+
+        // 播放攻击动画
+        if (attackerUnit != null)
+        {
+            // 找到目标位置的世界坐标
+            Vector3 targetWorldPos = Vector3.zero;
+            foreach (var board in PlayerBoardInforDict.Values)
+            {
+                if (board.Cells2DPos.Equals(targetPos))
+                {
+                    targetWorldPos = new Vector3(
+                        board.Cells3DPos.x,
+                        board.Cells3DPos.y + 6.5f,
+                        board.Cells3DPos.z
+                    );
+                    break;
+                }
+            }
+
+            // 创建攻击动画
+            Sequence attackSequence = DOTween.Sequence();
+
+            // 冲刺效果
+            Vector3 attackPos = Vector3.Lerp(attackerUnit.transform.position, targetWorldPos, 0.7f);
+            attackSequence.Append(attackerUnit.transform.DOMove(attackPos, MoveSpeed * 0.3f));
+
+            // 目标消失效果
+            if (targetUnit != null)
+            {
+                attackSequence.Join(targetUnit.transform.DOScale(0f, 0.2f));
+                attackSequence.Join(targetUnit.transform.DORotate(new Vector3(0, 360, 0), 0.2f, RotateMode.FastBeyond360));
+            }
+
+            // 移动到目标位置
+            attackSequence.Append(attackerUnit.transform.DOMove(targetWorldPos, MoveSpeed * 0.3f));
+
+            // 完成后更新引用
+            attackSequence.OnComplete(() =>
+            {
+                // 销毁目标单位
+                if (targetUnit != null)
+                {
+                    Destroy(targetUnit);
+                }
+
+                // 更新攻击者单位的引用
+                if (msg.AttackerPlayerId == localPlayerId)
+                {
+                    localPlayerUnits.Remove(attackerPos);
+                    localPlayerUnits[targetPos] = attackerUnit;
+                }
+                else
+                {
+                    if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId))
+                    {
+                        otherPlayersUnits[msg.AttackerPlayerId].Remove(attackerPos);
+                        otherPlayersUnits[msg.AttackerPlayerId][targetPos] = attackerUnit;
+                    }
+                }
+
+                // 移除目标单位的引用
+                if (msg.TargetPlayerId == localPlayerId)
+                {
+                    localPlayerUnits.Remove(targetPos);
+                }
+                else
+                {
+                    if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId))
+                    {
+                        otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
+                    }
+                }
+
+                // 更新GameManage
+                GameManage.Instance.MoveCellObject(attackerPos, targetPos);
+
+                Debug.Log($"[网络攻击] 动画完成: ({attackerPos.x},{attackerPos.y}) -> ({targetPos.x},{targetPos.y})");
+            });
+        }
+        else
+        {
+            Debug.LogWarning($"[网络攻击] 找不到攻击者单位 at ({attackerPos.x},{attackerPos.y})");
+
+            // 如果找不到攻击者单位，至少销毁目标
+            if (targetUnit != null)
+            {
+                Destroy(targetUnit);
+
+                if (msg.TargetPlayerId == localPlayerId)
+                {
+                    localPlayerUnits.Remove(targetPos);
+                }
+                else if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId))
+                {
+                    otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
+                }
+            }
+        }
+    }
 
     // *************************
     //        事件处理

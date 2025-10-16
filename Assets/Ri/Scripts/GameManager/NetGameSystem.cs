@@ -108,6 +108,17 @@ public class UnitRemoveMessage
     public int PosY;
 }
 
+// 攻击消息
+[Serializable]
+public class UnitAttackMessage
+{
+    public int AttackerPlayerId;
+    public int AttackerPosX;
+    public int AttackerPosY;
+    public int TargetPlayerId;
+    public int TargetPosX;
+    public int TargetPosY;
+}
 [Serializable]
 public class TurnEndMessage
 {
@@ -263,6 +274,7 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
                 { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
+                { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },  
                 { NetworkMessageType.PING, HandlePing },
                 { NetworkMessageType.PONG, HandlePong }
         };
@@ -1088,6 +1100,55 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager = PlayerDataManager.Instance;
             playerDataManager.RemoveUnit(data.PlayerId, pos);
+        }
+    }
+
+    // 单位攻击
+    private void HandleUnitAttack(NetworkMessage message)
+    {
+        UnitAttackMessage data = JsonConvert.DeserializeObject<UnitAttackMessage>(message.JsonData);
+
+        Unity.Mathematics.int2 attackerPos = new Unity.Mathematics.int2(data.AttackerPosX, data.AttackerPosY);
+        Unity.Mathematics.int2 targetPos = new Unity.Mathematics.int2(data.TargetPosX, data.TargetPosY);
+
+        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
+
+        // 确保管理器存在
+        if (playerDataManager == null)
+        {
+            playerDataManager = PlayerDataManager.Instance;
+        }
+
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // 移除被攻击的单位
+        if (playerDataManager != null)
+        {
+            bool removed = playerDataManager.RemoveUnit(data.TargetPlayerId, targetPos);
+            if (removed)
+            {
+                Debug.Log($"[网络] 成功移除玩家 {data.TargetPlayerId} 在 ({targetPos.x},{targetPos.y}) 的单位");
+            }
+            else
+            {
+                Debug.LogWarning($"[网络] 未能移除单位，可能已经被移除");
+            }
+
+            // 移动攻击者到目标位置
+            bool moved = playerDataManager.MoveUnit(data.AttackerPlayerId, attackerPos, targetPos);
+            if (moved)
+            {
+                Debug.Log($"[网络] 成功移动攻击者到 ({targetPos.x},{targetPos.y})");
+            }
+        }
+
+        // 通知 PlayerOperationManager 处理视觉效果
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkAttack(data);
         }
     }
 
