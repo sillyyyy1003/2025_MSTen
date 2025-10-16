@@ -4,6 +4,7 @@ using UnityEngine;
 using DG.Tweening;
 using Unity.Mathematics;
 using Newtonsoft.Json.Bson;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// 玩家操作管理，负责处理因玩家操作导致的数据变动
@@ -114,6 +115,10 @@ public class PlayerOperationManager : MonoBehaviour
 
     private void HandleMouseInput()
     {
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
         // 左键点击 - 选择单位
         if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
