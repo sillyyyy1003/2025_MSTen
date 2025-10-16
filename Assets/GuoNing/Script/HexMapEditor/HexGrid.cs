@@ -173,9 +173,9 @@ public class HexGrid : MonoBehaviour
 		HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
 		cell.transform.localPosition = position;
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
-
-        // Set cell neighbors in west direction
-        if (x > 0)
+		cell.Index = i;
+		// Set cell neighbors in west direction
+		if (x > 0)
 		{
 			cell.SetNeighbor(HexDirection.W, cells[i - 1]);
 		}

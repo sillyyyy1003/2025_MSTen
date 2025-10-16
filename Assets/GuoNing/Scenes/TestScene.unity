@@ -3731,6 +3731,19 @@ MonoBehaviour:
   erosionPercentage: 50
   seed: 0
   useFixedSeed: 0
+  riverPercentage: 17
+  evaporationFactor: 0.5
+  precipitationFactor: 0.25
+  runoffFactor: 0.25
+  seepageFactor: 0.125
+  windDirection: 5
+  windStrength: 4
+  startingMoisture: 0.1
+  extraLakeProbability: 0.25
+  lowTemperature: 0
+  highTemperature: 1
+  hemisphere: 0
+  temperatureJitter: 0.1
 --- !u!4 &463063389
 Transform:
   m_ObjectHideFlags: 0

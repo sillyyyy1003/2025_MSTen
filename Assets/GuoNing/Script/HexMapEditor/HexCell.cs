@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -200,9 +201,9 @@ public class HexCell : MonoBehaviour
 
 	public HexCell NextWithSamePriority { get; set; }	//追踪有相同优先级的单元格
 	// todo: 之后要修改 因为不存在Terrain颜色 取而代之的是纹理
-	public enum TerrainColor
+	public enum TerrainColor:int
 	{
-	sand=0, grass=1,mud=2,stone=3,snow=4
+		Sand=0, Grass=1,Mud=2,Stone=3,Snow=4
 	}
 
 	// 25.9.23 RI add cell's Serial number
@@ -218,6 +219,14 @@ public class HexCell : MonoBehaviour
 	{
 		get { return isVacancy; }
 		set { isVacancy = value; }
+	}
+
+	public int ViewElevation
+	{
+		get
+		{
+			return elevation >= waterLevel ? elevation : waterLevel;
+		}
 	}
 
 	/// <summary>
@@ -236,12 +245,18 @@ public class HexCell : MonoBehaviour
 			}
 
 			waterLevel = value;
+
 			ValidateRivers();
 			Refresh();
 		}
 	}
 
 
+
+	/// <summary>
+	/// Unique global index of the cell.
+	/// </summary>
+	public int Index { get; set; }
 
 	/// <summary>
 	/// 这个格子是否有水
