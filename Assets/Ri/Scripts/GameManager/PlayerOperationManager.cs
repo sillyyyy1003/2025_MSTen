@@ -631,7 +631,22 @@ public class PlayerOperationManager : MonoBehaviour
                      GameManage.Instance.MoveCellObject(fromPos, toPos);
 
                      LastSelectingCellID = targetCellId;
-                 });
+
+                // 发送网络消息 - 移动
+                if (GameManage.Instance._NetGameSystem != null)
+                {
+                    UnitMoveMessage moveMsg = new UnitMoveMessage
+                    {
+                        PlayerId = localPlayerId,
+                        FromX = fromPos.x,
+                        FromY = fromPos.y,
+                        ToX = toPos.x,
+                        ToY = toPos.y
+                    };
+                    GameManage.Instance._NetGameSystem.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
+                    Debug.Log($"[本地] 已发送移动消息到网络: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+                }
+            });
         }
         else
         {
@@ -752,6 +767,12 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log($"[本地] 已发送攻击消息到网络");
         }
     }
+
+
+    // *************************
+    //        事件处理
+    // *************************
+
 
     // 处理来自网络的攻击消息（其他玩家的攻击）
     public void HandleNetworkAttack(UnitAttackMessage msg)
@@ -905,9 +926,89 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
-    // *************************
-    //        事件处理
-    // *************************
+    // 处理来自网络的移动消息
+    public void HandleNetworkMove(UnitMoveMessage msg)
+    {
+        // 如果是自己的移动，已经在本地处理过了
+        if (msg.PlayerId == localPlayerId)
+        {
+            Debug.Log("[网络移动] 这是本地玩家的移动，已处理");
+            return;
+        }
+
+        int2 fromPos = new int2(msg.FromX, msg.FromY);
+        int2 toPos = new int2(msg.ToX, msg.ToY);
+
+        Debug.Log($"[网络移动] 玩家 {msg.PlayerId} 移动: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+
+        // 获取移动的单位
+        GameObject movingUnit = null;
+
+        if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
+            otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
+        {
+            movingUnit = otherPlayersUnits[msg.PlayerId][fromPos];
+        }
+
+        if (movingUnit != null)
+        {
+            // 找到目标位置的世界坐标
+            Vector3 targetWorldPos = Vector3.zero;
+            foreach (var board in PlayerBoardInforDict.Values)
+            {
+                if (board.Cells2DPos.Equals(toPos))
+                {
+                    targetWorldPos = new Vector3(
+                        board.Cells3DPos.x,
+                        board.Cells3DPos.y + 2.5f,
+                        board.Cells3DPos.z
+                    );
+                    break;
+                }
+            }
+
+            // 执行移动动画
+            movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
+            {
+                // 更新字典
+                otherPlayersUnits[msg.PlayerId].Remove(fromPos);
+                otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
+
+                // 更新GameManage
+                GameManage.Instance.MoveCellObject(fromPos, toPos);
+
+                Debug.Log($"[网络移动] 动画完成");
+            });
+        }
+        else
+        {
+            Debug.LogWarning($"[网络移动] 找不到移动的单位 at ({fromPos.x},{fromPos.y})");
+        }
+    }
+
+    // 处理来自网络的创建单位消息
+    public void HandleNetworkAddUnit(UnitAddMessage msg)
+    {
+        // 如果是自己的创建，已经在本地处理过了
+        if (msg.PlayerId == localPlayerId)
+        {
+            Debug.Log("[网络创建] 这是本地玩家的创建，已处理");
+            return;
+        }
+
+        int2 pos = new int2(msg.PosX, msg.PosY);
+        PlayerUnitType unitType = (PlayerUnitType)msg.UnitType;
+
+        Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
+
+        // 创建单位数据
+        PlayerUnitData unitData = new PlayerUnitData(unitType, pos);
+
+        // 创建视觉对象
+        CreateEnemyUnit(msg.PlayerId, unitData);
+
+        Debug.Log($"[网络创建] 完成");
+    }
 
     private void OnUnitAddedHandler(int playerId, PlayerUnitData unitData)
     {

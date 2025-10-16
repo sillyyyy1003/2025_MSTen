@@ -1059,6 +1059,12 @@ public class NetGameSystem : MonoBehaviour
             playerDataManager = PlayerDataManager.Instance;
             playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
         }
+
+        // 通知 PlayerOperationManager 处理视觉效果
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkMove(data);
+        }
     }
 
     // 单位添加
@@ -1080,6 +1086,12 @@ public class NetGameSystem : MonoBehaviour
 
             playerDataManager = PlayerDataManager.Instance;
             playerDataManager.AddUnit(data.PlayerId, unitType, pos);
+        }
+
+        // 通知 PlayerOperationManager 处理视觉效果
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkAddUnit(data);
         }
     }
 
