@@ -12,42 +12,68 @@ namespace GamePieces
     public abstract class Piece : VisualGameObject
     {
         [SerializeField] protected PieceDataSO pieceData;
-        
-        // ===== 実行時の状態 =====
-        protected float currentHP;
-        protected float currentAP;
-        protected Team ownerTeam;
-        protected PieceState currentState = PieceState.Idle;
-        
 
-        
+        // ===== 実行時の状態 =====
+        protected float currentMaxHP;
+        protected float currentHP;
+        protected float currentMaxAP;
+        protected float currentAP;
+        protected int currentPID; // 現在所属しているプレイヤーID
+        protected int originalPID; // 元々所属していたプレイヤーID
+        protected PieceState currentState = PieceState.Idle;
+        protected int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2、3:升級3
+
+
+
         // ===== イベント =====
         public event Action<Piece> OnPieceDeath;
+        public event Action<Piece,Piece> OnCharmed;//(魅惑された駒、魅惑した駒)
         public event Action<float, float> OnHPChanged;
         public event Action<float, float> OnAPChanged;
         public event Action<PieceState, PieceState> OnStateChanged;
-        
+
         // ===== プロパティ =====
         public PieceDataSO Data => pieceData;
+        public int CurrentPID => currentPID;
+        public int OriginalPID => originalPID;
         public float CurrentHP => currentHP;
         public float CurrentAP => currentAP;
         public bool IsAlive => currentHP > 0;
         public bool CanMove => currentAP >= pieceData.moveAPCost;
-        public Team OwnerTeam => ownerTeam;
         public PieceState State => currentState;
+        public int UpgradeLevel => upgradeLevel;
         
         #region 初期化
-        
-        public virtual void Initialize(PieceDataSO data, Team team)
+
+        /// <summary>
+        /// 駒を初期化（プレイヤーIDで管理）
+        /// </summary>
+        /// <param name="data">駒のデータ</param>
+        /// <param name="playerID">所属するプレイヤーID</param>
+        public virtual void Initialize(PieceDataSO data, int playerID)
         {
             pieceData = data;
-            ownerTeam = team;
-            
-            currentHP = data.maxHP;
-            currentAP = data.maxAP;
-            
+            originalPID = data.originalPID;
+            currentPID = playerID;
+
+            currentMaxHP = data.maxHPByLevel[0];
+            currentHP = currentMaxHP;
+            currentMaxAP = data.maxAPByLevel[0];
+            currentAP = currentMaxAP;
+
             SetupComponents();
             StartCoroutine(ActionPointRecoveryCoroutine());
+        }
+
+        /// <summary>
+        /// プレイヤーIDを変更（陣営変更）
+        /// </summary>
+        /// <param name="newPlayerID">新しいプレイヤーID</param>
+        public virtual void ChangePID(int newPlayerID,Piece charmer=null)
+        {
+            currentPID = newPlayerID;
+            OnCharmed?.Invoke(this,charmer);
+            Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
         }
 
         protected virtual void SetupComponents()
@@ -65,7 +91,7 @@ namespace GamePieces
         {
             while (IsAlive)
             {
-                if (currentAP < pieceData.maxAP && currentState != PieceState.InBuilding)
+                if (currentAP < currentMaxAP && currentState != PieceState.InBuilding)
                 {
                     ModifyAP(pieceData.aPRecoveryRate * Time.deltaTime);
                 }
@@ -86,11 +112,11 @@ namespace GamePieces
         protected void ModifyAP(float amount)
         {
             float oldValue = currentAP;
-            currentAP = Mathf.Clamp(currentAP + amount, 0, pieceData.maxAP);
+            currentAP = Mathf.Clamp(currentAP + amount, 0, currentMaxAP);
             
             if (!Mathf.Approximately(oldValue, currentAP))
             {
-                OnAPChanged?.Invoke(currentAP, pieceData.maxAP);
+                OnAPChanged?.Invoke(currentAP, currentMaxAP);
             }
         }
         
@@ -103,7 +129,7 @@ namespace GamePieces
             float oldHP = currentHP;
             currentHP = Mathf.Max(0, currentHP - damage);
             
-            OnHPChanged?.Invoke(currentHP, pieceData.maxHP);
+            OnHPChanged?.Invoke(currentHP, currentMaxHP);
             
             if (currentHP <= 0 && oldHP > 0)
             {
@@ -114,11 +140,11 @@ namespace GamePieces
         public virtual void Heal(float amount)
         {
             float oldHP = currentHP;
-            currentHP = Mathf.Min(pieceData.maxHP, currentHP + amount);
+            currentHP = Mathf.Min(currentMaxHP, currentHP + amount);
             
             if (!Mathf.Approximately(oldHP, currentHP))
             {
-                OnHPChanged?.Invoke(currentHP, pieceData.maxHP);
+                OnHPChanged?.Invoke(currentHP, currentMaxHP);
             }
         }
         
@@ -137,7 +163,37 @@ namespace GamePieces
         }
         
         #endregion
-        
+
+        #region アップグレード管理
+
+        /// <summary>
+        /// 駒をアップグレードする
+        /// </summary>
+        public virtual bool UpgradePiece()
+        {
+            if (upgradeLevel >= 3)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} は既に最大レベルです");
+                return false;
+            }
+
+            upgradeLevel++;
+            ApplyUpgradeEffects();
+            Debug.Log($"{pieceData.pieceName} がレベル {upgradeLevel} にアップグレードしました");
+            return true;
+        }
+
+        /// <summary>
+        /// アップグレード効果を適用（派生クラスでオーバーライド）
+        /// </summary>
+        protected virtual void ApplyUpgradeEffects()
+        {
+            // 基底クラスでは何もしない
+            // 派生クラスで具体的な効果を実装
+        }
+
+        #endregion
+
         #region 死亡処理
         
         protected virtual void Die()

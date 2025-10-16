@@ -22,6 +22,7 @@ namespace Buildings
         private int currentSkillUses;//現時点まだ使用可能のスロットの数
         private int lastResourceGenTurn;
         private int apCostperTurn;
+        private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2
 
         // 配置された農民のリスト
         private List<FarmerSlot> farmerSlots = new List<FarmerSlot>();
@@ -42,6 +43,7 @@ namespace Buildings
         public int RemainingBuildCost => remainingBuildCost;
         public List<FarmerSlot> FarmerSlots => farmerSlots;
         public int APCostPerTurn => apCostperTurn;
+        public int UpgradeLevel => upgradeLevel;
 
         #region 初期化
 
@@ -51,14 +53,15 @@ namespace Buildings
             currentHp = data.maxHp;
             remainingBuildCost = data.buildingAPCost;
             apCostperTurn = data.apCostperTurn;
-            currentSkillUses = data.maxUnitCapacity;
+            currentSkillUses = data.GetMaxSlotsByLevel(0);
 
             ChangeState(BuildingState.UnderConstruction);
 
             // スロット初期化
             if (data.isSpecialBuilding)
             {
-                for (int i = 0; i < data.maxUnitCapacity; i++)
+                int initialSlots = data.GetMaxSlotsByLevel(0);
+                for (int i = 0; i < initialSlots; i++)
                 {
                     farmerSlots.Add(new FarmerSlot());
                 }
@@ -126,7 +129,6 @@ namespace Buildings
                 return false;
             }
                 
-
             var emptySlot = farmerSlots.Find(s => !s.IsOccupied);
             if (emptySlot == null)
                 return false;
@@ -180,7 +182,7 @@ namespace Buildings
                 if (slot.IsOccupied && slot.HasAP)
                 {
                     // 基本生産量にスキルレベルによる倍率を適用
-                    totalProduction += buildingData.baseProductionAmount * slot.ProductionMultiplier;
+                    totalProduction += buildingData.baseProductionAmount;
                 }
             }
 
@@ -258,6 +260,90 @@ namespace Buildings
 
         #endregion
 
+        #region アップグレード管理
+
+        /// <summary>
+        /// 建物をアップグレードする
+        /// </summary>
+        public bool UpgradeBuilding()
+        {
+            if (upgradeLevel >= 2)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} は既に最大レベルです");
+                return false;
+            }
+
+            if (currentState != BuildingState.Disabled && currentState != BuildingState.Active)
+            {
+                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
+                return false;
+            }
+
+            upgradeLevel++;
+            ApplyUpgradeEffects();
+            Debug.Log($"{buildingData.buildingName} がレベル {upgradeLevel} にアップグレードしました");
+            return true;
+        }
+
+        /// <summary>
+        /// アップグレード効果を適用
+        /// </summary>
+        private void ApplyUpgradeEffects()
+        {
+            // レベルに応じた最大HPを更新
+            int newMaxHp = buildingData.GetMaxHpByLevel(upgradeLevel);
+            float hpRatio = (float)currentHp / buildingData.maxHp;
+            currentHp = Mathf.RoundToInt(newMaxHp * hpRatio);
+
+            // レベルに応じた最大スロット数を更新
+            int newMaxSlots = buildingData.GetMaxSlotsByLevel(upgradeLevel);
+            if (newMaxSlots > farmerSlots.Count)
+            {
+                // スロット数を増やす
+                int slotsToAdd = newMaxSlots - farmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    farmerSlots.Add(new FarmerSlot());
+                }
+                currentSkillUses = newMaxSlots;
+            }
+
+            Debug.Log($"建物のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHp}, スロット数={newMaxSlots}");
+
+            // 新しい機能のログ
+            if (upgradeLevel == 1)
+            {
+                int attackRange = buildingData.GetAttackRangeByLevel(upgradeLevel);
+                if (attackRange > 0)
+                {
+                    Debug.Log($"攻撃機能獲得: 攻撃範囲={attackRange}");
+                }
+            }
+            else if (upgradeLevel == 2)
+            {
+                int attackRange = buildingData.GetAttackRangeByLevel(upgradeLevel);
+                Debug.Log($"強化攻撃機能: 攻撃範囲={attackRange}");
+            }
+        }
+
+        /// <summary>
+        /// レベルに応じた攻撃範囲を取得
+        /// </summary>
+        public int GetAttackRange()
+        {
+            return buildingData.GetAttackRangeByLevel(upgradeLevel);
+        }
+
+        /// <summary>
+        /// 攻撃可能かどうか
+        /// </summary>
+        public bool CanAttack()
+        {
+            return GetAttackRange() > 0 && IsOperational;
+        }
+
+        #endregion
+
         /// <summary>
         /// 農民スロット管理クラス
         /// </summary>
@@ -268,7 +354,6 @@ namespace Buildings
 
             public bool IsOccupied => assignedFarmer != null;
             public bool HasAP => assignedFarmer != null && assignedFarmer.CurrentAP > 0;
-            public float ProductionMultiplier => assignedFarmer != null ? assignedFarmer.GetProductionMultiplier() : 1f;
 
             public void AssignFarmer(Farmer farmer)
             {
