@@ -422,7 +422,6 @@ public class PlayerOperationManager : MonoBehaviour
         {
             if (unit != null)
             {
-
                 Destroy(unit);
                 Debug.Log("unit is " + unit.name);
             }
@@ -967,22 +966,30 @@ public class PlayerOperationManager : MonoBehaviour
                 }
             }
 
+            // 先立即更新字典，防止回合结束同步时出现问题
+            otherPlayersUnits[msg.PlayerId].Remove(fromPos);
+            otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
+
+            // 更新GameManage（立即清理旧位置）
+            GameManage.Instance.SetCellObject(fromPos, null);
+            GameManage.Instance.SetCellObject(toPos, movingUnit);
+
             // 执行移动动画
             movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
             {
-                // 更新字典
-                otherPlayersUnits[msg.PlayerId].Remove(fromPos);
-                otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
-
-                // 更新GameManage
-                GameManage.Instance.MoveCellObject(fromPos, toPos);
-
                 Debug.Log($"[网络移动] 动画完成");
             });
         }
         else
         {
             Debug.LogWarning($"[网络移动] 找不到移动的单位 at ({fromPos.x},{fromPos.y})");
+
+            // 尝试在目标位置查找是否已经有单位（可能是重复消息）
+            if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
+                otherPlayersUnits[msg.PlayerId].ContainsKey(toPos))
+            {
+                Debug.Log($"[网络移动] 单位已在目标位置，可能是重复消息");
+            }
         }
     }
 
