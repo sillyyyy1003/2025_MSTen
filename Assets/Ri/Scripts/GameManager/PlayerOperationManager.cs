@@ -73,6 +73,8 @@ public class PlayerOperationManager : MonoBehaviour
     // 移动速度
     public float MoveSpeed = 1.0f;
 
+
+
     // UI相关(需要在Inspector中赋值)
     //public GameObject EndTurnButton;
 
@@ -115,7 +117,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     private void HandleMouseInput()
     {
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        if (IsPointerOverUIElement())
         {
             return;
         }
@@ -134,6 +136,43 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
+    // 检测鼠标指针是否在可交互的UI元素上（按钮、输入框等）
+    private bool IsPointerOverUIElement()
+    {
+        if (EventSystem.current == null)
+            return false;
+
+        // 创建指针事件数据
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Input.mousePosition;
+
+        // 射线检测所有UI元素
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        // 只检查可交互的UI组件（按钮、输入框等）
+        foreach (var result in results)
+        {
+            if (result.gameObject.activeInHierarchy)
+            {
+                // 检查是否是按钮或其他可交互组件
+                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
+                    result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
+                    result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
+                {
+                    Debug.Log($"点击了UI组件: {result.gameObject.name}");
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
     private void HandleLeftClick()
     {
         Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
