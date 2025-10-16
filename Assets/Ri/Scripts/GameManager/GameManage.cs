@@ -243,7 +243,7 @@ public class GameManage : MonoBehaviour
     // 游戏初始化 (测试用)
     public bool GameInit()
     {
-        Debug.Log("GameManage: 本地测试模式初始化...");
+        Debug.Log("GameManage: 本地测试模式初始化【=...");
 
         SetIsGamingOrNot(true);
 

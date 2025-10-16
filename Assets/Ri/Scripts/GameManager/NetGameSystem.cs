@@ -238,7 +238,7 @@ public class NetGameSystem : MonoBehaviour
         }
         else
         {
-            Debug.Log($"成功获取 GameManage,对象名: {gameManage.gameObject.name}");
+            Debug.Log($"成功获取 GameManage");
         }
 
         playerDataManager = PlayerDataManager.Instance;
@@ -745,34 +745,33 @@ public class NetGameSystem : MonoBehaviour
     {
         try
         {
-            Debug.Log($"=== HandleTurnStart 被调用 ===");
             Debug.Log($"当前是服务器: {isServer}");
             Debug.Log($"消息发送者ID: {message.SenderId}");
 
             var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
             Debug.Log($"目标玩家: {data.PlayerId}");
 
-            // 多重查找 GameManage
-            if (gameManage == null)
-            {
-                Debug.Log("gameManage 为 null，尝试查找...");
-                gameManage = GameManage.Instance;
-            }
+            //// 多重查找 GameManage
+            //if (gameManage == null)
+            //{
+            //    Debug.Log("gameManage 为 null，尝试查找...");
+            //    gameManage = GameManage.Instance;
+            //}
 
-            if (gameManage == null)
-            {
-                Debug.Log("尝试通过 GameObject.Find 查找...");
-                GameObject gmObj = GameObject.Find("GameManager");
-                if (gmObj != null)
-                {
-                    gameManage = gmObj.GetComponent<GameManage>();
-                    Debug.Log($" 通过 GameObject.Find 找到 GameManage");
-                }
-                else
-                {
-                    Debug.LogError("GameObject.Find 未找到 'GameManager' 对象");
-                }
-            }
+            //if (gameManage == null)
+            //{
+            //    Debug.Log("尝试通过 GameObject.Find 查找...");
+            //    GameObject gmObj = GameObject.Find("GameManager");
+            //    if (gmObj != null)
+            //    {
+            //        gameManage = gmObj.GetComponent<GameManage>();
+            //        Debug.Log($" 通过 GameObject.Find 找到 GameManage");
+            //    }
+            //    else
+            //    {
+            //        Debug.LogError("GameObject.Find 未找到 'GameManager' 对象");
+            //    }
+            //}
 
             if (gameManage != null)
             {
