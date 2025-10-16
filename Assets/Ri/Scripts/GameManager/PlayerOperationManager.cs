@@ -631,6 +631,8 @@ public class PlayerOperationManager : MonoBehaviour
 
                      LastSelectingCellID = targetCellId;
 
+                    _HexGrid.ClearPath();
+
                 // 发送网络消息 - 移动
                 if (GameManage.Instance._NetGameSystem != null)
                 {
@@ -1050,80 +1052,58 @@ public class PlayerOperationManager : MonoBehaviour
 
     private void OnUnitAddedHandler(int playerId, PlayerUnitData unitData)
     {
-        if (playerId == localPlayerId)
-        {
-            // 本地玩家添加单位
-            Debug.Log($"本地玩家添加单位: {unitData.UnitType} at ({unitData.Position.x},{unitData.Position.y})");
-        }
-        else
-        {
-            // 其他玩家添加单位
-            CreateEnemyUnit(playerId, unitData);
-        }
+        //if (playerId == localPlayerId)
+        //{
+        //    // 本地玩家添加单位
+        //    Debug.Log($"本地玩家添加单位: {unitData.UnitType} at ({unitData.Position.x},{unitData.Position.y})");
+        //}
+        //else
+        //{
+        //    // 其他玩家添加单位
+        //    CreateEnemyUnit(playerId, unitData);
+        //}
     }
 
     private void OnUnitRemovedHandler(int playerId, int2 position)
     {
+        Debug.Log($"[事件] OnUnitRemovedHandler: 玩家 {playerId} at ({position.x},{position.y})");
+
         if (playerId == localPlayerId)
         {
-            // 移除本地单位GameObject
+            Debug.Log("[事件] 本地玩家移除单位");
+            // 本地玩家移除单位（发生在被攻击时）
             if (localPlayerUnits.ContainsKey(position))
             {
                 Destroy(localPlayerUnits[position]);
                 localPlayerUnits.Remove(position);
             }
+            GameManage.Instance.SetCellObject(position, null);
         }
         else
         {
-            // 移除其他玩家单位GameObject
-            if (otherPlayersUnits.ContainsKey(playerId) &&
-                otherPlayersUnits[playerId].ContainsKey(position))
-            {
-                Destroy(otherPlayersUnits[playerId][position]);
-                otherPlayersUnits[playerId].Remove(position);
-            }
+            Debug.Log("[事件] 其他玩家移除单位由 HandleNetworkAttack 处理，跳过");
+         
+            return;
         }
-
-        GameManage.Instance.SetCellObject(position, null);
     }
 
     private void OnUnitMovedHandler(int playerId, int2 fromPos, int2 toPos)
     {
-        // 本地玩家的移动已经在MoveToSelectCell中处理
-        if (playerId != localPlayerId)
-        {
-            // 其他玩家的单位移动
-            if (otherPlayersUnits.ContainsKey(playerId) &&
-                otherPlayersUnits[playerId].ContainsKey(fromPos))
-            {
-                GameObject unit = otherPlayersUnits[playerId][fromPos];
+        //Debug.Log($"[事件] OnUnitMovedHandler: 玩家 {playerId}");
 
-                // 找到目标位置的世界坐标
-                Vector3 targetPos = Vector3.zero;
-                foreach (var board in PlayerBoardInforDict.Values)
-                {
-                    if (board.Cells2DPos.Equals(toPos))
-                    {
-                        targetPos = new Vector3(
-                            board.Cells3DPos.x,
-                            board.Cells3DPos.y + 2.5f,
-                            board.Cells3DPos.z
-                        );
-                        break;
-                    }
-                }
-
-                // 执行移动动画
-                unit.transform.DOMove(targetPos, MoveSpeed);
-
-                // 更新字典
-                otherPlayersUnits[playerId].Remove(fromPos);
-                otherPlayersUnits[playerId][toPos] = unit;
-
-                // 更新GameManage
-                GameManage.Instance.MoveCellObject(fromPos, toPos);
-            }
-        }
+      
+        //if (playerId == localPlayerId)
+        //{
+        //    Debug.Log("[事件] 本地玩家移动已在 MoveToSelectCell 中处理");
+        //    // 本地玩家的移动已经在MoveToSelectCell中处理，这里不需要再处理
+        //    return;
+        //}
+        //else
+        //{
+        //    Debug.Log("[事件] 其他玩家移动由 HandleNetworkMove 处理，跳过");
+        //    // 其他玩家的移动由 HandleNetworkMove 处理，这里不处理
+        //    return;
+        //}
     }
 
     // *************************
