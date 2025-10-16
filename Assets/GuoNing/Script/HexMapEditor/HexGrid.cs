@@ -345,8 +345,19 @@ public class HexGrid : MonoBehaviour
 		currentPathExists = Search(fromCell, toCell, speed);
 		ShowPath(speed);
 	}
-	
-	public HexCell GetCell (Ray ray) {
+
+    // 25.10.16 RI Add FindPath By Cell's ID
+    public void FindPath(int fromCellID, int toCellID, int speed)
+    {
+        ClearPath();
+		currentPathFrom = GetCell(fromCellID); 
+        currentPathTo = GetCell(toCellID);
+        currentPathExists = Search(GetCell(fromCellID), GetCell(toCellID), speed);
+        ShowPath(speed);
+    }
+
+
+    public HexCell GetCell (Ray ray) {
 		RaycastHit hit;
 		if (Physics.Raycast(ray, out hit)) {
 			return GetCell(hit.point);

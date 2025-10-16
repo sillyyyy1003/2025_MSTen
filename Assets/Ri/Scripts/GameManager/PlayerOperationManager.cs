@@ -12,7 +12,7 @@ using UnityEngine.EventSystems;
 public class PlayerOperationManager : MonoBehaviour
 {
     // HexGrid的引用
-    public GameObject HexGrid;
+    public GameObject _HexGrid;
 
 
     private Camera GameCamera;
@@ -124,14 +124,14 @@ public class PlayerOperationManager : MonoBehaviour
         // 左键点击 - 选择单位
         if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
-            HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
+            _HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
             HandleLeftClick();
         }
 
         // 右键点击 - 移动/攻击
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
-            HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
+            _HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
         }
     }
@@ -298,7 +298,7 @@ public class PlayerOperationManager : MonoBehaviour
         CreateUnitAtPosition(unitType, SelectedEmptyCellID);
 
         // 清除选择
-        HexGrid.GetComponent<HexGrid>().GetCell(SelectedEmptyCellID).DisableHighlight();
+        _HexGrid.GetComponent<HexGrid>().GetCell(SelectedEmptyCellID).DisableHighlight();
         SelectedEmptyCellID = -1;
 
         return true;
@@ -361,7 +361,7 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = false;
 
         // 取消当前选择
-        HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
+        _HexGrid.GetComponent<HexGrid>().GetCell(selectCellID).DisableHighlight();
         ReturnToDefault();
         SelectingUnit = null;
         SelectedEmptyCellID = -1;
@@ -595,6 +595,8 @@ public class PlayerOperationManager : MonoBehaviour
         int2 fromPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
         int2 toPos = PlayerBoardInforDict[targetCellId].Cells2DPos;
 
+        _HexGrid.GetComponent<HexGrid>().FindPath(LastSelectingCellID, targetCellId,10);
+
         Vector3 targetWorldPos = new Vector3(
             PlayerBoardInforDict[targetCellId].Cells3DPos.x,
             PlayerBoardInforDict[targetCellId].Cells3DPos.y + 6.5f,
@@ -638,7 +640,7 @@ public class PlayerOperationManager : MonoBehaviour
     }
     private void ChooseEmptyCell(int cell)
     {
-        HexGrid.GetComponent<HexGrid>().GetCell(cell).EnableHighlight(Color.red);
+        _HexGrid.GetComponent<HexGrid>().GetCell(cell).EnableHighlight(Color.red);
     }
 
     //// 攻击单位(示例实现)
