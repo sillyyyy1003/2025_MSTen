@@ -8,7 +8,14 @@ using UnityEngine;
 /// </summary>
 public static class PieceFactory
 {
-    public static Piece CreatePiece(PieceDataSO data, Vector3 position, Team team)
+    /// <summary>
+    /// 駒を生成（プレイヤーIDで管理）
+    /// </summary>
+    /// <param name="data">駒のデータ</param>
+    /// <param name="position">生成位置</param>
+    /// <param name="playerID">所属するプレイヤーID</param>
+    /// <returns>生成された駒</returns>
+    public static Piece CreatePiece(PieceDataSO data, Vector3 position, int playerID)
     {
         if (data == null || data.piecePrefab == null)
         {
@@ -45,7 +52,7 @@ public static class PieceFactory
             return null;
         }
 
-        piece.Initialize(data, team);
+        piece.Initialize(data, playerID);
         return piece;
     }
 }
