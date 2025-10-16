@@ -271,15 +271,20 @@ PrefabInstance:
       propertyPath: m_Name
       value: MapReader
       objectReference: {fileID: 0}
+    - target: {fileID: 4128139145662238012, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
+        type: 3}
+      propertyPath: m_UiScaleMode
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4517708935386682577, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 337.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4517708935386682577, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 207
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4517708935386682577, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
         type: 3}
@@ -323,8 +328,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6874862486640017318, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
         type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 37
+      objectReference: {fileID: 0}
+    - target: {fileID: 6874862486640017318, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
+        type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -510.46
+      value: -390
       objectReference: {fileID: 0}
     - target: {fileID: 7423763628735222413, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
         type: 3}
@@ -855,7 +865,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isServer: 1
-  serverIP: 192.168.1.100
+  serverIP: 192.168.3.23
   port: 8888
   maxPlayers: 2
   playerName: Player
@@ -2191,8 +2201,6 @@ MonoBehaviour:
   chunkPrefab: {fileID: 100083073583928104, guid: b9cdec4e2737898499891c641ed27d35,
     type: 3}
   seed: 1234
-  currentPathFrom: {fileID: 0}
-  currentPathTo: {fileID: 0}
 --- !u!4 &1913528996
 Transform:
   m_ObjectHideFlags: 0
