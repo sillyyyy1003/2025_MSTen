@@ -28,8 +28,10 @@ public class MilitaryCard_t : MonoBehaviour
 	private bool isHovered = false;
 	private bool showDataPanel = false;
 
-	// 滑动起始与结束位置
-	private Vector2 panelHiddenPos;
+    private bool isChoosed = false;
+
+    // 滑动起始与结束位置
+    private Vector2 panelHiddenPos;
 	private Vector2 panelVisiblePos;
 
 	void Start()
@@ -95,13 +97,14 @@ public class MilitaryCard_t : MonoBehaviour
 	public void ShowPanel()
 	{
 		if (showDataPanel) return;
+        MilitaryCardManager_t.Instance.CloseAllCards();
 
-		showDataPanel = true;
+        showDataPanel = true;
 		dataPanel.SetActive(true);
 
-		StopAllCoroutines();
-		StartCoroutine(SlidePanelIn());
-	}
+        StartCoroutine(SlidePanelIn());
+
+    }
 
 	public void ClosePanel()
 	{
@@ -146,4 +149,6 @@ public class MilitaryCard_t : MonoBehaviour
 	{
 		return showDataPanel;
 	}
+
+
 }

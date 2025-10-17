@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2089176593000143440}
-  - component: {fileID: 2191602267963445818}
+  - component: {fileID: 7414540447789487892}
   m_Layer: 5
   m_Name: MilitaryCard_t
   m_TagString: Untagged
@@ -38,7 +38,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2191602267963445818
+--- !u!114 &7414540447789487892
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -47,15 +47,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 556326996573962142}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b5b3fa886ed47d4b922669cf0aa36ac, type: 3}
+  m_Script: {fileID: 11500000, guid: 7418b0ba0cbe06a4c9dff52f2411dd85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   militaryCardImage: {fileID: 297634395040350656}
   dataPanel: {fileID: 4831709853799725992}
   dataText_HpText: {fileID: 5787605562157022790}
   dataText_AttackText: {fileID: 295902979401150303}
-  hoverMoveDistance: 0
-  hoverMoveSpeed: 0
   panelSlideSpeed: 6
 --- !u!1 &1156493124876353147
 GameObject:
@@ -333,8 +331,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2191602267963445818}
-        m_TargetAssemblyTypeName: MilitaryCard, Assembly-CSharp
+      - m_Target: {fileID: 7414540447789487892}
+        m_TargetAssemblyTypeName: MilitaryCard_t, Assembly-CSharp
         m_MethodName: PanelEvent
         m_Mode: 1
         m_Arguments:

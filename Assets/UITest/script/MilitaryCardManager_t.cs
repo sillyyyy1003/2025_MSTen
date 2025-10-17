@@ -19,15 +19,34 @@ public class MilitaryCardManager_t : MonoBehaviour
 	[Header("Fake Player Data")]
 	public int playerCardCount = 5;
 
-	private List<MilitaryCard> cards = new List<MilitaryCard>();
+	private List<MilitaryCard_t> cards = new List<MilitaryCard_t>();
 	private List<SoliderData>  soliderDatas = new List<SoliderData>();
 
-	public int playerID { get; set; }	// 开局时赋予玩家ID
+	private float cardWidth = 1f;
+		 
+    public int playerID { get; set; }   // 开局时赋予玩家ID
 
-	void Start()
+    public static MilitaryCardManager_t Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
+        cardWidth = cardPrefab.transform.Find("Card").GetComponent<RectTransform>().sizeDelta.x;
+
+    }
+
+    void Start()
 	{
-		GenerateCards(playerCardCount);
-	}
+
+        GenerateCards(playerCardCount);
+
+    }
 
 	#region ---- 生成与销毁 ----
 
@@ -44,10 +63,10 @@ public class MilitaryCardManager_t : MonoBehaviour
 	{
 		int i = fakeIndex ?? cards.Count;
 		GameObject cardObj = Instantiate(cardPrefab, cardContainer);
-		MilitaryCard card = cardObj.GetComponent<MilitaryCard>();
+        MilitaryCard_t card = cardObj.GetComponent<MilitaryCard_t>();
 
 		RectTransform rect = cardObj.GetComponent<RectTransform>();
-		rect.anchoredPosition = startPosition + new Vector2(i * cardSpacing, 0);
+		rect.anchoredPosition = startPosition + new Vector2(i * (cardSpacing+cardWidth), 0);
 
 		// 如果有士兵数据则使用数据，否则使用默认值
 		if (soliderDatas.Count != 0)
@@ -137,12 +156,13 @@ public class MilitaryCardManager_t : MonoBehaviour
 		}
 	}
 
+
 	/// <summary>
 	/// 计算卡牌的基线位置（不随动画变化）
 	/// </summary>
 	Vector2 GetBasePosition(int index)
 	{
-		return startPosition + new Vector2(index * cardSpacing, 0f);
+        return startPosition + new Vector2(index * (cardSpacing + cardWidth), 0f);
 	}
 
 
@@ -203,4 +223,32 @@ public class MilitaryCardManager_t : MonoBehaviour
 		public int hp { get; set; }
 		public int attack { get; set; }
 	}
+
+    public void CloseAllCards()
+    {
+
+        for (int i = 0; i < cards.Count; i++)
+        {
+            var card = cards[i];
+            if (card == null) continue;
+
+            // 如果卡牌当前是展开的，就让它关闭
+            if (card.GetPanelOpen())
+            {
+				card.ClosePanel();
+            }
+
+            // 重置位置（回到默认位置）
+            RectTransform rect = card.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                Vector2 targetPos = GetBasePosition(i);
+                rect.anchoredPosition = targetPos;
+            }
+        }
+
+
+
+    }
+
 }
