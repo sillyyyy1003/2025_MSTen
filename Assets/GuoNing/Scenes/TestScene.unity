@@ -3718,20 +3718,20 @@ MonoBehaviour:
   jitterProbability: 0.25
   chunkSizeMin: 30
   chunkSizeMax: 100
-  landPercentage: 50
+  landPercentage: 95
   highRiseProbability: 0.25
   sinkProbability: 0.2
-  waterLevel: 3
+  waterLevel: 1
   elevationMinimum: -2
-  elevationMaximum: 8
-  mapBorderX: 5
-  mapBorderZ: 5
+  elevationMaximum: 1
+  mapBorderX: 0
+  mapBorderZ: 0
   regionCount: 1
   regionBorder: 5
   erosionPercentage: 50
   seed: 0
   useFixedSeed: 0
-  riverPercentage: 17
+  riverPercentage: 10
   evaporationFactor: 0.5
   precipitationFactor: 0.25
   runoffFactor: 0.25

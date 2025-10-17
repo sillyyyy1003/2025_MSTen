@@ -370,12 +370,6 @@ public class HexCell : MonoBehaviour
 		}
 	}
 
-
-	
-
-
-
-
 	/// <summary>
 	/// 是否被有围墙
 	/// </summary>
@@ -876,7 +870,7 @@ public class HexCell : MonoBehaviour
 			(HexMetrics.SampleNoise(position).y * 2f - 1f) *
 			HexMetrics.elevationPerturbStrength;
 		transform.localPosition = position;
-
+		
 		Vector3 uiPosition = uiRect.localPosition;
 		uiPosition.z = -position.y;
 		uiRect.localPosition = uiPosition;

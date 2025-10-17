@@ -44,7 +44,7 @@ public class HexMapGenerator : MonoBehaviour
 	[Header("LandElevation")]
 	[Range(-4, 0)]
 	public int elevationMinimum = -2;           // 地形最低海拔
-	[Range(6, 10)]
+	[Range(1, 10)]
 	public int elevationMaximum = 8;            // 地形最高海拔
 
 	[Header("LandBoard")]

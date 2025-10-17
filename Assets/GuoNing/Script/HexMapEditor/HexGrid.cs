@@ -142,7 +142,6 @@ public class HexGrid : MonoBehaviour
     public HexCell GetCell(int id)
     {
 		return cells[id];
-
     }
 
 
@@ -271,16 +270,21 @@ public class HexGrid : MonoBehaviour
 
 	public void Load(BinaryReader reader, int header)
 	{
+
 		ClearPath();
 		int x = 20, z = 15;
 		if (header >= 1)
 		{
+			Debug.Log(header);
 			x = reader.ReadInt32();
 			z = reader.ReadInt32();
 		}
-
+		Debug.Log(cellCountX);
+		Debug.Log(cellCountZ);
 		if (x != cellCountX || z != cellCountZ)
 		{
+
+
 			if (!CreateMap(x, z))
 			{
 				return;
@@ -447,7 +451,9 @@ public class HexGrid : MonoBehaviour
 				{
 					neighbor.SearchPhase = searchFrontierPhase;
 					neighbor.Distance = distance;
+					/*
 					neighbor.SetLabel(turn.ToString());
+					*/
 					neighbor.PathFrom = current;
 					neighbor.SearchHeuristic =
 						neighbor.coordinates.DistanceTo(toCell.coordinates);
@@ -457,7 +463,9 @@ public class HexGrid : MonoBehaviour
 				{
 					int oldPriority = neighbor.SearchPriority;
 					neighbor.Distance = distance;
+					/*
 					neighbor.SetLabel(turn.ToString());
+					*/
 					neighbor.PathFrom = current;
 					searchFrontier.Change(neighbor, oldPriority);
 				}
