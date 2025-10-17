@@ -206,17 +206,17 @@ public class PlayerOperationManager : MonoBehaviour
                 SelectingUnit = null;
 
                 // 检查是否是空格子
-                if (!playerDataManager.IsPositionOccupied(clickPos))
+                if (!playerDataManager.IsPositionOccupied(clickPos)&& _HexGrid.IsValidDestination(_HexGrid.GetCell(ClickCellid)))
                 {
                     ChooseEmptyCell(ClickCellid);
                     selectCellID = ClickCellid;
                     SelectedEmptyCellID = ClickCellid; // 保存选中的空格子
-                    Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
+                    //Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
                 }
                 else
                 {
                     SelectedEmptyCellID = -1; // 清除选择
-                    Debug.Log("该格子已有单位");
+                    Debug.Log("该格子无法创建单位");
                 }
             }
         }
