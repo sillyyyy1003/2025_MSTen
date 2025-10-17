@@ -16,7 +16,7 @@ public class Pope : Piece
     // イベント
     public event Action OnPopeDeath;
 
-    public override void Initialize(PieceDataSO data, Team team)
+    public override void Initialize(PieceDataSO data, int playerID)
     {
         popeData = data as PopeDataSO;
         if (popeData == null)
@@ -25,7 +25,7 @@ public class Pope : Piece
             return;
         }
 
-        base.Initialize(data, team);
+        base.Initialize(data, playerID);
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public class Pope : Piece
             return false;
         }
 
-        if (targetPiece.OwnerTeam != ownerTeam)
+        if (targetPiece.CurrentPID != currentPID)
         {
             Debug.LogWarning("味方駒とのみ位置を交換できます");
             return false;
@@ -52,10 +52,11 @@ public class Pope : Piece
             return false;
         }
 
+        ///今後ターン数を使って計算へ移行
         // クールタイムチェック
-        if (Time.time - lastSwapTime < popeData.swapCooldown)
+        if (Time.time - lastSwapTime < popeData.swapCooldown[UpgradeLevel])
         {
-            Debug.LogWarning($"クールタイム中です。残り: {popeData.swapCooldown - (Time.time - lastSwapTime):F1}秒");
+            Debug.LogWarning($"クールタイム中です。残り: {popeData.swapCooldown[UpgradeLevel] - (Time.time - lastSwapTime):F1}秒");
             return false;
         }
 
@@ -72,11 +73,12 @@ public class Pope : Piece
 
     /// <summary>
     /// 残りクールタイムを取得
+    /// ここもターン数へ移行待ち
     /// </summary>
     public float GetRemainingCooldown()
     {
         float elapsed = Time.time - lastSwapTime;
-        return Mathf.Max(0, popeData.swapCooldown - elapsed);
+        return Mathf.Max(0, popeData.swapCooldown[UpgradeLevel] - elapsed);
     }
 
     /// <summary>
@@ -85,6 +87,28 @@ public class Pope : Piece
     public bool CanSwap()
     {
         return GetRemainingCooldown() <= 0;
+    }
+
+    /// <summary>
+    /// アップグレード効果を適用
+    /// </summary>
+    protected override void ApplyUpgradeEffects()
+    {
+        if (popeData == null) return;
+
+        // レベルに応じてHP、AP、攻撃力を更新
+        float newMaxHP = popeData.GetMaxHPByLevel(upgradeLevel);
+        float newMaxAP = popeData.GetMaxAPByLevel(upgradeLevel);
+
+        // 現在のHPとAPの割合を保持
+        float hpRatio = currentHP / currentMaxHP;
+        float apRatio = currentAP / currentMaxAP;
+
+        // 新しい最大値に基づいて現在値を更新
+        currentHP = newMaxHP * hpRatio;
+        
+
+        Debug.Log($"教皇のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}");
     }
 
     /// <summary>

@@ -5,6 +5,7 @@ using System.IO;
 
 public class HexMapReader : MonoBehaviour
 {
+	const int mapFileVersion = 5;
 	public HexGrid hexGrid;
 	public string mapFileName = "Example.map";
 
@@ -21,7 +22,7 @@ public class HexMapReader : MonoBehaviour
 		using (BinaryReader reader = new BinaryReader(File.OpenRead(path)))
 		{
 			int header = reader.ReadInt32();
-			if (header <= 1)
+			if (header <= mapFileVersion)
 			{
 				hexGrid.Load(reader, header);
 

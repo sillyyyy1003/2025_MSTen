@@ -5,6 +5,8 @@ using System.IO;
 
 public class SaveLoadMenu : MonoBehaviour
 {
+	const int mapFileVersion = 4;
+
 	public Text menuLabel, actionButtonLabel;
 	public HexGrid hexGrid;
 	public InputField nameInput;
@@ -104,15 +106,9 @@ public class SaveLoadMenu : MonoBehaviour
 	}
 	void Save(string path)
 	{
-		
-		using (
-			BinaryWriter writer =
-			new BinaryWriter(File.Open(path, FileMode.Create))
-		)
-		{
-			writer.Write(1);
-			hexGrid.Save(writer);
-		}
+		using var writer = new BinaryWriter(File.Open(path, FileMode.Create));
+		writer.Write(mapFileVersion);
+		hexGrid.Save(writer);
 	}
 
 	void Load(string path)
@@ -122,20 +118,19 @@ public class SaveLoadMenu : MonoBehaviour
 			Debug.LogError("File does not exist " + path);
 			return;
 		}
-		using (BinaryReader reader = new BinaryReader(File.OpenRead(path)))
-		{
-			int header = reader.ReadInt32();
-			if (header <= 1)
-			{
-				hexGrid.Load(reader, header);
 
-                // 25.10.10 RI 删除Camera相关避免loadMap出错
-                //HexMapCamera.ValidatePosition();
-            }
-            else
-			{
-				Debug.LogWarning("Unknown map format " + header);
-			}
+		using var reader = new BinaryReader(File.OpenRead(path));
+		int header = reader.ReadInt32();
+
+
+		if (header <= mapFileVersion)
+		{
+			hexGrid.Load(reader, header);
+		}
+		else
+		{
+			Debug.LogWarning("Unknown map format " + header);
 		}
 	}
+
 }

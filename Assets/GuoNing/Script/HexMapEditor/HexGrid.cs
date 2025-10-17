@@ -4,6 +4,7 @@ using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 
 
@@ -27,8 +28,9 @@ public class HexGrid : MonoBehaviour
 	HexGridChunk[] chunks;
 	HexCellPriorityQueue searchFrontier;    // 搜索优先队列
 
-	HexCell currentPathFrom, currentPathTo;	// 当前搜索起点和终点
-	bool currentPathExists;	// 是否存在路径
+	public HexCell currentPathFrom, currentPathTo;	// 当前搜索起点和终点
+	bool currentPathExists; // 是否存在路径
+
 
 	void Start()
 	{
@@ -288,7 +290,7 @@ public class HexGrid : MonoBehaviour
 
 		for (int i = 0; i < cells.Length; i++)
 		{
-			cells[i].Load(reader);
+			cells[i].Load(reader, header);
 			
 			// 该格子的类型，是否可通过，是否可占领的信息
 			CellInfo cellInfo = new CellInfo();
@@ -333,16 +335,7 @@ public class HexGrid : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// 寻找从某个单元格到另一个单元格的路径
-	/// </summary>
-	/// <param name="fromCell">起始单元格</param>
-	/// <param name="toCell">目标单元格</param>
-	public void FindPath(HexCell fromCell, HexCell toCell)
-	{
-		StopAllCoroutines();
-		StartCoroutine(Search(fromCell, toCell));
-	}
+
 
 	public void FindPath(HexCell fromCell, HexCell toCell, int speed)
 	{
@@ -360,6 +353,12 @@ public class HexGrid : MonoBehaviour
 		}
 		return null;
 	}
+
+	public HexCell GetCell(int xOffset, int zOffset)
+	{
+		return cells[xOffset + zOffset * cellCountX];
+	}
+
 
 
 	/// <summary>
@@ -396,7 +395,7 @@ public class HexGrid : MonoBehaviour
 				return true;
 			}
 
-			int currentTurn =current.Distance / speed;
+			int currentTurn = (current.Distance - 1) / speed;
 
 			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
 			{
@@ -438,7 +437,7 @@ public class HexGrid : MonoBehaviour
 				}
 
 				int distance = current.Distance + moveCost;
-				int turn = distance / speed;
+				int turn = (distance - 1) / speed;
 				if (turn > currentTurn)
 				{
 					distance = turn * speed + moveCost;
@@ -502,7 +501,7 @@ public class HexGrid : MonoBehaviour
 			HexCell current = currentPathTo;
 			while (current != currentPathFrom)
 			{
-				int turn = current.Distance / speed;
+				int turn = (current.Distance - 1) / speed;
 				current.SetLabel(turn.ToString());
 				current.EnableHighlight(Color.white);
 				current = current.PathFrom;
@@ -512,7 +511,7 @@ public class HexGrid : MonoBehaviour
 		currentPathTo.EnableHighlight(Color.red);
 	}
 
-	void ClearPath()
+	public void ClearPath()
 	{
 		if (currentPathExists)
 		{
@@ -534,107 +533,49 @@ public class HexGrid : MonoBehaviour
 		currentPathFrom = currentPathTo = null;
 	}
 
+
 	/// <summary>
-	/// 寻找从某个单元格到另一个单元格的距离
+	/// 返回单元格路径
 	/// </summary>
-	/// <param name="fromCell">起始单元格</param>
-	/// <param name="toCell">目标单元格</param>
 	/// <returns></returns>
-	IEnumerator Search(HexCell fromCell, HexCell toCell)
+	public List<HexCell> GetPath()
 	{
-		if (searchFrontier == null)
+		if (!currentPathExists)
 		{
-			searchFrontier = new HexCellPriorityQueue();
+			return null;
 		}
-		else
+		List<HexCell> path = ListPool<HexCell>.Get();
+		for (HexCell c = currentPathTo; c != currentPathFrom; c = c.PathFrom)
 		{
-			searchFrontier.Clear();
+			path.Add(c);
 		}
-
-		//广度优先搜索
-		for (int i = 0; i < cells.Length; i++)
-		{
-			cells[i].Distance = int.MaxValue;
-			cells[i].DisableHighlight();//禁用高亮
-		}
-
-		fromCell.EnableHighlight(Color.blue);// 起点高亮 蓝
-		toCell.EnableHighlight(Color.red);	// 重点高亮 红
-
-		WaitForSeconds delay = new WaitForSeconds(1 / 60f);
-		fromCell.Distance = 0;
-		searchFrontier.Enqueue(fromCell);
-
-		while (searchFrontier.Count > 0)
-		{
-			yield return delay;
-			HexCell current = searchFrontier.Dequeue();
-
-			//当前单元格是目标单元格 中止搜索
-			if (current == toCell)
-			{
-				current = current.PathFrom;
-				while (current != fromCell)
-				{
-					current.EnableHighlight(Color.white);	//高亮路径 白色
-					current = current.PathFrom;
-				}
-			}
-
-			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
-			{
-				HexCell neighbor = current.GetNeighbor(d);
-				
-				if (neighbor == null)
-				{
-					continue;
-				}
-
-				// 水域不考虑
-				if (neighbor.IsUnderwater)
-				{
-					continue;
-				}
-
-				// 山地不考虑
-				HexEdgeType edgeType = current.GetEdgeType(neighbor);
-				if (edgeType == HexEdgeType.Cliff)
-				{
-					continue;
-				}
-
-				int distance = current.Distance;
-				if (current.HasRoadThroughEdge(d))
-				{
-					distance += 1;
-				}
-				else
-				{
-					// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
-					distance += edgeType == HexEdgeType.Flat ? 1 :2;
-					int ForestEffecetor=1, FarmEffecetor=1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
-
-					distance += neighbor.ForestLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
-					            neighbor.PlantLevel * PlantEffecetor;
-				}
-
-				if (neighbor.Distance == int.MaxValue)
-				{
-					neighbor.Distance = distance;
-					neighbor.PathFrom = current;
-					neighbor.SearchHeuristic =
-						neighbor.coordinates.DistanceTo(toCell.coordinates);
-					searchFrontier.Enqueue(neighbor);
-				}
-				else if (distance < neighbor.Distance)
-				{
-					int oldPriority = neighbor.SearchPriority;
-					neighbor.Distance = distance;
-					neighbor.PathFrom = current;
-					searchFrontier.Change(neighbor, oldPriority);
-				}
-
-			}
-		}
+		path.Add(currentPathFrom);
+		path.Reverse();
+		return path;
 	}
+
+
+	/// <summary>
+	/// 返回二维数列
+	/// </summary>
+	/// <returns></returns>
+	public List<HexCoordinates> GetPathCoordinate()
+	{
+		// RI test
+		if (!currentPathExists)
+		{
+			return null;
+		}
+
+		List<HexCoordinates> coordinates = ListPool<HexCoordinates>.Get();
+		for (HexCell c = currentPathTo; c != currentPathFrom; c = c.PathFrom)
+		{
+			coordinates.Add(c.coordinates);
+		}
+		coordinates.Add(currentPathFrom.coordinates);
+		coordinates.Reverse();
+		return coordinates;
+	}
+
+
 }

@@ -16,9 +16,7 @@ public class Missionary : Piece
     // 占領状態
     private bool isOccupying = false;
 
-    // 変換した駒の管理
-    private System.Collections.Generic.List<ConvertedPieceInfo> convertedPieces =
-        new System.Collections.Generic.List<ConvertedPieceInfo>();
+    // 変換した駒の管理はGMに任せた
 
     // イベント
     public event Action<bool> OnOccupyCompleted; // 占領完了(成功/失敗)
@@ -28,7 +26,7 @@ public class Missionary : Piece
     public bool IsOccupying => isOccupying;
     public int SkillLevel => currentSkillLevel;
 
-    public override void Initialize(PieceDataSO data, Team team)
+    public override void Initialize(PieceDataSO data, int playerID)
     {
         missionaryData = data as MissionaryDataSO;
         if (missionaryData == null)
@@ -37,7 +35,7 @@ public class Missionary : Piece
             return;
         }
 
-        base.Initialize(data, team);
+        base.Initialize(data, playerID);
     }
 
     #region スキルレベル管理
@@ -48,7 +46,7 @@ public class Missionary : Piece
     public void SetSkillLevel(int level)
     {
         int oldLevel = currentSkillLevel;
-        currentSkillLevel = Mathf.Clamp(level, 1, missionaryData.maxSkillLevel);
+        currentSkillLevel = Mathf.Clamp(level, 1, missionaryData.convertFarmerChanceByLevel.Length);
 
         if (oldLevel != currentSkillLevel)
         {
@@ -62,40 +60,58 @@ public class Missionary : Piece
     /// </summary>
     public void LevelUp()
     {
-        if (currentSkillLevel < missionaryData.maxSkillLevel)
+        if (currentSkillLevel < missionaryData.convertFarmerChanceByLevel.Length)
         {
             SetSkillLevel(currentSkillLevel + 1);
         }
     }
 
     /// <summary>
-    /// スキルレベルに基づく占領成功率を計算
+    /// アップグレードレベルに基づく自領地占領成功率を取得
     /// </summary>
-    public float GetOccupySuccessRate()
+    public float GetOccupyEmptySuccessRate()
     {
-        float rate = missionaryData.baseOccupySuccessRate +
-                     (currentSkillLevel - 1) * missionaryData.skillSuccessRateBonus;
-        return Mathf.Clamp01(rate); // 0〜1の範囲にクランプ
+        return missionaryData.GetOccupyEmptySuccessRate(upgradeLevel);
     }
 
     /// <summary>
-    /// スキルレベルに基づく攻撃時変換確率を計算
+    /// アップグレードレベルに基づく敵領地占領成功率を取得
     /// </summary>
-    public float GetConversionAttackChance()
+    public float GetOccupyEnemySuccessRate()
     {
-        float chance = missionaryData.baseConversionAttackChance +
-                       (currentSkillLevel - 1) * missionaryData.skillSuccessRateBonus;
-        return Mathf.Clamp01(chance);
+        return missionaryData.GetOccupyEnemySuccessRate(upgradeLevel);
     }
 
     /// <summary>
-    /// スキルレベルに基づく防御時変換確率を計算
+    /// ターゲットの駒の種類に応じた魅惑成功率を取得
     /// </summary>
-    public float GetConversionDefenseChance()
+    public float GetConversionChanceByPieceType(Piece target)
     {
-        float chance = missionaryData.baseConversionDefenseChance +
-                       (currentSkillLevel - 1) * missionaryData.skillSuccessRateBonus;
-        return Mathf.Clamp01(chance);
+        if (target is Missionary)
+        {
+            return missionaryData.GetConvertMissionaryChance(upgradeLevel);
+        }
+        else if (target is Farmer)
+        {
+            return missionaryData.GetConvertFarmerChance(upgradeLevel);
+        }
+        else if (target is MilitaryUnit)
+        {
+            return missionaryData.GetConvertMilitaryChance(upgradeLevel);
+        }
+        else
+        {
+            // 教皇や他の駒タイプの場合は0%（魅惑不可）
+            return 0f;
+        }
+    }
+
+    /// <summary>
+    /// 魅惑敵性スキルを持っているか（升級1以降）
+    /// </summary>
+    public bool HasAntiConversionSkill()
+    {
+        return missionaryData.HasAntiConversionSkill(upgradeLevel);
     }
 
     #endregion
@@ -130,8 +146,9 @@ public class Missionary : Piece
         isOccupying = true;
         ChangeState(PieceState.Building); // 占領中状態
 
-        // 占領判定（スキルレベルに応じた成功率）
-        float successRate = GetOccupySuccessRate();
+        // 占領判定（アップグレードレベルに応じた成功率）
+        // TODO: 領地タイプに応じてGetOccupyEmptySuccessRate()かGetOccupyEnemySuccessRate()を使い分ける
+        float successRate = GetOccupyEmptySuccessRate();
         bool success = UnityEngine.Random.value < successRate;
 
         if (success)
@@ -172,7 +189,7 @@ public class Missionary : Piece
             return false;
         }
 
-        if (target.OwnerTeam == ownerTeam)
+        if (target.CurrentPID == currentPID)
         {
             Debug.LogWarning("味方には攻撃できません");
             return false;
@@ -186,16 +203,27 @@ public class Missionary : Piece
 
         ChangeState(PieceState.Attacking);
 
-        // 変換判定（スキルレベルに応じた成功率）
-        float conversionChance = GetConversionAttackChance();
+        // 変換判定（ターゲットの種類に応じた成功率）
+        float conversionChance = GetConversionChanceByPieceType(target);
         if (UnityEngine.Random.value < conversionChance)
         {
-            ConvertEnemy(target);
-            Debug.Log($"{target.Data.pieceName}を自軍に変換しました！（成功率: {conversionChance * 100:F1}%）");
+            // 升級1以上の宣教師・十字軍に対しては即死
+            bool shouldInstantKill = target.UpgradeLevel >= 1 && (target is Missionary || target is MilitaryUnit);
+
+            if (shouldInstantKill)
+            {
+                Debug.Log($"魅惑成功！{target.Data.pieceName}（升級{target.UpgradeLevel}）は即死しました！（成功率: {conversionChance * 100:F0}%）");
+                target.TakeDamage(target.CurrentHP, this); // 即死ダメージ
+            }
+            else
+            {
+                ConvertEnemy(target);
+                Debug.Log($"{target.Data.pieceName}を自軍に変換しました！（成功率: {conversionChance * 100:F0}%）");
+            }
         }
         else
         {
-            Debug.Log($"変換失敗（成功率: {conversionChance * 100:F1}%）");
+            Debug.Log($"変換失敗（成功率: {conversionChance * 100:F0}%）");
         }
 
         ChangeState(PieceState.Idle);
@@ -211,15 +239,32 @@ public class Missionary : Piece
     /// </summary>
     public override void TakeDamage(float damage, Piece attacker = null)
     {
-        // 特殊防御判定（スキルレベルに応じた成功率）
-        if (attacker != null && attacker.OwnerTeam != ownerTeam)
+        if (HasAntiConversionSkill() && attacker is Missionary)
         {
-            float defenseChance = GetConversionDefenseChance();
+            Debug.Log("魅惑敵性スキル発動：敵の変換を無効化しました");
+            base.TakeDamage(damage, attacker);
+            return;
+        }
+
+        // 特殊防御判定（攻撃者の種類に応じた成功率）
+        if (attacker != null && attacker.CurrentPID != currentPID)
+        {
+            float defenseChance = GetConversionChanceByPieceType(attacker);
             if (UnityEngine.Random.value < defenseChance)
             {
-                ConvertEnemy(attacker);
-                Debug.Log($"防御時に{attacker.Data.pieceName}を自軍に変換しました！（成功率: {defenseChance * 100:F1}%）");
-                // 変換成功時はダメージを受けない
+                // 升級1以上の宣教師・十字軍に対しては即死
+                bool shouldInstantKill = attacker.UpgradeLevel >= 1 && (attacker is Missionary || attacker is MilitaryUnit);
+
+                if (shouldInstantKill)
+                {
+                    Debug.Log($"防御時魅惑成功！{attacker.Data.pieceName}（升級{attacker.UpgradeLevel}）は即死しました！（成功率: {defenseChance * 100:F0}%）");
+                    attacker.TakeDamage(attacker.CurrentHP, this); // 即死ダメージ
+                }
+                else
+                {
+                    ConvertEnemy(attacker);
+                    Debug.Log($"防御時に{attacker.Data.pieceName}を自軍に変換しました！（成功率: {defenseChance * 100:F0}%）");
+                }
                 return;
             }
         }
@@ -237,39 +282,74 @@ public class Missionary : Piece
 
     private void ConvertEnemy(Piece enemy)
     {
-        // 元のチームを保存
-        Team originalTeam = enemy.OwnerTeam;
+        // 元のプレイヤーIDを保存
+        int originalPlayerID = enemy.CurrentPID;
 
-        // TODO: 実際のチーム変更処理（何処に陣営変更関数を実装するかはまた後日）
-        // enemy.ChangeTeam(ownerTeam);
+        ///ここでもう一度相手駒の職業で判定する必要はない。
+        //↓switch式の練習としては良かったのだが↓
+        //float convertSuccessRate = enemy.Data switch
+        //{
+        //    MissionaryDataSO => missionaryData.GetConvertMissionaryChance(UpgradeLevel),
+        //    MilitaryDataSO => missionaryData.GetConvertMilitaryChance(UpgradeLevel),
+        //    FarmerDataSO => missionaryData.GetConvertFarmerChance(UpgradeLevel),
+        //    _ => default
+        //};
+
+
+        // プレイヤーIDを変更（陣営変更）
+        enemy.ChangePID(currentPID,this);
 
         // 変換情報を記録
         var convertInfo = new ConvertedPieceInfo
         {
             convertedPiece = enemy,
-            originalTeam = originalTeam,
-            conversionTime = Time.time
+            originalPlayerID = originalPlayerID,
+            convertedTurn = Time.time //これからGMから現在のターンを取得。
         };
-        convertedPieces.Add(convertInfo);
 
-        // 一定時間後に敵に戻すコルーチンを開始
-        StartCoroutine(RevertConversionCoroutine(convertInfo));
-
-        OnPieceConverted?.Invoke(enemy, missionaryData.conversionDuration);
+        OnPieceConverted?.Invoke(enemy, missionaryData.conversionTurnDuration[UpgradeLevel]);
     }
 
-    private IEnumerator RevertConversionCoroutine(ConvertedPieceInfo convertInfo)
+
+    #endregion
+
+    #region アップグレード管理
+
+    /// <summary>
+    /// アップグレード効果を適用
+    /// </summary>
+    protected override void ApplyUpgradeEffects()
     {
-        yield return new WaitForSeconds(missionaryData.conversionDuration);
+        if (missionaryData == null) return;
 
-        if (convertInfo.convertedPiece != null && convertInfo.convertedPiece.IsAlive)
+        // レベルに応じてHP、AP、攻撃力を更新
+        float newMaxHP = missionaryData.GetMaxHPByLevel(upgradeLevel);
+        float newMaxAP = missionaryData.GetMaxAPByLevel(upgradeLevel);
+
+        // 現在のHPとAPの割合を保持
+        float hpRatio = currentHP / currentMaxHP;
+        float apRatio = currentAP / currentMaxAP;
+
+        // 新しい最大値に基づいて現在値を更新
+        currentHP = newMaxHP * hpRatio;
+        
+
+        // 現在のアップグレードレベルに応じたスキル効果を取得
+        float occupyOwnRate = GetOccupyEmptySuccessRate();
+        float occupyEnemyRate = GetOccupyEnemySuccessRate();
+        float convertMissionaryChance = missionaryData.GetConvertMissionaryChance(upgradeLevel);
+        float convertFarmerChance = missionaryData.GetConvertFarmerChance(upgradeLevel);
+        float convertMilitaryChance = missionaryData.GetConvertMilitaryChance(upgradeLevel);
+
+        Debug.Log($"宣教師のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}");
+        Debug.Log($"自領地占領成功率: {occupyOwnRate * 100:F0}%, 敵領地占領成功率: {occupyEnemyRate * 100:F0}%");
+        Debug.Log($"魅惑成功率 - 宣教師: {convertMissionaryChance * 100:F0}%, 信徒: {convertFarmerChance * 100:F0}%, 十字軍: {convertMilitaryChance * 100:F0}%");
+
+        // 新しいスキルのログ
+        if (upgradeLevel == 1)
         {
-            // TODO: チームを元に戻す
-            // convertInfo.convertedPiece.ChangeTeam(convertInfo.originalTeam);
-            Debug.Log($"{convertInfo.convertedPiece.Data.pieceName}が元のチームに戻りました");
+            Debug.Log("新スキル獲得: 魅惑敵性（敵の宣教師による変換を無効化）");
         }
-
-        convertedPieces.Remove(convertInfo);
     }
 
     #endregion
@@ -279,17 +359,9 @@ public class Missionary : Piece
     protected override void Die()
     {
         ///判定は瞬間で行われる為キャンセル一説がなくなった↓
-        // 占領中の場合はキャンセル
-        //if (isOccupying)
-        //{
-      
-        //}
 
         ///宣教師が死んでも変換したコマは規定ターン数経たないと元陣営に
         ///復帰しない
-        
-    //これいるのかな↓
-        convertedPieces.Clear();
 
         base.Die();
     }
@@ -297,12 +369,12 @@ public class Missionary : Piece
     #endregion
 
     /// <summary>
-    /// 変換した駒の情報を保持する構造体（※今現在使えない）
+    /// 変換した駒の情報を保持する構造体
     /// </summary>
     private class ConvertedPieceInfo
     {
         public Piece convertedPiece;
-        public Team originalTeam;
-        public float conversionTime;
+        public int originalPlayerID;
+        public float convertedTurn;
     }
 }
