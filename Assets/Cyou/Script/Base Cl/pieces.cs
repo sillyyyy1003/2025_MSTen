@@ -12,6 +12,7 @@ namespace GamePieces
     public abstract class Piece : VisualGameObject
     {
         [SerializeField] protected PieceDataSO pieceData;
+        public DemoUITest GM;
 
         // ===== 実行時の状態 =====
         protected float currentMaxHP;
@@ -24,10 +25,28 @@ namespace GamePieces
         protected int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2、3:升級3
 
 
+        /// <summary>
+        /// 変換した駒の情報を保持する構造体
+        /// </summary>
+        public struct ConvertedPieceInfo
+        {
+            public Piece convertedPiece;
+            public int originalPlayerID;
+            public float convertedTurn;
+
+        }
+
+
 
         // ===== イベント =====
+
+        //GameManagerとの連絡用
+        public static event Action<Piece, Piece> OnAnyCharmed;    // グローバルイベント
+        public static event Action<Piece> OnAnyUncharmed;         // グローバルイベント
+
         public event Action<Piece> OnPieceDeath;
         public event Action<Piece,Piece> OnCharmed;//(魅惑された駒、魅惑した駒)
+        public event Action<Piece> OnUncharmed;//魅惑状態が解除して元の陣営に戻った駒
         public event Action<float, float> OnHPChanged;
         public event Action<float, float> OnAPChanged;
         public event Action<PieceState, PieceState> OnStateChanged;
@@ -58,22 +77,57 @@ namespace GamePieces
 
             currentMaxHP = data.maxHPByLevel[0];
             currentHP = currentMaxHP;
+            if (CurrentHP <= 0)
+                Debug.LogError($"{data.pieceName}のHP初期値定義が0以下です！");
             currentMaxAP = data.maxAPByLevel[0];
             currentAP = currentMaxAP;
+            if (CurrentAP <= 0)
+                Debug.LogError($"{data.pieceName}のAP初期値定義が0以下です！");
+
 
             SetupComponents();
-            StartCoroutine(ActionPointRecoveryCoroutine());
+            //StartCoroutine(ActionPointRecoveryCoroutine());
         }
 
         /// <summary>
         /// プレイヤーIDを変更（陣営変更）
+        /// 変更なので勿論元戻りも含まれている
         /// </summary>
         /// <param name="newPlayerID">新しいプレイヤーID</param>
-        public virtual void ChangePID(int newPlayerID,Piece charmer=null)
+        public virtual void ChangePID(int newPlayerID, int charmTurns=0,Piece charmer=null)
         {
             currentPID = newPlayerID;
-            OnCharmed?.Invoke(this,charmer);
-            Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
+            if (newPlayerID != OriginalPID)
+            {
+                OnCharmed?.Invoke(this, charmer);
+                Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
+            }
+            else if(newPlayerID==OriginalPID)
+            {
+                OnUncharmed?.Invoke(this);
+                Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}に復帰しました。");
+            }
+
+            if(charmTurns>0)
+                StartCoroutine(RevertCharmAfterTurns(charmTurns,OriginalPID));
+
+
+        }
+
+        private IEnumerator RevertCharmAfterTurns(int charmTurns,int originalPID)
+        {
+            int remainingTurns=charmTurns;
+            int endTurn = remainingTurns + DemoUITest.GetTurn();//魅惑が解除されるターンの数字
+
+            while (remainingTurns > 0)
+            {
+                yield return new WaitUntil(() => DemoUITest.GetTurn() >= endTurn);//GameManagerからターンの終了宣告を貰う
+                    remainingTurns--;
+            }
+            
+            currentPID = originalPID;
+            OnUncharmed?.Invoke(this);
+            Debug.Log($"{OriginalPID}の駒{this.pieceData.pieceName}の魅惑が解けました");
         }
 
         protected virtual void SetupComponents()
@@ -93,7 +147,7 @@ namespace GamePieces
             {
                 if (currentAP < currentMaxAP && currentState != PieceState.InBuilding)
                 {
-                    ModifyAP(pieceData.aPRecoveryRate * Time.deltaTime);
+                    ModifyAP(pieceData.aPRecoveryRate * Time.deltaTime);//ターン数へ移行
                 }
                 yield return null;
             }
@@ -200,7 +254,8 @@ namespace GamePieces
         {
             ChangeState(PieceState.Dead);
             OnPieceDeath?.Invoke(this);
-            StartCoroutine(DeathAnimation());
+            Destroy(gameObject);
+            //StartCoroutine(DeathAnimation());//死亡アニメーションも一応
         }
         
         protected virtual IEnumerator DeathAnimation()
