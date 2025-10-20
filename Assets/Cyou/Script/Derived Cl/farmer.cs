@@ -11,12 +11,10 @@ public class Farmer : Piece
 {
     private FarmerDataSO farmerData;
     private Building currentBuilding; //現在在籍中の建物
-    private int currentSkillLevel = 1; // 現在のスキルレベル
 
-    // プロパティ
-    public int SkillLevel => currentSkillLevel;
 
-    public override void Initialize(PieceDataSO data, Team team)
+
+    public override void Initialize(PieceDataSO data, int playerID)
     {
         farmerData = data as FarmerDataSO;
         if (farmerData == null)
@@ -25,7 +23,7 @@ public class Farmer : Piece
             return;
         }
 
-        base.Initialize(data, team);
+        base.Initialize(data, playerID);
     }
 
     /// <summary>
@@ -33,7 +31,7 @@ public class Farmer : Piece
     /// </summary>
     public void SetSkillLevel(int level)
     {
-        currentSkillLevel = Mathf.Clamp(level, 1, farmerData.maxSkillLevel);
+        upgradeLevel = Mathf.Clamp(level, 1, farmerData.maxAPByLevel.Length);
     }
 
     /// <summary>
@@ -41,19 +39,31 @@ public class Farmer : Piece
     /// </summary>
     public void LevelUp()
     {
-        if (currentSkillLevel < farmerData.maxSkillLevel)
+        if (UpgradeLevel < farmerData.maxAPByLevel.Length)
         {
-            currentSkillLevel++;
+            upgradeLevel++;
         }
     }
 
     /// <summary>
-    /// 生産倍率を取得（スキルレベルに基づく）
+    /// AP消費し他駒を回復するスキル
     /// </summary>
-    public float GetProductionMultiplier()
+    public void Sacrifice(Piece target)
     {
-        return 1f + (currentSkillLevel - 1) * farmerData.skillProductionBonus;
+        if (currentState==PieceState.Idle&&target.IsAlive)
+        {
+            currentAP--;
+            target.Heal(farmerData.maxSacrificeLevel[UpgradeLevel]);
+        }
     }
+
+
+
+
+
+    /// <summary>
+    /// 生産倍率を取得（スキルレベルに基づく）←（廃止）
+    /// </summary>
 
     /// <summary>
     /// 建物を建築（仮）
@@ -106,6 +116,8 @@ public class Farmer : Piece
 
     /// <summary>
     /// 既存の建築中建物の建築を継続
+    /// 複数の農民を選択してこれを実行させることが必要だと思うが
+    /// それはGMに任せる
     /// </summary>
     public bool ContinueConstruction(Building building)
     {
@@ -193,4 +205,40 @@ public class Farmer : Piece
             gameObject.SetActive(true);
         }
     }
+
+    #region アップグレード管理
+
+    /// <summary>
+    /// アップグレード効果を適用
+    /// </summary>
+    protected override void ApplyUpgradeEffects()
+    {
+        if (farmerData == null) return;
+
+        // レベルに応じてHP、AP、攻撃力を更新
+        float newMaxHP = farmerData.GetMaxHPByLevel(upgradeLevel);
+        float newMaxAP = farmerData.GetMaxAPByLevel(upgradeLevel);
+
+        // 現在のHPとAPの割合を保持
+        float hpRatio = currentHP / currentMaxHP;
+        float apRatio = currentAP / currentMaxAP;
+
+        // 新しい最大値に基づいて現在値を更新
+        currentHP = newMaxHP * hpRatio;
+        
+
+        Debug.Log($"信徒のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}");
+
+        // 新しいステータスのログ
+        if (upgradeLevel == 1)
+        {
+            Debug.Log("血量: 4, 行動力: 5");
+        }
+        else if (upgradeLevel == 2)
+        {
+            Debug.Log("血量: 5, 行動力: 未記載");
+        }
+    }
+
+    #endregion
 }

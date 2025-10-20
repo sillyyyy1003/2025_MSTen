@@ -589,6 +589,7 @@ public class HexGrid : MonoBehaviour
 	/// <returns></returns>
 	public List<HexCoordinates> GetPathCoordinate()
 	{
+		// RI test
 		if (!currentPathExists)
 		{
 			return null;
