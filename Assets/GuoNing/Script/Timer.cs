@@ -9,86 +9,76 @@ using UnityEngine.UI;
 /// </summary>
 public class Timer : MonoBehaviour
 {
-	private bool m_isTimeOut; // 是否超时
-	[SerializeField] private float timeLimitEveryTurn = 30f; // 每回合都会刷新的时间限制
-	[SerializeField] private float timePool;	// 每局游戏玩家可以使用的时间池
-	private float m_currentTurnTime;	// 当前回合剩余时间
-	private float m_currentTimePool;	// 本局游戏剩余时间池
-	private bool m_isRunning;			// 计时器是否运行
+    // 配置
+    [Header("计时器设置")]
+    public float turnTimeLimit = 60f;      // 每回合独立时间
+    public float timePoolInitial = 300f;   // 倒计时池初始时间
 
-	public Action OnTimeOut;	// 超时回调
-	//      当前回合剩余时间， 时间池剩余时间
-	public Action<float, float> OnTimeChanged;	// 时间变化回调
+    // 状态
+    private float currentTurnTime;
+    private float currentTimePool;
+    private bool isRunning = false;
+    private bool isUsingTimePool = false;
 
+    // 事件
+    public event Action OnTimeOut;          // 时间用完事件
+    public event Action OnTimePoolStarted;  // 开始使用倒计时池事件
 
-	// Start is called before the first frame update
-	void Start()
-	{
-		InitTimer();
-	}
-
-	// Update is called once per frame
-	public void SetTime()
-	{
-		//if (!m_isRunning || m_isTimeOut) return;
-
-		if (m_currentTurnTime > 0)
-		{
-			m_currentTurnTime -= Time.deltaTime;
-			if (m_currentTurnTime < 0) m_currentTurnTime = 0;
-		}
-		else
-		{
-			m_currentTimePool -= Time.deltaTime;
-			if (m_currentTimePool < 0) 
-			{
-				m_currentTimePool = 0;
-				m_isTimeOut = true;
-				m_isRunning = false;
-			}
-		}
-
-		OnTimeChanged?.Invoke(m_currentTurnTime, m_currentTimePool);
-
-		// 更新UI
-
-        GameSceneUIManager.Instance.SetCountdownTime((int)m_currentTurnTime);
-	
-        GameSceneUIManager.Instance.SetCountdownTimePool((int)m_currentTimePool);
-
-		// 如果时间池和当前时间都用完了，则超时
-		if (m_currentTurnTime <= 0 && timePool <= 0)
-		{
-			m_isTimeOut = true;
-			m_isRunning = false;
-			OnTimeOut?.Invoke();
-		}
-	}
-
-	public void StartTurn()
-	{
-		Debug.Log("turn time is"+ timeLimitEveryTurn);
-		m_currentTurnTime = timeLimitEveryTurn;	// 重置时间
-		m_isRunning = true;						// 开始计时
-
-	}
-
-	public void EndTurn()
-	{
-		m_isRunning = false;	// 停止计时
-		m_currentTurnTime = 0;  // 当前回合时间归零
-		GameSceneUIManager.Instance.TimeIsOut();
-	}
-
-	public void InitTimer()
-	{
-		m_isTimeOut = false;
-		m_currentTimePool = timePool;
-		EndTurn();	// 重置时间
-	}
-
-    public bool IsTimeOut()
+    private void Awake()
     {
-        return m_isTimeOut;
-	}
+        currentTimePool = timePoolInitial;
+    }
+
+    private void Update()
+    {
+        if (isRunning)
+        {
+            UpdateTimer();
+        }
+    }
+
+    public void StartTurn()
+    {
+        currentTurnTime = turnTimeLimit;
+        isUsingTimePool = false;
+        isRunning = true;
+        Debug.Log($"Timer: 回合开始 - 独立时间: {turnTimeLimit}秒");
+    }
+
+    public void StopTimer()
+    {
+        isRunning = false;
+    }
+
+    private void UpdateTimer()
+    {
+        if (!isUsingTimePool)
+        {
+            currentTurnTime -= Time.deltaTime;
+
+            if (currentTurnTime <= 0)
+            {
+                currentTurnTime = 0;
+                isUsingTimePool = true;
+                OnTimePoolStarted?.Invoke();
+                Debug.Log("Timer: 开始使用倒计时池");
+            }
+        }
+        else
+        {
+            currentTimePool -= Time.deltaTime;
+
+            if (currentTimePool <= 0)
+            {
+                currentTimePool = 0;
+                isRunning = false;
+                OnTimeOut?.Invoke();
+                Debug.LogWarning("Timer: 时间耗尽!");
+            }
+        }
+    }
+
+    public float GetTurnTime() => currentTurnTime;
+    public float GetTimePool() => currentTimePool;
+    public bool IsUsingTimePool() => isUsingTimePool;
 }

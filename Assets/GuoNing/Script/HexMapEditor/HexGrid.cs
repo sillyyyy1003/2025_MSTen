@@ -85,6 +85,12 @@ public class HexGrid : MonoBehaviour
 		CreateCells();
 		ShowUI(true);
 
+		// 25.9.23 RI add GameStart
+		if (!GameManage.Instance.GameInit())
+		{
+			Debug.LogError("Game Init Failed!");
+		}
+
 		// 调整MiniMap的摄像机位置
 		if (minimapCamController)
 		{
@@ -369,8 +375,19 @@ public class HexGrid : MonoBehaviour
 		currentPathExists = Search(fromCell, toCell, speed);
 		ShowPath(speed);
 	}
-	
-	public HexCell GetCell (Ray ray) {
+
+    // 25.10.16 RI Add FindPath By Cell's ID
+    public void FindPath(int fromCellID, int toCellID, int speed)
+    {
+        ClearPath();
+		currentPathFrom = GetCell(fromCellID); 
+        currentPathTo = GetCell(toCellID);
+        currentPathExists = Search(GetCell(fromCellID), GetCell(toCellID), speed);
+        ShowPath(speed);
+    }
+
+
+    public HexCell GetCell (Ray ray) {
 		RaycastHit hit;
 		if (Physics.Raycast(ray, out hit)) {
 			return GetCell(hit.point);
@@ -515,7 +532,7 @@ public class HexGrid : MonoBehaviour
 	/// <returns></returns>
 	public bool IsValidDestination(HexCell cell)
 	{
-		return !cell.IsUnderwater && !cell.Unit && cell.Elevation < 2;
+		return !cell.IsUnderwater && !cell.Unit && cell.Elevation <= 2;
 	}
 
 	/// <summary>

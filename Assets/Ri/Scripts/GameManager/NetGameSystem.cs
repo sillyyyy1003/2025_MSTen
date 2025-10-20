@@ -108,6 +108,17 @@ public class UnitRemoveMessage
     public int PosY;
 }
 
+// 攻击消息
+[Serializable]
+public class UnitAttackMessage
+{
+    public int AttackerPlayerId;
+    public int AttackerPosX;
+    public int AttackerPosY;
+    public int TargetPlayerId;
+    public int TargetPosX;
+    public int TargetPosY;
+}
 [Serializable]
 public class TurnEndMessage
 {
@@ -263,6 +274,7 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
                 { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
+                { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },  
                 { NetworkMessageType.PING, HandlePing },
                 { NetworkMessageType.PONG, HandlePong }
         };
@@ -1036,19 +1048,20 @@ public class NetGameSystem : MonoBehaviour
         Unity.Mathematics.int2 fromPos = new Unity.Mathematics.int2(data.FromX, data.FromY);
         Unity.Mathematics.int2 toPos = new Unity.Mathematics.int2(data.ToX, data.ToY);
 
-        Debug.Log($"玩家 {data.PlayerId} 移动单位: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+        Debug.Log($"[网络] 玩家 {data.PlayerId} 移动单位: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
 
-        if (playerDataManager != null)
+        // 确保管理器存在
+        if (gameManage == null)
         {
-            playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+            gameManage = GameManage.Instance;
         }
-        else
+
+        // 只通知 PlayerOperationManager 处理视觉效果
+        if (gameManage != null && gameManage._PlayerOperation != null)
         {
-            playerDataManager = PlayerDataManager.Instance;
-            playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+            gameManage._PlayerOperation.HandleNetworkMove(data);
         }
     }
-
     // 单位添加
     private void HandleUnitAdd(NetworkMessage message)
     {
@@ -1057,17 +1070,17 @@ public class NetGameSystem : MonoBehaviour
         Unity.Mathematics.int2 pos = new Unity.Mathematics.int2(data.PosX, data.PosY);
         PlayerUnitType unitType = (PlayerUnitType)data.UnitType;
 
-        Debug.Log($"玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
+        Debug.Log($"[网络] 玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
 
-        if (playerDataManager != null)
+        if (gameManage == null)
         {
-            playerDataManager.AddUnit(data.PlayerId, unitType, pos);
+            gameManage = GameManage.Instance;
         }
-        else
-        {
 
-            playerDataManager = PlayerDataManager.Instance;
-            playerDataManager.AddUnit(data.PlayerId, unitType, pos);
+        // 只通知 PlayerOperationManager 处理
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkAddUnit(data);
         }
     }
 
@@ -1088,6 +1101,29 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager = PlayerDataManager.Instance;
             playerDataManager.RemoveUnit(data.PlayerId, pos);
+        }
+    }
+
+    // 单位攻击
+    private void HandleUnitAttack(NetworkMessage message)
+    {
+        UnitAttackMessage data = JsonConvert.DeserializeObject<UnitAttackMessage>(message.JsonData);
+
+        Unity.Mathematics.int2 attackerPos = new Unity.Mathematics.int2(data.AttackerPosX, data.AttackerPosY);
+        Unity.Mathematics.int2 targetPos = new Unity.Mathematics.int2(data.TargetPosX, data.TargetPosY);
+
+        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // 通知 PlayerOperationManager 处理
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkAttack(data);
         }
     }
 
