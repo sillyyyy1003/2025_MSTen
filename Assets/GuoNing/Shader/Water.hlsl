@@ -8,16 +8,19 @@
 float Foam(float shore, float2 worldXZ, float time, Texture2D noiseTex, SamplerState noiseSampler)
 {
 	shore = sqrt(shore) * 0.9;
+	//float foamWeight = smoothstep(0.0, 1.0, shore);
 
 	float2 noiseUV = worldXZ + time * 0.25;
 	float4 noise = noiseTex.Sample(noiseSampler, noiseUV * (2 * TILING_SCALE));
 
 	float distortion1 = noise.x * (1 - shore);
 	float foam1 = sin((shore + distortion1) * 10 - time);
+	//float foam1 = sin((foamWeight + distortion1) * 10 - time);
 	foam1 *= foam1;
 
 	float distortion2 = noise.y * (1 - shore);
 	float foam2 = sin((shore + distortion2) * 10 + time + 2);
+	//float foam2 = sin((foamWeight + distortion2) * 10 + time + 2);
 	foam2 *= foam2 * 0.7;
 
 	return max(foam1, foam2) * shore;

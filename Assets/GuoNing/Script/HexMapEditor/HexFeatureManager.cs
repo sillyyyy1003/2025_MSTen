@@ -12,7 +12,7 @@ public class HexFeatureManager : MonoBehaviour
 	public HexFeatureCollection[]
 		forestCollections, farmCollections, plantCollections;
 	Transform container;    // 防止刷新时特征重复
-
+	public Transform[] special;
 	public HexMesh walls;
 
 	public void Clear()
@@ -34,6 +34,10 @@ public class HexFeatureManager : MonoBehaviour
 
 	public void AddFeature(HexCell cell, Vector3 position)
 	{
+		if (cell.IsSpecial)
+		{
+			return;
+		}
 		HexHash hash = HexMetrics.SampleHashGrid(position);
 		Transform prefab = PickPrefab(
 			forestCollections, cell.ForestLevel, hash.a, hash.d
@@ -229,6 +233,12 @@ public class HexFeatureManager : MonoBehaviour
 		v3.y = v4.y = center.y + HexMetrics.wallHeight;
 		walls.AddQuadUnperturbed(v1, v2, v3, v4);
 	}
-
-
+	public void AddSpecialFeature(HexCell cell, Vector3 position)
+	{
+		Transform instance = Instantiate(special[cell.SpecialIndex - 1]);
+		instance.localPosition = HexMetrics.Perturb(position);
+		HexHash hash = HexMetrics.SampleHashGrid(position);
+		instance.localRotation = Quaternion.Euler(0f, 360f * hash.e, 0f);
+		instance.SetParent(container, false);
+	}
 }
