@@ -84,11 +84,12 @@ public class FarmerDataSOEditor : PieceDataSOEditor
         serializedObject.Update();
 
         EditorGUILayout.Space();
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("Buildings"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("buildingSpeedModifier"));
 
         EditorGUILayout.Space();
         EditorGUILayout.PropertyField(serializedObject.FindProperty("productEfficiency"));
+
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("devotionAPCost"));
 
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox("レベル0:初期、1:升級1、2:升級2", MessageType.Info);
@@ -141,7 +142,7 @@ public class MissionaryDataSOEditor : PieceDataSOEditor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("occupyAPCost"));
 
         EditorGUILayout.Space();
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("baseConversionAttackChance"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("convertAPCost"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("conversionTurnDuration"));
 
         EditorGUILayout.Space();

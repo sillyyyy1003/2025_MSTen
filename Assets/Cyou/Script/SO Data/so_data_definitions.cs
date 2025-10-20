@@ -13,9 +13,10 @@ namespace GameData
         [Header("基本属性")]
         public string buildingName;
         public int maxHp = 100;
-        public int buildStartAPCost; // 建築開始に必要な行動力
+        public int buildStartAPCost=1; // 建築開始に必要な行動力
         public int buildingAPCost; // 建築過程に必要な行動力
         public int resourceGenInterval; // 資源生成間隔（ターン数）
+        public Terrain cellType;//金鉱がある土地か否か
 
         [Header("特殊建物属性")]
         public bool isSpecialBuilding; // バフ効果を持つ特別な建物か
@@ -24,6 +25,7 @@ namespace GameData
         [Header("生産設定")]
         public ResourceGenerationType generationType;
         public int baseProductionAmount;
+        public int goldenProductionAmount;
         public int apCostperTurn;//資源生成する際毎ターン消耗する農民のAP
         public float productionMultiplier = 1.0f;
 
@@ -77,8 +79,18 @@ namespace GameData
             return buildingAPCostByLevel[level];
         }
 
+        public int GetBuildingResourceProduction()
+        {
+            return cellType switch
+            {
+                Terrain.Normal => baseProductionAmount,
+                Terrain.Gold => goldenProductionAmount,
+                _ => 0
+            };
+        }
     }
-    
+
+
     /// <summary>
     /// 駒（ピース）の基本データ定義
     /// </summary>
@@ -109,7 +121,7 @@ namespace GameData
         public float[] maxAPByLevel = new float[4]; // レベルごとの最大AP
         public float[] attackPowerByLevel = new float[4]; // レベルごとの攻撃力
 
-        [Header("ビジュアル")]
+        [Header("ビジュアル(Mesh・Sprite必ずしも一つは必要です)")]
         public Sprite pieceSprite;
         public Mesh pieceMesh;
         public Material pieceMaterial;
@@ -182,12 +194,13 @@ namespace GameData
     public class FarmerDataSO : PieceDataSO
     {
         [Header("建築能力")]
-        public BuildingDataSO[] Buildings; // 建築可能な建物リスト
         public float buildingSpeedModifier = 1.0f; // 建築速度修正値
         
         [Header("資源生産効率")]
         public float productEfficiency = 1.0f; // 作業効率
-        
+
+        [Header("献身の治癒")]
+        public int devotionAPCost = 1;//行動力を消費して他駒を回復するスキル
 
         [Header("アップグレードレベルごとのデータ（升級1,2）")]
         public int[] maxHpByLevel = new int[3] { 3, 4, 5 }; // 血量
@@ -314,6 +327,11 @@ namespace GameData
         None,A,B,C,D,E,F,G,H
     }
 
+    public enum Terrain
+    {
+        Normal,Gold
+    }
+
     /// <summary>
     /// 教皇のデータ定義
     /// </summary>
@@ -353,15 +371,13 @@ namespace GameData
         //public float occupyDuration = 5f; // 占領判定までの時間(秒)（廃止）
 
         [Header("特殊攻撃設定")]
-        public float baseConversionAttackChance = 0.3f; // 基礎攻撃時変換確率
+        public int convertAPCost= 3; // 基礎攻撃時変換確率
         public int[] conversionTurnDuration = new int[4] { 2, 3, 4, 5 }; // 変換した駒が敵に戻るまでのターン数
 
         [Header("特殊防御設定")]
         public float baseConversionDefenseChance = 0.2f; // 基礎防御時変換確率
 
         [Header("スキルレベル設定")]
-        //public int maxSkillLevel = 10; // 最大スキルレベル
-        //public float skillSuccessRateBonus = 0.05f; // スキルレベルごとの成功率ボーナス（5%）
 
         public float[] occupyEmptySuccessRateByLevel = new float[4] { 0.8f, 0.9f, 1.0f, 1.0f }; // 占領成功率
         public float[] occupyEnemySuccessRateByLevel = new float[4] { 0.5f, 0.6f, 0.7f, 0.7f }; // 占領成功率

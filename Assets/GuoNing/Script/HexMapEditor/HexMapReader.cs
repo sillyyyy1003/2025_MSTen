@@ -9,6 +9,11 @@ public class HexMapReader : MonoBehaviour
 	public HexGrid hexGrid;
 	public string mapFileName = "Example.map";
 
+	public void SetMapPath(string path)
+	{
+		mapFileName = path;
+	}
+
 	public void LoadMap()
 	{
 		string path = Path.Combine(Application.dataPath, "Maps", mapFileName);
@@ -26,8 +31,6 @@ public class HexMapReader : MonoBehaviour
 			{
 				hexGrid.Load(reader, header);
 
-                // 25.10.10 RI 删除Camera相关避免loadMap出错
-                //HexMapCamera.ValidatePosition();
 
                 Debug.Log($"地图加载成功: {path}");
 			}

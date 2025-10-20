@@ -36,7 +36,7 @@ namespace Buildings
         public BuildingDataSO Data => buildingData;
         public BuildingState State => currentState;
         public bool IsAlive => currentState != BuildingState.Ruined;
-        public bool IsOperational => (currentState == BuildingState.Disabled || currentState == BuildingState.Active) && currentSkillUses > 0;
+        public bool IsOperational => (currentState == BuildingState.Inactive || currentState == BuildingState.Active) && currentSkillUses > 0;
         public int CurrentHP => currentHp;
         public float BuildProgress => buildingData.buildingAPCost > 0 ?
             1f - (float)remainingBuildCost / buildingData.buildingAPCost : 1f;
@@ -102,8 +102,34 @@ namespace Buildings
 
         private void CompleteConstruction()
         {
-            ChangeState(BuildingState.Disabled);//未稼働状態へ移行
+            ChangeState(BuildingState.Inactive);//未稼働状態へ移行
             OnBuildingCompleted?.Invoke(this);
+        }
+
+        /// <summary>
+        /// 建築をキャンセルする
+        /// 注意: 消耗された農民と行動力は返されない
+        /// </summary>
+        public bool CancelConstruction()
+        {
+            if (currentState != BuildingState.UnderConstruction)
+            {
+                Debug.LogWarning("建築中でない建物はキャンセルできません");
+                return false;
+            }
+
+            Debug.Log($"建物 {buildingData.buildingName} の建築がキャンセルされました。消耗された農民と行動力は返されません。");
+
+            // 建物を廃墟状態に変更
+            ChangeState(BuildingState.Ruined);
+
+            // 破壊イベントを発火（DemoUITestのリストから自動削除される）
+            OnBuildingDestroyed?.Invoke(this);
+
+            // 建物オブジェクトを破棄
+            Destroy(gameObject);
+
+            return true;
         }
 
         #endregion
@@ -123,7 +149,7 @@ namespace Buildings
         /// </summary>
         public bool AssignFarmer(Farmer farmer)
         {
-            if (!buildingData.isSpecialBuilding || (currentState != BuildingState.Disabled&&currentState!=BuildingState.Active))
+            if (!buildingData.isSpecialBuilding || (currentState != BuildingState.Inactive&&currentState!=BuildingState.Active))
             {
                 Debug.Log("建物が未完成又は廃墟になってます。");
                 return false;
@@ -147,18 +173,29 @@ namespace Buildings
         public void ProcessTurn(int currentTurn)
         {
             if (!IsOperational)
+            {
+                Debug.Log($"建物 {buildingData.buildingName} は稼働可能な状態ではありません (状態: {currentState}, スロット: {currentSkillUses})");
                 return;
+            }
 
             // APがある農民がいるかチェック
             bool hasActiveFarmer = farmerSlots.Any(slot => slot.IsOccupied && slot.HasAP);
             if (!hasActiveFarmer)
+            {
+                Debug.Log($"建物 {buildingData.buildingName} にAPを持つ農民がいません");
                 return;
+            }
 
             // APがある農民がいる場合のみActiveに変更
-            if (currentState == BuildingState.Disabled)
+            if (currentState == BuildingState.Inactive)
+            {
                 ChangeState(BuildingState.Active);
+                Debug.Log($"建物 {buildingData.buildingName} がActiveに変更されました");
+            }
 
-            if (currentTurn - lastResourceGenTurn >= buildingData.resourceGenInterval)
+            // 資源生成間隔チェック
+            int turnsSinceLastGen = currentTurn - lastResourceGenTurn;
+            if (turnsSinceLastGen >= buildingData.resourceGenInterval)
             {
                 GenerateResources();
                 lastResourceGenTurn = currentTurn;
@@ -166,11 +203,16 @@ namespace Buildings
                 // 農民の行動力を消費
                 ProcessFarmerAP();
             }
+            else
+            {
+                Debug.Log($"建物 {buildingData.buildingName} は資源生成間隔待ち中 ({turnsSinceLastGen}/{buildingData.resourceGenInterval}ターン)");
+            }
         }
 
         private void GenerateResources()
         {
             int totalProduction = CalculateProduction();
+            Debug.Log($"建物 {buildingData.buildingName} が資源 {totalProduction} を生成しました！");
             OnResourceGenerated?.Invoke(totalProduction);
         }
 
@@ -181,8 +223,9 @@ namespace Buildings
             {
                 if (slot.IsOccupied && slot.HasAP)
                 {
+                    int baseProduction = Data.GetBuildingResourceProduction();
                     // 基本生産量にスキルレベルによる倍率を適用
-                    totalProduction += buildingData.baseProductionAmount;
+                    totalProduction += baseProduction;
                 }
             }
 
@@ -222,13 +265,13 @@ namespace Buildings
         {
             if (currentState == BuildingState.Active)
             {
-                // Active状態で稼働中農民がいない場合はDisabledに戻す
+                // Active状態で稼働中農民がいない場合はInactiveに戻す
                 bool hasActiveFarmer = farmerSlots.Any(slot => slot.IsOccupied && slot.HasAP);
                 
                 if (!hasActiveFarmer)
                 {
-                    ChangeState(BuildingState.Disabled);
-                    Debug.Log($"建物 {buildingData.buildingName} の農民のAPが尽きたため、Disabledに状態変更しました");
+                    ChangeState(BuildingState.Inactive);
+                    Debug.Log($"建物 {buildingData.buildingName} の農民のAPが尽きたため、Inactiveに状態変更しました");
                 }
             }
         }
@@ -273,7 +316,7 @@ namespace Buildings
                 return false;
             }
 
-            if (currentState != BuildingState.Disabled && currentState != BuildingState.Active)
+            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
             {
                 Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
                 return false;
@@ -386,7 +429,7 @@ namespace Buildings
     {
         UnderConstruction,  // 建築中
         Active,            // 稼働中
-        Disabled,          // 未稼働（効果を発揮してない）
+        Inactive,          // 未稼働（効果を発揮してない）
         Ruined            // 廃墟
     }
 
