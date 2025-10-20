@@ -171,18 +171,6 @@ public enum TerrainType
 }
 
 
-/// <summary>
-/// 每个格子的内容信息
-/// </summary>
-public struct CellInfo
-{
-	public bool isPassalbe;		// 是否可以通过
-	public bool isCapturable;   // 是否可以占领
-
-	public TerrainType type;	// 当前的Feature
-
-}
-
 public class HexCell : MonoBehaviour
 {
 	public HexCoordinates coordinates; // Hex coordinate(https://catlikecoding.com/unity/tutorials/hex-map/part-1/hexagonal-coordinates/cube-coordinates.png)
@@ -205,9 +193,6 @@ public class HexCell : MonoBehaviour
 	{
 		Sand=0, Grass=1,Mud=2,Stone=3,Snow=4
 	}
-
-	// 25.9.23 RI add cell's Serial number
-	public int id { get; set; }
 
 	// 当前格子所属的玩家ID
 	public int playerId { get; set; }

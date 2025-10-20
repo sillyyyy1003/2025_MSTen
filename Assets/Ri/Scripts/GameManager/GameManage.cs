@@ -17,9 +17,12 @@ public struct BoardInfor
     // 每个格子的世界坐标
     public Vector3 Cells3DPos;
 
-
     // 每个格子的id
     public int id;
+
+    // 每个格子的地块信息 是否可通过
+    public TerrainType type;
+
 };
 
 // 游戏开始数据
