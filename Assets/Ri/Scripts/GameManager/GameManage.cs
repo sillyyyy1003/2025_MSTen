@@ -565,16 +565,8 @@ public class GameManage : MonoBehaviour
         //GameBoardInfor.Clear();
         //GameBoardInforDict.Clear();
 
-        // 清空玩家数据
-        //_PlayerDataManager.ClearAllPlayers();
-
-        SetIsGamingOrNot(true);
-        _CurrentTurnPlayerID = -1;
-
-        // 触发游戏结束事件
-        //OnGameEnded?.Invoke(winnerPlayerId);
-
-        //return true;
+        GameBoardInfor.Add(infor);
+        GameBoardInforDict.Add(infor.id, infor);
     }
 
   

@@ -532,7 +532,9 @@ public class HexGrid : MonoBehaviour
 	/// <returns></returns>
 	public bool IsValidDestination(HexCell cell)
 	{
-		return !cell.IsUnderwater && !cell.Unit && cell.Elevation <= 2;
+		// 25.10.20_RI Add create unit test
+		Debug.Log("cell under water is "+cell.IsUnderwater+" cell unit is "+cell.Unit+" cell Elevation is "+cell.elevation);
+		return !cell.IsUnderwater && !cell.Unit && cell.Elevation <= 5;
 	}
 
 	/// <summary>

@@ -207,7 +207,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 检查是否是空格子
                 if (!playerDataManager.IsPositionOccupied(clickPos)&& _HexGrid.IsValidDestination(_HexGrid.GetCell(ClickCellid)))
-                {
+                { 
                     ChooseEmptyCell(ClickCellid);
                     selectCellID = ClickCellid;
                     SelectedEmptyCellID = ClickCellid; // 保存选中的空格子
