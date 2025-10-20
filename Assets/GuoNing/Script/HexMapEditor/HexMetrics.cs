@@ -14,7 +14,7 @@ public static class HexMetrics
 	public const int terraceSteps = terracesPerSlope * 2 + 1;   // Total number of steps between two hex cells with different elevation
 	public const float horizontalTerraceStepSize = 1f / terraceSteps;   // Horizontal step size between two terrace steps
 	public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);   // Vertical step size between two terrace steps
-	public const float cellPerturbStrength = 0f;    //Strength setting to HexMetrics so we can scale the perturbations
+	public const float cellPerturbStrength = 1f;    //Strength setting to HexMetrics so we can scale the perturbations
 	public const float noiseScale = 0.003f;
 
 	public const float solidFactor = 0.8f;
@@ -22,7 +22,7 @@ public static class HexMetrics
 	public const float elevationPerturbStrength = 1.5f;     //provides some subtle variation, which is roughly the height of a single terrace step
 
 	public static Texture2D noiseSource;
-	public const int chunkSizeX = 5, chunkSizeZ = 5;//5 by 5 blocks
+	public const int chunkSizeX = 5, chunkSizeZ = 5;	//5 by 5 blocks
 
 	public const float streamBedElevationOffset = -1.75f;
 	//public const float riverSurfaceElevationOffset = -0.5f;
@@ -32,6 +32,9 @@ public static class HexMetrics
 	public const int hashGridSize = 256;
 	public const float hashGridScale = 0.25f;
 
+	public const float wallHeight = 0.3f;   // 墙的高度
+	public const float wallThickness = 0.75f; // 墙的厚度
+	public const float wallElevationOffset = verticalTerraceStepSize;
 	//public static Color[] colors;
 	static HexHash[] hashGrid;
 
@@ -177,5 +180,24 @@ public static class HexMetrics
 	public static float[] GetFeatureThresholds(int level)
 	{
 		return featureThresholds[level];
+	}
+
+	public static Vector3 WallThicknessOffset(Vector3 near, Vector3 far)
+	{
+		Vector3 offset;
+		offset.x = far.x - near.x;
+		offset.y = 0f;
+		offset.z = far.z - near.z;
+		return offset.normalized * (wallThickness * 0.5f);
+	}
+
+	public static Vector3 WallLerp(Vector3 near, Vector3 far)
+	{
+		near.x += (far.x - near.x) * 0.5f;
+		near.z += (far.z - near.z) * 0.5f;
+		float v =
+			near.y < far.y ? wallElevationOffset : (1f - wallElevationOffset);
+		near.y += (far.y - near.y) * v;
+		return near;
 	}
 }

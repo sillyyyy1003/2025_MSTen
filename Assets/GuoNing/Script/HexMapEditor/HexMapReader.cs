@@ -5,8 +5,14 @@ using System.IO;
 
 public class HexMapReader : MonoBehaviour
 {
+	const int mapFileVersion = 5;
 	public HexGrid hexGrid;
 	public string mapFileName = "Example.map";
+
+	public void SetMapPath(string path)
+	{
+		mapFileName = path;
+	}
 
 	public void LoadMap()
 	{
@@ -21,11 +27,12 @@ public class HexMapReader : MonoBehaviour
 		using (BinaryReader reader = new BinaryReader(File.OpenRead(path)))
 		{
 			int header = reader.ReadInt32();
-			if (header <= 1)
+			if (header <= mapFileVersion)
 			{
 				hexGrid.Load(reader, header);
-				HexMapCamera.ValidatePosition();
-				Debug.Log($"地图加载成功: {path}");
+
+
+                Debug.Log($"地图加载成功: {path}");
 			}
 			else
 			{

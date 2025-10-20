@@ -12,29 +12,44 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: FarmerData
   m_EditorClassIdentifier: Assembly-CSharp:GameData:FarmerDataSO
+  originalPID: 0
   pieceName: "\u8FB2\u6C11"
-  maxHP: 150
-  populationCost: 1
-  resourceCost: 10
-  maxAP: 100
+  populationCost: 2
+  resourceCost: 1
+  initialLevel: 0
   aPRecoveryRate: 10
-  moveAPCost: 10
+  moveAPCost: 0
   moveSpeed: 1
   canAttack: 0
   attackPower: 0
   attackRange: 0
   attackCooldown: 1
   attackAPCost: 20
-  pieceSprite: {fileID: 21300000, guid: 07b23f67c0fd67c41b35e7a66f96afb0, type: 3}
+  maxHPByLevel:
+  - 3
+  - 4
+  - 5
+  - 5
+  maxAPByLevel:
+  - 3
+  - 5
+  - 5
+  - 5
+  attackPowerByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  pieceSprite: {fileID: 0}
   pieceMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
-  pieceMaterial: {fileID: -4900309438388420668, guid: c77a6468393638d4b88a10111d933863,
-    type: 3}
+  pieceMaterial: {fileID: 2100000, guid: bc413f8004846d94a8160d364fafad7c, type: 2}
   piecePrefab: {fileID: 7153972553235425938, guid: 9f1317f8bb1f13e4b8e70e285367a1b5,
     type: 3}
   animatorController: {fileID: 0}
-  Buildings:
-  - {fileID: 11400000, guid: 6718970c017ac53459b064dfc05b67f1, type: 2}
+  Buildings: []
   buildingSpeedModifier: 1
   productEfficiency: 1
-  maxSkillLevel: 10
-  skillProductionBonus: 0.2
+  devotionAPCost: 1
+  maxHpByLevel: 030000000400000005000000
+  maxApByLevel: 030000000500000005000000
+  maxSacrificeLevel: 010000000200000002000000

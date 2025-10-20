@@ -109,8 +109,10 @@ public class HexMapCamera : MonoBehaviour
 		}
 	}
 
-	public static void ValidatePosition()
-	{
-		instance.AdjustPosition(0f, 0f);
-	}
+	// 25.10.10 RI 删除Camera相关避免loadMap出错
+
+	//public static void ValidatePosition()
+	//{
+	//	instance.AdjustPosition(0f, 0f);
+	//}
 }

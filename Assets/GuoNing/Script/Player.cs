@@ -35,11 +35,11 @@ public class Player : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
-		// 如果计时器超时 则结束回合
-		if (m_timer.IsTimeOut())
-		{
-			EndTurn();
-		}
+		//// 如果计时器超时 则结束回合
+		////if (m_timer.IsTimeOut())
+		//{
+		//	EndTurn();
+		//}
 	}
 
 
@@ -110,8 +110,8 @@ public class Player : MonoBehaviour
 	/// </summary>
 	public void EndTurn()
 	{
-		if(m_timer)m_timer.EndTurn();
+		//if(m_timer)m_timer.EndTurn();
 	
-		isYourTurn = false;
+		//isYourTurn = false;
 	}
 }

@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: PopeData
+  m_EditorClassIdentifier: Assembly-CSharp:GameData:PopeDataSO
+  originalPID: 0
+  pieceName: "\u6559\u7687"
+  populationCost: 5
+  resourceCost: 10
+  initialLevel: 0
+  aPRecoveryRate: 10
+  moveAPCost: 10
+  moveSpeed: 1
+  canAttack: 0
+  attackPower: 0
+  attackRange: 0
+  attackCooldown: 1
+  attackAPCost: 20
+  maxHPByLevel:
+  - 5
+  - 7
+  - 9
+  - 9
+  maxAPByLevel:
+  - 5
+  - 3
+  - 3
+  - 3
+  attackPowerByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  pieceSprite: {fileID: 0}
+  pieceMesh: {fileID: 0}
+  pieceMaterial: {fileID: 0}
+  piecePrefab: {fileID: 0}
+  animatorController: {fileID: 0}
+  swapCooldown: 05000000030000000300000003000000
+  hpBuff: 01000000020000000200000002000000
+  atkBuff: 01000000010000000100000001000000
+  convertBuff:
+  - 0.05
+  - 0.08
+  - 0.08
+  - 0.08

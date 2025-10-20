@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -200,25 +201,32 @@ public class HexCell : MonoBehaviour
 
 	public HexCell NextWithSamePriority { get; set; }	//追踪有相同优先级的单元格
 	// todo: 之后要修改 因为不存在Terrain颜色 取而代之的是纹理
-	public enum TerrainColor
+	public enum TerrainColor:int
 	{
-		White = 0, // NULL TEXTURE
-		Green = 1, // 
-		Orange = 2,
-		Cyan = 3,
-		Yellow = 4,
-		Player1 = 5,
-		Player2 = 6
+		Sand=0, Grass=1,Mud=2,Stone=3,Snow=4
 	}
-
 
 	// 25.9.23 RI add cell's Serial number
 	public int id { get; set; }
+
+	// 当前格子所属的玩家ID
+	public int playerId { get; set; }
+	// 当前格子是否有棋子
+	public GameObject Unit { get; set; }
+
 
 	public bool IsVacancy
 	{
 		get { return isVacancy; }
 		set { isVacancy = value; }
+	}
+
+	public int ViewElevation
+	{
+		get
+		{
+			return elevation >= waterLevel ? elevation : waterLevel;
+		}
 	}
 
 	/// <summary>
@@ -237,12 +245,18 @@ public class HexCell : MonoBehaviour
 			}
 
 			waterLevel = value;
+
 			ValidateRivers();
 			Refresh();
 		}
 	}
 
 
+
+	/// <summary>
+	/// Unique global index of the cell.
+	/// </summary>
+	public int Index { get; set; }
 
 	/// <summary>
 	/// 这个格子是否有水
@@ -284,7 +298,7 @@ public class HexCell : MonoBehaviour
 	public void AddRoad(HexDirection direction)
 	{
 		if (
-			!roads[(int)direction] && !HasRiverThroughEdge(direction) &&
+			!roads[(int)direction] && !HasRiverThroughEdge(direction) && !IsSpecial && !GetNeighbor(direction).IsSpecial &&
 			GetElevationDifference(direction) <= 1
 		)
 		{
@@ -328,7 +342,7 @@ public class HexCell : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 改变某个格子的颜色/ todo: 鉴于之后terrainTypeIndex应该会变成纹理索引。这个地方需要改成在纹理的基础上修改颜色
+	/// 改变某个格子的颜色
 	/// </summary>
 	/// <param name="color"></param>
 	public void SetCellColor(TerrainColor color)
@@ -355,6 +369,28 @@ public class HexCell : MonoBehaviour
 			}
 		}
 	}
+
+	/// <summary>
+	/// 是否被有围墙
+	/// </summary>
+	public bool Walled
+	{
+		get
+		{
+			return walled;
+		}
+		set
+		{
+			if (walled != value)
+			{
+				walled = value;
+				Refresh();
+			}
+		}
+	}
+
+	bool walled;
+
 
 	/// <summary>
 	/// 获得该格子的高度
@@ -511,11 +547,14 @@ public class HexCell : MonoBehaviour
 
 		hasOutgoingRiver = true;
 		outgoingRiver = direction;
+		specialIndex = 0;
 
 		// set neighbor in coming river
 		neighbor.RemoveIncomingRiver();
 		neighbor.hasIncomingRiver = true;
 		neighbor.incomingRiver = direction.Opposite();
+		neighbor.specialIndex = 0;
+
 		//neighbor.RefreshSelfOnly();
 		SetRoad((int)direction, false);
 	}
@@ -577,6 +616,62 @@ public class HexCell : MonoBehaviour
 		get { return transform.localPosition; }
 	}
 
+
+
+	/// <summary>
+	/// 特殊内容索引
+	/// </summary>
+	int specialIndex;
+	public int SpecialIndex
+	{
+		get
+		{
+			return specialIndex;
+		}
+		set
+		{
+			if (specialIndex != value && !HasRiver)
+			{
+				specialIndex = value;
+				RemoveRoads();
+				RefreshSelfOnly();
+			}
+		}
+	}
+
+	public bool IsStartPos
+	{
+		get
+		{
+			return specialIndex == (int)SpecialIndexType.Pope;
+		}
+	}
+
+	public bool IsGoldMine
+	{
+		get
+		{
+			return specialIndex == (int)SpecialIndexType.Gold;
+		}
+
+	}
+
+	/// <summary>
+	/// 判断是否具备特殊近况
+	/// </summary>
+	public bool IsSpecial
+	{
+		get
+		{
+			return specialIndex > 0;
+		}
+	}
+
+	enum SpecialIndexType
+	{
+		Pope = 1, // 教皇的初始位置	
+		Gold = 2 // 金矿
+	};
 
 
 	/// <summary>
@@ -725,18 +820,18 @@ public class HexCell : MonoBehaviour
 		}
 	}
 
-
+	public int SearchPhase { get; set; }
 
 	public void Save(BinaryWriter writer)
 	{
 		writer.Write((byte)terrainTypeIndex);
-		writer.Write((byte)elevation);
+		writer.Write((byte)(elevation + 127));
 		writer.Write((byte)waterLevel);
 		writer.Write((byte)forestLevel);
 		writer.Write((byte)farmLevel);
 		writer.Write((byte)plantLevel);
-		//writer.Write(specialIndex);
-		//writer.Write(walled);
+		writer.Write((byte)specialIndex);
+		writer.Write(walled);
 
 
 		if (hasIncomingRiver)
@@ -773,18 +868,24 @@ public class HexCell : MonoBehaviour
 	/// 读取单个格子的信息
 	/// </summary>
 	/// <param name="reader"></param>
-	public void Load(BinaryReader reader)
+	public void Load(BinaryReader reader, int header)
 	{
 
 		terrainTypeIndex = reader.ReadByte();
 		elevation = reader.ReadByte();
+		if (header >= 4)
+		{
+			elevation -= 127;
+		}
+
 		RefreshPosition();
 		waterLevel = reader.ReadByte(); // 格子的水平面高度
 		forestLevel = reader.ReadByte(); // 格子的urban level
 		farmLevel = reader.ReadByte(); // 格子的farm level
 		plantLevel = reader.ReadByte(); // 格子的plant level
-		// specialIndex=reader.ReadByte();
-		// walled=reader.ReadByte();
+		specialIndex = reader.ReadByte();
+		walled = reader.ReadBoolean();
+
 		byte riverData = reader.ReadByte();
 		if (riverData >= 128)
 		{
@@ -827,20 +928,12 @@ public class HexCell : MonoBehaviour
 			(HexMetrics.SampleNoise(position).y * 2f - 1f) *
 			HexMetrics.elevationPerturbStrength;
 		transform.localPosition = position;
-
+		
 		Vector3 uiPosition = uiRect.localPosition;
 		uiPosition.z = -position.y;
 		uiRect.localPosition = uiPosition;
 	}
 
-	/// <summary>
-	/// 更新Text标签
-	/// </summary>
-	void UpdateDistanceLabel()
-	{
-		Text label = uiRect.GetComponent<Text>();
-		label.text = distance == int.MaxValue ? "" : distance.ToString();
-	}
 
 	/// <summary>
 	/// HexCell距离
@@ -851,8 +944,13 @@ public class HexCell : MonoBehaviour
 		set
 		{
 			distance = value;
-			UpdateDistanceLabel();
 		}
+	}
+
+	public void SetLabel(string text)
+	{
+		UnityEngine.UI.Text label = uiRect.GetComponent<Text>();
+		label.text = text;
 	}
 
 	public void DisableHighlight()
@@ -876,5 +974,6 @@ public class HexCell : MonoBehaviour
 			return distance + SearchHeuristic;
 		}
 	}
+
 }
 

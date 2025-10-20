@@ -5,6 +5,8 @@ using System.IO;
 
 public class SaveLoadMenu : MonoBehaviour
 {
+	const int mapFileVersion = 4;
+
 	public Text menuLabel, actionButtonLabel;
 	public HexGrid hexGrid;
 	public InputField nameInput;
@@ -27,13 +29,11 @@ public class SaveLoadMenu : MonoBehaviour
 
 		FillList();
 		gameObject.SetActive(true);
-		HexMapCamera.Locked = true;
 	}
 
 	public void Close()
 	{
 		gameObject.SetActive(false);
-		HexMapCamera.Locked = false;
 	}
 
 	public void SelectItem(string name)
@@ -46,6 +46,7 @@ public class SaveLoadMenu : MonoBehaviour
 		string path = GetSelectedPath();
 		if (path == null)
 		{
+			Debug.Log("Error path!");
 			return;
 		}
 		if (File.Exists(path))
@@ -105,15 +106,9 @@ public class SaveLoadMenu : MonoBehaviour
 	}
 	void Save(string path)
 	{
-		
-		using (
-			BinaryWriter writer =
-			new BinaryWriter(File.Open(path, FileMode.Create))
-		)
-		{
-			writer.Write(1);
-			hexGrid.Save(writer);
-		}
+		using var writer = new BinaryWriter(File.Open(path, FileMode.Create));
+		writer.Write(mapFileVersion);
+		hexGrid.Save(writer);
 	}
 
 	void Load(string path)
@@ -123,18 +118,19 @@ public class SaveLoadMenu : MonoBehaviour
 			Debug.LogError("File does not exist " + path);
 			return;
 		}
-		using (BinaryReader reader = new BinaryReader(File.OpenRead(path)))
+
+		using var reader = new BinaryReader(File.OpenRead(path));
+		int header = reader.ReadInt32();
+
+
+		if (header <= mapFileVersion)
 		{
-			int header = reader.ReadInt32();
-			if (header <= 1)
-			{
-				hexGrid.Load(reader, header);
-				HexMapCamera.ValidatePosition();
-			}
-			else
-			{
-				Debug.LogWarning("Unknown map format " + header);
-			}
+			hexGrid.Load(reader, header);
+		}
+		else
+		{
+			Debug.LogWarning("Unknown map format " + header);
 		}
 	}
+
 }

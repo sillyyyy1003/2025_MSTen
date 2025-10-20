@@ -22,6 +22,7 @@ namespace Buildings
         private int currentSkillUses;//現時点まだ使用可能のスロットの数
         private int lastResourceGenTurn;
         private int apCostperTurn;
+        private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2
 
         // 配置された農民のリスト
         private List<FarmerSlot> farmerSlots = new List<FarmerSlot>();
@@ -35,13 +36,14 @@ namespace Buildings
         public BuildingDataSO Data => buildingData;
         public BuildingState State => currentState;
         public bool IsAlive => currentState != BuildingState.Ruined;
-        public bool IsOperational => (currentState == BuildingState.Disabled || currentState == BuildingState.Active) && currentSkillUses > 0;
+        public bool IsOperational => (currentState == BuildingState.Inactive || currentState == BuildingState.Active) && currentSkillUses > 0;
         public int CurrentHP => currentHp;
         public float BuildProgress => buildingData.buildingAPCost > 0 ?
             1f - (float)remainingBuildCost / buildingData.buildingAPCost : 1f;
         public int RemainingBuildCost => remainingBuildCost;
         public List<FarmerSlot> FarmerSlots => farmerSlots;
         public int APCostPerTurn => apCostperTurn;
+        public int UpgradeLevel => upgradeLevel;
 
         #region 初期化
 
@@ -51,14 +53,15 @@ namespace Buildings
             currentHp = data.maxHp;
             remainingBuildCost = data.buildingAPCost;
             apCostperTurn = data.apCostperTurn;
-            currentSkillUses = data.maxUnitCapacity;
+            currentSkillUses = data.GetMaxSlotsByLevel(0);
 
             ChangeState(BuildingState.UnderConstruction);
 
             // スロット初期化
             if (data.isSpecialBuilding)
             {
-                for (int i = 0; i < data.maxUnitCapacity; i++)
+                int initialSlots = data.GetMaxSlotsByLevel(0);
+                for (int i = 0; i < initialSlots; i++)
                 {
                     farmerSlots.Add(new FarmerSlot());
                 }
@@ -99,8 +102,34 @@ namespace Buildings
 
         private void CompleteConstruction()
         {
-            ChangeState(BuildingState.Disabled);//未稼働状態へ移行
+            ChangeState(BuildingState.Inactive);//未稼働状態へ移行
             OnBuildingCompleted?.Invoke(this);
+        }
+
+        /// <summary>
+        /// 建築をキャンセルする
+        /// 注意: 消耗された農民と行動力は返されない
+        /// </summary>
+        public bool CancelConstruction()
+        {
+            if (currentState != BuildingState.UnderConstruction)
+            {
+                Debug.LogWarning("建築中でない建物はキャンセルできません");
+                return false;
+            }
+
+            Debug.Log($"建物 {buildingData.buildingName} の建築がキャンセルされました。消耗された農民と行動力は返されません。");
+
+            // 建物を廃墟状態に変更
+            ChangeState(BuildingState.Ruined);
+
+            // 破壊イベントを発火（DemoUITestのリストから自動削除される）
+            OnBuildingDestroyed?.Invoke(this);
+
+            // 建物オブジェクトを破棄
+            Destroy(gameObject);
+
+            return true;
         }
 
         #endregion
@@ -120,13 +149,12 @@ namespace Buildings
         /// </summary>
         public bool AssignFarmer(Farmer farmer)
         {
-            if (!buildingData.isSpecialBuilding || (currentState != BuildingState.Disabled&&currentState!=BuildingState.Active))
+            if (!buildingData.isSpecialBuilding || (currentState != BuildingState.Inactive&&currentState!=BuildingState.Active))
             {
                 Debug.Log("建物が未完成又は廃墟になってます。");
                 return false;
             }
                 
-
             var emptySlot = farmerSlots.Find(s => !s.IsOccupied);
             if (emptySlot == null)
                 return false;
@@ -145,18 +173,29 @@ namespace Buildings
         public void ProcessTurn(int currentTurn)
         {
             if (!IsOperational)
+            {
+                Debug.Log($"建物 {buildingData.buildingName} は稼働可能な状態ではありません (状態: {currentState}, スロット: {currentSkillUses})");
                 return;
+            }
 
             // APがある農民がいるかチェック
             bool hasActiveFarmer = farmerSlots.Any(slot => slot.IsOccupied && slot.HasAP);
             if (!hasActiveFarmer)
+            {
+                Debug.Log($"建物 {buildingData.buildingName} にAPを持つ農民がいません");
                 return;
+            }
 
             // APがある農民がいる場合のみActiveに変更
-            if (currentState == BuildingState.Disabled)
+            if (currentState == BuildingState.Inactive)
+            {
                 ChangeState(BuildingState.Active);
+                Debug.Log($"建物 {buildingData.buildingName} がActiveに変更されました");
+            }
 
-            if (currentTurn - lastResourceGenTurn >= buildingData.resourceGenInterval)
+            // 資源生成間隔チェック
+            int turnsSinceLastGen = currentTurn - lastResourceGenTurn;
+            if (turnsSinceLastGen >= buildingData.resourceGenInterval)
             {
                 GenerateResources();
                 lastResourceGenTurn = currentTurn;
@@ -164,11 +203,16 @@ namespace Buildings
                 // 農民の行動力を消費
                 ProcessFarmerAP();
             }
+            else
+            {
+                Debug.Log($"建物 {buildingData.buildingName} は資源生成間隔待ち中 ({turnsSinceLastGen}/{buildingData.resourceGenInterval}ターン)");
+            }
         }
 
         private void GenerateResources()
         {
             int totalProduction = CalculateProduction();
+            Debug.Log($"建物 {buildingData.buildingName} が資源 {totalProduction} を生成しました！");
             OnResourceGenerated?.Invoke(totalProduction);
         }
 
@@ -179,8 +223,9 @@ namespace Buildings
             {
                 if (slot.IsOccupied && slot.HasAP)
                 {
+                    int baseProduction = Data.GetBuildingResourceProduction();
                     // 基本生産量にスキルレベルによる倍率を適用
-                    totalProduction += buildingData.baseProductionAmount * slot.ProductionMultiplier;
+                    totalProduction += baseProduction;
                 }
             }
 
@@ -220,13 +265,13 @@ namespace Buildings
         {
             if (currentState == BuildingState.Active)
             {
-                // Active状態で稼働中農民がいない場合はDisabledに戻す
+                // Active状態で稼働中農民がいない場合はInactiveに戻す
                 bool hasActiveFarmer = farmerSlots.Any(slot => slot.IsOccupied && slot.HasAP);
                 
                 if (!hasActiveFarmer)
                 {
-                    ChangeState(BuildingState.Disabled);
-                    Debug.Log($"建物 {buildingData.buildingName} の農民のAPが尽きたため、Disabledに状態変更しました");
+                    ChangeState(BuildingState.Inactive);
+                    Debug.Log($"建物 {buildingData.buildingName} の農民のAPが尽きたため、Inactiveに状態変更しました");
                 }
             }
         }
@@ -258,6 +303,90 @@ namespace Buildings
 
         #endregion
 
+        #region アップグレード管理
+
+        /// <summary>
+        /// 建物をアップグレードする
+        /// </summary>
+        public bool UpgradeBuilding()
+        {
+            if (upgradeLevel >= 2)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} は既に最大レベルです");
+                return false;
+            }
+
+            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
+            {
+                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
+                return false;
+            }
+
+            upgradeLevel++;
+            ApplyUpgradeEffects();
+            Debug.Log($"{buildingData.buildingName} がレベル {upgradeLevel} にアップグレードしました");
+            return true;
+        }
+
+        /// <summary>
+        /// アップグレード効果を適用
+        /// </summary>
+        private void ApplyUpgradeEffects()
+        {
+            // レベルに応じた最大HPを更新
+            int newMaxHp = buildingData.GetMaxHpByLevel(upgradeLevel);
+            float hpRatio = (float)currentHp / buildingData.maxHp;
+            currentHp = Mathf.RoundToInt(newMaxHp * hpRatio);
+
+            // レベルに応じた最大スロット数を更新
+            int newMaxSlots = buildingData.GetMaxSlotsByLevel(upgradeLevel);
+            if (newMaxSlots > farmerSlots.Count)
+            {
+                // スロット数を増やす
+                int slotsToAdd = newMaxSlots - farmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    farmerSlots.Add(new FarmerSlot());
+                }
+                currentSkillUses = newMaxSlots;
+            }
+
+            Debug.Log($"建物のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHp}, スロット数={newMaxSlots}");
+
+            // 新しい機能のログ
+            if (upgradeLevel == 1)
+            {
+                int attackRange = buildingData.GetAttackRangeByLevel(upgradeLevel);
+                if (attackRange > 0)
+                {
+                    Debug.Log($"攻撃機能獲得: 攻撃範囲={attackRange}");
+                }
+            }
+            else if (upgradeLevel == 2)
+            {
+                int attackRange = buildingData.GetAttackRangeByLevel(upgradeLevel);
+                Debug.Log($"強化攻撃機能: 攻撃範囲={attackRange}");
+            }
+        }
+
+        /// <summary>
+        /// レベルに応じた攻撃範囲を取得
+        /// </summary>
+        public int GetAttackRange()
+        {
+            return buildingData.GetAttackRangeByLevel(upgradeLevel);
+        }
+
+        /// <summary>
+        /// 攻撃可能かどうか
+        /// </summary>
+        public bool CanAttack()
+        {
+            return GetAttackRange() > 0 && IsOperational;
+        }
+
+        #endregion
+
         /// <summary>
         /// 農民スロット管理クラス
         /// </summary>
@@ -268,7 +397,6 @@ namespace Buildings
 
             public bool IsOccupied => assignedFarmer != null;
             public bool HasAP => assignedFarmer != null && assignedFarmer.CurrentAP > 0;
-            public float ProductionMultiplier => assignedFarmer != null ? assignedFarmer.GetProductionMultiplier() : 1f;
 
             public void AssignFarmer(Farmer farmer)
             {
@@ -301,7 +429,7 @@ namespace Buildings
     {
         UnderConstruction,  // 建築中
         Active,            // 稼働中
-        Disabled,          // 未稼働（効果を発揮してない）
+        Inactive,          // 未稼働（効果を発揮してない）
         Ruined            // 廃墟
     }
 

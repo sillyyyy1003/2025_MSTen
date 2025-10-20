@@ -15,14 +15,20 @@ MonoBehaviour:
   buildingName: "Gold Mine(\u4EEE)"
   maxHp: 100
   buildStartAPCost: 1
-  buildingAPCost: 3
+  buildingAPCost: 9
   resourceGenInterval: 0
+  cellType: 0
   isSpecialBuilding: 1
   maxUnitCapacity: 3
   generationType: 5
   baseProductionAmount: 1
+  goldenProductionAmount: 0
   apCostperTurn: 20
   productionMultiplier: 1
+  maxHpByLevel: 190000001e0000002d000000
+  attackRangeByLevel: 000000000100000002000000
+  maxSlotsByLevel: 030000000300000005000000
+  buildingAPCostByLevel: 1c0000001900000014000000
   buildingSprite: {fileID: 21300000, guid: 948f7832eee80d5428bd26a92391d984, type: 3}
   buildingMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   buildingMaterial: {fileID: 2100000, guid: 1299e8089b375be4986a2faebb9faca6, type: 2}
