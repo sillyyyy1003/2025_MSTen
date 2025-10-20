@@ -181,7 +181,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 射线检测
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
         {
-            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
+            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().Index;
             int2 clickPos = GameManage.Instance.FindCell(ClickCellid).Cells2DPos;
 
             // 检查是否点击了自己的单位
@@ -237,7 +237,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 射线检测
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
         {
-            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
+            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().Index;
             int2 targetPos = GameManage.Instance.FindCell(ClickCellid).Cells2DPos;
 
             // 检查目标位置

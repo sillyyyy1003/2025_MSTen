@@ -1,12 +1,14 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.IO;
+using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.UI;
-using System.IO;
-using System;
-using Unity.Mathematics;
-using Unity.VisualScripting;
+using UnityEngine.UIElements;
 
 
 
@@ -86,10 +88,10 @@ public class HexGrid : MonoBehaviour
 		ShowUI(true);
 
 		// 25.9.23 RI add GameStart
-		if (!GameManage.Instance.GameInit())
-		{
-			Debug.LogError("Game Init Failed!");
-		}
+		//if (!GameManage.Instance.GameInit())
+		//{
+		//	Debug.LogError("Game Init Failed!");
+		//}
 
 		// 调整MiniMap的摄像机位置
 		if (minimapCamController)
@@ -189,7 +191,6 @@ public class HexGrid : MonoBehaviour
 		position.z = z * (HexMetrics.outerRadius * 1.5f);
 
 		// Create cell from coordinates
-		
 		HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
 		cell.transform.localPosition = position;
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
@@ -234,26 +235,28 @@ public class HexGrid : MonoBehaviour
 		// Reset cell elevation
 		cell.Elevation = 0;
 
-        // 25.9.23 RI add layer to each cell
-        cell.gameObject.layer = LayerMask.NameToLayer("Cell");
 
-		
+		/*
+		//===========Set boardInfo 
+		// 25.9.23 RI add layer to each cell
+		cell.gameObject.layer = LayerMask.NameToLayer("Cell");
 
-        // 25.9.23 RI add cell's serial Number
-        cell.id = i;
+		// 25.9.23 RI add cell's serial Number
+		cell.id = i;
 
-        // 25.9.23 RI set cell's initial infor
-        BoardInfor infor = new BoardInfor();
+		// 25.9.23 RI set cell's initial infor
+		BoardInfor infor = new BoardInfor();
 
-		infor.Cells2DPos.x = x; 
-        infor.Cells2DPos.y= z; 
-        infor.Cells3DPos = position;
-        infor.id = i;
+		infor.Cells2DPos.x = x;
+		infor.Cells2DPos.y = z;
+		infor.Cells3DPos = position;
+		infor.id = i;
 
 		// 25.9.23 RI send cell's Infor to GameManage
-        GameManage.Instance.SetGameBoardInfor(infor);
+		GameManage.Instance.SetGameBoardInfor(infor);
+		*/
 
-        AddCellToChunk(x, z, cell);
+		AddCellToChunk(x, z, cell);
 
     }
 
@@ -321,43 +324,9 @@ public class HexGrid : MonoBehaviour
 				startIndex.Add(i);
 			}
 
+			// 2025.10.20 将更新后的Cell信息拷贝到GameManager里
+			SetGameBoardInfo(cells[i]);
 
-			// 该格子的类型，是否可通过，是否可占领的信息
-			CellInfo cellInfo = new CellInfo();
-
-			// 判断是否有水
-			if (cells[i].IsUnderwater)
-			{
-				cellInfo.isCapturable = false; // 不可占领
-				cellInfo.isPassalbe = false; // 不可通过
-				cellInfo.type = TerrainType.Water;
-			}
-			else
-			{
-				// 如果有高度
-				if (cells[i].Elevation > 2)
-				{
-					cellInfo.isCapturable = false; // 不可占领
-					cellInfo.isPassalbe = false; // 不可通过
-					cellInfo.type = TerrainType.Mountain;
-
-				}
-				else
-				{
-					if (cells[i].ForestLevel > 0)
-					{
-						cellInfo.isCapturable = false;
-						cellInfo.isPassalbe = true;
-						cellInfo.type = TerrainType.Forest;
-					}
-					else
-					{
-						cellInfo.isCapturable = true;
-						cellInfo.isPassalbe = true;
-						cellInfo.type = TerrainType.Plain;
-					}
-				}
-			}
 		}
 		for (int i = 0; i < chunks.Length; i++)
 		{
@@ -489,7 +458,7 @@ public class HexGrid : MonoBehaviour
 					neighbor.SearchPhase = searchFrontierPhase;
 					neighbor.Distance = distance;
 					/*
-					neighbor.SetLabel(turn.ToString());
+					neighbor.SetLabel(turn.ToString());// 游戏不需要UI表示
 					*/
 					neighbor.PathFrom = current;
 					neighbor.SearchHeuristic =
@@ -501,7 +470,7 @@ public class HexGrid : MonoBehaviour
 					int oldPriority = neighbor.SearchPriority;
 					neighbor.Distance = distance;
 					/*
-					neighbor.SetLabel(turn.ToString());
+					neighbor.SetLabel(turn.ToString());	// 游戏不需要UI表示
 					*/
 					neighbor.PathFrom = current;
 					searchFrontier.Change(neighbor, oldPriority);
@@ -644,5 +613,51 @@ public class HexGrid : MonoBehaviour
 		}
 
 		return startIndex[1];
+	}
+
+	void SetGameBoardInfo(HexCell cell)
+	{
+		// 25.9.23 RI add layer to each cell
+		cell.gameObject.layer = LayerMask.NameToLayer("Cell");
+
+		// 25.9.23 RI set cell's initial infor
+		BoardInfor infor = new BoardInfor();
+
+		int x = cell.coordinates.X + cell.coordinates.Z / 2;
+		int z = cell.coordinates.Z;
+
+		infor.Cells2DPos.x = x;
+		infor.Cells2DPos.y = z;
+		infor.Cells3DPos = cell.Position;
+		infor.id = cell.Index;
+
+
+		// 判断是否有水
+		if (cell.IsUnderwater)
+		{
+			infor.type = TerrainType.Water;
+		}
+		else
+		{
+			// 如果有高度
+			if (cell.Elevation > 2)
+			{
+				infor.type = TerrainType.Mountain;
+
+			}
+			else
+			{
+				if (cell.ForestLevel > 0)
+				{
+					infor.type = TerrainType.Forest;
+				}
+				else
+				{
+					infor.type = TerrainType.Plain;
+				}
+			}
+		}
+
+		GameManage.Instance.SetGameBoardInfor(infor);
 	}
 }
