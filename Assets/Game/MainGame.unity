@@ -326,6 +326,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4729201140612556420, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6874862486640017318, guid: 5bf2f074d3720b044975ca9c2ce2fb2a,
         type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -1700,9 +1705,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1805311232}
   hexGrid: {fileID: 1913528995}
+  isLoadMap: 0
   mapFileName: Example.map
   mapSize: 0
-  isLoadMap: 0
 --- !u!1 &1597210278
 GameObject:
   m_ObjectHideFlags: 0
@@ -2805,3 +2810,4 @@ SceneRoots:
   - {fileID: 291931289}
   - {fileID: 787177570}
   - {fileID: 131122554}
+  - {fileID: 87763369}
