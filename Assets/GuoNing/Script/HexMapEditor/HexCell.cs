@@ -298,7 +298,7 @@ public class HexCell : MonoBehaviour
 	public void AddRoad(HexDirection direction)
 	{
 		if (
-			!roads[(int)direction] && !HasRiverThroughEdge(direction) &&
+			!roads[(int)direction] && !HasRiverThroughEdge(direction) && !IsSpecial && !GetNeighbor(direction).IsSpecial &&
 			GetElevationDifference(direction) <= 1
 		)
 		{
@@ -547,11 +547,14 @@ public class HexCell : MonoBehaviour
 
 		hasOutgoingRiver = true;
 		outgoingRiver = direction;
+		specialIndex = 0;
 
 		// set neighbor in coming river
 		neighbor.RemoveIncomingRiver();
 		neighbor.hasIncomingRiver = true;
 		neighbor.incomingRiver = direction.Opposite();
+		neighbor.specialIndex = 0;
+
 		//neighbor.RefreshSelfOnly();
 		SetRoad((int)direction, false);
 	}
@@ -613,6 +616,62 @@ public class HexCell : MonoBehaviour
 		get { return transform.localPosition; }
 	}
 
+
+
+	/// <summary>
+	/// 特殊内容索引
+	/// </summary>
+	int specialIndex;
+	public int SpecialIndex
+	{
+		get
+		{
+			return specialIndex;
+		}
+		set
+		{
+			if (specialIndex != value && !HasRiver)
+			{
+				specialIndex = value;
+				RemoveRoads();
+				RefreshSelfOnly();
+			}
+		}
+	}
+
+	public bool IsStartPos
+	{
+		get
+		{
+			return specialIndex == (int)SpecialIndexType.Pope;
+		}
+	}
+
+	public bool IsGoldMine
+	{
+		get
+		{
+			return specialIndex == (int)SpecialIndexType.Gold;
+		}
+
+	}
+
+	/// <summary>
+	/// 判断是否具备特殊近况
+	/// </summary>
+	public bool IsSpecial
+	{
+		get
+		{
+			return specialIndex > 0;
+		}
+	}
+
+	enum SpecialIndexType
+	{
+		Pope = 1, // 教皇的初始位置	
+		Gold = 2 // 金矿
+	};
 
 
 	/// <summary>
@@ -766,14 +825,13 @@ public class HexCell : MonoBehaviour
 	public void Save(BinaryWriter writer)
 	{
 		writer.Write((byte)terrainTypeIndex);
-		//writer.Write((byte)elevation);
 		writer.Write((byte)(elevation + 127));
 		writer.Write((byte)waterLevel);
 		writer.Write((byte)forestLevel);
 		writer.Write((byte)farmLevel);
 		writer.Write((byte)plantLevel);
-		//writer.Write(specialIndex);
-		//writer.Write(walled);
+		writer.Write((byte)specialIndex);
+		writer.Write(walled);
 
 
 		if (hasIncomingRiver)
@@ -825,9 +883,9 @@ public class HexCell : MonoBehaviour
 		forestLevel = reader.ReadByte(); // 格子的urban level
 		farmLevel = reader.ReadByte(); // 格子的farm level
 		plantLevel = reader.ReadByte(); // 格子的plant level
-		// specialIndex=reader.ReadByte();
-		// walled=reader.ReadByte();
-		
+		specialIndex = reader.ReadByte();
+		walled = reader.ReadBoolean();
+
 		byte riverData = reader.ReadByte();
 		if (riverData >= 128)
 		{

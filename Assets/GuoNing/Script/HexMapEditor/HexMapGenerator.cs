@@ -468,7 +468,7 @@ public class HexMapGenerator : MonoBehaviour
 				}
 
 				cell.TerrainTypeIndex = cellBiome.terrain;
-				cell.ForestLevel = cellBiome.plant;
+				cell.PlantLevel = cellBiome.plant;
 			}
 			else
 			{

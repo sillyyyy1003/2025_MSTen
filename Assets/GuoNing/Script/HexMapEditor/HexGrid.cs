@@ -4,8 +4,10 @@ using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
+using System;
 using Unity.Mathematics;
 using Unity.VisualScripting;
+
 
 
 
@@ -15,29 +17,42 @@ public class HexGrid : MonoBehaviour
 	int chunkCountX, chunkCountZ;
 
 	public HexCell cellPrefab;		//单个格子的预制件
-	HexCell[] cells;
 	public Text cellLabelPrefab;    // coordinate text
 	public Texture2D noiseSource;
 	public HexGridChunk chunkPrefab;
-
-	int searchFrontierPhase;
-
 	public int seed;
-	//public Color[] colors;
 
-	HexGridChunk[] chunks;
-	HexCellPriorityQueue searchFrontier;    // 搜索优先队列
+	private HexCell[] cells;
+	private HexGridChunk[] chunks;
 
+	[Header("PathFindingCell")]
 	public HexCell currentPathFrom, currentPathTo;	// 当前搜索起点和终点
 	bool currentPathExists; // 是否存在路径
+	int searchFrontierPhase;
+	HexCellPriorityQueue searchFrontier;    // 搜索优先队列
 
+	[Header("MiniMapCamera")]
+	public HexMapLoader mapLoader;
+	public MinimapCameraController minimapCamController;
+
+	private List<int> startIndex = new List<int>();	// 默认玩家是两个人
 
 	void Start()
 	{
 		HexMetrics.noiseSource = noiseSource;
 		HexMetrics.InitializeHashGrid(seed);
-		CreateMap(cellCountX, cellCountZ);
-		
+		StartCoroutine(LoadMapOnce());
+
+	}
+
+	/// <summary>
+	/// 延迟一帧生成地图，确保 Start 执行完
+	/// </summary>
+	/// <returns></returns>
+	IEnumerator LoadMapOnce()
+	{
+		yield return null; // 等一帧，确保 Start 执行完
+		if (mapLoader) mapLoader.LoadMap();
 	}
 
 
@@ -70,12 +85,12 @@ public class HexGrid : MonoBehaviour
 		CreateCells();
 		ShowUI(true);
 
-		// 25.9.23 RI add GameStart
-		//if (!GameManage.Instance.GameInit())
-		//{
-		//	Debug.LogError("Game Init Failed!");
-		//}
-
+		// 调整MiniMap的摄像机位置
+		if (minimapCamController)
+		{
+			minimapCamController.Init();
+			minimapCamController.PositionCamera(cellCountX, cellCountZ);
+		}
 
 		return true;
 	}
@@ -270,7 +285,6 @@ public class HexGrid : MonoBehaviour
 
 	public void Load(BinaryReader reader, int header)
 	{
-
 		ClearPath();
 		int x = 20, z = 15;
 		if (header >= 1)
@@ -279,23 +293,29 @@ public class HexGrid : MonoBehaviour
 			x = reader.ReadInt32();
 			z = reader.ReadInt32();
 		}
-		Debug.Log(cellCountX);
-		Debug.Log(cellCountZ);
+
 		if (x != cellCountX || z != cellCountZ)
 		{
-
-
 			if (!CreateMap(x, z))
 			{
 				return;
 			}
-           
 		}
 
+		// 清除原本保存的Index
+		startIndex.Clear();
+		
 		for (int i = 0; i < cells.Length; i++)
 		{
 			cells[i].Load(reader, header);
 			
+			// 判断该格子是否是初始
+			if (cells[i].IsStartPos)
+			{
+				startIndex.Add(i);
+			}
+
+
 			// 该格子的类型，是否可通过，是否可占领的信息
 			CellInfo cellInfo = new CellInfo();
 
@@ -584,5 +604,25 @@ public class HexGrid : MonoBehaviour
 		return coordinates;
 	}
 
+	public int GetPlayerAStartCellIndex()
+	{
+		if (startIndex.Count < 1)
+		{
+			Debug.Log("StartPosANotFound");
+			return 0;
+		}
 
+		return startIndex[0];
+	}
+
+	public int GetPlayerBStartCellIndex()
+	{
+		if (startIndex.Count < 2)
+		{
+			Debug.Log("StartPosBNotFound");
+			return 0;
+		}
+
+		return startIndex[1];
+	}
 }

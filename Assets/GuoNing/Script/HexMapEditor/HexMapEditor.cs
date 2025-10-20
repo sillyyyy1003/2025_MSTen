@@ -10,17 +10,18 @@ public class HexMapEditor : MonoBehaviour
 
 	private int activeElevation;
 	private int activeWaterLevel;
-	int activeForestLevel, activeFarmLevel, activePlantLevel;
+	int activeForestLevel, activeFarmLevel, activePlantLevel, activeSpecialIndex;
+
 
 
 	bool applyElevation;
 	bool applyWaterLevel;
-	bool applyForestnLevel, applyFarmLevel, applyPlantLevel;
+	bool applyForestnLevel, applyFarmLevel, applyPlantLevel, applySpecialIndex;
 
 	int brushSize;
 	int activeTerrainTypeIndex;
 
-	
+
 
 	enum OptionalToggle
 	{
@@ -136,6 +137,10 @@ public class HexMapEditor : MonoBehaviour
 			if (roadMode == OptionalToggle.No)
 			{
 				cell.RemoveRoads();
+			}
+			if (applySpecialIndex)
+			{
+				cell.SpecialIndex = activeSpecialIndex;
 			}
 			if (isDrag)
 			{
@@ -271,6 +276,16 @@ public class HexMapEditor : MonoBehaviour
 	public void SetWalledMode(int mode)
 	{
 		walledMode = (OptionalToggle)mode;
+	}
+
+	public void SetApplySpecialIndex(bool toggle)
+	{
+		applySpecialIndex = toggle;
+	}
+
+	public void SetSpecialIndex(float index)
+	{
+		activeSpecialIndex = (int)index;
 	}
 
 	HexCell GetCellUnderCursor()
