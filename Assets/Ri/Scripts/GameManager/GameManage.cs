@@ -17,9 +17,12 @@ public struct BoardInfor
     // 每个格子的世界坐标
     public Vector3 Cells3DPos;
 
-
     // 每个格子的id
     public int id;
+
+    // 每个格子的地块信息 是否可通过
+    public TerrainType type;
+
 };
 
 // 游戏开始数据
@@ -152,7 +155,7 @@ public class GameManage : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        
     }
 
     // *************************
@@ -243,7 +246,7 @@ public class GameManage : MonoBehaviour
     // 游戏初始化 (测试用)
     public bool GameInit()
     {
-        Debug.Log("GameManage: 本地测试模式初始化【=...");
+        Debug.Log("GameManage: 本地测试模式初始化...");
 
         SetIsGamingOrNot(true);
 
@@ -561,12 +564,20 @@ public class GameManage : MonoBehaviour
     // 设置棋盘结构体信息
     public void SetGameBoardInfor(BoardInfor infor)
     {
+        // 如果已经储存数据 清除当前数据
+        //GameBoardInfor.Clear();
+        //GameBoardInforDict.Clear();
 
-		// 添加新的数据
-		GameBoardInfor.Add(infor);
+        GameBoardInfor.Add(infor);
         GameBoardInforDict.Add(infor.id, infor);
     }
 
+  
+    // *************************
+    //        网络消息处理
+    // *************************
+
+  
     // 获取所有玩家ID
     public List<int> GetAllPlayerIds()
     {

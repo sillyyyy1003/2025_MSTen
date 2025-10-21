@@ -22,7 +22,7 @@ public static class HexMetrics
 	public const float elevationPerturbStrength = 1.5f;     //provides some subtle variation, which is roughly the height of a single terrace step
 
 	public static Texture2D noiseSource;
-	public const int chunkSizeX = 5, chunkSizeZ = 5;//5 by 5 blocks
+	public const int chunkSizeX = 5, chunkSizeZ = 5;	//5 by 5 blocks
 
 	public const float streamBedElevationOffset = -1.75f;
 	//public const float riverSurfaceElevationOffset = -0.5f;

@@ -14,6 +14,7 @@ public class BuildingDataSOEditor : Editor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("buildStartAPCost"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("buildingAPCost"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceGenInterval"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("cellType"));
 
         EditorGUILayout.Space();
 
@@ -24,6 +25,7 @@ public class BuildingDataSOEditor : Editor
 
         EditorGUILayout.PropertyField(serializedObject.FindProperty("generationType"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("baseProductionAmount"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("goldenProductionAmount"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("apCostperTurn"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("productionMultiplier"));
 

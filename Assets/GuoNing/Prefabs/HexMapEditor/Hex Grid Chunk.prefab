@@ -772,6 +772,9 @@ MonoBehaviour:
     - {fileID: 1652430968232096026, guid: fd614d5983c0b47458a91fa2d763d84d, type: 3}
   - prefabs:
     - {fileID: 1652430968232096026, guid: fd614d5983c0b47458a91fa2d763d84d, type: 3}
+  special:
+  - {fileID: 922880094032734442, guid: f7d67aa5c7a85a845a4429b7583b4c1a, type: 3}
+  - {fileID: 6771430546697439007, guid: b23d63c46a0272342a4d9c811e40125b, type: 3}
   walls: {fileID: 6214972593768939866}
 --- !u!1 &7675690913885112237
 GameObject:
@@ -895,7 +898,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: efa57496f158d854898f46bfe66f4900, type: 2}
+  - {fileID: 2100000, guid: 98cd3ae243d61a34bae128e532807ad7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

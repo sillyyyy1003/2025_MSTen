@@ -23,6 +23,7 @@ public struct PlayerUnitData
     public PlayerUnitType UnitType;
     // 单位的2维坐标
     public int2 Position;
+   
 
     public PlayerUnitData(PlayerUnitType type, int2 pos)
     {
