@@ -601,7 +601,7 @@ public class PlayerOperationManager : MonoBehaviour
         _HexGrid.FindPath(LastSelectingCellID, targetCellId,10);
         if(_HexGrid.HasPath)
         {
-            List<HexCell> listCellPos = _HexGrid.GetPath();
+            List<HexCell> listCellPos = _HexGrid.GetPathCells();
 
             Sequence moveSequence = DOTween.Sequence();
             for (int i = 0; i < listCellPos.Count; i++)

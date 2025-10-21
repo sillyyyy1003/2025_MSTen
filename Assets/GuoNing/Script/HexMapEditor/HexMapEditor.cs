@@ -32,7 +32,7 @@ public class HexMapEditor : MonoBehaviour
 
 	bool isDrag;
 	HexDirection dragDirection;
-	HexCell previousCell;
+	int previousCellIndex = -1;
 
 	void Awake()
 	{
@@ -51,7 +51,7 @@ public class HexMapEditor : MonoBehaviour
 		}
 		else
 		{
-			previousCell = null;
+			previousCellIndex = -1;
 		}
 	}
 
@@ -62,7 +62,7 @@ public class HexMapEditor : MonoBehaviour
 		if (Physics.Raycast(inputRay, out hit))
 		{
 			HexCell currentCell = hexGrid.GetCell(hit.point);
-			if (previousCell && previousCell != currentCell)
+			if (previousCellIndex >= 0 && previousCellIndex != currentCell.Index)
 			{
 				ValidateDrag(currentCell);
 			}
@@ -73,11 +73,11 @@ public class HexMapEditor : MonoBehaviour
 
 	
 			EditCells(currentCell);
-			previousCell = currentCell;
+			previousCellIndex = currentCell.Index;
 		}
 		else
 		{
-			previousCell = null;
+			previousCellIndex = -1;
 		}
 	}
 
@@ -89,7 +89,8 @@ public class HexMapEditor : MonoBehaviour
 			dragDirection++
 		)
 		{
-			if (previousCell.GetNeighbor(dragDirection) == currentCell)
+			if (hexGrid.GetCell(previousCellIndex).GetNeighbor(dragDirection) ==
+			    currentCell)
 			{
 				isDrag = true;
 				return;
@@ -142,19 +143,16 @@ public class HexMapEditor : MonoBehaviour
 			{
 				cell.SpecialIndex = activeSpecialIndex;
 			}
-			if (isDrag)
+			if (isDrag &&
+			    cell.TryGetNeighbor(dragDirection.Opposite(), out HexCell otherCell))
 			{
-				HexCell otherCell = cell.GetNeighbor(dragDirection.Opposite());
-				if (otherCell)
+				if (riverMode == OptionalToggle.Yes)
 				{
-					if (riverMode == OptionalToggle.Yes)
-					{
-						otherCell.SetOutgoingRiver(dragDirection);
-					}
-					if (roadMode == OptionalToggle.Yes)
-					{
-						otherCell.AddRoad(dragDirection);
-					}
+					otherCell.SetOutgoingRiver(dragDirection);
+				}
+				if (roadMode == OptionalToggle.Yes)
+				{
+					otherCell.AddRoad(dragDirection);
 				}
 			}
 		}
@@ -181,8 +179,8 @@ public class HexMapEditor : MonoBehaviour
 
 	void EditCells(HexCell center)
 	{
-		int centerX = center.coordinates.X;
-		int centerZ = center.coordinates.Z;
+		int centerX = center.Coordinates.X;
+		int centerZ = center.Coordinates.Z;
 
 		for (int r = 0, z = centerZ - brushSize; z <= centerZ; z++, r++)
 		{
