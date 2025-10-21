@@ -15,7 +15,21 @@ using UnityEngine.UIElements;
 
 public class HexGrid : MonoBehaviour
 {
-	public int cellCountX = 20, cellCountZ = 15;    // 棋盘大小 CellCountX: 横向格子数 cellCountZ：纵向格子数
+
+
+	/// <summary>
+	/// Amount of cells in the X dimension.
+	/// </summary>
+	public int CellCountX
+	{ get; private set; }
+
+	/// <summary>
+	/// Amount of cells in the Z dimension.
+	/// </summary>
+	public int CellCountZ
+	{ get; private set; }
+
+
 	int chunkCountX, chunkCountZ;
 
 	public HexCell cellPrefab;		//单个格子的预制件
@@ -27,8 +41,7 @@ public class HexGrid : MonoBehaviour
 	private HexCell[] cells;
 	private HexGridChunk[] chunks;
 
-	[Header("PathFindingCell")]
-	public HexCell currentPathFrom, currentPathTo;	// 当前搜索起点和终点
+	int currentPathFromIndex = -1, currentPathToIndex = -1;// 当前搜索起点和终点索引
 	bool currentPathExists; // 是否存在路径
 	int searchFrontierPhase;
 	HexCellPriorityQueue searchFrontier;    // 搜索优先队列
@@ -79,10 +92,10 @@ public class HexGrid : MonoBehaviour
 			}
 		}
 
-		cellCountX = x;
-		cellCountZ = z;
-		chunkCountX = cellCountX / HexMetrics.chunkSizeX;
-		chunkCountZ = cellCountZ / HexMetrics.chunkSizeZ;
+		CellCountX = x;
+		CellCountZ = z;
+		chunkCountX = CellCountX / HexMetrics.chunkSizeX;
+		chunkCountZ = CellCountZ / HexMetrics.chunkSizeZ;
 		CreateChunks();
 		CreateCells();
 		ShowUI(true);
@@ -97,7 +110,7 @@ public class HexGrid : MonoBehaviour
 		if (minimapCamController)
 		{
 			minimapCamController.Init();
-			minimapCamController.PositionCamera(cellCountX, cellCountZ);
+			minimapCamController.PositionCamera(CellCountX, CellCountZ);
 		}
 
 		return true;
@@ -113,17 +126,18 @@ public class HexGrid : MonoBehaviour
 			{
 				HexGridChunk chunk = chunks[i++] = Instantiate(chunkPrefab);
 				chunk.transform.SetParent(transform);
+				chunk.Grid = this;
 			}
 		}
 	}
 
 	void CreateCells()
 	{
-		cells = new HexCell[cellCountZ * cellCountX];
+		cells = new HexCell[CellCountZ * CellCountX];
 
-		for (int z = 0, i = 0; z < cellCountZ; z++)
+		for (int z = 0, i = 0; z < CellCountZ; z++)
 		{
-			for (int x = 0; x < cellCountX; x++)
+			for (int x = 0; x < CellCountX; x++)
 			{
 				CreateCell(x, z, i++);
 			}
@@ -141,28 +155,37 @@ public class HexGrid : MonoBehaviour
 	{
 		position = transform.InverseTransformPoint(position);
 		HexCoordinates coordinates = HexCoordinates.FromPosition(position);
-		int index = coordinates.X + coordinates.Z * cellCountX + coordinates.Z / 2;
+		int index = coordinates.X + coordinates.Z * CellCountX + coordinates.Z / 2;
 		return cells[index];
 	}
 
 	public HexCell GetCell(HexCoordinates coordinates)
 	{
 		int z = coordinates.Z;
-		if (z < 0 || z >= cellCountZ)
-		{
-			return null;
-		}
 		int x = coordinates.X + z / 2;
-		if (x < 0 || x >= cellCountX)
+		if (z < 0 || z >= CellCountZ || x < 0 || x >= CellCountX)
 		{
 			return null;
 		}
-		return cells[x + z * cellCountX];
-		
+		return cells[x + z * CellCountX];
+
 	}
 
-    //25.10.9 Add Find Cell By ID
-    public HexCell GetCell(int id)
+	public bool TryGetCell(HexCoordinates coordinates, out HexCell cell)
+	{
+		int z = coordinates.Z;
+		int x = coordinates.X + z / 2;
+		if (z < 0 || z >= CellCountZ || x < 0 || x >= CellCountX)
+		{
+			cell = null;
+			return false;
+		}
+		cell = cells[x + z * CellCountX];
+		return true;
+	}
+
+	//25.10.9 Add Find Cell By ID
+	public HexCell GetCell(int id)
     {
 		return cells[id];
     }
@@ -192,35 +215,11 @@ public class HexGrid : MonoBehaviour
 
 		// Create cell from coordinates
 		HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
+		cell.Grid = this;
 		cell.transform.localPosition = position;
-		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
+		cell.Coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
 		cell.Index = i;
-		// Set cell neighbors in west direction
-		if (x > 0)
-		{
-			cell.SetNeighbor(HexDirection.W, cells[i - 1]);
-		}
-		if (z > 0)
-		{
-			if ((z & 1) == 0)// even rows 偶数排
-			{
-				//Connecting from NW to SE on even rows.
-				cell.SetNeighbor(HexDirection.SE, cells[i - cellCountX]);
-				if (x > 0)  //Connecting from NE to SW on even rows.
-				{
-					cell.SetNeighbor(HexDirection.SW, cells[i - cellCountX - 1]);
-				}
-			}
-			else // Odds rows 奇数排
-			{
-				cell.SetNeighbor(HexDirection.SW, cells[i - cellCountX]);
-				if (x < cellCountX - 1)
-				{
-					cell.SetNeighbor(HexDirection.SE, cells[i - cellCountX + 1]);
-				}
-			}
-		}
-
+	
 		// tile coordinate text label
 		Text label = Instantiate<Text>(cellLabelPrefab);
 		label.rectTransform.anchoredPosition =
@@ -284,8 +283,8 @@ public class HexGrid : MonoBehaviour
 
 	public void Save(BinaryWriter writer)
 	{
-		writer.Write(cellCountX);
-		writer.Write(cellCountZ);
+		writer.Write(CellCountX);
+		writer.Write(CellCountZ);
 		for (int i = 0; i < cells.Length; i++)
 		{
 			cells[i].Save(writer);
@@ -303,7 +302,7 @@ public class HexGrid : MonoBehaviour
 			z = reader.ReadInt32();
 		}
 
-		if (x != cellCountX || z != cellCountZ)
+		if (x != CellCountX || z != CellCountZ)
 		{
 			if (!CreateMap(x, z))
 			{
@@ -339,8 +338,8 @@ public class HexGrid : MonoBehaviour
 	public void FindPath(HexCell fromCell, HexCell toCell, int speed)
 	{
 		ClearPath();
-		currentPathFrom = fromCell;
-		currentPathTo = toCell;
+		currentPathFromIndex = fromCell.Index;
+		currentPathToIndex = toCell.Index;
 		currentPathExists = Search(fromCell, toCell, speed);
 		ShowPath(speed);
 	}
@@ -349,8 +348,8 @@ public class HexGrid : MonoBehaviour
     public void FindPath(int fromCellID, int toCellID, int speed)
     {
         ClearPath();
-		currentPathFrom = GetCell(fromCellID); 
-        currentPathTo = GetCell(toCellID);
+        currentPathFromIndex = fromCellID;
+        currentPathToIndex = toCellID;
         currentPathExists = Search(GetCell(fromCellID), GetCell(toCellID), speed);
         ShowPath(speed);
     }
@@ -366,7 +365,7 @@ public class HexGrid : MonoBehaviour
 
 	public HexCell GetCell(int xOffset, int zOffset)
 	{
-		return cells[xOffset + zOffset * cellCountX];
+		return cells[xOffset + zOffset * CellCountX];
 	}
 
 
@@ -409,9 +408,9 @@ public class HexGrid : MonoBehaviour
 
 			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
 			{
-				HexCell neighbor = current.GetNeighbor(d);
+				//HexCell neighbor = current.GetNeighbor(d);
 
-				if (neighbor == null ||
+				if (!current.TryGetNeighbor(d, out HexCell neighbor) ||
 				    neighbor.SearchPhase > searchFrontierPhase)
 				{
 					continue;
@@ -460,9 +459,9 @@ public class HexGrid : MonoBehaviour
 					/*
 					neighbor.SetLabel(turn.ToString());// 游戏不需要UI表示
 					*/
-					neighbor.PathFrom = current;
+					neighbor.PathFromIndex = current.Index;
 					neighbor.SearchHeuristic =
-						neighbor.coordinates.DistanceTo(toCell.coordinates);
+						neighbor.Coordinates.DistanceTo(toCell.Coordinates);
 					searchFrontier.Enqueue(neighbor);
 				}
 				else if (distance < neighbor.Distance)
@@ -472,7 +471,7 @@ public class HexGrid : MonoBehaviour
 					/*
 					neighbor.SetLabel(turn.ToString());	// 游戏不需要UI表示
 					*/
-					neighbor.PathFrom = current;
+					neighbor.PathFromIndex = current.Index;
 					searchFrontier.Change(neighbor, oldPriority);
 				}
 
@@ -514,83 +513,81 @@ public class HexGrid : MonoBehaviour
 	{
 		if (currentPathExists)
 		{
-			HexCell current = currentPathTo;
-			while (current != currentPathFrom)
+			HexCell current = cells[currentPathToIndex];
+			while (current.Index != currentPathFromIndex)
 			{
 				int turn = (current.Distance - 1) / speed;
 				current.SetLabel(turn.ToString());
 				current.EnableHighlight(Color.white);
-				current = current.PathFrom;
+				current = cells[current.PathFromIndex];
 			}
 		}
-		currentPathFrom.EnableHighlight(Color.blue);
-		currentPathTo.EnableHighlight(Color.red);
+		cells[currentPathFromIndex].EnableHighlight(Color.blue);
+		cells[currentPathToIndex].EnableHighlight(Color.red);
 	}
 
 	public void ClearPath()
 	{
 		if (currentPathExists)
 		{
-			HexCell current = currentPathTo;
-			while (current != currentPathFrom)
+			HexCell current = cells[currentPathToIndex];
+			while (current.Index != currentPathFromIndex)
 			{
 				current.SetLabel(null);
 				current.DisableHighlight();
-				current = current.PathFrom;
+				current = cells[current.PathFromIndex];
 			}
 			current.DisableHighlight();
 			currentPathExists = false;
 		}
-		else if (currentPathFrom)
+		else if (currentPathFromIndex >= 0)
 		{
-			currentPathFrom.DisableHighlight();
-			currentPathTo.DisableHighlight();
+			cells[currentPathFromIndex].DisableHighlight();
+			cells[currentPathToIndex].DisableHighlight();
 		}
-		currentPathFrom = currentPathTo = null;
+		currentPathFromIndex = currentPathToIndex = -1;
 	}
 
+
+	public List<HexCell> GetPathCells()
+	{
+		if (!currentPathExists)
+		{
+			return null;
+		}
+
+		List<HexCell> path = ListPool<HexCell>.Get();
+		for (HexCell c = cells[currentPathToIndex];
+		     c.Index != currentPathFromIndex;
+		     c = cells[c.PathFromIndex])
+		{
+			path.Add(c);
+		}
+		path.Add(cells[currentPathFromIndex]);
+		path.Reverse();
+		return path;
+	}
 
 	/// <summary>
 	/// 返回单元格路径
 	/// </summary>
 	/// <returns></returns>
-	public List<HexCell> GetPath()
+	public List<int> GetPath()
 	{
 		if (!currentPathExists)
 		{
 			return null;
 		}
-		List<HexCell> path = ListPool<HexCell>.Get();
-		for (HexCell c = currentPathTo; c != currentPathFrom; c = c.PathFrom)
+		List<int> path = ListPool<int>.Get();
+		for (HexCell c = cells[currentPathToIndex];
+		     c.Index != currentPathFromIndex;
+		     c = cells[c.PathFromIndex])
 		{
-			path.Add(c);
+			path.Add(c.Index);
 		}
-		path.Add(currentPathFrom);
+		path.Add(currentPathFromIndex);
 		path.Reverse();
 		return path;
-	}
-
-
-	/// <summary>
-	/// 返回二维数列
-	/// </summary>
-	/// <returns></returns>
-	public List<HexCoordinates> GetPathCoordinate()
-	{
-		// RI test
-		if (!currentPathExists)
-		{
-			return null;
-		}
-
-		List<HexCoordinates> coordinates = ListPool<HexCoordinates>.Get();
-		for (HexCell c = currentPathTo; c != currentPathFrom; c = c.PathFrom)
-		{
-			coordinates.Add(c.coordinates);
-		}
-		coordinates.Add(currentPathFrom.coordinates);
-		coordinates.Reverse();
-		return coordinates;
 	}
 
 	public int GetPlayerAStartCellIndex()
@@ -623,8 +620,8 @@ public class HexGrid : MonoBehaviour
 		// 25.9.23 RI set cell's initial infor
 		BoardInfor infor = new BoardInfor();
 
-		int x = cell.coordinates.X + cell.coordinates.Z / 2;
-		int z = cell.coordinates.Z;
+		int x = cell.Coordinates.X + cell.Coordinates.Z / 2;
+		int z = cell.Coordinates.Z;
 
 		infor.Cells2DPos.x = x;
 		infor.Cells2DPos.y = z;

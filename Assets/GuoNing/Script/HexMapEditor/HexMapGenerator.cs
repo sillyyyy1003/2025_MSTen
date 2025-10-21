@@ -325,7 +325,7 @@ public class HexMapGenerator : MonoBehaviour
 		firstCell.Distance = 0;
 		firstCell.SearchHeuristic = 0;
 		searchFrontier.Enqueue(firstCell);
-		HexCoordinates center = firstCell.coordinates;
+		HexCoordinates center = firstCell.Coordinates;
 
 		int rise = Random.value < highRiseProbability ? 2 : 1;
 		int size = 0;
@@ -350,11 +350,12 @@ public class HexMapGenerator : MonoBehaviour
 
 			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
 			{
-				HexCell neighbor = current.GetNeighbor(d);
-				if (neighbor && neighbor.SearchPhase < searchFrontierPhase)
+				//HexCell neighbor = current.GetNeighbor(d);
+				if (current.TryGetNeighbor(d, out HexCell neighbor) &&
+				    neighbor.SearchPhase < searchFrontierPhase)
 				{
 					neighbor.SearchPhase = searchFrontierPhase;
-					neighbor.Distance = neighbor.Distance = neighbor.coordinates.DistanceTo(center);
+					neighbor.Distance = neighbor.Distance = neighbor.Coordinates.DistanceTo(center);
 					neighbor.SearchHeuristic =
 						Random.value < jitterProbability ? 1 : 0;
 					searchFrontier.Enqueue(neighbor);
@@ -374,7 +375,7 @@ public class HexMapGenerator : MonoBehaviour
 		firstCell.Distance = 0;
 		firstCell.SearchHeuristic = 0;
 		searchFrontier.Enqueue(firstCell);
-		HexCoordinates center = firstCell.coordinates;
+		HexCoordinates center = firstCell.Coordinates;
 
 		int sink = Random.value < highRiseProbability ? 2 : 1;
 		int size = 0;
@@ -403,7 +404,7 @@ public class HexMapGenerator : MonoBehaviour
 				if (neighbor && neighbor.SearchPhase < searchFrontierPhase)
 				{
 					neighbor.SearchPhase = searchFrontierPhase;
-					neighbor.Distance = neighbor.Distance = neighbor.coordinates.DistanceTo(center);
+					neighbor.Distance = neighbor.Distance = neighbor.Coordinates.DistanceTo(center);
 					neighbor.SearchHeuristic =
 						Random.value < jitterProbability ? 1 : 0;
 					searchFrontier.Enqueue(neighbor);
@@ -468,6 +469,7 @@ public class HexMapGenerator : MonoBehaviour
 				}
 
 				cell.TerrainTypeIndex = cellBiome.terrain;
+				// 设定植物等级 数值越低，植被越稀疏
 				cell.PlantLevel = cellBiome.plant;
 			}
 			else
@@ -690,7 +692,7 @@ public class HexMapGenerator : MonoBehaviour
 
 	float DetermineTemperature(HexCell cell)
 	{
-		float latitude = (float)cell.coordinates.Z / grid.cellCountZ;
+		float latitude = (float)cell.Coordinates.Z / grid.CellCountZ;
 		float temperature =
 			Mathf.LerpUnclamped(lowTemperature, highTemperature, latitude);
 
@@ -729,62 +731,62 @@ public class HexMapGenerator : MonoBehaviour
 		{
 			default:
 				region.xMin = mapBorderX;
-				region.xMax = grid.cellCountX - mapBorderX;
+				region.xMax = grid.CellCountX - mapBorderX;
 				region.zMin = mapBorderZ;
-				region.zMax = grid.cellCountZ - mapBorderZ;
+				region.zMax = grid.CellCountZ - mapBorderZ;
 				regions.Add(region);
 				break;
 			case 2:
 				if (Random.value < 0.5f)
 				{
 					region.xMin = mapBorderX;
-					region.xMax = grid.cellCountX / 2 - regionBorder;
+					region.xMax = grid.CellCountX / 2 - regionBorder;
 					region.zMin = mapBorderZ;
-					region.zMax = grid.cellCountZ - mapBorderZ;
+					region.zMax = grid.CellCountZ - mapBorderZ;
 					regions.Add(region);
-					region.xMin = grid.cellCountX / 2 + regionBorder;
-					region.xMax = grid.cellCountX - mapBorderX;
+					region.xMin = grid.CellCountX / 2 + regionBorder;
+					region.xMax = grid.CellCountX - mapBorderX;
 					regions.Add(region);
 				}
 				else
 				{
 					region.xMin = mapBorderX;
-					region.xMax = grid.cellCountX - mapBorderX;
+					region.xMax = grid.CellCountX - mapBorderX;
 					region.zMin = mapBorderZ;
-					region.zMax = grid.cellCountZ / 2 - regionBorder;
+					region.zMax = grid.CellCountZ / 2 - regionBorder;
 					regions.Add(region);
-					region.zMin = grid.cellCountZ / 2 + regionBorder;
-					region.zMax = grid.cellCountZ - mapBorderZ;
+					region.zMin = grid.CellCountZ / 2 + regionBorder;
+					region.zMax = grid.CellCountZ - mapBorderZ;
 					regions.Add(region);
 				}
 				break;
 			case 3:
 				region.xMin = mapBorderX;
-				region.xMax = grid.cellCountX / 3 - regionBorder;
+				region.xMax = grid.CellCountX / 3 - regionBorder;
 				region.zMin = mapBorderZ;
-				region.zMax = grid.cellCountZ - mapBorderZ;
+				region.zMax = grid.CellCountZ - mapBorderZ;
 				regions.Add(region);
-				region.xMin = grid.cellCountX / 3 + regionBorder;
-				region.xMax = grid.cellCountX * 2 / 3 - regionBorder;
+				region.xMin = grid.CellCountX / 3 + regionBorder;
+				region.xMax = grid.CellCountX * 2 / 3 - regionBorder;
 				regions.Add(region);
-				region.xMin = grid.cellCountX * 2 / 3 + regionBorder;
-				region.xMax = grid.cellCountX - mapBorderX;
+				region.xMin = grid.CellCountX * 2 / 3 + regionBorder;
+				region.xMax = grid.CellCountX - mapBorderX;
 				regions.Add(region);
 				break;
 			case 4:
 				region.xMin = mapBorderX;
-				region.xMax = grid.cellCountX / 2 - regionBorder;
+				region.xMax = grid.CellCountX / 2 - regionBorder;
 				region.zMin = mapBorderZ;
-				region.zMax = grid.cellCountZ / 2 - regionBorder;
+				region.zMax = grid.CellCountZ / 2 - regionBorder;
 				regions.Add(region);
-				region.xMin = grid.cellCountX / 2 + regionBorder;
-				region.xMax = grid.cellCountX - mapBorderX;
+				region.xMin = grid.CellCountX / 2 + regionBorder;
+				region.xMax = grid.CellCountX - mapBorderX;
 				regions.Add(region);
-				region.zMin = grid.cellCountZ / 2 + regionBorder;
-				region.zMax = grid.cellCountZ - mapBorderZ;
+				region.zMin = grid.CellCountZ / 2 + regionBorder;
+				region.zMax = grid.CellCountZ - mapBorderZ;
 				regions.Add(region);
 				region.xMin = mapBorderX;
-				region.xMax = grid.cellCountX / 2 - regionBorder;
+				region.xMax = grid.CellCountX / 2 - regionBorder;
 				regions.Add(region);
 				break;
 		}
