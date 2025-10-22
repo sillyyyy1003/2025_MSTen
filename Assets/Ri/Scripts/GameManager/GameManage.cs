@@ -93,10 +93,14 @@ public class GameManage : MonoBehaviour
     // 网络系统引用 (在Inspector中赋值或通过代码获取)
     public NetGameSystem _NetGameSystem;
 
+    // 玩家相机引用
+    public GameCamera _GameCamera;
     // 玩家操作管理器
     public PlayerOperationManager _PlayerOperation;
     // 玩家数据管理器引用
     private PlayerDataManager _PlayerDataManager;
+
+
 
     // 事件: 回合开始
     public event Action<int> OnTurnStarted;
@@ -153,14 +157,35 @@ public class GameManage : MonoBehaviour
 
 
     // Update is called once per frame
-    void Update()
-    {
-        
-    }
+   
 
     // *************************
     //        游戏流程函数
     // *************************
+
+    // 房间状态待机管理
+    public void CheckIsServer(bool server)
+    {
+        _GameCamera.SetCanUseCamera(false);
+        if(server)
+        {
+
+        }
+        else
+        {
+
+        }
+    }
+
+    // 从房间UI处获取游戏开始事件
+    // 在此处设置单机或联机启动
+    public void StartGameFromRoomUI()
+    {
+        _GameCamera.SetCanUseCamera(true);
+
+        // 单机测试
+        GameInit();
+    }
 
     // 游戏初始化 (由网络系统调用,传入游戏开始数据)
     public bool InitGameWithNetworkData(GameStartData data)

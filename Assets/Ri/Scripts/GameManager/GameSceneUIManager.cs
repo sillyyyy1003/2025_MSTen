@@ -10,6 +10,9 @@ public class GameSceneUIManager : MonoBehaviour
     public static GameSceneUIManager Instance { get; private set; }
 
     public PlayerOperationManager _PlayerOpManager;
+
+    public GameObject GameUIObject;
+    public GameObject NetRoomUIObject;
     // 按钮
 
     // 创建传教士
@@ -89,6 +92,9 @@ public class GameSceneUIManager : MonoBehaviour
             timer.OnTimeOut += TimeIsOut;
             timer.OnTimePoolStarted += () => Debug.Log("开始使用倒计时池");
         }
+
+        GameUIObject.SetActive(false);
+        NetRoomUIObject.SetActive(true);
     }
     void Update()
     {

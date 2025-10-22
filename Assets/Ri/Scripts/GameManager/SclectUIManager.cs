@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class SclectUIManager : MonoBehaviour
@@ -64,10 +65,11 @@ public class SclectUIManager : MonoBehaviour
 
     private void OnClickCreateGame()
     {
-
+        SceneManager.LoadScene("MainGame");
     }
     private void OnClickAddGame()
     {
+        SceneManager.LoadScene("MainGame");
 
     }
 }
