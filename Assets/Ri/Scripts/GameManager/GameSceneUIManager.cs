@@ -192,6 +192,12 @@ public class GameSceneUIManager : MonoBehaviour
         {
             CreatePlayerListItem(player);
         }
+
+        // 更新按钮状态（客户端）
+        if (!NetGameSystem.Instance.IsServer)
+        {
+            UpdateClientButtonState();
+        }
     }
 
     // 创建玩家列表项 
@@ -206,25 +212,40 @@ public class GameSceneUIManager : MonoBehaviour
         item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
         item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
 
+        // 使用player.IsReady来设置Toggle状态
+        Toggle toggle = item.transform.Find("Toggle").GetComponent<Toggle>();
+        if (toggle != null)
+        {
+            toggle.isOn = player.IsReady;  // 使用实际的准备状态
+            toggle.interactable = false;    // Toggle只用于显示
+        }
+
         if (player.PlayerId==0)
         {
-            item.transform.Find("Toggle").GetComponent<Toggle>().isOn = true;
-            item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
             Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "WaitForPlayer";
             Button_ReadyAndStartGame.interactable = false;
         }
         else
         {
-            item.transform.Find("Toggle").GetComponent<Toggle>().isOn = false;
-            item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
             Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "Ready";
             Button_ReadyAndStartGame.interactable =true;
         }
 
         // 更新显示信息
         TextMeshProUGUI nameText = item.GetComponentInChildren<TextMeshProUGUI>();
-     
-       
+    }
+
+    // 更新客户端按钮状态
+    private void UpdateClientButtonState()
+    {
+        if (NetGameSystem.Instance != null && !NetGameSystem.Instance.IsServer)
+        {
+            bool isReady = NetGameSystem.Instance.IsLocalReady;
+            Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = isReady ? "Cancel" : "Ready";
+            Button_ReadyAndStartGame.interactable = true;
+
+            Debug.Log($"[UI] 客户端按钮状态更新 - 准备: {isReady}, 按钮文字: {(isReady ? "Cancel" : "Ready")}");
+        }
     }
 
     // 准备按钮点击事件
@@ -239,22 +260,24 @@ public class GameSceneUIManager : MonoBehaviour
                 return;
             }
 
+            // 获取当前准备状态
             bool currentStatus = NetGameSystem.Instance.IsLocalReady;
-            playerListItems[1].transform.Find("Toggle").GetComponent<Toggle>().isOn = currentStatus;
+            bool newStatus = !currentStatus;
 
-            // 更新按钮文本
+            Debug.Log($"[UI] 准备按钮点击 - 当前状态: {currentStatus}, 新状态: {newStatus}");
+
+            // 发送新的准备状态
+            NetGameSystem.Instance.SetReadyStatus(newStatus);
+
+            // 立即更新按钮文本（不等待网络回调）
             if (Button_ReadyAndStartGame != null)
             {
                 TextMeshProUGUI buttonText = Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>();
                 if (buttonText != null)
                 {
-                    buttonText.text = currentStatus ? "Ready" : "Cancel";
+                    buttonText.text = newStatus ? "Cancel" : "Ready";
                 }
             }
-            Debug.Log("Click!!!!!!!");
-            NetGameSystem.Instance.SetReadyStatus(!currentStatus);
-
-          
         }
     }
 
@@ -318,7 +341,17 @@ public class GameSceneUIManager : MonoBehaviour
         StartTurn();
     }
 
-
+    // 清理事件订阅
+    private void OnDestroy()
+    {
+        // 取消订阅事件
+        if (NetGameSystem.Instance != null)
+        {
+            NetGameSystem.Instance.OnRoomStatusUpdated -= UpdateRoomDisplay;
+            NetGameSystem.Instance.OnAllPlayersReady -= OnAllPlayersReadyChanged;
+            NetGameSystem.Instance.OnGameStarted -= OnGameStarted;
+        }
+    }
     // *************************
     //         公有函数
     // *************************

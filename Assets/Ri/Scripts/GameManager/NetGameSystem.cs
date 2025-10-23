@@ -558,12 +558,18 @@ public class NetGameSystem : MonoBehaviour
         {
             if (clientId != 0 && clientNames.ContainsKey(clientId))
             {
+                bool clientReady = false;
+                if (clientReadyStatus.ContainsKey(clientId))
+                {
+                    clientReady = clientReadyStatus[clientId];
+                }
+
                 roomPlayers.Add(new PlayerInfo
                 {
                     PlayerId = clientId,
                     PlayerName = clientNames[clientId],
                     PlayerIP = clientIPs.ContainsKey(clientId) ? clientIPs[clientId] : "Unknown",
-                    IsReady = clientReadyStatus.ContainsKey(clientId) ? clientReadyStatus[clientId] : false
+                    IsReady = clientReady
                 });
                 // 调试输出
                 Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
@@ -1133,9 +1139,11 @@ public class NetGameSystem : MonoBehaviour
         RoomStatusUpdateMessage data = JsonConvert.DeserializeObject<RoomStatusUpdateMessage>(message.JsonData);
         roomPlayers = data.Players;
 
+        foreach (var player in roomPlayers)
+        {
+            Debug.Log($"  - 玩家 {player.PlayerId}: {player.PlayerName}, 准备: {player.IsReady}");
+        }
         OnRoomStatusUpdated?.Invoke(roomPlayers);
-
-        Debug.Log("HandleRoomStatusUpdate");
         CheckAllPlayersReady();
     }
 
