@@ -829,7 +829,7 @@ public class NetGameSystem : MonoBehaviour
             try
             {
                 testClient.Connect(serverIP, port);
-                Debug.Log("Server IP is "+serverIP+" server port is "+port);
+                //Debug.Log("Server IP is "+serverIP+" server port is "+port);
                 // 发送一个测试Ping包
                 byte[] testData = Encoding.UTF8.GetBytes("PingCheck");
                 testClient.Send(testData, testData.Length);
@@ -1269,8 +1269,8 @@ public class NetGameSystem : MonoBehaviour
     {
         try
         {
-            Debug.Log($"当前是服务器: {isServer}");
-            Debug.Log($"消息发送者ID: {message.SenderId}");
+            //Debug.Log($"当前是服务器: {isServer}");
+            //Debug.Log($"消息发送者ID: {message.SenderId}");
 
             var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
             Debug.Log($"目标玩家: {data.PlayerId}");
@@ -1301,44 +1301,43 @@ public class NetGameSystem : MonoBehaviour
             {
                 Debug.Log($" 调用 StartTurn({data.PlayerId})");
                 gameManage.StartTurn(data.PlayerId);
-                Debug.Log($" StartTurn 调用完成");
+                //Debug.Log($" StartTurn 调用完成");
             }
             else
             {
                 Debug.LogError(" 无法找到 GameManage，延迟重试");
 
-                // 列出场景中所有对象（调试用）
-                GameObject[] allObjects = FindObjectsOfType<GameObject>();
-                Debug.Log($"场景中共有 {allObjects.Length} 个 GameObject");
+                //// 列出场景中所有对象（调试用）
+                //GameObject[] allObjects = FindObjectsOfType<GameObject>();
+                //Debug.Log($"场景中共有 {allObjects.Length} 个 GameObject");
 
-                bool foundGameManage = false;
-                foreach (var obj in allObjects)
-                {
-                    if (obj.name.Contains("GameManage") || obj.name.Contains("GameManager"))
-                    {
-                        Debug.Log($"找到可能的对象: {obj.name}, 激活: {obj.activeInHierarchy}");
-                        var gm = obj.GetComponent<GameManage>();
-                        if (gm != null)
-                        {
-                            Debug.Log($" 这个对象有 GameManage 组件!");
-                            gameManage = gm;
-                            foundGameManage = true;
-                            break;
-                        }
-                    }
-                }
+                //bool foundGameManage = false;
+                //foreach (var obj in allObjects)
+                //{
+                //    if (obj.name.Contains("GameManage") || obj.name.Contains("GameManager"))
+                //    {
+                //        Debug.Log($"找到可能的对象: {obj.name}, 激活: {obj.activeInHierarchy}");
+                //        var gm = obj.GetComponent<GameManage>();
+                //        if (gm != null)
+                //        {
+                //            Debug.Log($" 这个对象有 GameManage 组件!");
+                //            gameManage = gm;
+                //            foundGameManage = true;
+                //            break;
+                //        }
+                //    }
+                //}
 
-                if (!foundGameManage)
-                {
-                    Debug.LogError("场景中完全找不到 GameManage 组件!");
-                    StartCoroutine(RetryHandleTurnStart(message, 0.5f));
-                }
-                else
-                {
-                    // 找到了，再次尝试调用
-                    Debug.Log($" 通过遍历找到 GameManage，调用 StartTurn({data.PlayerId})");
-                    gameManage.StartTurn(data.PlayerId);
-                }
+                //if (!foundGameManage)
+                //{
+                //    Debug.LogError("场景中完全找不到 GameManage 组件!");
+                //    StartCoroutine(RetryHandleTurnStart(message, 0.5f));
+                //}
+                //else
+                //{
+                //    Debug.Log($" 通过遍历找到 GameManage，调用 StartTurn({data.PlayerId})");
+                //    gameManage.StartTurn(data.PlayerId);
+                //}
             }
         }
         catch (Exception ex)
@@ -1351,8 +1350,8 @@ public class NetGameSystem : MonoBehaviour
     private void HandleTurnEnd(NetworkMessage message)
     {
         Debug.Log($"=== HandleTurnEnd 被调用 ===");
-        Debug.Log($"当前是服务器: {isServer}");
-        Debug.Log($"gameManage 是否为空: {gameManage == null}");
+        //Debug.Log($"当前是服务器: {isServer}");
+        //Debug.Log($"gameManage 是否为空: {gameManage == null}");
 
 
         if (gameManage == null)
