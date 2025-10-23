@@ -601,6 +601,7 @@ public class NetGameSystem : MonoBehaviour
         bool allReady = true;
         foreach (var player in roomPlayers)
         {
+            Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
             if (!player.IsReady)
             {
                 allReady = false;
@@ -1086,6 +1087,7 @@ public class NetGameSystem : MonoBehaviour
                 clientReadyStatus[data.PlayerId] = true;
                 UpdateRoomPlayersList();
                 SendRoomStatusToAll();
+              
                 Debug.Log($"玩家 {data.PlayerId} 准备完毕");
             }
         }
