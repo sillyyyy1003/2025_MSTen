@@ -194,6 +194,7 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 开始初始化游戏...");
         Debug.Log($"接收到玩家数: {data.PlayerIds.Length}");
         Debug.Log($"起始位置数: {data.StartPositions.Length}");
+        
         // 清空之前的数据
         AllPlayerIds.Clear();
         PlayerStartPositions.Clear();
@@ -259,7 +260,7 @@ public class GameManage : MonoBehaviour
 
         _NetGameSystem.GetGameManage();
 
-
+        _GameCamera.SetCanUseCamera(true);
         // 触发游戏开始事件
         OnGameStarted?.Invoke();
 
