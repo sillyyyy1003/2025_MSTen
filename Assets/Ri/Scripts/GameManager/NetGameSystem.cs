@@ -820,7 +820,7 @@ public class NetGameSystem : MonoBehaviour
             try
             {
                 testClient.Connect(serverIP, port);
-
+                Debug.Log("Server IP is "+serverIP+" server port is "+port);
                 // 发送一个测试Ping包
                 byte[] testData = Encoding.UTF8.GetBytes("PingCheck");
                 testClient.Send(testData, testData.Length);
