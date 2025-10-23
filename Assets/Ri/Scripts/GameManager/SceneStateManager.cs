@@ -45,10 +45,18 @@ public class SceneStateManager : MonoBehaviour
     // 设置是否为服务器启动
     public void SetAsServer(bool isServer)
     {
-        // 暂时将设置玩家名放在这
-        SavePlayerName(PlayerName);
-        PlayerIP = GetLocalIPv4();
+        if(isServer)
+        {
+            // 暂时将设置玩家名放在这
+            SavePlayerName(PlayerName);
+            PlayerIP = GetLocalIPv4();
 
+        }
+        else
+        {
+            SavePlayerName("MisumiUika");
+            PlayerIP = GetLocalIPv4();
+        }
         bIsServer = isServer;
     }
     
