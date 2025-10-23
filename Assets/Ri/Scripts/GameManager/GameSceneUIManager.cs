@@ -206,7 +206,7 @@ public class GameSceneUIManager : MonoBehaviour
         item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
         item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
 
-        if (SceneStateManager.Instance.GetIsServer())
+        if (player.PlayerId==0)
         {
             item.transform.Find("Toggle").GetComponent<Toggle>().isOn = true;
             item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
@@ -232,7 +232,6 @@ public class GameSceneUIManager : MonoBehaviour
         {
             bool currentStatus = NetGameSystem.Instance.IsLocalReady;
             playerListItems[1].transform.Find("Toggle").GetComponent<Toggle>().isOn = currentStatus;
-            NetGameSystem.Instance.SetReadyStatus(!currentStatus);
 
             // 更新按钮文本
             if (Button_ReadyAndStartGame != null)
@@ -243,6 +242,10 @@ public class GameSceneUIManager : MonoBehaviour
                     buttonText.text = currentStatus ? "Ready" : "Cancel";
                 }
             }
+
+            NetGameSystem.Instance.SetReadyStatus(!currentStatus);
+
+          
         }
     }
 
@@ -261,12 +264,9 @@ public class GameSceneUIManager : MonoBehaviour
         // 只有服务器玩家才能看到开始游戏按钮
         if (NetGameSystem.Instance != null && NetGameSystem.Instance.IsServer)
         {
-            Debug.Log("is server ? " + NetGameSystem.Instance.IsServer);
+            Debug.Log("All Player Ready ? " + NetGameSystem.Instance.IsServer);
             if (Button_ReadyAndStartGame != null)
             {
-                
-                //Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text="StartGame";
-
                 // 可以添加按钮可交互性控制
                 Button_ReadyAndStartGame.interactable = allReady;
 

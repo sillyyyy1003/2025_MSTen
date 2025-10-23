@@ -382,8 +382,8 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.PONG, HandlePong }
         };
 
-        Debug.Log($"=== 消息处理器注册完成 ===");
-        Debug.Log($"共注册 {messageHandlers.Count} 个处理器");
+        //Debug.Log($"=== 消息处理器注册完成 ===");
+        //Debug.Log($"共注册 {messageHandlers.Count} 个处理器");
     }
 
     // *************************
@@ -924,6 +924,7 @@ public class NetGameSystem : MonoBehaviour
     // 设置准备状态
     public void SetReadyStatus(bool ready)
     {
+        Debug.Log("Ready? = "+ready);
         isLocalReady = ready;
 
         if (isServer)
