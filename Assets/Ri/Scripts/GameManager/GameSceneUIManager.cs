@@ -232,6 +232,13 @@ public class GameSceneUIManager : MonoBehaviour
     {
         if (NetGameSystem.Instance != null)
         {
+            // 如果是服务器并且所有玩家都准备了，则开始游戏
+            if (NetGameSystem.Instance.IsServer && Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text == "StartGame")
+            {
+                OnStartGameButtonClicked();
+                return;
+            }
+
             bool currentStatus = NetGameSystem.Instance.IsLocalReady;
             playerListItems[1].transform.Find("Toggle").GetComponent<Toggle>().isOn = currentStatus;
 

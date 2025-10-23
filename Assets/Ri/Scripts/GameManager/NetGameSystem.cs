@@ -515,9 +515,17 @@ public class NetGameSystem : MonoBehaviour
 
                         OnClientConnected?.Invoke(clientId);
                     }
+                    //// 转发其他消息
+                    //else if (message.MessageType != NetworkMessageType.PING &&
+                    //         message.MessageType != NetworkMessageType.PONG)
+                    //{
+                    //    BroadcastToClients(message, message.SenderId);
+                    //}
                     // 转发其他消息
                     else if (message.MessageType != NetworkMessageType.PING &&
-                             message.MessageType != NetworkMessageType.PONG)
+                             message.MessageType != NetworkMessageType.PONG &&
+                             message.MessageType != NetworkMessageType.PLAYER_READY &&  // 不广播准备消息
+                             message.MessageType != NetworkMessageType.PLAYER_NOT_READY)  // 不广播取消准备消息
                     {
                         BroadcastToClients(message, message.SenderId);
                     }
@@ -557,6 +565,8 @@ public class NetGameSystem : MonoBehaviour
                     PlayerIP = clientIPs.ContainsKey(clientId) ? clientIPs[clientId] : "Unknown",
                     IsReady = clientReadyStatus.ContainsKey(clientId) ? clientReadyStatus[clientId] : false
                 });
+                // 调试输出
+                Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
             }
         }
     }
@@ -1081,7 +1091,11 @@ public class NetGameSystem : MonoBehaviour
         if (isServer)
         {
             PlayerReadyMessage data = JsonConvert.DeserializeObject<PlayerReadyMessage>(message.JsonData);
-
+           
+            Debug.Log($"[服务器] 收到玩家 {data.PlayerId} 的准备请求");
+            Debug.Log($"[服务器] clientReadyStatus包含该ID? {clientReadyStatus.ContainsKey(data.PlayerId)}");
+            Debug.Log($"[服务器] 当前房间人数: {roomPlayers.Count}");
+          
             if (clientReadyStatus.ContainsKey(data.PlayerId)&& roomPlayers.Count >=2)
             {
                 clientReadyStatus[data.PlayerId] = true;
@@ -1089,6 +1103,10 @@ public class NetGameSystem : MonoBehaviour
                 SendRoomStatusToAll();
               
                 Debug.Log($"玩家 {data.PlayerId} 准备完毕");
+            }
+            else
+            {
+                Debug.LogError($"[服务器] 找不到玩家 {data.PlayerId} 的准备状态记录");
             }
         }
     }
