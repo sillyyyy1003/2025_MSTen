@@ -714,69 +714,69 @@ public class NetGameSystem : MonoBehaviour
 
 
         // 检查所有玩家是否准备完毕
-        bool allReady = true;
-        foreach (var player in roomPlayers)
+        //bool allReady = true;
+        //foreach (var player in roomPlayers)
+        //{
+        //    if (!player.IsReady)
+        //    {
+        //        allReady = false;
+        //        break;
+        //    }
+        //}
+
+        //if (!allReady)
+        //{
+        //    Debug.LogWarning("还有玩家未准备!");
+        //    return;
+        //}
+        //isGameStarted = true;
+
+        //// 发送游戏开始消息
+        //NetworkMessage startMsg = new NetworkMessage
+        //{
+        //    MessageType = NetworkMessageType.GAME_START,
+        //    SenderId = 0
+        //};
+
+        //BroadcastToClients(startMsg, uint.MaxValue);
+
+        //// 本地也触发游戏开始
+        //MainThreadDispatcher.Enqueue(() => {
+        //    OnGameStarted?.Invoke();
+        //});
+
+        // 创建游戏开始数据
+
+        int[] playerIds = new int[connectedPlayers.Count];
+        for (int i = 0; i < connectedPlayers.Count; i++)
         {
-            if (!player.IsReady)
-            {
-                allReady = false;
-                break;
-            }
+            playerIds[i] = (int)connectedPlayers[i];
         }
 
-        if (!allReady)
+        GameStartData gameData = new GameStartData
         {
-            Debug.LogWarning("还有玩家未准备!");
-            return;
-        }
-        isGameStarted = true;
-
-        // 发送游戏开始消息
-        NetworkMessage startMsg = new NetworkMessage
-        {
-            MessageType = NetworkMessageType.GAME_START,
-            SenderId = 0
+            PlayerIds = playerIds,
+            StartPositions = AssignStartPositions(),
+            FirstTurnPlayerId = (int)connectedPlayers[0]
         };
 
-        BroadcastToClients(startMsg, uint.MaxValue);
+        NetworkMessage message = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.GAME_START,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(gameData)
+        };
 
-        // 本地也触发游戏开始
-        MainThreadDispatcher.Enqueue(() => {
+        // 广播给所有客户端
+        BroadcastToClients(message, 0);
+
+        // 服务器自己也处理
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            Debug.Log("[服务器] 游戏开始!");
             OnGameStarted?.Invoke();
+            HandleGameStart(message);
         });
-
-    //// 创建游戏开始数据
-
-    //int[] playerIds = new int[connectedPlayers.Count];
-    //    for (int i = 0; i < connectedPlayers.Count; i++)
-    //    {
-    //        playerIds[i] = (int)connectedPlayers[i];
-    //    }
-
-    //    GameStartData gameData = new GameStartData
-    //    {
-    //        PlayerIds = playerIds,
-    //        StartPositions = AssignStartPositions(),
-    //        FirstTurnPlayerId = (int)connectedPlayers[0]
-    //    };
-
-    //    NetworkMessage message = new NetworkMessage
-    //    {
-    //        MessageType = NetworkMessageType.GAME_START,
-    //        SenderId = 0,
-    //        JsonData = JsonConvert.SerializeObject(gameData)
-    //    };
-
-    //    // 广播给所有客户端
-    //    BroadcastToClients(message, 0);
-
-    //    // 服务器自己也处理
-    //    MainThreadDispatcher.Enqueue(() =>
-    //    {
-    //        Debug.Log("[服务器] 游戏开始!");
-    //        OnGameStarted?.Invoke();
-    //        HandleGameStart(message);
-    //    });
     }
 
     private int[] AssignStartPositions()
@@ -1184,33 +1184,33 @@ public class NetGameSystem : MonoBehaviour
     // 游戏开始
     private void HandleGameStart(NetworkMessage message)
     {
-        isGameStarted = true;
-        Debug.Log("游戏开始!");
-        OnGameStarted?.Invoke();
-        //GameStartData data = JsonConvert.DeserializeObject<GameStartData>(message.JsonData);
-
-        //Debug.Log($"游戏开始! 玩家数: {data.PlayerIds.Length}");
-
         //isGameStarted = true;
+        //Debug.Log("游戏开始!");
         //OnGameStarted?.Invoke();
+        GameStartData data = JsonConvert.DeserializeObject<GameStartData>(message.JsonData);
 
-        //// 通知GameManage初始化游戏
-        //if (gameManage != null)
-        //{
-        //    gameManage.InitGameWithNetworkData(data);
-        //}
-        //else
-        //{
-        //    gameManage = GameManage.Instance;
-        //    if (gameManage != null)
-        //    {
-        //        gameManage.InitGameWithNetworkData(data);
-        //    }
-        //    else
-        //    {
-        //        Debug.LogError("无法找到 GameManage 来初始化游戏!");
-        //    }
-        //}
+        Debug.Log($"游戏开始! 玩家数: {data.PlayerIds.Length}");
+
+        isGameStarted = true;
+        OnGameStarted?.Invoke();
+
+        // 通知GameManage初始化游戏
+        if (gameManage != null)
+        {
+            gameManage.InitGameWithNetworkData(data);
+        }
+        else
+        {
+            gameManage = GameManage.Instance;
+            if (gameManage != null)
+            {
+                gameManage.InitGameWithNetworkData(data);
+            }
+            else
+            {
+                Debug.LogError("无法找到 GameManage 来初始化游戏!");
+            }
+        }
     }
     // 添加回合开始消息
     private void HandleTurnStart(NetworkMessage message)
