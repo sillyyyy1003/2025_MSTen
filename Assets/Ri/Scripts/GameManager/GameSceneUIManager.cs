@@ -204,7 +204,6 @@ public class GameSceneUIManager : MonoBehaviour
         {
             CreatePlayerListItem(player);
         }
-        PlayerCount += 1;
     }
 
     // 创建玩家列表项 
@@ -213,7 +212,7 @@ public class GameSceneUIManager : MonoBehaviour
      
         // 使用预制体创建玩家列表项
         GameObject item = Instantiate(PlayerItemPrefab, this.GetComponent<Canvas>().transform.Find("NetRoomUI").transform);
-        item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[PlayerCount];
+        item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[(int)player.PlayerId];
        
         playerListItems[player.PlayerId] = item;
        
