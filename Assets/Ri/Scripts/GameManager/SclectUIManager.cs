@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -68,20 +68,20 @@ public class SclectUIManager : MonoBehaviour
     {
         if (SceneStateManager.Instance != null)
         {
-            // »ñÈ¡²¢±£´æÍæ¼ÒÃû
+            // è·å–å¹¶ä¿å­˜ç©å®¶å
             //string playerName = SceneStateManager.Instance.PlayerName;
            
 
            // SceneStateManager.Instance.PlayerName = playerName;
 
-            // ÉèÖÃÎª·şÎñÆ÷Ä£Ê½
+            // è®¾ç½®ä¸ºæœåŠ¡å™¨æ¨¡å¼
             SceneStateManager.Instance.SetAsServer(true);
 
-            Debug.Log($"´´½¨·¿¼ä - Íæ¼ÒÃû: {SceneStateManager.Instance.PlayerName}, Ä£Ê½: ·şÎñÆ÷");
+            Debug.Log($"åˆ›å»ºæˆ¿é—´ - ç©å®¶å: {SceneStateManager.Instance.PlayerName}, æ¨¡å¼: æœåŠ¡å™¨");
         }
         else
         {
-            Debug.LogError("SceneStateManager.Instance Îª¿Õ!");
+            Debug.LogError("SceneStateManager.Instance ä¸ºç©º!");
         }
 
 
@@ -94,19 +94,19 @@ public class SclectUIManager : MonoBehaviour
            
                 ////string serverIP = InputField_ServerIP.text;
                 //PlayerPrefs.SetString("ServerIP", serverIP);
-                //PlayerPrefs.SetString("LastServerIP", serverIP); // ±£´æ×îºóÊ¹ÓÃµÄIP
+                //PlayerPrefs.SetString("LastServerIP", serverIP); // ä¿å­˜æœ€åä½¿ç”¨çš„IP
                 //PlayerPrefs.Save();
 
-                //Debug.Log($"±£´æ·şÎñÆ÷IP: {serverIP}");
+                //Debug.Log($"ä¿å­˜æœåŠ¡å™¨IP: {serverIP}");
 
-            // ÉèÖÃÎª¿Í»§¶ËÄ£Ê½
+            // è®¾ç½®ä¸ºå®¢æˆ·ç«¯æ¨¡å¼
             SceneStateManager.Instance.SetAsServer(false);
 
-            Debug.Log($"¼ÓÈë·¿¼ä - Íæ¼ÒÃû: {SceneStateManager.Instance.PlayerName}, Ä£Ê½: ¿Í»§¶Ë");
+            Debug.Log($"åŠ å…¥æˆ¿é—´ - ç©å®¶å: {SceneStateManager.Instance.PlayerName}, æ¨¡å¼: å®¢æˆ·ç«¯");
         }
         else
         {
-            Debug.LogError("SceneStateManager.Instance Îª¿Õ!");
+            Debug.LogError("SceneStateManager.Instance ä¸ºç©º!");
         }
         SceneManager.LoadScene("MainGame");
 

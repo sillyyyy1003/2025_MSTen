@@ -152,6 +152,7 @@ public class GameManage : MonoBehaviour
             GameObject pdm = new GameObject("PlayerDataManager");
             _PlayerDataManager = pdm.AddComponent<PlayerDataManager>();
         }
+        
     }
 
 

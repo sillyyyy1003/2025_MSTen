@@ -276,6 +276,7 @@ public class NetGameSystem : MonoBehaviour
         // 初始化房间相关字典 
         clientReadyStatus = new Dictionary<uint, bool>();
         clientIPs = new Dictionary<uint, string>();
+
     }
 
     private void Start()

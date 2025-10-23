@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using static UnityEditor.Progress;
 
 public class GameSceneUIManager : MonoBehaviour
 {
@@ -196,7 +197,6 @@ public class GameSceneUIManager : MonoBehaviour
     // 创建玩家列表项 
     private void CreatePlayerListItem(PlayerInfo player)
     {
-     
         // 使用预制体创建玩家列表项
         GameObject item = Instantiate(PlayerItemPrefab, this.GetComponent<Canvas>().transform.Find("NetRoomUI").transform);
         item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[(int)player.PlayerId];
@@ -206,7 +206,7 @@ public class GameSceneUIManager : MonoBehaviour
         item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
         item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
 
-        if(SceneStateManager.Instance.GetIsServer())
+        if (item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text=="0")
         {
             item.transform.Find("Toggle").GetComponent<Toggle>().isOn = true;
             item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
@@ -214,6 +214,7 @@ public class GameSceneUIManager : MonoBehaviour
         else
         {
             item.transform.Find("Toggle").GetComponent<Toggle>().isOn = false;
+            item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
         }
 
         // 更新显示信息
@@ -228,6 +229,7 @@ public class GameSceneUIManager : MonoBehaviour
         if (NetGameSystem.Instance != null)
         {
             bool currentStatus = NetGameSystem.Instance.IsLocalReady;
+            this.transform.Find("Toggle").GetComponent<Toggle>().isOn = currentStatus;
             NetGameSystem.Instance.SetReadyStatus(!currentStatus);
 
             // 更新按钮文本
@@ -260,7 +262,8 @@ public class GameSceneUIManager : MonoBehaviour
             Debug.Log("is server ? " + NetGameSystem.Instance.IsServer);
             if (Button_ReadyAndStartGame != null)
             {
-                Button_ReadyAndStartGame.gameObject.SetActive(allReady);
+                
+                //Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text="StartGame";
 
                 // 可以添加按钮可交互性控制
                 Button_ReadyAndStartGame.interactable = allReady;
