@@ -394,7 +394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _NetGameSystem: {fileID: 787177569}
-  _GameCamera: {fileID: 0}
+  _GameCamera: {fileID: 332689579}
   _PlayerOperation: {fileID: 291931288}
 --- !u!4 &131122554
 Transform:
