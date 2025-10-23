@@ -1151,7 +1151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isServer: 1
-  serverIP: 192.168.3.16
+  serverIP: 192.168.3.23
   port: 8888
   maxPlayers: 2
   playerName: Player

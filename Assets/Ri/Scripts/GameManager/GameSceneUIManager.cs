@@ -296,7 +296,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 只有服务器玩家才能看到开始游戏按钮
         if (NetGameSystem.Instance != null && NetGameSystem.Instance.IsServer)
         {
-            Debug.Log("All Player Ready ? " + allReady);
+            //Debug.Log("All Player Ready ? " + allReady);
             if (Button_ReadyAndStartGame != null)
             {
                 // 可以添加按钮可交互性控制

@@ -550,7 +550,7 @@ public class NetGameSystem : MonoBehaviour
             PlayerId = 0,
             PlayerName = playerName,
             PlayerIP = playerIP,
-            IsReady = isLocalReady
+            IsReady = true
         });
 
         // 添加所有客户端
