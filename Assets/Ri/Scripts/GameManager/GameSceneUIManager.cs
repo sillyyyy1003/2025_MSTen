@@ -204,7 +204,7 @@ public class GameSceneUIManager : MonoBehaviour
         {
             CreatePlayerListItem(player);
         }
-    
+        PlayerCount += 1;
     }
 
     // 创建玩家列表项 
