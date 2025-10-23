@@ -422,6 +422,7 @@ public class GameSceneUIManager : MonoBehaviour
 
     private void OnEndTurnButtonPressed()
     {
+        StopTimer();
         _PlayerOpManager.TurnEnd();
     }
 
