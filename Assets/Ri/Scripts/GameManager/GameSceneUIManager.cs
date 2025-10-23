@@ -230,7 +230,7 @@ public class GameSceneUIManager : MonoBehaviour
         if (NetGameSystem.Instance != null)
         {
             bool currentStatus = NetGameSystem.Instance.IsLocalReady;
-            playerListItems[(uint)GameManage.Instance.LocalPlayerID].transform.Find("Toggle").GetComponent<Toggle>().isOn = currentStatus;
+            playerListItems[1].transform.Find("Toggle").GetComponent<Toggle>().isOn = currentStatus;
             NetGameSystem.Instance.SetReadyStatus(!currentStatus);
 
             // 更新按钮文本
