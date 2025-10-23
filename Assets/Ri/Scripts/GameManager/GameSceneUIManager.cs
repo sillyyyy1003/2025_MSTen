@@ -218,6 +218,7 @@ public class GameSceneUIManager : MonoBehaviour
             item.transform.Find("Toggle").GetComponent<Toggle>().isOn = false;
             item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
             Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "Ready";
+            Button_ReadyAndStartGame.interactable =true;
         }
 
         // 更新显示信息

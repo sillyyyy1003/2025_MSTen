@@ -1080,7 +1080,8 @@ public class NetGameSystem : MonoBehaviour
         if (isServer)
         {
             PlayerReadyMessage data = JsonConvert.DeserializeObject<PlayerReadyMessage>(message.JsonData);
-            if (clientReadyStatus.ContainsKey(data.PlayerId))
+
+            if (clientReadyStatus.ContainsKey(data.PlayerId)&& roomPlayers.Count >=2)
             {
                 clientReadyStatus[data.PlayerId] = true;
                 UpdateRoomPlayersList();
