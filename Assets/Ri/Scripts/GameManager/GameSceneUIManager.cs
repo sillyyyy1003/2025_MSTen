@@ -206,10 +206,11 @@ public class GameSceneUIManager : MonoBehaviour
         item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
         item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
 
-        if (item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text=="0")
+        if (SceneStateManager.Instance.GetIsServer())
         {
             item.transform.Find("Toggle").GetComponent<Toggle>().isOn = true;
             item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
+            Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "WaitForPlayer";
         }
         else
         {
