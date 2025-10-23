@@ -838,12 +838,21 @@ public class NetGameSystem : MonoBehaviour
                 testClient.Client.ReceiveTimeout = 500;
                 IPEndPoint remote = new IPEndPoint(IPAddress.Any, 0);
 
-                // 尝试接收回应（如果有服务器，它会收到数据并尝试解析）
-                if (testClient.Available > 0)
+                // 等待服务器响应
+                DateTime startTime = DateTime.Now;
+                while ((DateTime.Now - startTime).TotalMilliseconds < 500)
                 {
-                    byte[] recv = testClient.Receive(ref remote);
-                    if (recv != null && recv.Length > 0)
-                        serverExists = true;
+                    if (testClient.Available > 0)
+                    {
+                        byte[] recv = testClient.Receive(ref remote);
+                        string reply = Encoding.UTF8.GetString(recv);
+                        if (reply.Contains("ServerAlive"))
+                        {
+                            serverExists = true;
+                            break;
+                        }
+                    }
+                    Thread.Sleep(10); // 短暂等待避免占满CPU
                 }
             }
             catch (SocketException)
