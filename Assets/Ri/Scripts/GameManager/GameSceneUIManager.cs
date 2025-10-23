@@ -211,6 +211,7 @@ public class GameSceneUIManager : MonoBehaviour
             item.transform.Find("Toggle").GetComponent<Toggle>().isOn = true;
             item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
             Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "WaitForPlayer";
+            Button_ReadyAndStartGame.interactable = false;
         }
         else
         {

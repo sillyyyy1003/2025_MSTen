@@ -582,6 +582,8 @@ public class NetGameSystem : MonoBehaviour
         // 服务器自己也更新
         MainThreadDispatcher.Enqueue(() => {
             OnRoomStatusUpdated?.Invoke(roomPlayers);
+
+            Debug.Log("SendRoomStatusToAll");
             CheckAllPlayersReady();
         });
     }
@@ -589,6 +591,7 @@ public class NetGameSystem : MonoBehaviour
     // 检查所有玩家是否准备完毕
     private void CheckAllPlayersReady()
     {
+        Debug.Log("CheckAllPlayersReady");
         if (roomPlayers.Count < 2) // 至少需要2个玩家
         {
             OnAllPlayersReady?.Invoke(false);
@@ -1110,6 +1113,8 @@ public class NetGameSystem : MonoBehaviour
         roomPlayers = data.Players;
 
         OnRoomStatusUpdated?.Invoke(roomPlayers);
+
+        Debug.Log("HandleRoomStatusUpdate");
         CheckAllPlayersReady();
     }
 
