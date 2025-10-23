@@ -154,19 +154,6 @@ public class GameSceneUIManager : MonoBehaviour
             Button_ReadyAndStartGame.onClick.AddListener(OnReadyButtonClicked);
         }
 
-        //// 如果使用Toggle
-        //if (Toggle_Ready != null)
-        //{
-        //    Toggle_Ready.onValueChanged.AddListener(OnReadyToggleChanged);
-        //}
-
-        //// 开始游戏按钮
-        //if (Button_StartGame != null)
-        //{
-        //    Button_StartGame.onClick.AddListener(OnStartGameButtonClicked);
-        //    Button_StartGame.gameObject.SetActive(false); // 初始隐藏
-        //}
-
         // 订阅网络事件
         if (NetGameSystem.Instance != null)
         {
@@ -218,7 +205,8 @@ public class GameSceneUIManager : MonoBehaviour
        
         item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
         item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
-        if(PlayerCount==0)
+
+        if(SceneStateManager.Instance.GetIsServer())
         {
             item.transform.Find("Toggle").GetComponent<Toggle>().isOn = true;
             item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
@@ -254,14 +242,14 @@ public class GameSceneUIManager : MonoBehaviour
         }
     }
 
-    // 准备Toggle改变事件
-    private void OnReadyToggleChanged(bool isReady)
-    {
-        if (NetGameSystem.Instance != null)
-        {
-            NetGameSystem.Instance.SetReadyStatus(isReady);
-        }
-    }
+    //// 准备Toggle改变事件
+    //private void OnReadyToggleChanged(bool isReady)
+    //{
+    //    if (NetGameSystem.Instance != null)
+    //    {
+    //        NetGameSystem.Instance.SetReadyStatus(isReady);
+    //    }
+    //}
 
     // 所有玩家准备完毕回调 
     private void OnAllPlayersReadyChanged(bool allReady)
@@ -269,6 +257,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 只有服务器玩家才能看到开始游戏按钮
         if (NetGameSystem.Instance != null && NetGameSystem.Instance.IsServer)
         {
+            Debug.Log("is server ? " + NetGameSystem.Instance.IsServer);
             if (Button_ReadyAndStartGame != null)
             {
                 Button_ReadyAndStartGame.gameObject.SetActive(allReady);
