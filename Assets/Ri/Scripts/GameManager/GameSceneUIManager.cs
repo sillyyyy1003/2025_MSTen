@@ -194,7 +194,7 @@ public class GameSceneUIManager : MonoBehaviour
         }
 
         // 更新按钮状态（客户端）
-        if (!NetGameSystem.Instance.IsServer)
+        if (!NetGameSystem.Instance.bIsServer)
         {
             UpdateClientButtonState();
         }
@@ -238,7 +238,7 @@ public class GameSceneUIManager : MonoBehaviour
     // 更新客户端按钮状态
     private void UpdateClientButtonState()
     {
-        if (NetGameSystem.Instance != null && !NetGameSystem.Instance.IsServer)
+        if (NetGameSystem.Instance != null && !NetGameSystem.Instance.bIsServer)
         {
             bool isReady = NetGameSystem.Instance.IsLocalReady;
             Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = isReady ? "Cancel" : "Ready";
@@ -254,7 +254,7 @@ public class GameSceneUIManager : MonoBehaviour
         if (NetGameSystem.Instance != null)
         {
             // 如果是服务器并且所有玩家都准备了，则开始游戏
-            if (NetGameSystem.Instance.IsServer && Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text == "StartGame")
+            if (NetGameSystem.Instance.bIsServer && Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text == "StartGame")
             {
                 OnStartGameButtonClicked();
                 return;
@@ -294,7 +294,7 @@ public class GameSceneUIManager : MonoBehaviour
     private void OnAllPlayersReadyChanged(bool allReady)
     {
         // 只有服务器玩家才能看到开始游戏按钮
-        if (NetGameSystem.Instance != null && NetGameSystem.Instance.IsServer)
+        if (NetGameSystem.Instance != null && NetGameSystem.Instance.bIsServer)
         {
             //Debug.Log("All Player Ready ? " + allReady);
             if (Button_ReadyAndStartGame != null)
@@ -315,7 +315,7 @@ public class GameSceneUIManager : MonoBehaviour
     // 开始游戏按钮点击事件
     private void OnStartGameButtonClicked()
     {
-        if (NetGameSystem.Instance != null && NetGameSystem.Instance.IsServer)
+        if (NetGameSystem.Instance != null && NetGameSystem.Instance.bIsServer)
         {
             NetGameSystem.Instance.StartGame();
         }

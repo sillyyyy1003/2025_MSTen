@@ -92,13 +92,6 @@ public class SclectUIManager : MonoBehaviour
         if (SceneStateManager.Instance != null)
         {
            
-                ////string serverIP = InputField_ServerIP.text;
-                //PlayerPrefs.SetString("ServerIP", serverIP);
-                //PlayerPrefs.SetString("LastServerIP", serverIP); // 保存最后使用的IP
-                //PlayerPrefs.Save();
-
-                //Debug.Log($"保存服务器IP: {serverIP}");
-
             // 设置为客户端模式
             SceneStateManager.Instance.SetAsServer(false);
 

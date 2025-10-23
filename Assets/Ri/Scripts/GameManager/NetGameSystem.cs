@@ -7,6 +7,7 @@ using System.Threading;
 using UnityEngine;
 using Newtonsoft.Json;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 
 
@@ -229,11 +230,12 @@ public class NetGameSystem : MonoBehaviour
     public event Action<bool> OnAllPlayersReady; // 所有玩家准备完毕
 
     // 属性
-    public bool IsConnected => isRunning;
-    public bool IsServer => isServer;
-    public uint LocalClientId => localClientId;
+    public bool bIsConnected => isRunning;
+    public bool bIsServer => isServer;
+    public uint bLocalClientId => localClientId;
     public List<uint> ConnectedPlayers => new List<uint>(connectedPlayers);
     public int PlayerCount => connectedPlayers.Count;
+
 
     // 获取房间玩家信息
     public List<PlayerInfo> RoomPlayers => new List<PlayerInfo>(roomPlayers);
@@ -809,13 +811,45 @@ public class NetGameSystem : MonoBehaviour
     //      客户端功能
     // *************************
 
-    public void ConnectToServer()
+    public void  ConnectToServer()
     {
-        if (isRunning)
+        // 添加服务器检测
+        bool serverExists = false;
+        using (UdpClient testClient = new UdpClient())
         {
-            Debug.LogWarning("已经连接!");
-            return;
+            try
+            {
+                testClient.Connect(serverIP, port);
+
+                // 发送一个测试Ping包
+                byte[] testData = Encoding.UTF8.GetBytes("PingCheck");
+                testClient.Send(testData, testData.Length);
+
+                // 设置超时
+                testClient.Client.ReceiveTimeout = 500;
+                IPEndPoint remote = new IPEndPoint(IPAddress.Any, 0);
+
+                // 尝试接收回应（如果有服务器，它会收到数据并尝试解析）
+                if (testClient.Available > 0)
+                {
+                    byte[] recv = testClient.Receive(ref remote);
+                    if (recv != null && recv.Length > 0)
+                        serverExists = true;
+                }
+            }
+            catch (SocketException)
+            {
+                serverExists = false;
+            }
         }
+
+        if (!serverExists)
+        {
+            Debug.LogWarning("[客户端] 未检测到服务器，连接失败。");
+            SceneManager.LoadScene("SelectScene");
+            return ;
+        }
+
 
         try
         {

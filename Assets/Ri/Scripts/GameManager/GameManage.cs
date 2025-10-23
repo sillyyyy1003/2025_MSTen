@@ -136,7 +136,7 @@ public class GameManage : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
+            //Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
         }
         else if (Instance != this)
         {
@@ -220,9 +220,9 @@ public class GameManage : MonoBehaviour
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
-        if (_NetGameSystem != null && !_NetGameSystem.IsServer)
+        if (_NetGameSystem != null && !_NetGameSystem.bIsServer)
         {
-            _LocalPlayerID = (int)_NetGameSystem.LocalClientId;
+            _LocalPlayerID = (int)_NetGameSystem.bLocalClientId;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
             // 临时方案: 假设第一个玩家是本地玩家
@@ -430,7 +430,7 @@ public class GameManage : MonoBehaviour
         Debug.Log($"[服务器] 切换到玩家 {nextPlayerId}");
 
         // 如果是服务器，广播 TURN_START
-        if (_NetGameSystem != null && _NetGameSystem.IsServer)
+        if (_NetGameSystem != null && _NetGameSystem.bIsServer)
         {
             TurnStartMessage turnStartData = new TurnStartMessage
             {
