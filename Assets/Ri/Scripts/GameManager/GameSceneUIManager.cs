@@ -89,7 +89,7 @@ public class GameSceneUIManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("ui");
+        //Debug.Log("ui");
         // 按钮事件初始化
         EndTurn = GameObject.Find("EndTurn").GetComponent<Button>();
         CreateFramer = GameObject.Find("CreateFramer").GetComponent<Button>();
@@ -242,7 +242,7 @@ public class GameSceneUIManager : MonoBehaviour
                     buttonText.text = currentStatus ? "Ready" : "Cancel";
                 }
             }
-
+            Debug.Log("Click!!!!!!!");
             NetGameSystem.Instance.SetReadyStatus(!currentStatus);
 
           

@@ -421,7 +421,7 @@ public class NetGameSystem : MonoBehaviour
                 PlayerId = 0,
                 PlayerName = playerName,
                 PlayerIP = playerIP,
-                IsReady = false
+                IsReady = true
             });
 
             // 启动接收线程
@@ -509,7 +509,7 @@ public class NetGameSystem : MonoBehaviour
 
                         BroadcastToClients(joinedMessage, clientId);
 
-                        // *** 新增：更新房间玩家列表并发送房间状态 ***
+                        // 更新房间玩家列表并发送房间状态
                         UpdateRoomPlayersList();
                         SendRoomStatusToAll();
 
