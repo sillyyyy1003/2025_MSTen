@@ -215,6 +215,7 @@ public class GameSceneUIManager : MonoBehaviour
         {
             item.transform.Find("Toggle").GetComponent<Toggle>().isOn = false;
             item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
+            Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "Ready";
         }
 
         // 更新显示信息
@@ -229,7 +230,7 @@ public class GameSceneUIManager : MonoBehaviour
         if (NetGameSystem.Instance != null)
         {
             bool currentStatus = NetGameSystem.Instance.IsLocalReady;
-            this.transform.Find("Toggle").GetComponent<Toggle>().isOn = currentStatus;
+            playerListItems[(uint)GameManage.Instance.LocalPlayerID].transform.Find("Toggle").GetComponent<Toggle>().isOn = currentStatus;
             NetGameSystem.Instance.SetReadyStatus(!currentStatus);
 
             // 更新按钮文本
