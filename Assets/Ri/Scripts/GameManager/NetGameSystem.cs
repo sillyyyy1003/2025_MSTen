@@ -457,6 +457,15 @@ public class NetGameSystem : MonoBehaviour
                 IPEndPoint clientEP = null;
                 byte[] data = udpClient.Receive(ref clientEP);
                 string json = Encoding.UTF8.GetString(data);
+             
+                if (json == "PingCheck")
+                {
+                    // 告知客户端“服务器在线”
+                    byte[] response = Encoding.UTF8.GetBytes("ServerAlive");
+                    udpClient.Send(response, response.Length, clientEP);
+                    continue; // 跳过本次循环，不继续解析
+                }
+
                 NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(json);
 
                 // 处理消息
