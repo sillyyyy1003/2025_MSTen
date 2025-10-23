@@ -13,6 +13,27 @@ public class GameSceneUIManager : MonoBehaviour
 
     public GameObject GameUIObject;
     public GameObject NetRoomUIObject;
+
+    // 房间UI组件
+    [Header("房间UI组件")]
+    //public Transform PlayerListContainer; // 玩家列表容器
+    public GameObject PlayerItemPrefab; // 玩家列表项预制体
+    public Button Button_ReadyAndStartGame; // 准备按钮
+    //public Button Button_StartGame; // 开始游戏按钮
+    //public TextMeshProUGUI Text_RoomInfo; // 房间信息文本
+    //public TextMeshProUGUI Text_LocalPlayerInfo; // 本地玩家信息
+                                              
+    //public Toggle Toggle_Ready; // 准备状态Toggle
+
+    // 玩家列表项字典
+    private Dictionary<uint, GameObject> playerListItems = new Dictionary<uint, GameObject>();
+
+    private List<Vector2> PlayerInforListPos=new List<Vector2> { 
+        new Vector2(0,50), 
+        new Vector2(0, 0), 
+        new Vector2(0, -50) };
+    private int PlayerCount = 0;
+
     // 按钮
 
     // 创建传教士
@@ -47,6 +68,7 @@ public class GameSceneUIManager : MonoBehaviour
     private bool bIsPlayerTurn=true; 
     
     private Timer timer;
+
 
     private void Awake()
     {
@@ -93,6 +115,10 @@ public class GameSceneUIManager : MonoBehaviour
             timer.OnTimePoolStarted += () => Debug.Log("开始使用倒计时池");
         }
 
+        // 初始化房间UI
+        InitializeRoomUI();
+
+
         GameUIObject.SetActive(false);
         NetRoomUIObject.SetActive(true);
     }
@@ -118,6 +144,179 @@ public class GameSceneUIManager : MonoBehaviour
             }
         }
     }
+
+    // 初始化房间UI
+    private void InitializeRoomUI()
+    {
+        // 如果使用按钮
+        if (Button_ReadyAndStartGame != null)
+        {
+            Button_ReadyAndStartGame.onClick.AddListener(OnReadyButtonClicked);
+        }
+
+        //// 如果使用Toggle
+        //if (Toggle_Ready != null)
+        //{
+        //    Toggle_Ready.onValueChanged.AddListener(OnReadyToggleChanged);
+        //}
+
+        //// 开始游戏按钮
+        //if (Button_StartGame != null)
+        //{
+        //    Button_StartGame.onClick.AddListener(OnStartGameButtonClicked);
+        //    Button_StartGame.gameObject.SetActive(false); // 初始隐藏
+        //}
+
+        // 订阅网络事件
+        if (NetGameSystem.Instance != null)
+        {
+            NetGameSystem.Instance.OnRoomStatusUpdated += UpdateRoomDisplay;
+            NetGameSystem.Instance.OnAllPlayersReady += OnAllPlayersReadyChanged;
+            NetGameSystem.Instance.OnGameStarted += OnGameStarted;
+        }
+    }
+
+    // 显示本地玩家信息
+    private void DisplayLocalPlayerInfo()
+    {
+        if (SceneStateManager.Instance != null)
+        {
+            string playerName = SceneStateManager.Instance.PlayerName;
+            string playerIP = playerIP = SceneStateManager.Instance.PlayerIP;
+            bool isServer = SceneStateManager.Instance.GetIsServer();
+
+            //Text_LocalPlayerInfo.text = $"玩家名: {playerName}\nIP: {playerIP}\n身份: {(isServer ? "房主" : "成员")}";
+        }
+    }
+
+    // 更新房间显示 
+    private void UpdateRoomDisplay(List<PlayerInfo> players)
+    {
+        // 清空现有列表
+        foreach (var item in playerListItems.Values)
+        {
+            Destroy(item);
+        }
+        playerListItems.Clear();
+
+        // 创建新的玩家列表项
+        foreach (var player in players)
+        {
+            CreatePlayerListItem(player);
+        }
+    
+    }
+
+    // 创建玩家列表项 
+    private void CreatePlayerListItem(PlayerInfo player)
+    {
+     
+        // 使用预制体创建玩家列表项
+        GameObject item = Instantiate(PlayerItemPrefab, this.GetComponent<Canvas>().transform.Find("NetRoomUI").transform);
+        item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[PlayerCount];
+       
+        playerListItems[player.PlayerId] = item;
+       
+        item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
+        item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
+        if(PlayerCount==0)
+        {
+            item.transform.Find("Toggle").GetComponent<Toggle>().isOn = true;
+            item.transform.Find("Toggle").GetComponent<Toggle>().interactable = false;
+        }
+        else
+        {
+            item.transform.Find("Toggle").GetComponent<Toggle>().isOn = false;
+        }
+
+        // 更新显示信息
+        TextMeshProUGUI nameText = item.GetComponentInChildren<TextMeshProUGUI>();
+     
+       
+    }
+
+    // 准备按钮点击事件
+    private void OnReadyButtonClicked()
+    {
+        if (NetGameSystem.Instance != null)
+        {
+            bool currentStatus = NetGameSystem.Instance.IsLocalReady;
+            NetGameSystem.Instance.SetReadyStatus(!currentStatus);
+
+            // 更新按钮文本
+            if (Button_ReadyAndStartGame != null)
+            {
+                TextMeshProUGUI buttonText = Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null)
+                {
+                    buttonText.text = currentStatus ? "Ready" : "Cancel";
+                }
+            }
+        }
+    }
+
+    // 准备Toggle改变事件
+    private void OnReadyToggleChanged(bool isReady)
+    {
+        if (NetGameSystem.Instance != null)
+        {
+            NetGameSystem.Instance.SetReadyStatus(isReady);
+        }
+    }
+
+    // 所有玩家准备完毕回调 
+    private void OnAllPlayersReadyChanged(bool allReady)
+    {
+        // 只有服务器玩家才能看到开始游戏按钮
+        if (NetGameSystem.Instance != null && NetGameSystem.Instance.IsServer)
+        {
+            if (Button_ReadyAndStartGame != null)
+            {
+                Button_ReadyAndStartGame.gameObject.SetActive(allReady);
+
+                // 可以添加按钮可交互性控制
+                Button_ReadyAndStartGame.interactable = allReady;
+
+                // 更新按钮文本提示
+                TextMeshProUGUI buttonText = Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null)
+                {
+                    buttonText.text = allReady ? "StartGame" : "WaitForPlayer";
+                }
+            }
+        }
+    }
+
+    // 开始游戏按钮点击事件
+    private void OnStartGameButtonClicked()
+    {
+        if (NetGameSystem.Instance != null && NetGameSystem.Instance.IsServer)
+        {
+            NetGameSystem.Instance.StartGame();
+        }
+    }
+
+    // 游戏开始回调 
+    private void OnGameStarted()
+    {
+        // 切换到游戏UI
+        if (NetRoomUIObject != null)
+        {
+            NetRoomUIObject.SetActive(false);
+        }
+
+        if (GameUIObject != null)
+        {
+            GameUIObject.SetActive(true);
+        }
+
+        Debug.Log("游戏开始，切换到游戏界面");
+
+        // 初始化游戏状态
+        StartTurn();
+    }
+
+
     // *************************
     //         公有函数
     // *************************

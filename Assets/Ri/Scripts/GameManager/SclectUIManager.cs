@@ -51,7 +51,8 @@ public class SclectUIManager : MonoBehaviour
     }
     private void OnClickOnlineGame()
     {
-        Image_OnlineGame.SetActive(true);
+        Image_OnlineGame.SetActive(true); 
+     
     }
     private void OnClickSetting()
     {
@@ -65,10 +66,48 @@ public class SclectUIManager : MonoBehaviour
 
     private void OnClickCreateGame()
     {
+        if (SceneStateManager.Instance != null)
+        {
+            // 获取并保存玩家名
+            //string playerName = SceneStateManager.Instance.PlayerName;
+           
+
+           // SceneStateManager.Instance.PlayerName = playerName;
+
+            // 设置为服务器模式
+            SceneStateManager.Instance.SetAsServer(true);
+
+            Debug.Log($"创建房间 - 玩家名: {SceneStateManager.Instance.PlayerName}, 模式: 服务器");
+        }
+        else
+        {
+            Debug.LogError("SceneStateManager.Instance 为空!");
+        }
+
+
         SceneManager.LoadScene("MainGame");
     }
     private void OnClickAddGame()
     {
+        if (SceneStateManager.Instance != null)
+        {
+           
+                ////string serverIP = InputField_ServerIP.text;
+                //PlayerPrefs.SetString("ServerIP", serverIP);
+                //PlayerPrefs.SetString("LastServerIP", serverIP); // 保存最后使用的IP
+                //PlayerPrefs.Save();
+
+                //Debug.Log($"保存服务器IP: {serverIP}");
+
+            // 设置为客户端模式
+            SceneStateManager.Instance.SetAsServer(false);
+
+            Debug.Log($"加入房间 - 玩家名: {SceneStateManager.Instance.PlayerName}, 模式: 客户端");
+        }
+        else
+        {
+            Debug.LogError("SceneStateManager.Instance 为空!");
+        }
         SceneManager.LoadScene("MainGame");
 
     }

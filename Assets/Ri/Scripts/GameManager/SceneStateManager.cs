@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Sockets;
+using System.Net;
 using UnityEngine;
 
 // 场景状态管理，需要切换场景保存参数时使用
@@ -10,6 +12,8 @@ public class SceneStateManager : MonoBehaviour
 
     // 玩家名
     public string PlayerName;
+    // 玩家ip
+    public string PlayerIP;
 
     // 是否为主机
     private bool bIsServer;
@@ -23,6 +27,7 @@ public class SceneStateManager : MonoBehaviour
     // 设置本地保存服务器与客户端网络ip，需提前在电脑设置
     private const string SERVER_IP = "192.168.1.100";
     private const string CLIENT_IP = "192.168.1.101";
+
 
     void Awake()
     {
@@ -42,10 +47,11 @@ public class SceneStateManager : MonoBehaviour
     {
         // 暂时将设置玩家名放在这
         SavePlayerName(PlayerName);
-
+        PlayerIP = GetLocalIPv4();
 
         bIsServer = isServer;
     }
+    
     public bool GetIsServer()
     {
         return bIsServer;
@@ -82,5 +88,20 @@ public class SceneStateManager : MonoBehaviour
 
     }
 
+    string GetLocalIPv4()
+    {
+        string localIP = "";
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
+        {
+            // 只要 IPv4，且不是回环地址
+            if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+            {
+                localIP = ip.ToString();
+                break;
+            }
+        }
+        return string.IsNullOrEmpty(localIP) ? "未找到局域网 IPv4 地址" : localIP;
+    }
 
 }
