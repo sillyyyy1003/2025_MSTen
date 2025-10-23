@@ -287,11 +287,12 @@ public class NetGameSystem : MonoBehaviour
             playerName = SceneStateManager.Instance.PlayerName;
             playerIP = SceneStateManager.Instance.PlayerIP; // 获取本地IP
 
-            // 如果是客户端，从SceneStateManager获取服务器IP
+            // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
             if (!isServer)
             {
-                // 这里可以从PlayerPrefs获取服务器IP
-                serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+                
+                // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                //serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
             }
         }
         // 延迟启动网络,确保所有单例初始化完成
@@ -470,8 +471,8 @@ public class NetGameSystem : MonoBehaviour
                         uint clientId = nextClientId++;
                         clients[clientId] = clientEP;
                         clientNames[clientId] = connectData.PlayerName;
-                        clientReadyStatus[clientId] = false; // *** 新增：初始化为未准备 ***
-                        clientIPs[clientId] = connectData.PlayerIP; // *** 新增：保存IP ***
+                        clientReadyStatus[clientId] = false; // 初始化为未准备
+                        clientIPs[clientId] = connectData.PlayerIP; // 保存IP
                         connectedPlayers.Add(clientId);
 
                         // 发送确认
