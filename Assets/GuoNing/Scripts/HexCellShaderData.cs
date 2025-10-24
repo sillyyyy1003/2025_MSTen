@@ -84,18 +84,18 @@ public class HexCellShaderData : MonoBehaviour
 	/// <param name="cell">Cell with changed visibility.</param>
 	public void RefreshVisibility(HexCell cell)
 	{
-		//int index = cell.Index;
-		//if (ImmediateMode)
-		//{
-		//	cellTextureData[index].r = cell.IsVisible ? (byte)255 : (byte)0;
-		//	cellTextureData[index].g = cell.IsExplored ? (byte)255 : (byte)0;
-		//}
-		//else if (!visibilityTransitions[index])
-		//{
-		//	visibilityTransitions[index] = true;
-		//	transitioningCellIndices.Add(cell.Index);
-		//}
-		//enabled = true;
+		int index = cell.Index;
+		if (ImmediateMode)
+		{
+			cellTextureData[index].r =  (byte)255;
+			cellTextureData[index].g =  (byte)255;
+		}
+		else if (!visibilityTransitions[index])
+		{
+			visibilityTransitions[index] = true;
+			transitioningCellIndices.Add(cell.Index);
+		}
+		enabled = true;
 	}
 
 	/// <summary>
@@ -127,7 +127,7 @@ public class HexCellShaderData : MonoBehaviour
 		if (needsVisibilityReset)
 		{
 			needsVisibilityReset = false;
-			//Grid.ResetVisibility();
+			Grid.ResetVisibility();
 		}
 
 		int delta = (int)(Time.deltaTime * transitionSpeed);
@@ -156,14 +156,14 @@ public class HexCellShaderData : MonoBehaviour
 		Color32 data = cellTextureData[index];
 		bool stillUpdating = false;
 
-		/*
-		if (cell.IsExplored && data.g < 255)
+		
+		if (data.g < 255)
 		{
 			stillUpdating = true;
 			int t = data.g + delta;
 			data.g = t >= 255 ? (byte)255 : (byte)t;
 		}
-		*/
+		
 		if (cell.IsVisible)
 		{
 			if (data.r < 255)

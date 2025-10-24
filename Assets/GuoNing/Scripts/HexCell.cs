@@ -391,32 +391,31 @@ public class HexCell : MonoBehaviour
 
 	int visibility;
 
-	/*
+
 	/// <summary>
 	/// Increment visibility level.
 	/// </summary>
-	//public void IncreaseVisibility()
-	//{
-	//	visibility += 1;
-	//	if (visibility == 1)
-	//	{
-	//		IsExplored = true;
-	//		Grid.ShaderData.RefreshVisibility(this);
-	//	}
-	//}
+	public void IncreaseVisibility()
+	{
+		visibility += 1;
+		if (visibility == 1)
+		{
+			Grid.ShaderData.RefreshVisibility(this);
+		}
+	}
 
 	/// <summary>
 	/// Decrement visiblility level.
 	/// </summary>
-	//public void DecreaseVisibility()
-	//{
-	//	visibility -= 1;
-	//	if (visibility == 0)
-	//	{
-	//		Grid.ShaderData.RefreshVisibility(this);
-	//	}
-	//}
-	
+	public void DecreaseVisibility()
+	{
+		visibility -= 1;
+		if (visibility == 0)
+		{
+			Grid.ShaderData.RefreshVisibility(this);
+		}
+	}
+
 	/// <summary>
 	/// Reset visibility level to zero.
 	/// </summary>
@@ -428,7 +427,7 @@ public class HexCell : MonoBehaviour
 			Grid.ShaderData.RefreshVisibility(this);
 		}
 	}
-	*/
+	
 
 	/// <summary>
 	/// Get one of the neighbor cells. Only valid if that neighbor exists.
@@ -746,6 +745,7 @@ public class HexCell : MonoBehaviour
 		flags |= (HexFlags)reader.ReadByte();
 
 		//IsExplored = header >= 3 && reader.ReadBoolean();
+	
 		Grid.ShaderData.RefreshTerrain(this);
 		Grid.ShaderData.RefreshVisibility(this);
 	}

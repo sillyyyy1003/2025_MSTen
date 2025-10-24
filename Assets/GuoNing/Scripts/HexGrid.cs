@@ -726,7 +726,7 @@ public class HexGrid : MonoBehaviour
 		return path;
 	}
 
-	/*
+	
 	/// <summary>
 	/// Increase the visibility of all cells relative to a view cell.
 	/// </summary>
@@ -834,7 +834,7 @@ public class HexGrid : MonoBehaviour
 		}
 		return visibleCells;
 	}
-	*/
+	
 	/// <summary>
 	/// Center the map given an X position, to facilitate east-west wrapping.
 	/// </summary>
