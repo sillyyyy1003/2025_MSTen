@@ -6,6 +6,9 @@ using Unity.Mathematics;
 using Newtonsoft.Json.Bson;
 using UnityEngine.EventSystems;
 using System.Dynamic;
+using GameData;
+using GamePieces;
+using UnityEngine.UI;
 
 /// <summary>
 /// 玩家操作管理，负责处理因玩家操作导致的数据变动
@@ -453,32 +456,45 @@ public class PlayerOperationManager : MonoBehaviour
         Vector3 worldPos = cellInfo.Cells3DPos;
 
         // 选择对应的预制体
-        GameObject prefab = null;
+        //Piece prefab = null;
+        PieceType pieceType=PieceType.None;
         switch (unitType)
         {
             case PlayerUnitType.Farmer:
-             
-                prefab = FarmerPrefab;
+                pieceType = PieceType.Farmer;
+                //prefab = FarmerPrefab;
                 break;
             case PlayerUnitType.Soldier:
-                prefab = SoldierPrefab;
+                pieceType = PieceType.Military;
+                //prefab = SoldierPrefab;
                 break;
-            //case PlayerUnitType.Missionary:
-            //    prefab = MissionaryPrefab;
-            //    break;
+            case PlayerUnitType.Missionary:
+                pieceType = PieceType.Missionary;
+                break;
             default:
                 Debug.LogError($"未知的单位类型: {unitType}");
                 return;
         }
 
-        if (prefab == null)
+      if(GameManage.Instance==null)
+        {
+            Debug.Log("Game Manage is null");
+        }
+
+        // 创建GameObject
+        GameObject unit = GameManage.Instance._Instantiater.CreatePiece(
+                   pieceType,
+                    Religion.A,
+                    GameManage.Instance.LocalPlayerID,
+                    worldPos).gameObject;
+        // 添加描边效果
+        unit.AddComponent<ChangeMaterial>();
+
+        if (unit == null)
         {
             Debug.LogError($"预制体为空: {unitType}");
             return;
         }
-
-        // 创建GameObject
-        GameObject unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
         unit.transform.position = new Vector3(
             unit.transform.position.x,
             unit.transform.position.y + 2.5f,
@@ -510,39 +526,39 @@ public class PlayerOperationManager : MonoBehaviour
 
 
     // 创建玩家单位
-    private void CreatePlayerUnits(int startBoardID)
-    {
-        // 清空现有单位
-        foreach (var a in localPlayerUnits.Values)
-        {
-            if (a != null)
-                Destroy(a);
-        }
-        localPlayerUnits.Clear();
+    //private void CreatePlayerUnits(int startBoardID)
+    //{
+    //    // 清空现有单位
+    //    foreach (var a in localPlayerUnits.Values)
+    //    {
+    //        if (a != null)
+    //            Destroy(a);
+    //    }
+    //    localPlayerUnits.Clear();
 
-        // 在起始位置创建一个初始单位
-        int2 startPos = GameManage.Instance.GetBoardInfor(startBoardID).Cells2DPos;
-        Vector3 worldPos = GameManage.Instance.GetBoardInfor(startBoardID).Cells3DPos;
+    //    // 在起始位置创建一个初始单位
+    //    int2 startPos = GameManage.Instance.GetBoardInfor(startBoardID).Cells2DPos;
+    //    Vector3 worldPos = GameManage.Instance.GetBoardInfor(startBoardID).Cells3DPos;
 
-        // 添加到数据
-        playerDataManager.AddUnit(localPlayerId, PlayerUnitType.Farmer, startPos);
+    //    // 添加到数据
+    //    playerDataManager.AddUnit(localPlayerId, PlayerUnitType.Farmer, startPos);
 
-        // 创建GameObject
-        GameObject prefab = FarmerPrefab != null ? FarmerPrefab : GameObject.CreatePrimitive(PrimitiveType.Cube);
-        GameObject unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
+    //    // 创建GameObject
+    //    GameObject prefab = FarmerPrefab != null ? FarmerPrefab : GameObject.CreatePrimitive(PrimitiveType.Cube);
+    //    GameObject unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
 
-        unit.transform.position = new Vector3(
-            unit.transform.position.x,
-            unit.transform.position.y + 6.5f,
-            unit.transform.position.z
-        );
+    //    unit.transform.position = new Vector3(
+    //        unit.transform.position.x,
+    //        unit.transform.position.y + 6.5f,
+    //        unit.transform.position.z
+    //    );
 
-        // 保存引用
-        localPlayerUnits[startPos] = unit;
-        GameManage.Instance.SetCellObject(startPos, unit);
+    //    // 保存引用
+    //    localPlayerUnits[startPos] = unit;
+    //    GameManage.Instance.SetCellObject(startPos, unit);
 
-        Debug.Log($"在 ({startPos.x},{startPos.y}) 创建了初始单位");
-    }
+    //    Debug.Log($"在 ({startPos.x},{startPos.y}) 创建了初始单位");
+    //}
 
     // 创建敌方单位
     private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
@@ -605,6 +621,7 @@ public class PlayerOperationManager : MonoBehaviour
             List<HexCell> listCellPos = _HexGrid.GetPathCells();
 
             Sequence moveSequence = DOTween.Sequence();
+            Vector3 currentPos = SelectingUnit.transform.position;
             for (int i = 0; i < listCellPos.Count; i++)
             {
                 // 根据路径坐标找到对应的格子信息
@@ -613,10 +630,19 @@ public class PlayerOperationManager : MonoBehaviour
                    listCellPos[i].Position.y +2.5f,
                     listCellPos[i].Position.z
                     );
-                moveSequence.Append(SelectingUnit.transform.DOMove(waypoint, MoveSpeed)
+
+                // 计算弧形路径的中间点
+                Vector3 midPoint = (currentPos + waypoint) / 2f;
+                midPoint.y += 5.0f;
+
+                // 创建从当前位置到目标位置的弧形路径
+                Vector3[] path = new Vector3[] { currentPos, midPoint, waypoint };
+
+                moveSequence.Append(SelectingUnit.transform.DOPath(path, MoveSpeed, PathType.CatmullRom)
                   .SetEase(Ease.Linear));
-                Debug.Log("2Dpos is " + PlayerBoardInforDict[i].Cells2DPos+
-                    "3Dpos is "+ PlayerBoardInforDict[i].Cells3DPos);
+                currentPos = waypoint;
+                //Debug.Log("2Dpos is " + PlayerBoardInforDict[i].Cells2DPos+
+                //    "3Dpos is "+ PlayerBoardInforDict[i].Cells3DPos);
             }
             moveSequence.OnComplete(() =>
             {
@@ -1046,7 +1072,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
 
         // 创建单位数据
-        PlayerUnitData unitData = new PlayerUnitData(unitType, pos);
+        PlayerUnitData unitData = new PlayerUnitData(1,unitType, pos);
 
         // 创建视觉对象
         CreateEnemyUnit(msg.PlayerId, unitData);

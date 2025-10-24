@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using GameData;
 
 /// <summary>
 /// 单位种类
@@ -11,6 +12,7 @@ public enum PlayerUnitType
 {
     Soldier,    //士兵
     Farmer,     //农民
+    Missionary, //传教士
     // 后续添加
 }
 
@@ -19,16 +21,24 @@ public enum PlayerUnitType
 [Serializable]
 public struct PlayerUnitData
 {
+    // 单位的唯一ID
+    public int UnitID;
+
     // 单位的种类
     public PlayerUnitType UnitType;
+
     // 单位的2维坐标
     public int2 Position;
-   
 
-    public PlayerUnitData(PlayerUnitType type, int2 pos)
+    // 玩家拥有的单位GameObject
+    public GameObject PlayerUnitObject;
+
+    public PlayerUnitData(int unitId, PlayerUnitType type, int2 pos, GameObject unitObject = null)
     {
+        UnitID = unitId;
         UnitType = type;
         Position = pos;
+        PlayerUnitObject = unitObject;
     }
 }
 
@@ -46,27 +56,46 @@ public struct PlayerData
     // 玩家资源 
     public int Resources;
 
+    // 玩家宗教
+    public Religion PlayerReligion;
+
     public PlayerData(int playerId)
     {
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
         Resources = 0;
+        PlayerReligion = Religion.None;
     }
 
     // 添加单位(单位与位置)
-    public void AddUnit(PlayerUnitType type, int2 pos)
+    public void AddUnit(int unitId, PlayerUnitType type, int2 pos, GameObject unitObject = null)
     {
-        PlayerUnits.Add(new PlayerUnitData(type, pos));
-        Debug.Log($"玩家 {PlayerID} 在 ({pos.x},{pos.y}) 添加了 {type}");
+        PlayerUnits.Add(new PlayerUnitData(unitId, type, pos, unitObject));
+        Debug.Log($"玩家 {PlayerID} 在 ({pos.x},{pos.y}) 添加了 {type}，ID: {unitId}");
     }
 
     // 添加单位(完整数据)
     public void AddUnit(PlayerUnitData unitData)
     {
         PlayerUnits.Add(unitData);
-        Debug.Log($"玩家 {PlayerID} 添加单位: {unitData.UnitType} at ({unitData.Position.x},{unitData.Position.y})");
+        Debug.Log($"玩家 {PlayerID} 添加单位: {unitData.UnitType} at ({unitData.Position.x},{unitData.Position.y})，ID: {unitData.UnitID}");
     }
 
+    // 更新单位的GameObject引用
+    public bool UpdateUnitGameObject(int unitId, GameObject unitObject)
+    {
+        for (int i = 0; i < PlayerUnits.Count; i++)
+        {
+            if (PlayerUnits[i].UnitID == unitId)
+            {
+                PlayerUnitData updatedUnit = PlayerUnits[i];
+                updatedUnit.PlayerUnitObject = unitObject;
+                PlayerUnits[i] = updatedUnit;
+                return true;
+            }
+        }
+        return false;
+    }
 
     // 移动单位
     public bool MoveUnit(int2 startPos, int2 endPos)
@@ -78,12 +107,10 @@ public struct PlayerData
                 PlayerUnitData movedUnit = PlayerUnits[i];
                 movedUnit.Position = endPos;
                 PlayerUnits[i] = movedUnit;
-
-                //Debug.Log($"玩家 {PlayerID} 移动单位: ({startPos.x},{startPos.y}) -> ({endPos.x},{endPos.y})");
                 return true;
             }
         }
-        return false; // 没找到要移动的单位
+        return false;
     }
 
     // 根据坐标删除单位
@@ -100,14 +127,37 @@ public struct PlayerData
         return false;
     }
 
+    // 根据ID删除单位
+    public bool RemoveUnitById(int unitId)
+    {
+        for (int i = 0; i < PlayerUnits.Count; i++)
+        {
+            if (PlayerUnits[i].UnitID == unitId)
+            {
+                PlayerUnits.RemoveAt(i);
+                return true;
+            }
+        }
+        return false;
+    }
 
-
-    // 查找单位
+    // 根据坐标查找单位
     public PlayerUnitData? FindUnitAt(int2 position)
     {
         foreach (var unit in PlayerUnits)
         {
             if (unit.Position.Equals(position))
+                return unit;
+        }
+        return null;
+    }
+
+    // 根据ID查找单位
+    public PlayerUnitData? FindUnitById(int unitId)
+    {
+        foreach (var unit in PlayerUnits)
+        {
+            if (unit.UnitID == unitId)
                 return unit;
         }
         return null;
@@ -139,6 +189,12 @@ public class PlayerDataManager : MonoBehaviour
     // 所有玩家数据
     private Dictionary<int, PlayerData> allPlayersData = new Dictionary<int, PlayerData>();
 
+    // 单位ID计数器（用于生成唯一ID）
+    private int unitIdCounter = 0;
+
+    // 通过UnitID快速查找的字典 <UnitID, PlayerID>
+    private Dictionary<int, int> unitIdToPlayerIdMap = new Dictionary<int, int>();
+
     // 事件: 玩家数据变化
     public event Action<int, PlayerData> OnPlayerDataChanged;
 
@@ -162,6 +218,24 @@ public class PlayerDataManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    // *************************
+    //        ID管理
+    // *************************
+
+    // 生成新的单位ID
+    private int GenerateUnitID()
+    {
+        return unitIdCounter++;
+    }
+
+    // 重置ID计数器（用于新游戏开始时）
+    public void ResetUnitIDCounter()
+    {
+        unitIdCounter = 0;
+        unitIdToPlayerIdMap.Clear();
+        Debug.Log("PlayerDataManager: ID计数器已重置");
     }
 
     // *************************
@@ -208,6 +282,13 @@ public class PlayerDataManager : MonoBehaviour
     {
         if (allPlayersData.ContainsKey(playerId))
         {
+            // 清理该玩家所有单位的ID映射
+            PlayerData data = allPlayersData[playerId];
+            foreach (var unit in data.PlayerUnits)
+            {
+                unitIdToPlayerIdMap.Remove(unit.UnitID);
+            }
+
             allPlayersData.Remove(playerId);
             Debug.Log($"PlayerDataManager: 移除玩家 {playerId}");
         }
@@ -223,6 +304,7 @@ public class PlayerDataManager : MonoBehaviour
     public void ClearAllPlayers()
     {
         allPlayersData.Clear();
+        unitIdToPlayerIdMap.Clear();
         Debug.Log("PlayerDataManager: 清空所有玩家数据");
     }
 
@@ -236,37 +318,70 @@ public class PlayerDataManager : MonoBehaviour
     //        单位管理
     // *************************
 
-    // 添加单位(种类与位置)
-    public bool AddUnit(int playerId, PlayerUnitType type, int2 pos)
+    // 添加单位(种类与位置) - 返回生成的UnitID
+    public int AddUnit(int playerId, PlayerUnitType type, int2 pos, GameObject unitObject = null)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
+            int newUnitId = GenerateUnitID();
+
             PlayerData data = allPlayersData[playerId];
-            data.AddUnit(type, pos);
+            data.AddUnit(newUnitId, type, pos, unitObject);
             allPlayersData[playerId] = data;
 
+            // 添加ID映射
+            unitIdToPlayerIdMap[newUnitId] = playerId;
+
             // 触发事件
-            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(type, pos));
+            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitObject));
             OnPlayerDataChanged?.Invoke(playerId, data);
 
-            return true;
+            return newUnitId;
         }
-        return false;
+        return -1; // 失败返回-1
     }
 
-    // 添加单位(完整数据)
-    public bool AddUnit(int playerId, PlayerUnitData unitData)
+    // 添加单位(完整数据) - 如果UnitData中的ID为0，则生成新ID
+    public int AddUnit(int playerId, PlayerUnitData unitData)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
+            // 如果没有ID，生成新的
+            if (unitData.UnitID == 0)
+            {
+                unitData.UnitID = GenerateUnitID();
+            }
+
             PlayerData data = allPlayersData[playerId];
             data.AddUnit(unitData);
             allPlayersData[playerId] = data;
 
+            // 添加ID映射
+            unitIdToPlayerIdMap[unitData.UnitID] = playerId;
+
             OnUnitAdded?.Invoke(playerId, unitData);
             OnPlayerDataChanged?.Invoke(playerId, data);
 
-            return true;
+            return unitData.UnitID;
+        }
+        return -1;
+    }
+
+    // 更新单位的GameObject引用
+    public bool UpdateUnitGameObject(int playerId, int unitId, GameObject unitObject)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+            bool success = data.UpdateUnitGameObject(unitId, unitObject);
+
+            if (success)
+            {
+                allPlayersData[playerId] = data;
+                OnPlayerDataChanged?.Invoke(playerId, data);
+            }
+
+            return success;
         }
         return false;
     }
@@ -293,16 +408,26 @@ public class PlayerDataManager : MonoBehaviour
         return false;
     }
 
-    // 删除单位
+    // 删除单位（按位置）
     public bool RemoveUnit(int playerId, int2 pos)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
             PlayerData data = allPlayersData[playerId];
+
+            // 先找到单位ID，以便清理映射
+            PlayerUnitData? unitData = data.FindUnitAt(pos);
+
             bool success = data.RemoveUnitAt(pos);
 
             if (success)
             {
+                // 清理ID映射
+                if (unitData.HasValue)
+                {
+                    unitIdToPlayerIdMap.Remove(unitData.Value.UnitID);
+                }
+
                 allPlayersData[playerId] = data;
 
                 // 触发事件
@@ -313,6 +438,103 @@ public class PlayerDataManager : MonoBehaviour
             return success;
         }
         return false;
+    }
+
+    // 删除单位（按ID）
+    public bool RemoveUnitById(int unitId)
+    {
+        // 先找到单位所属的玩家
+        if (!unitIdToPlayerIdMap.ContainsKey(unitId))
+        {
+            Debug.LogWarning($"PlayerDataManager: 找不到ID为 {unitId} 的单位");
+            return false;
+        }
+
+        int playerId = unitIdToPlayerIdMap[unitId];
+
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+
+            // 获取单位位置（用于事件）
+            PlayerUnitData? unitData = data.FindUnitById(unitId);
+
+            bool success = data.RemoveUnitById(unitId);
+
+            if (success)
+            {
+                // 清理ID映射
+                unitIdToPlayerIdMap.Remove(unitId);
+                allPlayersData[playerId] = data;
+
+                // 触发事件
+                if (unitData.HasValue)
+                {
+                    OnUnitRemoved?.Invoke(playerId, unitData.Value.Position);
+                }
+                OnPlayerDataChanged?.Invoke(playerId, data);
+            }
+
+            return success;
+        }
+        return false;
+    }
+
+    // *************************
+    //        通过ID查询
+    // *************************
+
+    // 通过UnitID获取单位的GameObject
+    public GameObject GetUnitGameObjectById(int unitId)
+    {
+        if (!unitIdToPlayerIdMap.ContainsKey(unitId))
+        {
+            Debug.LogWarning($"PlayerDataManager: 找不到ID为 {unitId} 的单位");
+            return null;
+        }
+
+        int playerId = unitIdToPlayerIdMap[unitId];
+        PlayerData data = GetPlayerData(playerId);
+
+        PlayerUnitData? unitData = data.FindUnitById(unitId);
+
+        if (unitData.HasValue)
+        {
+            return unitData.Value.PlayerUnitObject;
+        }
+
+        return null;
+    }
+
+    // 通过UnitID获取完整的单位数据
+    public PlayerUnitData? GetUnitDataById(int unitId)
+    {
+        if (!unitIdToPlayerIdMap.ContainsKey(unitId))
+        {
+            Debug.LogWarning($"PlayerDataManager: 找不到ID为 {unitId} 的单位");
+            return null;
+        }
+
+        int playerId = unitIdToPlayerIdMap[unitId];
+        PlayerData data = GetPlayerData(playerId);
+
+        return data.FindUnitById(unitId);
+    }
+
+    // 通过UnitID获取单位所属的玩家ID
+    public int GetPlayerIdByUnitId(int unitId)
+    {
+        if (unitIdToPlayerIdMap.ContainsKey(unitId))
+        {
+            return unitIdToPlayerIdMap[unitId];
+        }
+        return -1;
+    }
+
+    // 检查UnitID是否存在
+    public bool UnitIdExists(int unitId)
+    {
+        return unitIdToPlayerIdMap.ContainsKey(unitId);
     }
 
     // *************************
@@ -370,6 +592,21 @@ public class PlayerDataManager : MonoBehaviour
         return alivePlayers;
     }
 
+    // 获取某玩家的所有单位ID
+    public List<int> GetPlayerUnitIds(int playerId)
+    {
+        List<int> unitIds = new List<int>();
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+            foreach (var unit in data.PlayerUnits)
+            {
+                unitIds.Add(unit.UnitID);
+            }
+        }
+        return unitIds;
+    }
+
     // *************************
     //        调试功能
     // *************************
@@ -383,12 +620,18 @@ public class PlayerDataManager : MonoBehaviour
             Debug.Log($"玩家 {kvp.Key}: {kvp.Value.GetUnitCount()} 个单位");
             foreach (var unit in kvp.Value.PlayerUnits)
             {
-                Debug.Log($"  - {unit.UnitType} at ({unit.Position.x},{unit.Position.y}) ");
+                Debug.Log($"  - ID:{unit.UnitID} {unit.UnitType} at ({unit.Position.x},{unit.Position.y}) GameObject:{(unit.PlayerUnitObject != null ? unit.PlayerUnitObject.name : "null")}");
             }
+        }
+
+        Debug.Log($"=== 单位ID映射表 ({unitIdToPlayerIdMap.Count} 条) ===");
+        foreach (var kvp in unitIdToPlayerIdMap)
+        {
+            Debug.Log($"  UnitID:{kvp.Key} -> PlayerID:{kvp.Value}");
         }
     }
 
-    // 查找单位
+    // 查找单位（按位置）
     public PlayerUnitData? FindUnit(int playerId, int2 pos)
     {
         if (allPlayersData.ContainsKey(playerId))
@@ -419,5 +662,4 @@ public class PlayerDataManager : MonoBehaviour
         }
         return -1; // 没有单位
     }
-
 }
