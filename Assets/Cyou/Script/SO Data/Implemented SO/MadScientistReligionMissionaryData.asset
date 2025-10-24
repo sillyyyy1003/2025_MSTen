@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: MissionaryData
-  m_EditorClassIdentifier: Assembly-CSharp:GameData:MissionaryDataSO
+  m_Name: MadScientistReligionMissionaryData
+  m_EditorClassIdentifier: Assembly-CSharp:GameData:MadScientistReligionMissionaryDataSO
   originalPID: 0
-  pieceName: "\u5BA3\u6559\u5E2B"
+  pieceName: "\u760B\u72C2\u79D1\u5B78\u5BB6\u6559_\u5BA3\u6559\u5E2B"
   populationCost: 3
   resourceCost: 3
   initialLevel: 0
@@ -24,7 +24,7 @@ MonoBehaviour:
   attackPower: 0
   attackRange: 0
   attackCooldown: 1
-  attackAPCost: 25
+  attackAPCost: 20
   maxHPByLevel:
   - 7
   - 9
@@ -40,13 +40,9 @@ MonoBehaviour:
   - 0
   - 0
   - 0
-  pieceSprite: {fileID: 0}
-  pieceMesh: {fileID: 2225987390406733162, guid: 3dff2239ed7e6204296acab988a99e14,
-    type: 3}
-  pieceMaterial: {fileID: 2100000, guid: 98cd3ae243d61a34bae128e532807ad7, type: 2}
-  piecePrefab: {fileID: 7153972553235425938, guid: bc85a3009b2bf0347b0ab50c4ed35fac,
-    type: 3}
-  animatorController: {fileID: 0}
+  hpUpgradeCost: 050000000600000000000000
+  apUpgradeCost: 060000000700000000000000
+  piecePrefab: {fileID: 0}
   occupyAPCost: 2
   convertAPCost: 3
   conversionTurnDuration: 02000000030000000400000005000000
@@ -64,16 +60,18 @@ MonoBehaviour:
   convertMissionaryChanceByLevel:
   - 0
   - 0.5
-  - 0.6
-  - 0.7
+  - 0.55
+  - 0.65
   convertFarmerChanceByLevel:
   - 0
-  - 0.9
+  - 0.1
   - 0.2
   - 0.3
   convertMilitaryChanceByLevel:
   - 0
-  - 0.7
-  - 0.7
-  - 0.9
+  - 0.45
+  - 0.5
+  - 0.6
   hasAntiConversionSkill: 00010101
+  occupyUpgradeCost: 040000000500000000000000
+  convertEnemyUpgradeCost: 050000000600000007000000

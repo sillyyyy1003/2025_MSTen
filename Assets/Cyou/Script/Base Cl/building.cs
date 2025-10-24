@@ -54,6 +54,8 @@ namespace Buildings
             remainingBuildCost = data.buildingAPCost;
             apCostperTurn = data.apCostperTurn;
             currentSkillUses = data.GetMaxSlotsByLevel(0);
+            //地面に金鉱があるか否かを判断すべき
+
 
             ChangeState(BuildingState.UnderConstruction);
 
@@ -72,9 +74,7 @@ namespace Buildings
 
         protected virtual void SetupComponents()
         {
-            SetupVisualComponents();
-            ApplySprite(buildingData.buildingSprite, Color.white);
-            ApplyMesh(buildingData.buildingMesh, buildingData.buildingMaterial);
+            // SetupVisualComponents(); // Prefabの外見をそのまま使用するため不要
         }
 
         #endregion

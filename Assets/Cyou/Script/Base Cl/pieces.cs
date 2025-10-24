@@ -114,6 +114,7 @@ namespace GamePieces
 
         }
 
+
         private IEnumerator RevertCharmAfterTurns(int charmTurns,int originalPID)
         {
             int remainingTurns=charmTurns;
@@ -132,9 +133,8 @@ namespace GamePieces
 
         protected virtual void SetupComponents()
         {
-            SetupVisualComponents();
-            ApplySprite(pieceData.pieceSprite, Color.white);
-            ApplyMesh(pieceData.pieceMesh, pieceData.pieceMaterial);
+            // SetupVisualComponents(); // Prefabの外見をそのまま使用するため不要
+            // Prefabの外見をそのまま使用するため、動的な適用は不要
         }
 
         #endregion

@@ -7,7 +7,7 @@ namespace GameData
     /// 建物の基本データ定義
     /// C++のPOD構造体のような純粋なデータコンテナ
     /// </summary>
-    [CreateAssetMenu(fileName = "BuildingData", menuName = "GameData/Buildings/BuildingData")]
+    [CreateAssetMenu(fileName = "BuildingData", menuName = "GameData/BaseBuilding/BuildingData")]
     public class BuildingDataSO : ScriptableObject
     {
         [Header("基本属性")]
@@ -30,18 +30,19 @@ namespace GameData
         public float productionMultiplier = 1.0f;
 
         [Header("アップグレードレベルごとのデータ（升級1,2）")]
-        public int[] maxHpByLevel = new int[3] { 25, 30, 45 }; // 血量
+        public int[] maxHpByLevel = new int[3] { 25, 30, 45 }; // 血量（Excel基礎数値）
         public int[] attackRangeByLevel = new int[3] { 0, 1, 2 }; // 攻撃範囲（無、有攻撃範囲1、攻撃範囲2）
-        public int[] maxSlotsByLevel = new int[3] { 3, 3, 5 }; // 投入信徒数量
-        public int[] buildingAPCostByLevel = new int[3] { 28, 25, 20 }; // 建造所需花費
+        public int[] maxSlotsByLevel = new int[3] { 3, 5, 5 }; // 投入信徒数量（Excel基礎数値: 3, 5, 升級2未記載なので5を踏襲）
+        public int[] buildingAPCostByLevel = new int[3] { 9, 6, 3 }; // 建造所需花費（Excel基礎数値: 9, 6, 3）
 
-        [Header("ビジュアル")]
-        public Sprite buildingSprite;
-        public Mesh buildingMesh;
-        public Material buildingMaterial;
+        [Header("各項目のアップグレードコスト")]
+        public int[] hpUpgradeCost = new int[2]; // 血量アップグレード資源コスト（0→1, 1→2）。0=アップグレード不可
+        public int[] attackRangeUpgradeCost = new int[2]; // 攻撃範囲アップグレード資源コスト（0→1, 1→2）
+        public int[] slotsUpgradeCost = new int[2]; // 祭壇格子数アップグレード資源コスト（0→1, 1→2）
+        public int[] buildCostUpgradeCost = new int[2]; // 建造所需花費アップグレード資源コスト（0→1, 1→2）
+
+        [Header("Prefab")]
         public GameObject buildingPrefab;
-        public Color buildingColor = Color.white;
-        public RuntimeAnimatorController animatorController;
 
         /// <summary>
         /// レベルに応じた最大HPを取得
@@ -94,7 +95,7 @@ namespace GameData
     /// <summary>
     /// 駒（ピース）の基本データ定義
     /// </summary>
-    [CreateAssetMenu(fileName = "PieceData", menuName = "GameData/Pieces/PieceData")]
+    [CreateAssetMenu(fileName = "PieceData", menuName = "GameData/BasePieces/PieceData")]
     public class PieceDataSO : ScriptableObject
     {
         [Header("基本パラメータ")]
@@ -121,12 +122,12 @@ namespace GameData
         public float[] maxAPByLevel = new float[4]; // レベルごとの最大AP
         public float[] attackPowerByLevel = new float[4]; // レベルごとの攻撃力
 
-        [Header("ビジュアル(Mesh・Sprite必ずしも一つは必要です)")]
-        public Sprite pieceSprite;
-        public Mesh pieceMesh;
-        public Material pieceMaterial;
+        [Header("各項目のアップグレードコスト")]
+        public int[] hpUpgradeCost = new int[3]; // 血量アップグレード資源コスト（0→1, 1→2, 2→3）。0=アップグレード不可
+        public int[] apUpgradeCost = new int[3]; // 行動力アップグレード資源コスト（0→1, 1→2, 2→3）
+
+        [Header("Prefab")]
         public GameObject piecePrefab;
-        public RuntimeAnimatorController animatorController;
 
         /// <summary>
         /// レベルに応じたHP取得
@@ -190,7 +191,7 @@ namespace GameData
     /// <summary>
     /// 農民特有のデータ定義
     /// </summary>
-    [CreateAssetMenu(fileName = "FarmerData", menuName = "GameData/Pieces/FarmerData")]
+    [CreateAssetMenu(fileName = "FarmerData", menuName = "GameData/BasePieces/FarmerData")]
     public class FarmerDataSO : PieceDataSO
     {
         [Header("建築能力")]
@@ -203,12 +204,13 @@ namespace GameData
         public int devotionAPCost = 1;//行動力を消費して他駒を回復するスキル
 
         [Header("アップグレードレベルごとのデータ（升級1,2）")]
-        public int[] maxHpByLevel = new int[3] { 3, 4, 5 }; // 血量
-        public int[] maxApByLevel = new int[3] { 3, 5, 5 }; // 
         public int[] maxSacrificeLevel = new int[3] { 1, 2, 2 }; // 自分を生贄にして他駒を回復するスキル
 
+        [Header("農民専用アップグレードコスト")]
+        public int[] sacrificeUpgradeCost = new int[2]; // 獻祭アップグレード資源コスト（0→1, 1→2）
+
         // コンストラクタ的な初期化
-        private void OnEnable()
+        private void Reset()
         {
             // デフォルト値の設定
             if (string.IsNullOrEmpty(pieceName))
@@ -222,7 +224,7 @@ namespace GameData
     /// <summary>
     /// 軍隊ユニットのデータ定義
     /// </summary>
-    [CreateAssetMenu(fileName = "MilitaryData", menuName = "GameData/Pieces/MilitaryData")]
+    [CreateAssetMenu(fileName = "MilitaryData", menuName = "GameData/BasePieces/MilitaryData")]
     public class MilitaryDataSO : PieceDataSO
     {
         [Header("軍隊特有パラメータ")]
@@ -232,9 +234,13 @@ namespace GameData
 
         [Header("スキル")]
         public SkillDataSO[] availableSkills;
+        public int skillAPCost;
 
         [Header("アップグレードレベルごとのスキル効果（升級1,2,3）")]
         public bool[] hasAntiConversionSkill = new bool[4] { false, true, true, true }; // 魅惑敵性（升級3）
+
+        [Header("軍隊専用アップグレードコスト")]
+        public int[] attackPowerUpgradeCost = new int[3]; // 攻撃力アップグレード資源コスト（0→1, 1→2, 2→3）
 
         /// <summary>
         /// レベルに応じた攻撃力係数を取得
@@ -254,7 +260,7 @@ namespace GameData
             return hasAntiConversionSkill[level];
         }
 
-        private void OnEnable()
+        private void Reset()
         {
             pieceName = "十字軍";
             canAttack = true; // 軍隊は必ず攻撃可能
@@ -324,7 +330,12 @@ namespace GameData
 
     public enum Religion
     {
-        None,A,B,C,D,E,F,G,H
+        None,
+        SilkReligion,           // 絲織教
+        RedMoonReligion,        // 紅月教
+        MayaReligion,           // 瑪雅外星人文明教
+        MadScientistReligion,   // 瘋狂科學家教
+        E, F, G, H              // 将来の拡張用
     }
 
     public enum Terrain
@@ -335,19 +346,22 @@ namespace GameData
     /// <summary>
     /// 教皇のデータ定義
     /// </summary>
-    [CreateAssetMenu(fileName = "PopeData", menuName = "GameData/Pieces/PopeData")]
+    [CreateAssetMenu(fileName = "PopeData", menuName = "GameData/BasePieces/PopeData")]
     public class PopeDataSO : PieceDataSO
     {
         [Header("位置交換能力")]
         public int[] swapCooldown =new int[4] {5,3,3,3}; // 位置交換のクールタイム（ターン数）
 
         [Header("バフ効果一覧")]
-        public int[] hpBuff = new int[4] { 1, 2, 2, 2 };//周囲駒への体力バフ
+        public int[] hpBuff = new int[4] { 1, 2, 3, 3 };//周囲駒への体力バフ（Excel基礎数値: +1, +2, +3）
         public int[] atkBuff = new int[4] { 1, 1, 1, 1 };//周囲駒への攻撃力バフ
-        public float[] convertBuff = new float[4] { 0.05f, 0.08f, 0.08f, 0.08f };//周囲宣教師への魅惑スキル成功率バフ
+        public float[] convertBuff = new float[4] { 0.03f, 0.05f, 0.08f, 0.08f };//周囲宣教師への魅惑スキル成功率バフ（Excel基礎数値: +3%, +5%, +8%）
 
+        [Header("教皇専用アップグレードコスト")]
+        public int[] swapCooldownUpgradeCost = new int[2]; // 位置交換CDアップグレード資源コスト（0→1, 1→2）
+        public int[] buffUpgradeCost = new int[3]; // バフ効果アップグレード資源コスト（0→1, 1→2, 2→3）
 
-        private void OnEnable()
+        private void Reset()
         {
             if (string.IsNullOrEmpty(pieceName))
             {
@@ -360,7 +374,7 @@ namespace GameData
     /// <summary>
     /// 宣教師のデータ定義
     /// </summary>
-    [CreateAssetMenu(fileName = "MissionaryData", menuName = "GameData/Pieces/MissionaryData")]
+    [CreateAssetMenu(fileName = "MissionaryData", menuName = "GameData/BasePieces/MissionaryData")]
     public class MissionaryDataSO : PieceDataSO
     {
         //[Header("移動設定")]（）廃止
@@ -379,12 +393,16 @@ namespace GameData
 
         [Header("スキルレベル設定")]
 
-        public float[] occupyEmptySuccessRateByLevel = new float[4] { 0.8f, 0.9f, 1.0f, 1.0f }; // 占領成功率
-        public float[] occupyEnemySuccessRateByLevel = new float[4] { 0.5f, 0.6f, 0.7f, 0.7f }; // 占領成功率
-        public float[] convertMissionaryChanceByLevel = new float[4] { 0.0f, 0.5f, 0.6f, 0.7f }; // 攻撃時転換確率
-        public float[] convertFarmerChanceByLevel = new float[4] { 0.0f, 0.1f, 0.2f, 0.3f }; // 攻撃時転換確率（初期50%、升級1:60%、升級2:70%、升級3:70%）
-        public float[] convertMilitaryChanceByLevel = new float[4] { 0.0f, 0.7f, 0.7f, 0.9f }; // 攻撃時転換確率
+        public float[] occupyEmptySuccessRateByLevel = new float[4] { 0.8f, 0.9f, 1.0f, 1.0f }; // 占領成功率（Excel基礎数値）
+        public float[] occupyEnemySuccessRateByLevel = new float[4] { 0.5f, 0.6f, 0.7f, 0.7f }; // 占領成功率（Excel基礎数値）
+        public float[] convertMissionaryChanceByLevel = new float[4] { 0.0f, 0.5f, 0.55f, 0.65f }; // 魅惑傳教士（Excel基礎数値: 無, 0.5, 0.55, 0.65）
+        public float[] convertFarmerChanceByLevel = new float[4] { 0.0f, 0.1f, 0.2f, 0.3f }; // 魅惑信徒（Excel基礎数値: 無, 0.1, 0.2, 0.3）
+        public float[] convertMilitaryChanceByLevel = new float[4] { 0.0f, 0.45f, 0.5f, 0.6f }; // 魅惑十字軍（Excel基礎数値: 無, 0.45, 0.5, 0.6）
         public bool[] hasAntiConversionSkill = new bool[4] { false, true, true, true }; // 魅惑敵性（升級1以降）
+
+        [Header("宣教師専用アップグレードコスト")]
+        public int[] occupyUpgradeCost = new int[3]; // 佔領空白領土アップグレード資源コスト（0→1, 1→2, 2→3）
+        public int[] convertEnemyUpgradeCost = new int[3]; // 魅惑傳教士アップグレード資源コスト（0→1, 1→2, 2→3）
 
         /// <summary>
         /// レベルに応じた空白領地占領成功率を取得
@@ -440,7 +458,7 @@ namespace GameData
             return hasAntiConversionSkill[level];
         }
 
-        private void OnEnable()
+        private void Reset()
         {
             if (string.IsNullOrEmpty(pieceName))
             {
