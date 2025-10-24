@@ -27,7 +27,7 @@ public class GameCamera : MonoBehaviour
     float yaw;            // 水平旋转角
     float pitch = 45f;    // 固定一个俯视角（RTS 常用）
 
-    private bool bCanUseCamera;
+    public bool bCanUseCamera;
   
     void Start()
     {
