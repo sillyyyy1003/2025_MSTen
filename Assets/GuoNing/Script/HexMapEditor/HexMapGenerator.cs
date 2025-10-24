@@ -67,7 +67,7 @@ public class HexMapGenerator : MonoBehaviour
 	public int seed;                            // 随机种子
 	public bool useFixedSeed;                   // 是否使用固定种子（否则随机生成）
 
-	[Range(0, 20)]
+	[Range(0, 40)]
 	public int riverPercentage = 10;            // 河流覆盖率（相对陆地百分比）
 
 	//===================【气候参数】===================//
@@ -136,6 +136,19 @@ public class HexMapGenerator : MonoBehaviour
 		new Biome(0, 0), new Biome(1, 0), new Biome(1, 1), new Biome(1, 2),
 		new Biome(0, 0), new Biome(1, 1), new Biome(1, 2), new Biome(1, 3)
 	};
+
+	//湿度 ↑
+	//m=0   m=1   m=2   m=3
+	//┌────┬────┬────┬────┐
+	//│砂  │雪   │雪  │雪  │ t=0  → 极寒区（雪线以上）
+	//├────┼────┼────┼────┤
+	//│砂  │泥  │泥   │泥  │ t=1  → 寒冷湿地/冻土带
+	//├────┼────┼────┼────┤
+	//│砂  │草  │草   │草  │ t=2  → 温带草原
+	//├────┼────┼────┼────┤
+	//│砂  │草  │草   │草  │ t=3  → 热带草原/雨林边缘
+	//└────┴────┴────┴────┘
+
 
 
 	//===================【主生成流程】===================//
@@ -213,67 +226,90 @@ public class HexMapGenerator : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// 创建气候
+	/// </summary>
 
 	void CreateClimate()
 	{
 		climate.Clear();
 		nextClimate.Clear();
 
+		// 初始气候状态，每个格子的初始湿度值相同
 		ClimateData initialData = new ClimateData();
 		initialData.moisture = startingMoisture;
+
+		// 清空气候状态模板
 		ClimateData clearData = new ClimateData();
+
+		// 为每个格子分配初始气候数据
 		for (int i = 0; i < cellCount; i++)
 		{
-			climate.Add(initialData);
-			nextClimate.Add(clearData);
+			climate.Add(initialData);   // 当前循环使用的数据
+			nextClimate.Add(clearData); // 存放下一轮演化结果
 		}
 
+		// 进行40轮气候演化循环
 		for (int cycle = 0; cycle < 40; cycle++)
 		{
 			for (int i = 0; i < cellCount; i++)
 			{
-				EvolveClimate(i);
+				EvolveClimate(i); // 对每个格子执行一次气候演化
 			}
+
+			// 交换引用：将 nextClimate 作为新的气候状态
 			List<ClimateData> swap = climate;
 			climate = nextClimate;
 			nextClimate = swap;
 		}
 	}
 
+	/// <summary>
+	/// 气候演化
+	/// </summary>
+	/// <param name="cellIndex"></param>
 	void EvolveClimate(int cellIndex)
 	{
 		HexCell cell = grid.GetCell(cellIndex);
 		ClimateData cellClimate = climate[cellIndex];
 
+		// 1️⃣ 海洋或水下格子：恒定湿润
 		if (cell.IsUnderwater)
 		{
-			cellClimate.moisture = 1f;
-			cellClimate.clouds += evaporationFactor;
+			cellClimate.moisture = 1f;                  // 满湿度
+			cellClimate.clouds += evaporationFactor;    // 蒸发产生云
 		}
 		else
 		{
+			// 陆地蒸发：湿度变少 → 云增加
 			float evaporation = cellClimate.moisture * evaporationFactor;
 			cellClimate.moisture -= evaporation;
 			cellClimate.clouds += evaporation;
 		}
 
-
+		// 2️ 云降雨：部分云量转化为降水，湿度上升
 		float precipitation = cellClimate.clouds * precipitationFactor;
 		cellClimate.clouds -= precipitation;
 		cellClimate.moisture += precipitation;
 
+		// 3️⃣ 云层高度限制：海拔越高，云量上限越小
 		float cloudMaximum = 1f - cell.ViewElevation / (elevationMaximum + 1f);
 		if (cellClimate.clouds > cloudMaximum)
 		{
+			// 超出云上限部分 → 转化为降水
 			cellClimate.moisture += cellClimate.clouds - cloudMaximum;
 			cellClimate.clouds = cloudMaximum;
 		}
 
+		// 4️⃣ 风向传播：云向风向相反方向扩散
 		HexDirection mainDispersalDirection = windDirection.Opposite();
 		float cloudDispersal = cellClimate.clouds * (1f / (5f + windStrength));
+
+		// 5️⃣ 地表水流动（runoff & seepage）
 		float runoff = cellClimate.moisture * runoffFactor * (1f / 6f);
 		float seepage = cellClimate.moisture * seepageFactor * (1f / 6f);
 
+		// 向六个方向扩散湿度与云
 		for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
 		{
 			HexCell neighbor = cell.GetNeighbor(d);
@@ -282,6 +318,8 @@ public class HexMapGenerator : MonoBehaviour
 				continue;
 			}
 			ClimateData neighborClimate = nextClimate[neighbor.Index];
+
+			// 🌬️ 主风向传播更强
 			if (d == mainDispersalDirection)
 			{
 				neighborClimate.clouds += cloudDispersal * windStrength;
@@ -291,13 +329,14 @@ public class HexMapGenerator : MonoBehaviour
 				neighborClimate.clouds += cloudDispersal;
 			}
 
+			// 🏔️ 水分流动规则
 			int elevationDelta = neighbor.Elevation - cell.Elevation;
-			if (elevationDelta < 0)
+			if (elevationDelta < 0) // 向低处流动（径流 runoff）
 			{
 				cellClimate.moisture -= runoff;
 				neighborClimate.moisture += runoff;
 			}
-			else if (elevationDelta == 0)
+			else if (elevationDelta == 0) // 水平扩散（渗流 seepage）
 			{
 				cellClimate.moisture -= seepage;
 				neighborClimate.moisture += seepage;
@@ -306,16 +345,20 @@ public class HexMapGenerator : MonoBehaviour
 			nextClimate[neighbor.Index] = neighborClimate;
 		}
 
+		// 6️⃣ 更新当前格子的下一轮数据
 		ClimateData nextCellClimate = nextClimate[cellIndex];
 		nextCellClimate.moisture += cellClimate.moisture;
+
 		if (nextCellClimate.moisture > 1f)
 		{
 			nextCellClimate.moisture = 1f;
 		}
+
 		nextClimate[cellIndex] = nextCellClimate;
+
+		// 当前循环数据清空，为下次迭代准备
 		climate[cellIndex] = new ClimateData();
 	}
-
 
 	int RaiseTerrain(int chunkSize, int budget, MapRegion region)
 	{
@@ -417,17 +460,30 @@ public class HexMapGenerator : MonoBehaviour
 
 	void SetTerrainType()
 	{
+		// 随机选择一个通道用来为温度扰动（Noise）选择偏移——与 DetermineTemperature 相关
 		temperatureJitterChannel = Random.Range(0, 4);
+
+		// 计算“岩石沙漠（rock desert）”出现的高度阈值：
+		// 当高度高于 rockDesertElevation 时，原本是“无纹理(0)”的气候格子会被改为石头（3）
+		// 公式：在最大高度和水位之间取中点偏向最高（等同于：elevationMaximum - (range/2)）
 		int rockDesertElevation =
 			elevationMaximum - (elevationMaximum - waterLevel) / 2;
 
+		// 遍历每个单元格并为其设置地形类型索引
 		for (int i = 0; i < cellCount; i++)
 		{
 			HexCell cell = grid.GetCell(i);
+
+			// 根据当前格子计算温度（可能使用噪声与高度等因素）
 			float temperature = DetermineTemperature(cell);
+
+			// 从 climate 数组中读取当前格子的湿度（假设 climate 长度 == cellCount）
 			float moisture = climate[i].moisture;
+
+			// 如果不是水下格子，按生物群系（温度/湿度分段）进行地形/植被判定
 			if (!cell.IsUnderwater)
 			{
+				// 找到 temperature 所在的温度段索引 t
 				int t = 0;
 				for (; t < temperatureBands.Length; t++)
 				{
@@ -436,6 +492,8 @@ public class HexMapGenerator : MonoBehaviour
 						break;
 					}
 				}
+
+				// 找到 moisture 所在的湿度段索引 m
 				int m = 0;
 				for (; m < moistureBands.Length; m++)
 				{
@@ -444,21 +502,29 @@ public class HexMapGenerator : MonoBehaviour
 						break;
 					}
 				}
+
+				// biomes 以 (temperature index * 4 + moisture index) 存储（4 == 湿度段数或固定列数）
+				// 把对应的生物群系取出来（包含 terrain 与 plant 信息）
 				Biome cellBiome = biomes[t * 4 + m];
 
+				// 当 biome.terrain 为 0（代表“无纹理/沙？”或“默认”）时，
+				// 如果当前格子高度高于 rockDesertElevation，视为岩石（Stone -> index 3）
 				if (cellBiome.terrain == 0)
 				{
 					if (cell.Elevation >= rockDesertElevation)
 					{
-						cellBiome.terrain = 3;
+						cellBiome.terrain = 3; // Stone（或岩石/荒漠）
 					}
 				}
+				// 如果格子恰好在最高海拔（elevationMaximum），则强制设为雪（4）
 				else if (cell.Elevation == elevationMaximum)
 				{
-					cellBiome.terrain = 4;
+					cellBiome.terrain = 4; // Snow（积雪）
 				}
 
-
+				// 根据最终的 terrain 决定植物等级变化：
+				// 如果是雪地（4），则没有植被（plant = 0）。
+				// 否则：如果当前 biome 的 plant 等级 < 3 且该格子有河流，则植物等级 +1（河边植物更丰富）
 				if (cellBiome.terrain == 4)
 				{
 					cellBiome.plant = 0;
@@ -468,15 +534,23 @@ public class HexMapGenerator : MonoBehaviour
 					cellBiome.plant += 1;
 				}
 
+				// 将决定好的地形索引写回格子
 				cell.TerrainTypeIndex = cellBiome.terrain;
-				// 设定植物等级 数值越低，植被越稀疏
-				cell.PlantLevel = cellBiome.plant;
+
+				// 如果你想把 plant 等级也存回格子（目前被注释掉），可以解除下一行注释
+				// 设定植物等级：数值越低，植被越稀疏
+				// cell.PlantLevel = cellBiome.plant;
 			}
+			// 水下（或海岸）格子的处理逻辑
 			else
 			{
 				int terrain;
+
+				// 如果该水下格子的高度恰好为 waterLevel - 1，表示它是海岸带（浅滩/近岸）
 				if (cell.Elevation == waterLevel - 1)
 				{
+					// 计算周围六个邻居中有多少是“悬崖(cliffs)”或“斜坡(slopes)”。
+					// 依据邻居高度相对于当前格子水位（cell.WaterLevel）来判定。
 					int cliffs = 0, slopes = 0;
 					for (
 						HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++
@@ -485,18 +559,28 @@ public class HexMapGenerator : MonoBehaviour
 						HexCell neighbor = cell.GetNeighbor(d);
 						if (!neighbor)
 						{
+							// 如果没有邻居（地图边缘），跳过
 							continue;
 						}
+						// delta = 邻居高度 - 当前格子的水位
 						int delta = neighbor.Elevation - cell.WaterLevel;
 						if (delta == 0)
 						{
+							// 如果邻居与水位相等，视为斜坡（连着浅水区）
 							slopes += 1;
 						}
 						else if (delta > 0)
 						{
+							// 邻居比水位高：可能是悬崖/岸线
 							cliffs += 1;
 						}
 					}
+
+					// 根据周围 cliff/slopes 数决定海岸类型：
+					// 如果 cliffs + slopes > 3（邻居中多数是斜坡或悬崖），设为 terrain = 1（比如“沙/岸/浅滩”）
+					// 否则若存在 cliffs 把 terrain 设为 3（比如“石岸/悬崖”）
+					// 否则若存在 slopes 把 terrain 设为 0（平缓的泥滩/浅滩）
+					// 最后默认回到 terrain = 1
 					if (cliffs + slopes > 3)
 					{
 						terrain = 1;
@@ -514,26 +598,33 @@ public class HexMapGenerator : MonoBehaviour
 						terrain = 1;
 					}
 				}
+				// 如果海拔 >= waterLevel（理论上不应该发生在 IsUnderwater 为 true 的分支里，但为了安全处理）
 				else if (cell.Elevation >= waterLevel)
 				{
 					terrain = 1;
 				}
+				// 如果海拔 < 0（非常低的海底，深海）的处理
 				else if (cell.Elevation < 0)
 				{
 					terrain = 3;
 				}
+				// 其它水下情况（中等深度）
 				else
 				{
 					terrain = 2;
 				}
 
+				// 特殊规则：如果判定为 terrain == 1（某种近岸/沙）但温度非常低（低于最冷温度段）
+				// 则把 terrain 改为 2（例如：冰/寒冷泥地/冻土）
 				if (terrain == 1 && temperature < temperatureBands[0])
 				{
 					terrain = 2;
 				}
+
+				// 写回格子的地形类型
 				cell.TerrainTypeIndex = terrain;
 			}
-			
+
 		}
 	}
 
@@ -690,20 +781,42 @@ public class HexMapGenerator : MonoBehaviour
 	}
 
 
+	/// <summary>
+	/// 根据地块纬度、海拔与噪声扰动计算格子的温度值（0~1）
+	/// </summary>
 	float DetermineTemperature(HexCell cell)
 	{
+		// 1️ 纬度系数（Z 方向）：用于模拟南北温差
+		//    cell.Coordinates.Z 越大代表越靠北或越靠南
+		//    latitude 范围通常是 0 ~ 1，对应地图从底部到顶部
 		float latitude = (float)cell.Coordinates.Z / grid.CellCountZ;
+
+		// 2️ 基础温度：根据纬度在 [lowTemperature, highTemperature] 区间插值
+		//    通常 lowTemperature = 0（极地），highTemperature = 1（赤道）
+		//    Mathf.LerpUnclamped 允许 latitude 超出 [0,1] 也能计算（用于噪声偏移或极端气候）
 		float temperature =
 			Mathf.LerpUnclamped(lowTemperature, highTemperature, latitude);
 
+		// 3️ 海拔修正：海拔越高温度越低
+		//    (cell.ViewElevation - waterLevel) 越大 → 温度衰减越多
+		//    elevationMaximum - waterLevel + 1f 是归一化的高度范围
 		temperature *= 1f - (cell.ViewElevation - waterLevel) /
 			(elevationMaximum - waterLevel + 1f);
 
+		// 4️ 噪声扰动（Noise Jitter）：
+		//    从噪声贴图采样随机值，让温度分布更自然、非线性
+		//    temperatureJitterChannel 表示采样噪声的哪个通道（0~3）
+		//    *0.1f 缩放 world position，控制噪声图案大小
 		float jitter =
 			HexMetrics.SampleNoise(cell.Position * 0.1f)[temperatureJitterChannel];
 
+		// 5️ 将噪声扰动应用到温度上：
+		//    jitter 原始值为 0~1 → (jitter*2f - 1f) 映射为 -1~+1
+		//    temperatureJitter 控制扰动强度（例如 0.2 表示 ±20% 温度变化）
 		temperature += (jitter * 2f - 1f) * temperatureJitter;
 
+		// 6️ 返回最终温度值（一般在 0~1 之间，但不强制 Clamp）
+		//    不进行 Mathf.Clamp01，可以保留极端值差异以生成更多地貌变化
 		return temperature;
 	}
 
