@@ -100,11 +100,7 @@ public class HexGrid : MonoBehaviour
 		CreateCells();
 		ShowUI(true);
 
-		// 25.9.23 RI add GameStart
-		//if (!GameManage.Instance.GameInit())
-		//{
-		//	Debug.LogError("Game Init Failed!");
-		//}
+		
 
 		// 调整MiniMap的摄像机位置
 		if (minimapCamController)
@@ -331,11 +327,16 @@ public class HexGrid : MonoBehaviour
 		{
 			chunks[i].Refresh();
 		}
+		//// 25.10.22 RI add GameStart Single Player
+		//if (!GameManage.Instance.GameInit())
+		//{
+		//	Debug.LogError("Game Init Failed!");
+		//}
 	}
 
 
 
-	public void FindPath(HexCell fromCell, HexCell toCell, int speed)
+    public void FindPath(HexCell fromCell, HexCell toCell, int speed)
 	{
 		ClearPath();
 		currentPathFromIndex = fromCell.Index;

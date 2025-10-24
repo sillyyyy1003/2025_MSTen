@@ -457,6 +457,7 @@ public class PlayerOperationManager : MonoBehaviour
         switch (unitType)
         {
             case PlayerUnitType.Farmer:
+             
                 prefab = FarmerPrefab;
                 break;
             case PlayerUnitType.Soldier:
