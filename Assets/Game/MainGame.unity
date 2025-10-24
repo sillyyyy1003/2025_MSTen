@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028352, g: 0.22571376, b: 0.3069224, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -598,6 +598,7 @@ MonoBehaviour:
   edgeSize: 30
   rotationSpeed: 100
   grid: {fileID: 1913528995}
+  bCanUseCamera: 0
 --- !u!114 &332689580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1632,8 +1633,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 958f6c6960663bd4e94106d21ffbb0fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnTimeLimit: 30
-  timePoolInitial: 60
 --- !u!1 &1006675385
 GameObject:
   m_ObjectHideFlags: 0
@@ -2085,10 +2084,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d85afdff247f5b4a9b8093e41c06412, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellCountX: 0
-  cellCountZ: 0
-  heightOffset: 50
-  borderPadding: 5
 --- !u!114 &1287516541
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2240,7 +2235,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1412323962}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8b6d0ee5cd5cf745b4cc1dc160d4ab2, type: 3}
+  m_Script: {fileID: 11500000, guid: 1611c97feb6f82b488947c2d5c655b5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1805311232}
@@ -2776,7 +2771,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1805311230}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfa984ff99867b94daef0c13e353f776, type: 3}
+  m_Script: {fileID: 11500000, guid: 5ce9de9c7694b42c9ac45ddfca692a98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   grid: {fileID: 1913528995}
@@ -3093,19 +3088,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1913528994}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2e67ed40af853b4d9e8b88d319778ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 414a0fc06528949a0baff4f719b04a4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cellLabelPrefab: {fileID: 11470134, guid: f68794ca03b6f4510b9a5bd6ee9ba2f4, type: 3}
   cellPrefab: {fileID: 9067535797548090458, guid: 6f1669170fcf42d44af1cd24dcf51bfe,
     type: 3}
-  cellLabelPrefab: {fileID: 7742247916833519642, guid: c085c9be66277134e8b743084f14c88b,
+  chunkPrefab: {fileID: 114000010052569294, guid: 7622d007cafd044a1b1189c0b93d2912,
     type: 3}
-  noiseSource: {fileID: 2800000, guid: cb8fdb6d63a1ce343844eb802a9366eb, type: 3}
-  chunkPrefab: {fileID: 100083073583928104, guid: b9cdec4e2737898499891c641ed27d35,
-    type: 3}
-  seed: 1234
+  unitPrefab: {fileID: 0}
+  noiseSource: {fileID: 2800000, guid: 38701cdeb1fb9427cbb585f917aa59cb, type: 3}
+  seed: 0
   mapLoader: {fileID: 1412323964}
-  minimapCamController: {fileID: 1287516540}
 --- !u!4 &1913528996
 Transform:
   m_ObjectHideFlags: 0
@@ -3636,5 +3630,4 @@ SceneRoots:
   - {fileID: 291931289}
   - {fileID: 787177570}
   - {fileID: 131122554}
-  - {fileID: 87763369}
   - {fileID: 1228639852}
