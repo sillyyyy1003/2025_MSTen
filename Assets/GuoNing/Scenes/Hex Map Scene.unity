@@ -13771,7 +13771,7 @@ PrefabInstance:
     - target: {fileID: 7698797980731268316, guid: f239927840e5a3b4ca6b23300f65a738,
         type: 3}
       propertyPath: edgeSize
-      value: 222
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 7698797980731268316, guid: f239927840e5a3b4ca6b23300f65a738,
         type: 3}
@@ -14975,30 +14975,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grid: {fileID: 1571186511}
-  useFixedSeed: 1
-  seed: 1208905299
   jitterProbability: 0.25
   chunkSizeMin: 30
   chunkSizeMax: 100
+  landPercentage: 50
   highRiseProbability: 0.25
   sinkProbability: 0.2
-  landPercentage: 50
-  waterLevel: 3
+  waterLevel: 1
   elevationMinimum: -2
-  elevationMaximum: 8
+  elevationMaximum: 6
   mapBorderX: 5
   mapBorderZ: 5
-  regionBorder: 5
   regionCount: 1
+  regionBorder: 5
   erosionPercentage: 50
-  startingMoisture: 0.1
+  seed: 1208905299
+  useFixedSeed: 1
+  riverPercentage: 0
   evaporationFactor: 0.5
   precipitationFactor: 0.25
   runoffFactor: 0.25
   seepageFactor: 0.25
   windDirection: 5
   windStrength: 4
-  riverPercentage: 10
+  startingMoisture: 0.1
   extraLakeProbability: 0.25
   lowTemperature: 0
   highTemperature: 1

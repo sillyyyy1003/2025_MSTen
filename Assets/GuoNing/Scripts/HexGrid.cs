@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 /// <summary>
 /// Component that represents an entire hexagon map.
@@ -85,9 +86,13 @@ public class HexGrid : MonoBehaviour
 		HexUnit.unitPrefab = unitPrefab;
 		cellShaderData = gameObject.AddComponent<HexCellShaderData>();
 		cellShaderData.Grid = this;
-		StartCoroutine(LoadMapOnce());
+		CreateMap(CellCountX, CellCountZ, false);
 	}
 
+	void Start()
+	{
+		mapLoader.LoadMap();
+	}
 
 	/// <summary>
 	/// 延迟一帧生成地图，确保 Start 执行完
@@ -328,7 +333,6 @@ public class HexGrid : MonoBehaviour
 		HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
 		cell.Grid = this;
 		cell.transform.localPosition = position;
-		cell.transform.localPosition = position;
 		cell.Coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
 		cell.Index = i;
 		cell.ColumnIndex = x / HexMetrics.chunkSizeX;
@@ -415,7 +419,6 @@ public class HexGrid : MonoBehaviour
 
 			// 2025.10.20 将更新后的Cell信息拷贝到GameManager里
 			SetGameBoardInfo(cells[i]);
-
 		}
 
 
