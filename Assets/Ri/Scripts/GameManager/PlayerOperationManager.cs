@@ -484,7 +484,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 创建GameObject
         GameObject unit = GameManage.Instance._Instantiater.CreatePiece(
                    pieceType,
-                    Religion.A,
+                    Religion.MadScientistReligion,
                     GameManage.Instance.LocalPlayerID,
                     worldPos).gameObject;
         // 添加描边效果
@@ -655,6 +655,9 @@ public class PlayerOperationManager : MonoBehaviour
                      // 更新本地引用
                      localPlayerUnits.Remove(fromPos);
                      localPlayerUnits[toPos] = SelectingUnit;
+                    
+                     // 更新格子上是否有单位
+                     
 
                      // 更新GameManage的格子对象
                      GameManage.Instance.MoveCellObject(fromPos, toPos);

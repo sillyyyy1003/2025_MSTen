@@ -3224,7 +3224,7 @@ MonoBehaviour:
   PlayerName: SakikoSakiko
   PlayerIP: 
   PlayerID: 0
-  PlayerReligion: 1
+  PlayerReligion: 4
   bIsSingle: 0
 --- !u!4 &1684337823
 Transform:

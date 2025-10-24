@@ -2479,8 +2479,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pieceDataEntries:
   - pieceType: 2
-    religion: 1
-    pieceDataSO: {fileID: 11400000, guid: 2d1d6bdf4e240d240b4e44814090b0a9, type: 2}
+    religion: 2
+    pieceDataSO: {fileID: 11400000, guid: 21c857e2cd3d8264c9c12c4962da076f, type: 2}
   - pieceType: 1
     religion: 1
     pieceDataSO: {fileID: 11400000, guid: 776c5a42793bf8a4187287df7504d7e9, type: 2}

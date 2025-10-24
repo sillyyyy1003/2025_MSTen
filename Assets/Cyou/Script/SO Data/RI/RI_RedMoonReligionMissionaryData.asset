@@ -10,43 +10,40 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: RI_MissionaryData
-  m_EditorClassIdentifier: Assembly-CSharp:GameData:MissionaryDataSO
+  m_Name: RI_RedMoonReligionMissionaryData
+  m_EditorClassIdentifier: Assembly-CSharp:GameData:RedMoonReligionMissionaryDataSO
   originalPID: 0
-  pieceName: "\u5BA3\u6559\u5E2B"
-  populationCost: 1
-  resourceCost: 10
+  pieceName: "\u7D05\u6708\u6559_\u5BA3\u6559\u5E2B"
+  populationCost: 3
+  resourceCost: 2
   initialLevel: 0
   aPRecoveryRate: 10
-  moveAPCost: 10
+  moveAPCost: 1
   moveSpeed: 1
   canAttack: 1
   attackPower: 0
   attackRange: 0
   attackCooldown: 1
-  attackAPCost: 25
+  attackAPCost: 20
   maxHPByLevel:
-  - 0
-  - 0
-  - 0
-  - 0
+  - 5
+  - 7
+  - 10
+  - 10
   maxAPByLevel:
-  - 0
-  - 0
-  - 0
-  - 0
+  - 5
+  - 7
+  - 8
+  - 8
   attackPowerByLevel:
   - 0
   - 0
   - 0
   - 0
-  pieceSprite: {fileID: 0}
-  pieceMesh: {fileID: 0}
-  pieceMaterial: {fileID: 0}
-  piecePrefab: {fileID: 7153972553235425938, guid: bc85a3009b2bf0347b0ab50c4ed35fac,
-    type: 3}
-  animatorController: {fileID: 0}
-  occupyAPCost: 30
+  hpUpgradeCost: 050000000600000000000000
+  apUpgradeCost: 050000000600000000000000
+  piecePrefab: {fileID: 0}
+  occupyAPCost: 2
   convertAPCost: 3
   conversionTurnDuration: 02000000030000000400000005000000
   baseConversionDefenseChance: 0.2
@@ -62,17 +59,19 @@ MonoBehaviour:
   - 0.7
   convertMissionaryChanceByLevel:
   - 0
-  - 0.5
+  - 0.55
   - 0.6
   - 0.7
   convertFarmerChanceByLevel:
   - 0
-  - 0.1
-  - 0.2
+  - 0.15
+  - 0.25
   - 0.3
   convertMilitaryChanceByLevel:
   - 0
-  - 0.7
-  - 0.7
-  - 0.9
+  - 0.5
+  - 0.55
+  - 0.6
   hasAntiConversionSkill: 00010101
+  occupyUpgradeCost: 040000000500000000000000
+  convertEnemyUpgradeCost: 050000000600000007000000
