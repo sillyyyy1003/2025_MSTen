@@ -181,7 +181,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 射线检测
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
         {
-            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
+            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().Index;
             int2 clickPos = GameManage.Instance.FindCell(ClickCellid).Cells2DPos;
 
             // 检查是否点击了自己的单位
@@ -237,7 +237,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 射线检测
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
         {
-            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().id;
+            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().Index;
             int2 targetPos = GameManage.Instance.FindCell(ClickCellid).Cells2DPos;
 
             // 检查目标位置
@@ -601,7 +601,7 @@ public class PlayerOperationManager : MonoBehaviour
         _HexGrid.FindPath(LastSelectingCellID, targetCellId,10);
         if(_HexGrid.HasPath)
         {
-            List<HexCell> listCellPos = _HexGrid.GetPath();
+            List<HexCell> listCellPos = _HexGrid.GetPathCells();
 
             Sequence moveSequence = DOTween.Sequence();
             for (int i = 0; i < listCellPos.Count; i++)
