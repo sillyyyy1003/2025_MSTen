@@ -290,16 +290,18 @@ public class NetGameSystem : MonoBehaviour
             playerName = SceneStateManager.Instance.PlayerName;
             playerIP = SceneStateManager.Instance.PlayerIP; // 获取本地IP
 
-            // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
-            if (!isServer)
-            {
-                
+          
                 // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
-                //serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
-            }
+                if (!isServer)
+                {
+
+                    // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                    //serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+                }
+                // 延迟启动网络,确保所有单例初始化完成
+                StartCoroutine(DelayedNetworkStart());
         }
-        // 延迟启动网络,确保所有单例初始化完成
-        StartCoroutine(DelayedNetworkStart());
+           
     }
 
     private IEnumerator DelayedNetworkStart()
@@ -310,14 +312,21 @@ public class NetGameSystem : MonoBehaviour
         // 获取 GameManage 引用
         GetGameManage();
 
-        // 自动启动网络
-        if (isServer)
+        if (SceneStateManager.Instance.bIsSingle)
         {
-            StartServer();
+            gameManage.StartGameFromRoomUI();
         }
         else
         {
-            ConnectToServer();
+            // 自动启动网络
+            if (isServer)
+            {
+                StartServer();
+            }
+            else
+            {
+                ConnectToServer();
+            }
         }
     }
     private void OnDestroy()

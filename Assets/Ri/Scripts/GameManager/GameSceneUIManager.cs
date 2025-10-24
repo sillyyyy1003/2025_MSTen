@@ -120,8 +120,16 @@ public class GameSceneUIManager : MonoBehaviour
         InitializeRoomUI();
 
 
-        GameUIObject.SetActive(false);
-        NetRoomUIObject.SetActive(true);
+        if(SceneStateManager.Instance.bIsSingle)
+        {
+            GameUIObject.SetActive(true);
+            NetRoomUIObject.SetActive(false);
+        }
+        else
+        {
+            GameUIObject.SetActive(false);
+            NetRoomUIObject.SetActive(true);
+        }
     }
     void Update()
     {

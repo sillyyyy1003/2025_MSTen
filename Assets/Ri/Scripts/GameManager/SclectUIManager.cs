@@ -23,7 +23,7 @@ public class SclectUIManager : MonoBehaviour
     void Start()
     {
         Button_EndGame.onClick.AddListener(()=>OnClickEndGame());
-        Button_GameTutorial.onClick.AddListener(()=>OnClickSinglePlayer());
+        Button_SinglePlayer.onClick.AddListener(()=>OnClickSinglePlayer());
         Button_OnlineGame.onClick.AddListener(()=>OnClickOnlineGame());
         Button_Setting.onClick.AddListener(()=>OnClickSetting());
 
@@ -46,7 +46,8 @@ public class SclectUIManager : MonoBehaviour
     }
     private void OnClickSinglePlayer()
     {
-
+        SceneStateManager.Instance.bIsSingle = true;
+        SceneManager.LoadScene("MainGame");
         Debug.Log("SinglePlayer");
     }
     private void OnClickOnlineGame()

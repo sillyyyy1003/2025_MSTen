@@ -85,6 +85,7 @@ public class GameManage : MonoBehaviour
     // 每个格子上的GameObject (所有玩家)
     private Dictionary<int2, GameObject> CellObjects = new Dictionary<int2, GameObject>();
 
+    private bool bIsStartSingleGame = false;
     // *************************
     //         公有属性
     // *************************
@@ -184,6 +185,7 @@ public class GameManage : MonoBehaviour
     {
         _GameCamera.SetCanUseCamera(true);
 
+       
         // 单机测试
         GameInit();
     }
@@ -276,8 +278,37 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 本地测试模式初始化...");
 
         SetIsGamingOrNot(true);
+     
+           if (!bIsStartSingleGame)
+                StartCoroutine(TrueStartGame());
+        
+        //if (bIsInGaming && GameBoardInforDict.Count > 0)
+        //{
+        //    //// 添加默认玩家
+        //    //_LocalPlayerID = 0;
+        //    //AllPlayerIds.Add(0);
+        //    //AllPlayerIds.Add(1);
 
-        if (bIsInGaming && GameBoardInforDict.Count > 0)
+        //    //_PlayerDataManager.CreatePlayer(0);
+        //    //_PlayerDataManager.CreatePlayer(1);
+
+        //    //// 添加玩家初始格子位置的id
+        //    //PlayerStartPositions.Add(0);
+        //    //PlayerStartPositions.Add(GameBoardInforDict.Count - 1);
+
+        //    //// 初始化本机玩家
+        //    //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+
+        //    //Debug.Log("本地玩家初始化完毕");
+        //    //// 开始第一个回合
+        //    //StartTurn(0);
+        //}
+        return true;
+    }
+    private IEnumerator TrueStartGame()
+    {
+        yield return 0.1f;
+        if (GameBoardInforDict.Count > 0)
         {
             // 添加默认玩家
             _LocalPlayerID = 0;
@@ -294,12 +325,13 @@ public class GameManage : MonoBehaviour
             // 初始化本机玩家
             _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
 
+            Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合
             StartTurn(0);
+            bIsStartSingleGame = true;
         }
-        return true;
-    }
 
+    }
     // 游戏结束
     public bool GameOver(int winnerPlayerId = -1)
     {
