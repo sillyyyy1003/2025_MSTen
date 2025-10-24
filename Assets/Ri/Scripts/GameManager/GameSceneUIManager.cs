@@ -417,6 +417,7 @@ public class GameSceneUIManager : MonoBehaviour
     {
         ResourcesCount = res;
     }
+
     public int GetPlayerResource()
     {
         return ResourcesCount;

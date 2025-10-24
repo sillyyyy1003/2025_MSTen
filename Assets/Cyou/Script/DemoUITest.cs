@@ -26,7 +26,7 @@ public class DemoUITest : MonoBehaviour
     [SerializeField] private BuildingRegistry buildingRegistry;//
 
     [Header("Default Test Settings")]
-    [SerializeField] private Religion defaultReligion = Religion.A;
+    [SerializeField] private Religion defaultReligion = Religion.E;
     [SerializeField] private int defaultPlayerID = 1;
     #endregion
 
@@ -144,7 +144,7 @@ public class DemoUITest : MonoBehaviour
         CreateButton("宣教師を生成", CreateMissionary);
         CreateButton("十字軍を生成", CreateMilitary);
         CreateButton("敵農民を生成 (PID:2)", () => CreatePiece(PieceType.Farmer, defaultReligion, 2));
-        CreateButton("異宗教農民を生成 (B)", () => CreatePiece(PieceType.Farmer, Religion.B, defaultPlayerID));
+        CreateButton("異宗教農民を生成 (B)", () => CreatePiece(PieceType.Farmer, Religion.F, defaultPlayerID));
         CreateButton("一式セット生成 (3種×2)", CreateTestSet);
         CreateButton("すべての駒を削除", ClearAllPieces);
 
@@ -934,7 +934,7 @@ public class DemoUITest : MonoBehaviour
         // Noneを飛ばしてA~Hをサイクル
         if (currentIndex > (int)Religion.H)
         {
-            currentIndex = (int)Religion.A;
+            currentIndex = (int)Religion.G;
         }
 
         defaultReligion = (Religion)currentIndex;
