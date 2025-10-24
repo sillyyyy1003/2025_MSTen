@@ -85,6 +85,7 @@ public class GameManage : MonoBehaviour
     // 每个格子上的GameObject (所有玩家)
     private Dictionary<int2, GameObject> CellObjects = new Dictionary<int2, GameObject>();
 
+    private bool bIsStartSingleGame = false;
     // *************************
     //         公有属性
     // *************************
@@ -93,10 +94,14 @@ public class GameManage : MonoBehaviour
     // 网络系统引用 (在Inspector中赋值或通过代码获取)
     public NetGameSystem _NetGameSystem;
 
+    // 玩家相机引用
+    public GameCamera _GameCamera;
     // 玩家操作管理器
     public PlayerOperationManager _PlayerOperation;
     // 玩家数据管理器引用
     private PlayerDataManager _PlayerDataManager;
+
+
 
     // 事件: 回合开始
     public event Action<int> OnTurnStarted;
@@ -132,7 +137,7 @@ public class GameManage : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
+            //Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
         }
         else if (Instance != this)
         {
@@ -148,19 +153,42 @@ public class GameManage : MonoBehaviour
             GameObject pdm = new GameObject("PlayerDataManager");
             _PlayerDataManager = pdm.AddComponent<PlayerDataManager>();
         }
+        
     }
 
 
 
     // Update is called once per frame
-    void Update()
-    {
-        
-    }
+   
 
     // *************************
     //        游戏流程函数
     // *************************
+
+    // 房间状态待机管理
+    public void CheckIsServer(bool server)
+    {
+        _GameCamera.SetCanUseCamera(false);
+        if(server)
+        {
+
+        }
+        else
+        {
+
+        }
+    }
+
+    // 从房间UI处获取游戏开始事件
+    // 在此处设置单机或联机启动
+    public void StartGameFromRoomUI()
+    {
+        _GameCamera.SetCanUseCamera(true);
+
+       
+        // 单机测试
+        GameInit();
+    }
 
     // 游戏初始化 (由网络系统调用,传入游戏开始数据)
     public bool InitGameWithNetworkData(GameStartData data)
@@ -168,6 +196,7 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 开始初始化游戏...");
         Debug.Log($"接收到玩家数: {data.PlayerIds.Length}");
         Debug.Log($"起始位置数: {data.StartPositions.Length}");
+        
         // 清空之前的数据
         AllPlayerIds.Clear();
         PlayerStartPositions.Clear();
@@ -193,9 +222,9 @@ public class GameManage : MonoBehaviour
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
-        if (_NetGameSystem != null && !_NetGameSystem.IsServer)
+        if (_NetGameSystem != null && !_NetGameSystem.bIsServer)
         {
-            _LocalPlayerID = (int)_NetGameSystem.LocalClientId;
+            _LocalPlayerID = (int)_NetGameSystem.bLocalClientId;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
             // 临时方案: 假设第一个玩家是本地玩家
@@ -233,7 +262,7 @@ public class GameManage : MonoBehaviour
 
         _NetGameSystem.GetGameManage();
 
-
+        _GameCamera.SetCanUseCamera(true);
         // 触发游戏开始事件
         OnGameStarted?.Invoke();
 
@@ -249,8 +278,37 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 本地测试模式初始化...");
 
         SetIsGamingOrNot(true);
+     
+           if (!bIsStartSingleGame)
+                StartCoroutine(TrueStartGame());
+        
+        //if (bIsInGaming && GameBoardInforDict.Count > 0)
+        //{
+        //    //// 添加默认玩家
+        //    //_LocalPlayerID = 0;
+        //    //AllPlayerIds.Add(0);
+        //    //AllPlayerIds.Add(1);
 
-        if (bIsInGaming && GameBoardInforDict.Count > 0)
+        //    //_PlayerDataManager.CreatePlayer(0);
+        //    //_PlayerDataManager.CreatePlayer(1);
+
+        //    //// 添加玩家初始格子位置的id
+        //    //PlayerStartPositions.Add(0);
+        //    //PlayerStartPositions.Add(GameBoardInforDict.Count - 1);
+
+        //    //// 初始化本机玩家
+        //    //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+
+        //    //Debug.Log("本地玩家初始化完毕");
+        //    //// 开始第一个回合
+        //    //StartTurn(0);
+        //}
+        return true;
+    }
+    private IEnumerator TrueStartGame()
+    {
+        yield return 0.1f;
+        if (GameBoardInforDict.Count > 0)
         {
             // 添加默认玩家
             _LocalPlayerID = 0;
@@ -267,12 +325,13 @@ public class GameManage : MonoBehaviour
             // 初始化本机玩家
             _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
 
+            Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合
             StartTurn(0);
+            bIsStartSingleGame = true;
         }
-        return true;
-    }
 
+    }
     // 游戏结束
     public bool GameOver(int winnerPlayerId = -1)
     {
@@ -403,7 +462,7 @@ public class GameManage : MonoBehaviour
         Debug.Log($"[服务器] 切换到玩家 {nextPlayerId}");
 
         // 如果是服务器，广播 TURN_START
-        if (_NetGameSystem != null && _NetGameSystem.IsServer)
+        if (_NetGameSystem != null && _NetGameSystem.bIsServer)
         {
             TurnStartMessage turnStartData = new TurnStartMessage
             {
