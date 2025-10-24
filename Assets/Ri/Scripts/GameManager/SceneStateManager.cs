@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Net;
 using UnityEngine;
+using GameData;
 
 // 场景状态管理，需要切换场景保存参数时使用
 public class SceneStateManager : MonoBehaviour
@@ -14,6 +15,11 @@ public class SceneStateManager : MonoBehaviour
     public string PlayerName;
     // 玩家ip
     public string PlayerIP;
+    // 玩家id
+    public int PlayerID;
+
+    // 玩家选择的宗教
+    public Religion PlayerReligion;
 
     // 是否为主机
     private bool bIsServer;
