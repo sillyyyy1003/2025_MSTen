@@ -192,26 +192,41 @@ public class HexMapGenerator : MonoBehaviour
 		Random.state = originalRandomState;
 	}
 
+
+	/// <summary>
+	/// 创建陆地（通过多次调用 RaiseTerrain / SinkTerrain 来随机塑造地形）
+	/// </summary>
 	void CreateLand()
 	{
+		// 根据地图格子总数和设定比例计算可用“陆地预算”
+		// landBudget 表示本次地形生成中可创建为陆地的格子数量
 		int landBudget = Mathf.RoundToInt(cellCount * landPercentage * 0.01f);
 		landCells = landBudget;
 
+		// 防止无限循环的安全阈值（防御性编程）
 		for (int guard = 0; guard < 10000; guard++)
 		{
+			// 决定本轮操作是下沉地形（Sink）还是上升地形（Raise）
 			bool sink = Random.value < sinkProbability;
+
+			// 遍历所有预定义的地图区域，每个区域都会进行一次地形修改
 			for (int i = 0; i < regions.Count; i++)
 			{
 				MapRegion region = regions[i];
+
+				// 随机确定本次修改块（chunk）的大小
 				int chunkSize = Random.Range(chunkSizeMin, chunkSizeMax - 1);
-				//				if (Random.value < sinkProbability) {
+
+				// 若本轮选择为“下沉地形”
 				if (sink)
 				{
 					landBudget = SinkTerrain(chunkSize, landBudget, region);
 				}
-				else
+				else // 否则执行“抬升地形”
 				{
 					landBudget = RaiseTerrain(chunkSize, landBudget, region);
+
+					// 若预算耗尽，则提前结束（陆地生成完成）
 					if (landBudget == 0)
 					{
 						return;
@@ -219,17 +234,20 @@ public class HexMapGenerator : MonoBehaviour
 				}
 			}
 		}
+
+		// 若循环结束后仍有剩余预算，说明地形生成不充分
 		if (landBudget > 0)
 		{
 			Debug.LogWarning("Failed to use up " + landBudget + " land budget.");
+			// 从总陆地数中扣除未使用的预算，保持统计一致
 			landCells -= landBudget;
 		}
 	}
 
+
 	/// <summary>
 	/// 创建气候
 	/// </summary>
-
 	void CreateClimate()
 	{
 		climate.Clear();
@@ -505,6 +523,8 @@ public class HexMapGenerator : MonoBehaviour
 		searchFrontier.Clear();
 		return budget;
 	}
+
+
 	void SetTerrainType()
 	{
 		// 随机选择一个通道用来为温度扰动（Noise）选择偏移——与 DetermineTemperature 相关
