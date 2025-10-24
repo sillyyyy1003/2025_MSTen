@@ -360,78 +360,124 @@ public class HexMapGenerator : MonoBehaviour
 		climate[cellIndex] = new ClimateData();
 	}
 
+	/// <summary>
+	/// 提升地形（在指定区域内随机选择一个起点并逐步抬升地形高度）
+	/// </summary>
+	/// <param name="chunkSize">单次地形生成的最大格子数量（影响规模）</param>
+	/// <param name="budget">当前地形生成预算，用于控制水下变陆地的次数</param>
+	/// <param name="region">指定随机起点的区域范围</param>
+	/// <returns>剩余预算</returns>
 	int RaiseTerrain(int chunkSize, int budget, MapRegion region)
 	{
-		searchFrontierPhase += 1;
+		searchFrontierPhase += 1; // 标记新的搜索阶段，避免与上次搜索混淆
+
+		// 从指定区域中随机选择一个起点格子
 		HexCell firstCell = GetRandomCell(region);
 		firstCell.SearchPhase = searchFrontierPhase;
 		firstCell.Distance = 0;
 		firstCell.SearchHeuristic = 0;
-		searchFrontier.Enqueue(firstCell);
+
+		searchFrontier.Enqueue(firstCell); // 将起点加入队列（广度优先搜索）
 		HexCoordinates center = firstCell.Coordinates;
 
+		// 决定本次上升的高度幅度：大概率是1，小概率是2
 		int rise = Random.value < highRiseProbability ? 2 : 1;
-		int size = 0;
+
+		int size = 0; // 当前已修改格子数
 		while (size < chunkSize && searchFrontier.Count > 0)
 		{
+			// 从队列中取出当前格子
 			HexCell current = searchFrontier.Dequeue();
 			int originalElevation = current.Elevation;
 			int newElevation = originalElevation + rise;
+
+			// 若超出允许的最高高度则跳过
 			if (newElevation > elevationMaximum)
 			{
 				continue;
 			}
+
+			// 更新格子高度
 			current.Elevation = newElevation;
+
+			// 若该格子由水下变为陆地，则消耗预算（当预算为0时结束）
 			if (
 				originalElevation < waterLevel &&
-				newElevation >= waterLevel && --budget == 0
+				newElevation >= waterLevel &&
+				--budget == 0
 			)
 			{
 				break;
 			}
+
 			size += 1;
 
+			// 遍历六个方向上的邻居格子
 			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
 			{
-				//HexCell neighbor = current.GetNeighbor(d);
 				if (current.TryGetNeighbor(d, out HexCell neighbor) &&
 					neighbor.SearchPhase < searchFrontierPhase)
 				{
+					// 标记邻居格子为本次搜索的一部分
 					neighbor.SearchPhase = searchFrontierPhase;
-					neighbor.Distance = neighbor.Distance = neighbor.Coordinates.DistanceTo(center);
-					neighbor.SearchHeuristic =
-						Random.value < jitterProbability ? 1 : 0;
+
+					// 计算邻居与中心的距离，用于控制范围衰减或随机抖动
+					neighbor.Distance = neighbor.Coordinates.DistanceTo(center);
+
+					// 随机扰动（用于让地形生成更自然）
+					neighbor.SearchHeuristic = Random.value < jitterProbability ? 1 : 0;
+
+					// 将邻居加入搜索队列
 					searchFrontier.Enqueue(neighbor);
 				}
 			}
 		}
+
+		// 清空队列以防止残留
 		searchFrontier.Clear();
 		return budget;
 	}
 
-
+	/// <summary>
+	/// 下沉地形（在指定区域内随机选择一个起点并逐步降低地形高度）
+	/// </summary>
+	/// <param name="chunkSize">单次地形生成的最大格子数量（影响规模）</param>
+	/// <param name="budget">当前地形生成预算，用于统计由陆地变水域的次数</param>
+	/// <param name="region">指定随机起点的区域范围</param>
+	/// <returns>更新后的预算</returns>
 	int SinkTerrain(int chunkSize, int budget, MapRegion region)
 	{
-		searchFrontierPhase += 1;
+		searchFrontierPhase += 1; // 标记新的搜索阶段
+
+		// 从指定区域中随机选择一个起点格子
 		HexCell firstCell = GetRandomCell(region);
 		firstCell.SearchPhase = searchFrontierPhase;
 		firstCell.Distance = 0;
 		firstCell.SearchHeuristic = 0;
+
 		searchFrontier.Enqueue(firstCell);
 		HexCoordinates center = firstCell.Coordinates;
 
+		// 决定本次下降的高度幅度：大概率是1，小概率是2
 		int sink = Random.value < highRiseProbability ? 2 : 1;
+
 		int size = 0;
 		while (size < chunkSize && searchFrontier.Count > 0)
 		{
 			HexCell current = searchFrontier.Dequeue();
 			int originalElevation = current.Elevation;
 			int newElevation = current.Elevation - sink;
+
+			// 若低于允许的最低高度则跳过
 			if (newElevation < elevationMinimum)
 			{
 				continue;
 			}
+
+			// 更新格子高度
 			current.Elevation = newElevation;
+
+			// 若该格子由陆地变为水下，则增加预算（模拟水域扩张）
 			if (
 				originalElevation >= waterLevel &&
 				newElevation < waterLevel
@@ -439,25 +485,26 @@ public class HexMapGenerator : MonoBehaviour
 			{
 				budget += 1;
 			}
+
 			size += 1;
 
+			// 遍历六个方向上的邻居格子
 			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
 			{
 				HexCell neighbor = current.GetNeighbor(d);
 				if (neighbor && neighbor.SearchPhase < searchFrontierPhase)
 				{
 					neighbor.SearchPhase = searchFrontierPhase;
-					neighbor.Distance = neighbor.Distance = neighbor.Coordinates.DistanceTo(center);
-					neighbor.SearchHeuristic =
-						Random.value < jitterProbability ? 1 : 0;
+					neighbor.Distance = neighbor.Coordinates.DistanceTo(center);
+					neighbor.SearchHeuristic = Random.value < jitterProbability ? 1 : 0;
 					searchFrontier.Enqueue(neighbor);
 				}
 			}
 		}
+
 		searchFrontier.Clear();
 		return budget;
 	}
-
 	void SetTerrainType()
 	{
 		// 随机选择一个通道用来为温度扰动（Noise）选择偏移——与 DetermineTemperature 相关
@@ -537,9 +584,8 @@ public class HexMapGenerator : MonoBehaviour
 				// 将决定好的地形索引写回格子
 				cell.TerrainTypeIndex = cellBiome.terrain;
 
-				// 如果你想把 plant 等级也存回格子（目前被注释掉），可以解除下一行注释
 				// 设定植物等级：数值越低，植被越稀疏
-				// cell.PlantLevel = cellBiome.plant;
+				 cell.PlantLevel = cellBiome.plant;
 			}
 			// 水下（或海岸）格子的处理逻辑
 			else

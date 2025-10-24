@@ -35,10 +35,9 @@ public class HexGridChunk : MonoBehaviour
 	/// <param name="cell">Cell to add.</param>
 	public void AddCell(int index, HexCell cell)
 	{
-		//cells[index] = cell;
 		cellIndices[index] = cell.Index;
 		cell.Chunk = this;
-		//cell.transform.SetParent(transform, false);
+		cell.transform.SetParent(transform, false);
 		cell.UIRect.SetParent(gridCanvas.transform, false);
 	}
 
