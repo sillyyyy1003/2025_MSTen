@@ -219,7 +219,7 @@ public class NetGameSystem : MonoBehaviour
     // 事件
     public event Action<NetworkMessage> OnMessageReceived;
     public event Action<uint> OnClientConnected;  // 服务器端
-    public event Action<uint> OnClientDisconnected;
+    //public event Action<uint> OnClientDisconnected;
 
     public event Action OnConnectedToServer;      // 客户端
     public event Action OnDisconnected;

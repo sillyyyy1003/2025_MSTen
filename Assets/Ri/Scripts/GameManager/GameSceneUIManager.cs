@@ -33,7 +33,7 @@ public class GameSceneUIManager : MonoBehaviour
         new Vector2(0,50), 
         new Vector2(0, 0), 
         new Vector2(0, -50) };
-    private int PlayerCount = 0;
+    //private int PlayerCount = 0;
 
     // 按钮
 
