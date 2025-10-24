@@ -4886,8 +4886,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2e67ed40af853b4d9e8b88d319778ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellCountX: 20
-  cellCountZ: 15
   cellPrefab: {fileID: 9067535797548090458, guid: 6f1669170fcf42d44af1cd24dcf51bfe,
     type: 3}
   cellLabelPrefab: {fileID: 7742247916833519642, guid: c085c9be66277134e8b743084f14c88b,
@@ -4896,8 +4894,6 @@ MonoBehaviour:
   chunkPrefab: {fileID: 100083073583928104, guid: b9cdec4e2737898499891c641ed27d35,
     type: 3}
   seed: 1234
-  currentPathFrom: {fileID: 0}
-  currentPathTo: {fileID: 0}
   mapLoader: {fileID: 148568298}
   minimapCamController: {fileID: 0}
 --- !u!4 &545352693
@@ -12399,7 +12395,7 @@ Transform:
   m_GameObject: {fileID: 1284297406}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 554.3, y: -4, z: 213.5}
+  m_LocalPosition: {x: 172, y: 1.43, z: 213.5}
   m_LocalScale: {x: 67, y: 67, z: 67}
   m_ConstrainProportionsScale: 1
   m_Children: []

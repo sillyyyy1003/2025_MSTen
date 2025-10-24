@@ -1082,7 +1082,7 @@
     "m_Hidden": false,
     "m_ShaderOutputName": "Scale",
     "m_StageCapability": 3,
-    "m_Value": 0.25,
+    "m_Value": 9.170000076293946,
     "m_DefaultValue": 10.0,
     "m_Labels": []
 }
@@ -2142,7 +2142,7 @@
     "m_Group": {
         "m_Id": ""
     },
-    "m_Name": "WaterMovement",
+    "m_Name": "Effect_Subgraph_WaterMovement",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -3078,7 +3078,7 @@
     "m_Group": {
         "m_Id": "7ce7180111ce495bb26d88a71f58dd0c"
     },
-    "m_Name": "WaterMovement",
+    "m_Name": "Effect_Subgraph_WaterMovement",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -3673,7 +3673,7 @@
     "m_Group": {
         "m_Id": ""
     },
-    "m_Name": "CalcDepth",
+    "m_Name": "Effect_Subgraph_CalcDepthFade",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -4050,7 +4050,7 @@
     "m_Group": {
         "m_Id": "900c050af1e64627b8dc8b48da6b911b"
     },
-    "m_Name": "CalcDepth",
+    "m_Name": "Effect_Subgraph_CalcDepthFade",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
