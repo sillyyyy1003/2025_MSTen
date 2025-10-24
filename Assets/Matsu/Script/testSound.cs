@@ -13,6 +13,13 @@ public class testSound : MonoBehaviour
     {
         soundManager.PlayBGM(SoundSystem.TYPE_BGM.TITLE,loop:true);
     }
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            soundManager.PlaySE(SoundSystem.TYPE_SE.SELECT);
+        }
+    }
 
 }
 
