@@ -99,6 +99,8 @@ public class ButtonMenuManager : MonoBehaviour
 
     public void LoadMenu(string id)
     {
+        UnitCardManager.Instance.SetDeckSelected(false);
+
         if (!menuDict.TryGetValue(id, out currentMenuData))
         {
             Debug.LogError($"Menu not found: {id}");
@@ -115,13 +117,34 @@ public class ButtonMenuManager : MonoBehaviour
 
         currentMenuData = menuDict[id];
 
-        if(id == "ButtonMenu_Root"&& unitChoosed!=CardType.None)
+        //目标目录为根目录
+        if(id == "ButtonMenu_Root")
         {
             EventSystem.current.SetSelectedGameObject(null);
             unitChoosed = CardType.None;
             UnitCardManager.Instance.SetTargetCardType(unitChoosed);
+            UnitCardManager.Instance.EnableSingleMode(true);
+        }
+        else if (id == "ButtonMenu_Second")//目标目录为第二目录
+        {
+            UnitCardManager.Instance.SetTargetCardType(unitChoosed);
+            if (unitChoosed == CardType.Pope|| unitChoosed == CardType.None)
+            {
+
+                UnitCardManager.Instance.EnableSingleMode(true);
+
+            }
+            else
+            {
+
+                UnitCardManager.Instance.EnableSingleMode(false);
+            }
 
         }
+
+
+
+
 
         //if(id == "ButtonMenu_Root"&& unitChoosed!=CardType.None)
         //{
@@ -132,6 +155,7 @@ public class ButtonMenuManager : MonoBehaviour
         //
         //    EventSystem.current.SetSelectedGameObject(null);
         //}
+
 
 
 
@@ -199,12 +223,9 @@ public class ButtonMenuManager : MonoBehaviour
                 if (currentMenuId == "ButtonMenu_Root")
                 {
                     unitChoosed = (CardType)index;
-                    UnitCardManager.Instance.SetTargetCardType(unitChoosed);
                     Debug.Log("CardTypeChanged");
-
-
                 }
-                UnitCardManager.Instance.SetDeckSelected(false);
+
                 LoadMenu(data.nextMenuId);
 
 

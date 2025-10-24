@@ -19,13 +19,14 @@ public enum CardType
 
 
 
-
 public class UnitCardManager : MonoBehaviour
 {
 	[Header("Prefabs & References")]
 	public GameObject cardPrefab;
-	public RectTransform cardContainer;
     public GameObject storedCardPrefab;
+
+    public RectTransform singleContainer;
+    public RectTransform doubleContainer;
     public RectTransform deckContainer;
     public GameObject deckCount;
 
@@ -44,20 +45,29 @@ public class UnitCardManager : MonoBehaviour
     public int currentDeckCount = 5;
     public int targetDeckCount = 5;
 
+    //内部保存用
     private List<UnitCard> cards = new List<UnitCard>();//目前场上显示的卡牌的列表
     private List<StoredCard> deck = new List<StoredCard>();//目前场上显示的卡组的列表
-    private List<SoliderData>  soliderDatas = new List<SoliderData>();
 
+
+    //内部计算用
 	private float cardWidth = 1f;//卡牌宽度
     private float detailCardWidth = 1f;//展开卡牌宽度
     private float openOffset = 1f;      // 展开卡牌导致的右移距离(从卡牌最左边为起点开始计算)
-    private Vector2 startPosition = new Vector2(0, 0);
+    private Vector2 startPosition_Double = new Vector2(0, 0);
+    private Vector2 startPosition_Single = new Vector2(0, 0);
 
-
-	private CardType currentCardType = CardType.None;
+    private CardType currentCardType = CardType.None;
     private CardType targetCardType = CardType.None;
 
-    public int playerID { get; set; }   // 开局时赋予玩家ID
+    private bool enableSingleMode = true;
+
+    //fake data
+
+
+
+
+
 
     public static UnitCardManager Instance { get; private set; }
 
@@ -72,12 +82,20 @@ public class UnitCardManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        deckCount.SetActive(false);
+
+        currentCardType = CardType.None;
+        targetCardType = CardType.None;
+
+        enableSingleMode = true;
+        doubleContainer.gameObject.SetActive(false);
+        singleContainer.gameObject.SetActive(true);
+
+
         cardWidth = cardPrefab.transform.Find("Card").GetComponent<RectTransform>().sizeDelta.x;
         detailCardWidth = cardPrefab.transform.Find("DetailCard").GetComponent<RectTransform>().sizeDelta.x;
 		openOffset = detailCardWidth + openSpacing + cardWidth;
-		startPosition = new Vector2(-cardContainer.sizeDelta.x/2 + startSpacing+ cardWidth/2, 0);
-
+		startPosition_Double = new Vector2(-doubleContainer.sizeDelta.x/2 + startSpacing+ cardWidth/2, 0);
+        startPosition_Single = new Vector2(-singleContainer.sizeDelta.x / 2 + startSpacing + cardWidth / 2, 0);
 
 
     }
@@ -90,23 +108,9 @@ public class UnitCardManager : MonoBehaviour
 
     void Update()
 	{
-        
+        UpdateCards();
 
-        if (targetCardType != currentCardType || targetCardCount != currentCardCount || targetDeckCount != currentDeckCount)
-        {
-            ClearAllCards();
-            if (targetCardType != CardType.None)
-            {
-                GenerateActiveCards(targetCardCount, targetCardType);
-                GenerateStoredCards(targetDeckCount, targetCardType);
-                
-            }
-                
 
-            currentCardType = targetCardType;
-            currentCardCount = targetCardCount;
-            currentDeckCount = targetDeckCount;
-        }
 
 
     }
@@ -126,63 +130,67 @@ public class UnitCardManager : MonoBehaviour
 
     void GenerateActiveCards(int count,CardType type)
 	{
-		for (int i = 0; i < count; i++)
-            AddActiveCard(type,i);
-	}
+        if (type == CardType.None) return;
 
-    /// <summary>
-    /// 添加单张激活的卡牌
-    /// </summary>
-    public void AddActiveCard(CardType type,int? fakeIndex = null)
-	{
-		int i = fakeIndex ?? cards.Count;
-		GameObject cardObj = Instantiate(cardPrefab, cardContainer);
-        UnitCard card = cardObj.GetComponent<UnitCard>();
-		card.SetSprite(type);
+        for (int i = 0; i < count; i++)
+            AddActiveCard(type, i);
 
-        RectTransform rect = cardObj.GetComponent<RectTransform>();
-		rect.anchoredPosition = startPosition + new Vector2(i * (cardSpacing+cardWidth), 0);
-
-		// 如果有士兵数据则使用数据，否则使用默认值
-		if (soliderDatas.Count != 0)
-		{
-			card.dataText_HpText.text = $"HP: {soliderDatas[i].hp}";
-			card.dataText_AttackText.text = $"Attack: {soliderDatas[i].attack}";
-		}
-		else
-		{   // 虚拟数据
-			card.dataText_HpText.text = $"HP: {100 + i * 10}";
-			card.dataText_AttackText.text = $"Attack: {20 + i * 5}";
-		}
-
-		// 点击事件
-		int index = i;
-		Button cardBtn = card.unitCardImage.GetComponent<Button>();
-		cardBtn.onClick.AddListener(() => OnCardClicked(index));
-
-		cards.Add(card);
-	}
-
+    }
 
     void GenerateStoredCards(int count, CardType type)
     {
-        deckCount.SetActive(false);
         if (count <= 0)
+        {
+            deckCount.SetActive(false);
             return;
+        }
+
 
         for (int i = 0; i < count; i++)
             AddStoredCard(type, i);
 
 
-        
+
         deckCount.SetActive(true);
         deckCount.transform.SetAsLastSibling();
         deckCount.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = count.ToString();
 
     }
 
+
+    /// <summary>
+    /// 添加单张激活的卡牌
+    /// </summary>
+    public void AddActiveCard(CardType type,int? fakeIndex = null)
+	{
+        if (type == CardType.None) return;
+
+        int i = fakeIndex ?? cards.Count;
+		GameObject cardObj = Instantiate(cardPrefab, type==CardType.Pope? singleContainer:doubleContainer);
+        UnitCard card = cardObj.GetComponent<UnitCard>();
+		card.SetSprite(type);
+
+        RectTransform rect = cardObj.GetComponent<RectTransform>();
+		rect.anchoredPosition = type == CardType.Pope ? startPosition_Single : startPosition_Double + new Vector2(i * (cardSpacing+cardWidth), 0);
+
+		card.dataText_HpText.text = $"HP: {100 + i * 10}";
+		card.dataText_AttackText.text = $"Attack: {20 + i * 5}";
+
+        cards.Add(card);
+
+
+        // 点击事件
+        int index = i;
+		Button cardBtn = card.unitCardImage.GetComponent<Button>();
+		cardBtn.onClick.AddListener(() => OnCardClicked(index));
+
+	}
+
     public void AddStoredCard(CardType type, int? fakeIndex = null)
     {
+        if (type == CardType.None|| type == CardType.Pope) return;
+
+
         int i = fakeIndex ?? deck.Count;
         // 生成卡牌对象
         GameObject cardObj = Instantiate(storedCardPrefab, deckContainer);
@@ -194,7 +202,7 @@ public class UnitCardManager : MonoBehaviour
 
         // 计算堆叠偏移位置（右堆叠）
         RectTransform rect = cardObj.GetComponent<RectTransform>();
-        Vector2 basePos = new Vector2(-deckContainer.sizeDelta.x / 2 + 10f + cardWidth / 2f + i * deckSpacing*5f, 0f);
+        Vector2 basePos = new Vector2(-deckContainer.sizeDelta.x / 2 + 10f + cardWidth / 2f + i * deckSpacing * 5f, 0f);
         rect.anchoredPosition = basePos;
 
 
@@ -207,54 +215,65 @@ public class UnitCardManager : MonoBehaviour
             cardBtn.onClick.AddListener(() => OnDeckClicked());
 
         }
-            
-        
+
+
 
         deck.Add(storedCard);
 
     }
 
 
+    public void ClearAllCards()
+    {
+        GameObject[] allObjects = FindObjectsOfType<GameObject>();
+
+        foreach (var obj in allObjects)
+        {
+            if (obj.name.EndsWith("(Clone)"))
+            {
+                Destroy(obj);
+            }
+        }
+        cards.Clear();
+        deck.Clear();
+        deckCount.SetActive(false);
+    }
+
+
+
+
 
 
     public void UpdateCards()
 	{
-        if(targetCardType != currentCardType)
-		{
-			ClearAllCards();
-            GenerateActiveCards(soliderDatas.Count,targetCardType);
-			currentCardType = targetCardType;
-
-        }
-		else
-		{
-            // clear old data
-            soliderDatas.Clear();
-            // Get Player data
-            PlayerData data = PlayerDataManager.Instance.GetPlayerData(playerID);
-
-            // 更新士兵数据
-            foreach (var playerUnit in data.PlayerUnits)
+        if (!enableSingleMode)
+        {
+            if (targetCardType != currentCardType || targetCardCount != currentCardCount || targetDeckCount != currentDeckCount)
             {
-                // 筛选士兵单位
-                if (playerUnit.UnitType == PlayerUnitType.Soldier)
-                {
-                    SoliderData solider = new SoliderData();
-                    // 假设SoliderData有Level, HP, Attack属性
-                    //solider.level = playerUnit.Level;
-                    //solider.hp = playerUnit.HP;
-                    //solider.attack = playerUnit.Attack;
-                    soliderDatas.Add(solider);
-                }
+                ClearAllCards();
+
+                GenerateActiveCards(targetCardCount, targetCardType);
+                GenerateStoredCards(targetDeckCount, targetCardType);
+
+                currentCardType = targetCardType;
+                currentCardCount = targetCardCount;
+                currentDeckCount = targetDeckCount;
             }
-			// 清空卡牌
-			ClearAllCards();
-            // 重新生成卡牌
-            GenerateActiveCards(soliderDatas.Count, currentCardType);
+
 
         }
+        else
+        {
+            if (targetCardType != currentCardType)
+            {
+                ClearAllCards();
+                GenerateActiveCards(1, targetCardType);
+                currentCardType = targetCardType;
+
+            }
 
 
+        }
 
 
 
@@ -295,14 +314,19 @@ public class UnitCardManager : MonoBehaviour
 
     }
 
+
+
     /// <summary>
     /// 计算卡牌的基线位置（不随动画变化）
     /// </summary>
     Vector2 GetBasePosition(int index)
-	{
-        return startPosition + new Vector2(index * (cardSpacing + cardWidth), 0f);
-	}
+    {
 
+        if (enableSingleMode) return startPosition_Single + new Vector2(index * (cardSpacing + cardWidth), 0f);
+
+
+        return startPosition_Double + new Vector2(index * (cardSpacing + cardWidth), 0f);
+	}
 
 	/// <summary>
 	/// 重排卡牌：只移动右侧的卡牌
@@ -340,7 +364,40 @@ public class UnitCardManager : MonoBehaviour
 		}
 	}
 
-	private IEnumerator MoveTo(RectTransform rect, Vector2 start, Vector2 target)
+    public void CloseAllCards()
+    {
+        bool findOpenCard = false;
+
+        for (int i = 0; i < cards.Count; i++)
+        {
+            var card = cards[i];
+            if (card == null) continue;
+
+            // 如果卡牌当前是展开的，就让它关闭
+            if (card.GetPanelOpen())
+            {
+                card.ClosePanel();
+                findOpenCard = true;
+            }
+
+            // 重置位置（回到默认位置）
+            if (findOpenCard)
+            {
+                RectTransform rect = card.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    Vector2 targetPos = GetBasePosition(i);
+                    rect.anchoredPosition = targetPos;
+                }
+
+            }
+
+        }
+
+    }
+
+
+    private IEnumerator MoveTo(RectTransform rect, Vector2 start, Vector2 target)
 	{
 		float t = 0f;
 		while (t < 1f)
@@ -351,95 +408,6 @@ public class UnitCardManager : MonoBehaviour
 		}
 		rect.anchoredPosition = target;
 	}
-
-	
-	#endregion
-
-	struct SoliderData
-	{
-		public int level { get; set; }
-		public int hp { get; set; }
-		public int attack { get; set; }
-	}
-
-    public void CloseAllCards()
-    {
-		bool findOpenCard = false;
-
-        for (int i = 0; i < cards.Count; i++)
-        {
-            var card = cards[i];
-            if (card == null) continue;
-
-            // 如果卡牌当前是展开的，就让它关闭
-            if (card.GetPanelOpen())
-            {
-				card.ClosePanel();
-				findOpenCard = true;
-            }
-
-			// 重置位置（回到默认位置）
-			if (findOpenCard)
-			{
-                RectTransform rect = card.GetComponent<RectTransform>();
-                if (rect != null)
-                {
-                    Vector2 targetPos = GetBasePosition(i);
-                    rect.anchoredPosition = targetPos;
-                }
-
-            }
-            
-        }
-
-    }
-
-    public void ResetStartPosition()
-	{
-
-
-        startPosition = new Vector2(-cardContainer.sizeDelta.x / 2 + startSpacing + cardWidth / 2, 0);
-
-
-    }
-
-    public void SetTargetCardType(CardType type)
-	{
-
-		targetCardType = type;
-
-    }
-
-	public void AddCardCount(int num)
-	{
-        if (isDeckSelected)
-        {
-            targetDeckCount = currentDeckCount + num;
-        }
-        else
-        {
-            targetCardCount = currentCardCount + num;
-        }
-		
-
-    }
-
-
-    public void ClearAllCards()
-	{
-        GameObject[] allObjects = FindObjectsOfType<GameObject>();
-
-        foreach (var obj in allObjects)
-        {
-            if (obj.name.EndsWith("(Clone)"))
-            {
-                Destroy(obj);
-            }
-        }
-        cards.Clear();
-        deck.Clear();
-        deckCount.SetActive(false);
-    }
 
     public void SetDeckSelected(bool tf)
     {
@@ -453,6 +421,69 @@ public class UnitCardManager : MonoBehaviour
         {
             deckContainer.GetComponent<Image>().color = new Color(0.2f, 0.6f, 1f, 0.5f);
         }
+
     }
 
+    public void EnableSingleMode(bool tf)
+    {
+        if (enableSingleMode == tf) return;
+
+        if (tf)
+        {
+            doubleContainer.gameObject.SetActive(false);
+            singleContainer.gameObject.SetActive(true);
+
+        }
+        else
+        {
+            doubleContainer.gameObject.SetActive(true);
+            singleContainer.gameObject.SetActive(false);
+
+        }
+
+
+        enableSingleMode = tf;
+
+        UpdateCards();
+
+    }
+
+
+    public void SetTargetCardType(CardType type)
+    {
+
+        targetCardType = type;
+
+
+    }
+
+    public void AddCardCount(int num)
+    {
+        if (isDeckSelected)
+        {
+            targetDeckCount = currentDeckCount + num;
+        }
+        else
+        {
+            targetCardCount = currentCardCount + num;
+        }
+
+
+    }
+
+
+
+
+    #endregion
+
+
+
+
+
+
+
+
+
+
 }
+
