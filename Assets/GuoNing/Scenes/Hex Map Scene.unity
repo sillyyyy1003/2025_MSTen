@@ -2401,7 +2401,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 2056945512}
   hexGrid: {fileID: 1571186511}
-  isLoadMap: 1
+  isLoadMap: 0
   mapFileName: Example.map
   mapSize: 0
 --- !u!1001 &305567642

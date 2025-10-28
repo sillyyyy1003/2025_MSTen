@@ -2076,7 +2076,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1805311232}
   hexGrid: {fileID: 1913528995}
-  isLoadMap: 1
+  isLoadMap: 0
   mapFileName: Example.map
   mapSize: 0
 --- !u!1 &1475043584
@@ -2671,9 +2671,9 @@ MonoBehaviour:
   landPercentage: 50
   highRiseProbability: 0.25
   sinkProbability: 0.2
-  waterLevel: 3
+  waterLevel: 1
   elevationMinimum: -2
-  elevationMaximum: 8
+  elevationMaximum: 6
   mapBorderX: 5
   mapBorderZ: 5
   regionCount: 1
