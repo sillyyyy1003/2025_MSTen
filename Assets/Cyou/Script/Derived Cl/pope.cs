@@ -15,7 +15,10 @@ public class Pope : Piece
 
     // イベント
     public event Action OnPopeDeath;
-
+    public PieceDataSO GetUnitDataSO()
+    {
+        return popeData;
+    }
     public override void Initialize(PieceDataSO data, int playerID)
     {
         popeData = data as PopeDataSO;

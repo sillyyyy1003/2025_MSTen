@@ -4,20 +4,11 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using GameData;
-
-/// <summary>
-/// 单位种类
-/// </summary>
-public enum PlayerUnitType
-{
-    Soldier,    //士兵
-    Farmer,     //农民
-    Missionary, //传教士
-    // 后续添加
-}
+using UnityEngine.UIElements;
+using TMPro;
 
 
-// 玩家单位的数据，种类与坐标一一对应
+// 玩家单位的数据
 [Serializable]
 public struct PlayerUnitData
 {
@@ -25,7 +16,7 @@ public struct PlayerUnitData
     public int UnitID;
 
     // 单位的种类
-    public PlayerUnitType UnitType;
+    public CardType UnitType;
 
     // 单位的2维坐标
     public int2 Position;
@@ -33,12 +24,20 @@ public struct PlayerUnitData
     // 玩家拥有的单位GameObject
     public GameObject PlayerUnitObject;
 
-    public PlayerUnitData(int unitId, PlayerUnitType type, int2 pos, GameObject unitObject = null)
+    // 单位的数据
+    public PieceDataSO PlayerUnitDataSO;
+
+    // 该单位是否已经上场
+    public bool bUnitIsUsed;
+
+    public PlayerUnitData(int unitId, CardType type, int2 pos, GameObject unitObject = null, PieceDataSO unitData = null,bool isUsed=false)
     {
         UnitID = unitId;
         UnitType = type;
         Position = pos;
         PlayerUnitObject = unitObject;
+        PlayerUnitDataSO = unitData;
+        bUnitIsUsed = isUsed;
     }
 }
 
@@ -67,20 +66,14 @@ public struct PlayerData
         PlayerReligion = Religion.None;
     }
 
-    // 添加单位(单位与位置)
-    public void AddUnit(int unitId, PlayerUnitType type, int2 pos, GameObject unitObject = null)
+    // 添加单位，此为单位加入手牌(单位与位置)
+    public void AddUnit(int unitId, CardType type, int2 pos, GameObject unitObject,PieceDataSO unitData)
     {
-        PlayerUnits.Add(new PlayerUnitData(unitId, type, pos, unitObject));
+        PlayerUnits.Add(new PlayerUnitData(unitId, type, pos, unitObject, unitData));
         Debug.Log($"玩家 {PlayerID} 在 ({pos.x},{pos.y}) 添加了 {type}，ID: {unitId}");
     }
 
-    // 添加单位(完整数据)
-    public void AddUnit(PlayerUnitData unitData)
-    {
-        PlayerUnits.Add(unitData);
-        Debug.Log($"玩家 {PlayerID} 添加单位: {unitData.UnitType} at ({unitData.Position.x},{unitData.Position.y})，ID: {unitData.UnitID}");
-    }
-
+ 
     // 更新单位的GameObject引用
     public bool UpdateUnitGameObject(int unitId, GameObject unitObject)
     {
@@ -194,6 +187,9 @@ public class PlayerDataManager : MonoBehaviour
 
     // 通过UnitID快速查找的字典 <UnitID, PlayerID>
     private Dictionary<int, int> unitIdToPlayerIdMap = new Dictionary<int, int>();
+
+    // 当前选择中的单位id
+    public int nowChooseUnitID;
 
     // 事件: 玩家数据变化
     public event Action<int, PlayerData> OnPlayerDataChanged;
@@ -314,26 +310,103 @@ public class PlayerDataManager : MonoBehaviour
         return allPlayersData.Count;
     }
 
+    // 返回当前玩家资源
+    public int GetPlayerResource()
+    {
+        return allPlayersData[GameManage.Instance.LocalPlayerID].Resources;
+    }
     // *************************
     //        单位管理
     // *************************
 
+    // 将一个单位上场
+    public void AddUnitToDeck(int playerID,int unitID)
+    {
+
+    }
+
+
+    /// <summary>
+    /// 得到已激活或未激活的单位数量
+    /// </summary>
+    /// <param name="activated">true:已激活 false:未激活</param>
+    /// <returns></returns>
+    public int GetActivateUnitCount(bool activated)
+    {
+        int allCount=allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits.Count;
+        int count=0;
+
+        foreach(var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
+        {
+            if (a.bUnitIsUsed)
+                count++;
+        }
+        if (activated)
+            return count;
+        else
+            return allCount - count;
+    }
+
+    /// <summary>
+    /// 拿到某一类型单位已上场的单位keyList
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public List<int> GetActivateUnitKey(CardType type)
+    {
+        List<int> list_unitID = new List<int>();
+        foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
+        {
+            if (a.UnitType==type&&a.bUnitIsUsed)
+                list_unitID.Add(a.UnitID);
+        }
+
+        return list_unitID;
+    }
+
+    // 拿到特定类型单位未上场的数量
+    public int GetUnActivateUnitCount(CardType type)
+    {
+        int count = 0;
+        foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
+        {
+            if (a.UnitType == type && !a.bUnitIsUsed)
+                count++;
+        }
+
+        return count;
+    }
+
+    // 通过位置获取一个单位的id
+    public int GetUnitIDBy2DPos(int2 pos)
+    {
+        PlayerUnitData? foundUnit = allPlayersData[GameManage.Instance.LocalPlayerID].FindUnitAt(pos);
+        if (foundUnit != null)
+        {
+            return foundUnit.Value.UnitID;
+        }
+        else
+            return 0;
+
+    }
     // 添加单位(种类与位置) - 返回生成的UnitID
-    public int AddUnit(int playerId, PlayerUnitType type, int2 pos, GameObject unitObject = null)
+    public int AddUnit(int playerId, CardType type, int2 pos, GameObject unitObject=null,PieceDataSO unitData = null, bool isUsed = false)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
             int newUnitId = GenerateUnitID();
 
             PlayerData data = allPlayersData[playerId];
-            data.AddUnit(newUnitId, type, pos, unitObject);
+            data.AddUnit(newUnitId, type, pos, unitObject, unitData);
             allPlayersData[playerId] = data;
+
+            
 
             // 添加ID映射
             unitIdToPlayerIdMap[newUnitId] = playerId;
 
             // 触发事件
-            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitObject));
+            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitObject, unitData));
             OnPlayerDataChanged?.Invoke(playerId, data);
 
             return newUnitId;
@@ -342,30 +415,30 @@ public class PlayerDataManager : MonoBehaviour
     }
 
     // 添加单位(完整数据) - 如果UnitData中的ID为0，则生成新ID
-    public int AddUnit(int playerId, PlayerUnitData unitData)
-    {
-        if (allPlayersData.ContainsKey(playerId))
-        {
-            // 如果没有ID，生成新的
-            if (unitData.UnitID == 0)
-            {
-                unitData.UnitID = GenerateUnitID();
-            }
+    //public int AddUnit(int playerId, PlayerUnitData unitData)
+    //{
+    //    if (allPlayersData.ContainsKey(playerId))
+    //    {
+    //        // 如果没有ID，生成新的
+    //        if (unitData.UnitID == 0)
+    //        {
+    //            unitData.UnitID = GenerateUnitID();
+    //        }
 
-            PlayerData data = allPlayersData[playerId];
-            data.AddUnit(unitData);
-            allPlayersData[playerId] = data;
+    //        PlayerData data = allPlayersData[playerId];
+    //        data.AddUnit(unitData);
+    //        allPlayersData[playerId] = data;
 
-            // 添加ID映射
-            unitIdToPlayerIdMap[unitData.UnitID] = playerId;
+    //        // 添加ID映射
+    //        unitIdToPlayerIdMap[unitData.UnitID] = playerId;
 
-            OnUnitAdded?.Invoke(playerId, unitData);
-            OnPlayerDataChanged?.Invoke(playerId, data);
+    //        OnUnitAdded?.Invoke(playerId, unitData);
+    //        OnPlayerDataChanged?.Invoke(playerId, data);
 
-            return unitData.UnitID;
-        }
-        return -1;
-    }
+    //        return unitData.UnitID;
+    //    }
+    //    return -1;
+    //}
 
     // 更新单位的GameObject引用
     public bool UpdateUnitGameObject(int playerId, int unitId, GameObject unitObject)

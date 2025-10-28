@@ -54,14 +54,17 @@ public class GameCamera : MonoBehaviour
         else
             bCanUseCamera = false;
     }
+
     /// <summary>
-    /// 得到玩家位置
+    /// 设置玩家跟踪的位置
     /// </summary>
     public void GetPlayerPosition(Vector3 playerPos)
     {
         this.transform.position = new Vector3(playerPos.x, 30, playerPos.z-21);
     }
 
+
+   
 
     void HandleZoom()
     {

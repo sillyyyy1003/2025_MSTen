@@ -885,7 +885,7 @@ public class HexGrid : MonoBehaviour
 		return !cell.IsUnderwater  && cell.Elevation <= 2;
 	}
 
-	void SetGameBoardInfo(HexCell cell)
+	public void SetGameBoardInfo(HexCell cell)
 	{
 		// 25.9.23 RI add layer to each cell
 		cell.gameObject.layer = LayerMask.NameToLayer("Cell");
@@ -900,6 +900,9 @@ public class HexGrid : MonoBehaviour
 		infor.Cells2DPos.y = z;
 		infor.Cells3DPos = cell.Position;
 		infor.id = cell.Index;
+
+		// 25.10.26 RI 添加起始位置
+		infor.bIsStartPos = cell.IsStartPos;
 
 
 		// 判断是否有水

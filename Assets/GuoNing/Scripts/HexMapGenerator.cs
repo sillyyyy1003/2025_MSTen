@@ -130,11 +130,17 @@ public class HexMapGenerator : MonoBehaviour
 	}
 
 	// 各种温度+湿度组合对应的地貌（简化版生物群落表）
+	//static Biome[] biomes = {
+	//	new Biome(0, 0), new Biome(4, 0), new Biome(4, 0), new Biome(4, 0),
+	//	new Biome(0, 0), new Biome(2, 0), new Biome(2, 1), new Biome(2, 2),
+	//	new Biome(0, 0), new Biome(1, 0), new Biome(1, 1), new Biome(1, 2),
+	//	new Biome(0, 0), new Biome(1, 1), new Biome(1, 2), new Biome(1, 3)
+	//};
 	static Biome[] biomes = {
-		new Biome(0, 0), new Biome(4, 0), new Biome(4, 0), new Biome(4, 0),
-		new Biome(0, 0), new Biome(2, 0), new Biome(2, 1), new Biome(2, 2),
-		new Biome(0, 0), new Biome(1, 0), new Biome(1, 1), new Biome(1, 2),
-		new Biome(0, 0), new Biome(1, 1), new Biome(1, 2), new Biome(1, 3)
+		new Biome((int)TerrainTextureType.Snow, 0), new Biome((int)TerrainTextureType.Snow, 0), new Biome((int)TerrainTextureType.Snow, 0), new Biome((int)TerrainTextureType.FallingForest, 0),
+		new Biome((int)TerrainTextureType.Swamp, 0), new Biome((int)TerrainTextureType.FallingForest, 0), new Biome((int)TerrainTextureType.Forest, 1), new Biome((int)TerrainTextureType.RainForest, 2),
+		new Biome((int)TerrainTextureType.Desert, 0), new Biome((int)TerrainTextureType.Forest, 0), new Biome((int)TerrainTextureType.Forest, 1), new Biome((int)TerrainTextureType.RainForest, 2),
+		new Biome((int)TerrainTextureType.Desert, 0), new Biome((int)TerrainTextureType.Sand, 1), new Biome((int)TerrainTextureType.Forest, 2), new Biome((int)TerrainTextureType.RainForest, 3)
 	};
 
 	//湿度 ↑
@@ -178,16 +184,19 @@ public class HexMapGenerator : MonoBehaviour
 			grid.GetCell(i).WaterLevel = waterLevel;
 		}
 
-		CreateRegions();    // 创建区域
-		CreateLand();       // 创建陆地
-		ErodeLand();        // 创建侵蚀
-		CreateClimate();    // 创建气候
-		CreateRivers();     // 创建河流
+		CreateRegions();		// 创建区域
+		CreateLand();			// 创建陆地
+		ErodeLand();			// 创建侵蚀
+		EliminateElevation();	// 消除高度为3的高度
+		CreateClimate();		// 创建气候
+		CreateRivers();			// 创建河流
+		SpawnPopes(5);
 
 		SetTerrainType();
 		for (int i = 0; i < cellCount; i++)
 		{
 			grid.GetCell(i).SearchPhase = 0;
+			grid.SetGameBoardInfo(grid.GetCell(i));
 		}
 		Random.state = originalRandomState;
 	}
@@ -224,6 +233,9 @@ public class HexMapGenerator : MonoBehaviour
 			Debug.LogWarning("Failed to use up " + landBudget + " land budget.");
 			landCells -= landBudget;
 		}
+
+
+	
 	}
 
 	/// <summary>
@@ -438,6 +450,7 @@ public class HexMapGenerator : MonoBehaviour
 		return budget;
 	}
 
+
 	/// <summary>
 	/// 下沉地形（在指定区域内随机选择一个起点并逐步降低地形高度）
 	/// </summary>
@@ -560,13 +573,15 @@ public class HexMapGenerator : MonoBehaviour
 				{
 					if (cell.Elevation >= rockDesertElevation)
 					{
-						cellBiome.terrain = 3; // Stone（或岩石/荒漠）
+						//cellBiome.terrain = 3; // Stone（或岩石/荒漠）
+						cellBiome.terrain = (int)TerrainTextureType.Swamp;	// 修改为沼泽地形 25.10.
 					}
 				}
 				// 如果格子恰好在最高海拔（elevationMaximum），则强制设为雪（4）
 				else if (cell.Elevation == elevationMaximum)
 				{
-					cellBiome.terrain = 4; // Snow（积雪）
+					//cellBiome.terrain = 4; // Snow（积雪）
+					cellBiome.terrain = (int)TerrainTextureType.Snow; // Snow（积雪）
 				}
 
 				// 根据最终的 terrain 决定植物等级变化：
@@ -629,42 +644,49 @@ public class HexMapGenerator : MonoBehaviour
 					// 最后默认回到 terrain = 1
 					if (cliffs + slopes > 3)
 					{
-						terrain = 1;
+						//terrain = (1);
+						terrain=(int)TerrainTextureType.Sand;
 					}
 					else if (cliffs > 0)
 					{
-						terrain = 3;
+						//terrain = 3;
+						terrain = (int)TerrainTextureType.Sand;
 					}
 					else if (slopes > 0)
 					{
-						terrain = 0;
+						//terrain = 0;
+						terrain = (int)TerrainTextureType.Sand;
 					}
 					else
 					{
-						terrain = 1;
+						//terrain = 1;
+						terrain = (int)TerrainTextureType.Sand;
 					}
 				}
 				// 如果海拔 >= waterLevel（理论上不应该发生在 IsUnderwater 为 true 的分支里，但为了安全处理）
 				else if (cell.Elevation >= waterLevel)
 				{
-					terrain = 1;
+					terrain =  (int)TerrainTextureType.Lake;
 				}
 				// 如果海拔 < 0（非常低的海底，深海）的处理
 				else if (cell.Elevation < 0)
 				{
-					terrain = 3;
+					//terrain = 3;
+					terrain = (int)TerrainTextureType.Swamp;
 				}
 				// 其它水下情况（中等深度）
 				else
 				{
-					terrain = 2;
+					//terrain = 2;
+					terrain = (int)TerrainTextureType.Lake;
 				}
 
 				// 特殊规则：如果判定为 terrain == 1（某种近岸/沙）但温度非常低（低于最冷温度段）
 				// 则把 terrain 改为 2（例如：冰/寒冷泥地/冻土）
 				if (terrain == 1 && temperature < temperatureBands[0])
 				{
-					terrain = 2;
+					//terrain = 2;
+					terrain = (int)TerrainTextureType.Snow;
 				}
 
 				// 写回格子的地形类型
@@ -1017,6 +1039,7 @@ public class HexMapGenerator : MonoBehaviour
 		}
 
 		ListPool<HexCell>.Add(erodibleCells);
+
 	}
 
 	bool IsErodible(HexCell cell)
@@ -1049,5 +1072,112 @@ public class HexMapGenerator : MonoBehaviour
 		HexCell target = candidates[Random.Range(0, candidates.Count)];
 		ListPool<HexCell>.Add(candidates);
 		return target;
+	}
+
+	void EliminateElevation(){
+
+		for (int i = 0; i < cellCount; i++)
+		{
+			if (grid.GetCell(i).Elevation >= waterLevel && grid.GetCell(i).Elevation == 3)
+			{
+				// 随机将高度为3的格子设定为2或者4
+				grid.GetCell(i).Elevation = (Random.value < 0.5f) ? 2 : 4;
+			}
+		}
+	}
+
+	/// <summary>
+	/// 为玩家分配两个起点：在非水下且海拔为1的格子中随机选取两个，
+	/// 要求两者直线格子距离（HexCoordinates.DistanceTo）严格大于 minDistance。
+	/// 若随机尝试失败，则从所有候选中选择距离最远的一对（如果存在）。
+	/// 成功后会把 player1StartCell/player2StartCell 赋值，并（可选）用指定地形标记它们。
+	/// </summary>
+	void SpawnPopes(int minDistance)
+	{
+		HexCell player1StartCell = null;
+		HexCell player2StartCell = null;
+
+		List<HexCell> candidates = ListPool<HexCell>.Get();
+		for (int i = 0; i < cellCount; i++)
+		{
+			HexCell c = grid.GetCell(i);
+			if (!c.IsUnderwater && c.Elevation == 1)
+			{
+				candidates.Add(c);
+			}
+		}
+
+		if (candidates.Count < 2)
+		{
+			ListPool<HexCell>.Add(candidates);
+			Debug.LogWarning("AssignPlayerStartPositions: not enough elevation==1 land cells (need >=2).");
+			return;
+		}
+
+		// 随机尝试若干次寻找满足距离的随机一对
+		for (int attempt = 0; attempt < 1000; attempt++)
+		{
+			int i1 = Random.Range(0, candidates.Count);
+			int i2 = Random.Range(0, candidates.Count - 1);
+			if (i2 >= i1) i2 += 1; // 确保 i2 != i1
+
+			HexCell a = candidates[i1];
+			HexCell b = candidates[i2];
+			int dist = a.Coordinates.DistanceTo(b.Coordinates);
+			if (dist > minDistance)
+			{
+				player1StartCell = a;
+				player2StartCell = b;
+				break;
+			}
+		}
+
+		// 如果随机尝试失败，选择候选集中最远的一对
+		if (player1StartCell == null)
+		{
+			int bestDist = -1;
+			HexCell bestA = null;
+			HexCell bestB = null;
+			for (int i = 0; i < candidates.Count; i++)
+			{
+				for (int j = i + 1; j < candidates.Count; j++)
+				{
+					int d = candidates[i].Coordinates.DistanceTo(candidates[j].Coordinates);
+					if (d > bestDist)
+					{
+						bestDist = d;
+						bestA = candidates[i];
+						bestB = candidates[j];
+					}
+				}
+			}
+			if (bestA != null && bestB != null)
+			{
+				if (bestDist > minDistance)
+				{
+					player1StartCell = bestA;
+					player2StartCell = bestB;
+					Debug.Log("AssignPlayerStartPositions: random attempts failed, used farthest pair.");
+				}
+				else
+				{
+					// 仍然不满足距离要求，只能接受当前最远的一对（或放弃）
+					player1StartCell = bestA;
+					player2StartCell = bestB;
+					Debug.LogWarning("AssignPlayerStartPositions: Could not find pair with distance > " + minDistance + ". Using farthest available pair with distance " + bestDist + ".");
+				}
+			}
+		}
+
+		// 可视化/标记（可选）
+		if (player1StartCell != null && player2StartCell != null)
+		{
+			player1StartCell.SpecialIndex = (int)SpecialIndexType.Pope;
+			player2StartCell.SpecialIndex = (int)SpecialIndexType.Pope;
+			
+			Debug.Log("Assigned player start cells: P1=(" + player1StartCell.Coordinates.X + "," + player1StartCell.Coordinates.Z + ")  P2=(" + player2StartCell.Coordinates.X + "," + player2StartCell.Coordinates.Z + ")");
+		}
+
+		ListPool<HexCell>.Add(candidates);
 	}
 }

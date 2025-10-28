@@ -288,6 +288,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b138e65e88b578d4c83051eafae7a95a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nowChooseUnitID: 0
 --- !u!114 &131122553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -329,6 +330,7 @@ GameObject:
   m_Component:
   - component: {fileID: 153493155}
   - component: {fileID: 153493154}
+  - component: {fileID: 153493156}
   m_Layer: 0
   m_Name: PlayerUnitData
   m_TagString: Untagged
@@ -365,6 +367,18 @@ Transform:
   - {fileID: 1615081801}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &153493156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153493153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc6c1792bcff1224487a4159e605d907, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &157152612
 GameObject:
   m_ObjectHideFlags: 0
@@ -567,6 +581,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _HexGrid: {fileID: 1913528995}
+  doubleClickTimeThreshold: 0.3
   FarmerPrefab: {fileID: 7153972553235425938, guid: 9f1317f8bb1f13e4b8e70e285367a1b5,
     type: 3}
   SoldierPrefab: {fileID: 7153972553235425938, guid: 67968626a9313654eb98a739ff2f6e17,
@@ -2076,7 +2091,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1805311232}
   hexGrid: {fileID: 1913528995}
-  isLoadMap: 1
+  isLoadMap: 0
   mapFileName: Example.map
   mapSize: 0
 --- !u!1 &1475043584
@@ -2338,11 +2353,26 @@ MonoBehaviour:
     religion: 2
     pieceDataSO: {fileID: 11400000, guid: 21c857e2cd3d8264c9c12c4962da076f, type: 2}
   - pieceType: 1
+    religion: 2
+    pieceDataSO: {fileID: 11400000, guid: 5a03f93e02fa91e48b7075aa46fd20a9, type: 2}
+  - pieceType: 3
+    religion: 2
+    pieceDataSO: {fileID: 11400000, guid: b75b64d084bd3ef448ac52a4ee630049, type: 2}
+  - pieceType: 4
+    religion: 2
+    pieceDataSO: {fileID: 11400000, guid: d02eddb2f4d90fc4fb838f1301834f8f, type: 2}
+  - pieceType: 2
     religion: 1
-    pieceDataSO: {fileID: 11400000, guid: 776c5a42793bf8a4187287df7504d7e9, type: 2}
+    pieceDataSO: {fileID: 11400000, guid: 180396f7199929d4b971771f761055a3, type: 2}
+  - pieceType: 1
+    religion: 1
+    pieceDataSO: {fileID: 11400000, guid: 6c89066f4ae5c8a439ff48690a0b33fc, type: 2}
   - pieceType: 3
     religion: 1
-    pieceDataSO: {fileID: 11400000, guid: eb6e6fb5314af3f42abfc1814ff5bacf, type: 2}
+    pieceDataSO: {fileID: 11400000, guid: 48d72298df754da498ba9893a470a905, type: 2}
+  - pieceType: 4
+    religion: 1
+    pieceDataSO: {fileID: 11400000, guid: 54c7b2bfbe406f24a98cf0e66fc98b22, type: 2}
 --- !u!1 &1677051645
 GameObject:
   m_ObjectHideFlags: 0
@@ -2671,9 +2701,9 @@ MonoBehaviour:
   landPercentage: 50
   highRiseProbability: 0.25
   sinkProbability: 0.2
-  waterLevel: 3
+  waterLevel: 1
   elevationMinimum: -2
-  elevationMaximum: 8
+  elevationMaximum: 6
   mapBorderX: 5
   mapBorderZ: 5
   regionCount: 1
