@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dac1587c651fb62439cebad99caba672, type: 3}
+  m_Name: RI_SilkReligionPopeData
+  m_EditorClassIdentifier: 
+  originalPID: 0
+  pieceName: "\u7D72\u7E54\u6559_\u6559\u7687"
+  populationCost: 5
+  resourceCost: 10
+  initialLevel: 0
+  aPRecoveryRate: 10
+  moveAPCost: 10
+  moveSpeed: 1
+  canAttack: 0
+  attackPower: 0
+  attackRange: 0
+  attackCooldown: 1
+  attackAPCost: 20
+  maxHPByLevel:
+  - 5
+  - 7
+  - 9
+  - 9
+  maxAPByLevel:
+  - 5
+  - 3
+  - 3
+  - 3
+  attackPowerByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  hpUpgradeCost: 060000000800000000000000
+  apUpgradeCost: 060000000000000000000000
+  piecePrefab: {fileID: 8868254160552346048, guid: 1724c1e5396873943a03922f74eff83a,
+    type: 3}
+  swapCooldown: 05000000030000000300000003000000
+  hpBuff: 00000000000000000000000000000000
+  atkBuff: 01000000010000000100000001000000
+  convertBuff:
+  - 0
+  - 0
+  - 0
+  - 0
+  swapCooldownUpgradeCost: 0600000000000000
+  buffUpgradeCost: 060000000800000000000000

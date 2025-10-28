@@ -24,6 +24,12 @@ public class Farmer : Piece
 
         base.Initialize(data, playerID);
     }
+    //25.10.26 RI 添加SOData回调
+    public PieceDataSO GetUnitDataSO()
+    {
+        return farmerData;
+    }
+
 
     /// <summary>
     /// スキルレベルを設定

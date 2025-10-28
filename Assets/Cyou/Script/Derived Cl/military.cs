@@ -2,6 +2,7 @@ using GameData;
 using GamePieces;
 
 using UnityEngine;
+using UnityEngine.Playables;
 
 /// <summary>
 /// 軍隊ユニットクラス
@@ -30,6 +31,11 @@ public class MilitaryUnit : Piece
             specialSkillAvailable = false;
     }
 
+    //25.10.26 RI 添加SOData回调
+    public PieceDataSO GetUnitDataSO()
+    {
+        return militaryData;
+    }
     /// <summary>
     /// 攻撃実行
     /// </summary>

@@ -901,6 +901,9 @@ public class HexGrid : MonoBehaviour
 		infor.Cells3DPos = cell.Position;
 		infor.id = cell.Index;
 
+		// 25.10.26 RI 添加起始位置
+		infor.bIsStartPos = cell.IsStartPos;
+
 
 		// 判断是否有水
 		if (cell.IsUnderwater || cell.Elevation > 2)

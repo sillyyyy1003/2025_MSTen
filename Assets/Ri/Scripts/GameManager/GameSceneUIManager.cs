@@ -445,7 +445,7 @@ public class GameSceneUIManager : MonoBehaviour
         }
 
         // 尝试创建单位
-        if (_PlayerOpManager.TryCreateUnit(PlayerUnitType.Farmer))
+        if (_PlayerOpManager.TryCreateUnit(CardType.Farmer))
         {
             ResourcesCount -= 10;
             SetResourcesCount(ResourcesCount);
@@ -465,7 +465,7 @@ public class GameSceneUIManager : MonoBehaviour
             return;
         }
         // 尝试创建单位
-        if (_PlayerOpManager.TryCreateUnit(PlayerUnitType.Soldier))
+        if (_PlayerOpManager.TryCreateUnit(CardType.Solider))
         {
             ResourcesCount -= 20;
             SetResourcesCount(ResourcesCount);
@@ -485,18 +485,18 @@ public class GameSceneUIManager : MonoBehaviour
             return;
         }
 
-        //// 尝试创建传教士
-        //if (_PlayerOpManager.TryCreateUnit(PlayerUnitType.Missionary))
-        //{
-        //    ResourcesCount -= 30;
-        //    SetResourcesCount(ResourcesCount);
-        //    Debug.Log("成功创建传教士");
-        //}
-        //else
-        //{
-        //    Debug.LogWarning("创建传教士失败 - 请先选择一个空格子");
-        //    ShowNoSelectedCell();
-        //}
+        // 尝试创建传教士
+        if (_PlayerOpManager.TryCreateUnit(CardType.Missionary))
+        {
+            ResourcesCount -= 30;
+            SetResourcesCount(ResourcesCount);
+            Debug.Log("成功创建传教士");
+        }
+        else
+        {
+            Debug.LogWarning("创建传教士失败 - 请先选择一个空格子");
+            ShowNoSelectedCell();
+        }
     }
     private void SetResourcesCount(int count)
     {
