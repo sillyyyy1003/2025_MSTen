@@ -36,6 +36,11 @@ public class Missionary : Piece
         base.Initialize(data, playerID);
     }
 
+    //25.10.26 RI 添加SOData回调
+    public PieceDataSO GetUnitDataSO()
+    {
+        return missionaryData;
+    }
     #region スキルレベル管理
 
     /// <summary>

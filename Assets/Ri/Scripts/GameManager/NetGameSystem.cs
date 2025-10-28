@@ -132,7 +132,9 @@ public class UnitAddMessage
     public int PlayerId;
     public int UnitType; // PlayerUnitType as int
     public int PosX;
-    public int PosY;
+    public int PosY; 
+    public string UnitDataSOJson; // PieceDataSO序列化为JSON字符串
+    public bool IsUsed; // 单位是否已使用
 }
 
 [Serializable]
@@ -535,12 +537,7 @@ public class NetGameSystem : MonoBehaviour
 
                         OnClientConnected?.Invoke(clientId);
                     }
-                    //// 转发其他消息
-                    //else if (message.MessageType != NetworkMessageType.PING &&
-                    //         message.MessageType != NetworkMessageType.PONG)
-                    //{
-                    //    BroadcastToClients(message, message.SenderId);
-                    //}
+                 
                     // 转发其他消息
                     else if (message.MessageType != NetworkMessageType.PING &&
                              message.MessageType != NetworkMessageType.PONG &&
@@ -732,39 +729,6 @@ public class NetGameSystem : MonoBehaviour
             return;
         }
 
-
-        // 检查所有玩家是否准备完毕
-        //bool allReady = true;
-        //foreach (var player in roomPlayers)
-        //{
-        //    if (!player.IsReady)
-        //    {
-        //        allReady = false;
-        //        break;
-        //    }
-        //}
-
-        //if (!allReady)
-        //{
-        //    Debug.LogWarning("还有玩家未准备!");
-        //    return;
-        //}
-        //isGameStarted = true;
-
-        //// 发送游戏开始消息
-        //NetworkMessage startMsg = new NetworkMessage
-        //{
-        //    MessageType = NetworkMessageType.GAME_START,
-        //    SenderId = 0
-        //};
-
-        //BroadcastToClients(startMsg, uint.MaxValue);
-
-        //// 本地也触发游戏开始
-        //MainThreadDispatcher.Enqueue(() => {
-        //    OnGameStarted?.Invoke();
-        //});
-
         // 创建游戏开始数据
 
         int[] playerIds = new int[connectedPlayers.Count];
@@ -801,7 +765,7 @@ public class NetGameSystem : MonoBehaviour
 
     private int[] AssignStartPositions()
     {
-        // 根据玩家数量分配起始位置
+        // 根据玩家数量分配起始位置，后续起始位置实装后不需要
         if (gameManage != null && gameManage.GetBoardCount() > 0)
         {
             int boardCount = gameManage.GetBoardCount();
@@ -810,6 +774,14 @@ public class NetGameSystem : MonoBehaviour
             // 简单分配: 第一个玩家在0, 最后一个玩家在最后一个格子
             for (int i = 0; i < positions.Length; i++)
             {
+                // 更改为保存的起始位置
+                //if (i == 0)
+                //    positions[i] = 0;
+                //else if (i == positions.Length - 1)
+                //    positions[i] = boardCount - 1;
+                //else
+                //    positions[i] = (boardCount / positions.Length) * i;
+
                 if (i == 0)
                     positions[i] = 0;
                 else if (i == positions.Length - 1)
@@ -1526,7 +1498,7 @@ public class NetGameSystem : MonoBehaviour
         UnitAddMessage data = JsonConvert.DeserializeObject<UnitAddMessage>(message.JsonData);
 
         Unity.Mathematics.int2 pos = new Unity.Mathematics.int2(data.PosX, data.PosY);
-        PlayerUnitType unitType = (PlayerUnitType)data.UnitType;
+        CardType unitType = (CardType)data.UnitType;
 
         Debug.Log($"[网络] 玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
 

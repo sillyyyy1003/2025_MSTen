@@ -22,6 +22,10 @@ public struct BoardInfor
 
     // 每个格子的地块信息 是否可通过
     public TerrainType type;
+    
+    // 是否是起始位置
+    public bool bIsStartPos;
+
 
 };
 
@@ -75,7 +79,6 @@ public class GameManage : MonoBehaviour
 
     // 玩家起始位置ID列表
     private List<int> PlayerStartPositions = new List<int>();
-
 
     // 棋盘信息List与Dictionary
     private List<BoardInfor> GameBoardInfor = new List<BoardInfor>();
@@ -218,7 +221,7 @@ public class GameManage : MonoBehaviour
             Debug.Log($"创建玩家数据: {playerId}");
         }
 
-        // 保存起始位置
+        // 保存起始位置，后续更改
         foreach (var pos in data.StartPositions)
         {
             PlayerStartPositions.Add(pos);
@@ -242,7 +245,6 @@ public class GameManage : MonoBehaviour
         }
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
-        Debug.Log($"棋盘格子数: {GameBoardInforDict.Count}");
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
@@ -257,7 +259,7 @@ public class GameManage : MonoBehaviour
                 int startPos = PlayerStartPositions[localPlayerIndex];
                 Debug.Log($"本地玩家起始位置: {startPos}");
 
-                // 使用正确的起始位置初始化
+                // 使用起始位置初始化
                 _PlayerOperation.InitPlayer(_LocalPlayerID, startPos);
             }
             else
@@ -285,30 +287,11 @@ public class GameManage : MonoBehaviour
 
         SetIsGamingOrNot(true);
      
+        // 使用协程开始游戏，避免脚本Start执行顺序问题
            if (!bIsStartSingleGame)
                 StartCoroutine(TrueStartGame());
         
-        //if (bIsInGaming && GameBoardInforDict.Count > 0)
-        //{
-        //    //// 添加默认玩家
-        //    //_LocalPlayerID = 0;
-        //    //AllPlayerIds.Add(0);
-        //    //AllPlayerIds.Add(1);
-
-        //    //_PlayerDataManager.CreatePlayer(0);
-        //    //_PlayerDataManager.CreatePlayer(1);
-
-        //    //// 添加玩家初始格子位置的id
-        //    //PlayerStartPositions.Add(0);
-        //    //PlayerStartPositions.Add(GameBoardInforDict.Count - 1);
-
-        //    //// 初始化本机玩家
-        //    //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
-
-        //    //Debug.Log("本地玩家初始化完毕");
-        //    //// 开始第一个回合
-        //    //StartTurn(0);
-        //}
+      
         return true;
     }
     private IEnumerator TrueStartGame()
@@ -326,8 +309,12 @@ public class GameManage : MonoBehaviour
             PlayerStartPositions.Add(0);
             PlayerStartPositions.Add(GameBoardInforDict.Count - 1);
 
-            // 初始化本机玩家
             _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+            // 初始化本机玩家
+            // 起始位置方法，待地图起始位置功能实装后使用
+            //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+            //_GameCamera.GetPlayerPosition(GameBoardInforDict[PlayerStartPositions[0]].Cells3DPos);
+
 
             Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合
@@ -633,6 +620,19 @@ public class GameManage : MonoBehaviour
 
         GameBoardInfor.Add(infor);
         GameBoardInforDict.Add(infor.id, infor);
+
+        // 正确的添加起始位置方式  
+        //if (infor.bIsStartPos)
+        //{
+        //    Debug.Log("Add start pos id :" + infor.id);
+        //    PlayerStartPositions.Add(infor.id);
+        //}
+        // 测试用
+        if (infor.id==24|| infor.id ==277)
+        {
+            Debug.Log("Add start pos id :" + infor.id);
+            PlayerStartPositions.Add(infor.id);
+        }
     }
 
   
