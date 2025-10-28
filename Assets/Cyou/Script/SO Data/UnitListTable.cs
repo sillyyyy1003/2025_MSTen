@@ -1,4 +1,4 @@
-using GameData;
+ï»¿using GameData;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,7 +22,7 @@ public class UnitListTable : MonoBehaviour
         public PieceDataSO PieceDataSO => pieceDataSO;
     }
 
-    [Header("‹îƒf[ƒ^’è‹`")]
+    [Header("Unit Data Table")]
     [SerializeField] private List<PieceDataEntry> pieceDataEntries = new List<PieceDataEntry>();
 
     private Dictionary<PieceDetail, PieceDataSO> pieceDataDict;
@@ -35,7 +35,7 @@ public class UnitListTable : MonoBehaviour
 
     private void InitializeDictionary()
     {
-        pieceDataDict=new Dictionary<PieceDetail, PieceDataSO> (pieceDataEntries.Count);//C#‚¾‚ÆCount()‚Å‚Í‚È‚­Count‚Å‚¢‚¢
+        pieceDataDict=new Dictionary<PieceDetail, PieceDataSO> (pieceDataEntries.Count);//C#ï¿½ï¿½ï¿½ï¿½Count()ï¿½Å‚Í‚È‚ï¿½Countï¿½Å‚ï¿½ï¿½ï¿½
 
         foreach(var entry in pieceDataEntries)
         {
@@ -46,7 +46,7 @@ public class UnitListTable : MonoBehaviour
             }
             else
             {
-                Debug.LogError($"Inspector“à‚ÅpieceDataEntry‚Ì’è‹`‚ª³‚µ‚¢‚©Šm”F‚µ‚Ä‚­‚¾‚³‚¢B");
+                Debug.LogError($"Inspector's pieceDataEntry Setting Error!");
             }
         }
     }
@@ -59,7 +59,7 @@ public class UnitListTable : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"{pD.PieceType},{pD.Religion}‚Ì‹î‚ÌSOƒf[ƒ^‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñB");
+            Debug.LogError($"{pD.PieceType},{pD.Religion}ï¿½Ì‹ï¿½ï¿½SOï¿½fï¿½[ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½Â‚ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½B");
             return null;
         }
     }

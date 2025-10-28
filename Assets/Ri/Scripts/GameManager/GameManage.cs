@@ -98,8 +98,12 @@ public class GameManage : MonoBehaviour
     public GameCamera _GameCamera;
     // 玩家操作管理器
     public PlayerOperationManager _PlayerOperation;
+
+    // 单位创建引用
+    public Instantiater _Instantiater;
     // 玩家数据管理器引用
     private PlayerDataManager _PlayerDataManager;
+
 
 
 
@@ -225,6 +229,7 @@ public class GameManage : MonoBehaviour
         if (_NetGameSystem != null && !_NetGameSystem.bIsServer)
         {
             _LocalPlayerID = (int)_NetGameSystem.bLocalClientId;
+            SceneStateManager.Instance.PlayerID = _LocalPlayerID;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
             // 临时方案: 假设第一个玩家是本地玩家
@@ -233,6 +238,7 @@ public class GameManage : MonoBehaviour
         else
         {
             _LocalPlayerID = 0; // 服务器默认是玩家0
+            SceneStateManager.Instance.PlayerID = _LocalPlayerID;
         }
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
@@ -313,10 +319,8 @@ public class GameManage : MonoBehaviour
             // 添加默认玩家
             _LocalPlayerID = 0;
             AllPlayerIds.Add(0);
-            AllPlayerIds.Add(1);
 
             _PlayerDataManager.CreatePlayer(0);
-            _PlayerDataManager.CreatePlayer(1);
 
             // 添加玩家初始格子位置的id
             PlayerStartPositions.Add(0);
