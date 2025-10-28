@@ -12,6 +12,19 @@ public enum TerrainType
 
 }
 
+public enum TerrainTextureType
+{
+	Sand=0,				// 海滩
+	Desert=1,			// 沙漠
+	Forest=2,			// 草地
+	RainForest=3,		// 雨林
+	FallingForest=4,	// 落叶林
+	Lake=5,				// 湖泊
+	Swamp=6,			// 沼泽
+	Snow=7,				// 雪地
+
+}
+
 public enum SpecialIndexType
 {
 	Pope = 1, // 教皇的初始位置	
