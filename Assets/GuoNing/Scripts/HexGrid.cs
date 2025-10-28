@@ -885,7 +885,7 @@ public class HexGrid : MonoBehaviour
 		return !cell.IsUnderwater  && cell.Elevation <= 2;
 	}
 
-	void SetGameBoardInfo(HexCell cell)
+	public void SetGameBoardInfo(HexCell cell)
 	{
 		// 25.9.23 RI add layer to each cell
 		cell.gameObject.layer = LayerMask.NameToLayer("Cell");

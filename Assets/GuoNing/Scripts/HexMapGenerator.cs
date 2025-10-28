@@ -196,6 +196,7 @@ public class HexMapGenerator : MonoBehaviour
 		for (int i = 0; i < cellCount; i++)
 		{
 			grid.GetCell(i).SearchPhase = 0;
+			grid.SetGameBoardInfo(grid.GetCell(i));
 		}
 		Random.state = originalRandomState;
 	}
