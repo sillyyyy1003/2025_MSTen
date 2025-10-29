@@ -29,6 +29,7 @@ public struct PlayerUnitData
         UnitType = type;
         Position = pos;
     }
+
 }
 
 
@@ -66,7 +67,6 @@ public struct PlayerData
         Debug.Log($"玩家 {PlayerID} 添加单位: {unitData.UnitType} at ({unitData.Position.x},{unitData.Position.y})");
     }
 
-
     // 移动单位
     public bool MoveUnit(int2 startPos, int2 endPos)
     {
@@ -99,8 +99,6 @@ public struct PlayerData
         return false;
     }
 
-
-
     // 查找单位
     public PlayerUnitData? FindUnitAt(int2 position)
     {
@@ -128,6 +126,7 @@ public struct PlayerData
     {
         return PlayerUnits.Count;
     }
+
 }
 
 public class PlayerDataManager : MonoBehaviour

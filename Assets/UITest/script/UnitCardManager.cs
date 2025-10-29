@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -27,6 +28,7 @@ public class UnitCardManager : MonoBehaviour
 
     public RectTransform singleContainer;
     public RectTransform doubleContainer;
+    public RectTransform cardContainer;
     public RectTransform deckContainer;
     public GameObject deckCount;
 
@@ -35,7 +37,8 @@ public class UnitCardManager : MonoBehaviour
 	public float stackedSpacing = 60f;   // 点击后右侧卡牌的堆叠间距
     public float openSpacing = 5f;//展开的时候卡牌最右侧与卡牌的间距
     public float startSpacing = 5f;//框最左侧与卡牌的间距
-    public float deckSpacing = 1f;//仓库里的卡牌与卡牌的间距
+    public float deckSpacing = 5f;//仓库里的卡牌与卡牌的间距
+    public float deckstartSpacing = 1f;//仓库里的卡牌与卡牌的间距
     public bool isDeckSelected = false;
 
 
@@ -54,13 +57,16 @@ public class UnitCardManager : MonoBehaviour
 	private float cardWidth = 1f;//卡牌宽度
     private float detailCardWidth = 1f;//展开卡牌宽度
     private float openOffset = 1f;      // 展开卡牌导致的右移距离(从卡牌最左边为起点开始计算)
-    private Vector2 startPosition_Double = new Vector2(0, 0);
-    private Vector2 startPosition_Single = new Vector2(0, 0);
+    private float containerWidth = 1f;//卡牌槽的原始宽度，当大于这个宽度的时候按照最大宽度重新拉长
+    private float viewWidth = 1f;//卡牌滚动窗口的固定大小
+    private Vector2 startPosition_Container = new Vector2(0, 0);
 
     private CardType currentCardType = CardType.None;
     private CardType targetCardType = CardType.None;
 
     private bool enableSingleMode = true;
+
+    public int openIndex = -1;
 
     //fake data
 
@@ -94,8 +100,9 @@ public class UnitCardManager : MonoBehaviour
         cardWidth = cardPrefab.transform.Find("Card").GetComponent<RectTransform>().sizeDelta.x;
         detailCardWidth = cardPrefab.transform.Find("DetailCard").GetComponent<RectTransform>().sizeDelta.x;
 		openOffset = detailCardWidth + openSpacing + cardWidth;
-		startPosition_Double = new Vector2(-doubleContainer.sizeDelta.x/2 + startSpacing+ cardWidth/2, 0);
-        startPosition_Single = new Vector2(-singleContainer.sizeDelta.x / 2 + startSpacing + cardWidth / 2, 0);
+        containerWidth = cardContainer.sizeDelta.x;
+        viewWidth = cardContainer.sizeDelta.x;
+        startPosition_Container = new Vector2(startSpacing, 0);
 
 
     }
@@ -110,12 +117,11 @@ public class UnitCardManager : MonoBehaviour
 	{
         UpdateCards();
 
-
-
-
     }
 
-    #region ---- 生成与销毁 ----
+    #region ==== 卡牌生成与销毁 ====
+
+    /// <summary>根据玩家数据生成卡牌（暂留）PlayerData==>UIData</summary>
     void GenerateCardList(PlayerData playerData)
     {
 
@@ -128,6 +134,7 @@ public class UnitCardManager : MonoBehaviour
 
     }
 
+    /// <summary>生成全部的激活的卡牌</summary>
     void GenerateActiveCards(int count,CardType type)
 	{
         if (type == CardType.None) return;
@@ -137,6 +144,7 @@ public class UnitCardManager : MonoBehaviour
 
     }
 
+    /// <summary>生成全部的储存区的卡牌</summary>
     void GenerateStoredCards(int count, CardType type)
     {
         if (count <= 0)
@@ -158,23 +166,22 @@ public class UnitCardManager : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// 添加单张激活的卡牌
-    /// </summary>
+    /// <summary>添加单张激活的卡牌</summary>
     public void AddActiveCard(CardType type,int? fakeIndex = null)
 	{
         if (type == CardType.None) return;
 
         int i = fakeIndex ?? cards.Count;
-		GameObject cardObj = Instantiate(cardPrefab, type==CardType.Pope? singleContainer:doubleContainer);
+		GameObject cardObj = Instantiate(cardPrefab, type==CardType.Pope? singleContainer:cardContainer);
         UnitCard card = cardObj.GetComponent<UnitCard>();
 		card.SetSprite(type);
 
-        RectTransform rect = cardObj.GetComponent<RectTransform>();
-		rect.anchoredPosition = type == CardType.Pope ? startPosition_Single : startPosition_Double + new Vector2(i * (cardSpacing+cardWidth), 0);
+        if (type == CardType.Pope) card.alwaysOpen = true;
 
-		card.dataText_HpText.text = $"HP: {100 + i * 10}";
-		card.dataText_AttackText.text = $"Attack: {20 + i * 5}";
+
+        RectTransform rect = cardObj.GetComponent<RectTransform>();
+		rect.anchoredPosition = startPosition_Container + new Vector2(i * (cardSpacing+cardWidth), 0);
+
 
         cards.Add(card);
 
@@ -184,8 +191,10 @@ public class UnitCardManager : MonoBehaviour
 		Button cardBtn = card.unitCardImage.GetComponent<Button>();
 		cardBtn.onClick.AddListener(() => OnCardClicked(index));
 
-	}
 
+    }
+
+    /// <summary>添加单张储存区卡牌</summary>
     public void AddStoredCard(CardType type, int? fakeIndex = null)
     {
         if (type == CardType.None|| type == CardType.Pope) return;
@@ -202,7 +211,7 @@ public class UnitCardManager : MonoBehaviour
 
         // 计算堆叠偏移位置（右堆叠）
         RectTransform rect = cardObj.GetComponent<RectTransform>();
-        Vector2 basePos = new Vector2(-deckContainer.sizeDelta.x / 2 + 10f + cardWidth / 2f + i * deckSpacing * 5f, 0f);
+        Vector2 basePos = new Vector2(deckstartSpacing + i * deckSpacing, 0f);
         rect.anchoredPosition = basePos;
 
 
@@ -222,7 +231,7 @@ public class UnitCardManager : MonoBehaviour
 
     }
 
-
+    /// <summary>清空所有卡牌的数据和显示</summary>
     public void ClearAllCards()
     {
         GameObject[] allObjects = FindObjectsOfType<GameObject>();
@@ -237,13 +246,11 @@ public class UnitCardManager : MonoBehaviour
         cards.Clear();
         deck.Clear();
         deckCount.SetActive(false);
+        openIndex = -1;
     }
 
 
-
-
-
-
+    /// <summary>更新卡牌显示</summary>
     public void UpdateCards()
 	{
         if (!enableSingleMode)
@@ -267,35 +274,42 @@ public class UnitCardManager : MonoBehaviour
             if (targetCardType != currentCardType)
             {
                 ClearAllCards();
-                GenerateActiveCards(1, targetCardType);
+                GenerateActiveCards(targetCardCount, targetCardType);
                 currentCardType = targetCardType;
-
+                currentCardCount = targetCardCount;
             }
 
 
         }
 
+        AdjustContainerWidth();
 
 
     }
 
-	#endregion
+    #endregion
 
-	#region ---- 点击与布局 ----
+    #region ==== 卡牌点击与交互 ====
 
-
-	void OnCardClicked(int clickedIndex)
+    void OnCardClicked(int clickedIndex)
 	{
-		if (cards[clickedIndex].GetPanelOpen())
+        if (cards[clickedIndex].alwaysOpen) return;
+
+        if (cards[clickedIndex].GetPanelOpen())
 		{
 			Debug.Log(cards[clickedIndex].GetPanelOpen());
 			RearrangeCards(clickedIndex, false);
-		}
+            openIndex = clickedIndex;
+
+        }
 		else
 		{
 			RearrangeCards(clickedIndex, true);
-		}
-	}
+            openIndex = -1;
+
+        }
+
+    }
 
     void OnDeckClicked()
 	{
@@ -314,56 +328,112 @@ public class UnitCardManager : MonoBehaviour
 
     }
 
+    #endregion
+
+    #region ==== 布局与位置控制 ====
+
+    /// <summary>调整容器宽度与视野位置</summary>
+    private void AdjustContainerWidth()
+    {
+        if (cardContainer == null || cards.Count == 0) return;
+
+        RectTransform rt = cards[currentCardCount - 1].GetComponent<RectTransform>();
+        float rightMostX = rt.anchoredPosition.x;
+        bool isOpen = cards[currentCardCount - 1].GetPanelOpen();
+
+        if (isOpen)
+        {
+            // 展开状态使用扩展后的宽度
+            rightMostX = rightMostX + openOffset + startSpacing;
+        }
+        else
+        {
+            // 未展开使用普通宽度
+            rightMostX = rightMostX + cardWidth + startSpacing;
+        }
+
+        // === 设置容器宽度 + 自动定位到打开的卡牌===
+        if (rightMostX != containerWidth)
+        {
+            Vector2 size = cardContainer.sizeDelta;
+            cardContainer.sizeDelta = new Vector2(rightMostX, size.y);
+
+            containerWidth = rightMostX;
+
+            if (openIndex >= 0 && openIndex < cards.Count)
+            {
+                RectTransform targetRT = cards[openIndex].GetComponent<RectTransform>();
+
+                // 卡牌右边界 = 位置 + 宽度展开
+                float targetRight = targetRT.anchoredPosition.x + openOffset;
+
+                // 如果内容超出视口宽才需要滚动,滚动到最右侧
+                if (targetRight > viewWidth)
+                {
+                    Vector2 pos = cardContainer.anchoredPosition;
+                    cardContainer.anchoredPosition = new Vector2(viewWidth - rightMostX, pos.y);
+                }
+            }
+        }
 
 
-    /// <summary>
-    /// 计算卡牌的基线位置（不随动画变化）
-    /// </summary>
+
+        // 可选：强制刷新布局
+        //Canvas.ForceUpdateCanvases();
+    }
+
+
+    /// <summary>自动聚焦到展开的卡牌  根据CardId去取 CardType</summary>
+    private void SetContainerLookAt()
+    {
+        
+
+    }
+
+    /// <summary>计算卡牌的基线位置（不随动画变化）</summary>
     Vector2 GetBasePosition(int index)
     {
 
-        if (enableSingleMode) return startPosition_Single + new Vector2(index * (cardSpacing + cardWidth), 0f);
+        return startPosition_Container + new Vector2(index * (cardSpacing + cardWidth), 0f);
+    }
+
+    /// <summary>重排卡牌：只移动右侧的卡牌</summary>
+    /// <param name="openedIndex">当前点击的卡牌索引</param>
+    /// <param name="isClosing">是否是在关闭展开卡牌</param>
+    void RearrangeCards(int openedIndex, bool isClosing)
+    {
+        StopAllCoroutines();
+        if (isClosing)
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                RectTransform rect = cards[i].GetComponent<RectTransform>();
+                Vector2 startPos = rect.anchoredPosition;
+                Vector2 targetPos = GetBasePosition(i);
+
+                StartCoroutine(MoveTo(rect, startPos, targetPos));
+            }
+        }
+        else
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (i <= openedIndex) continue;
+
+                RectTransform rect = cards[i].GetComponent<RectTransform>();
+                Vector2 startPos = GetBasePosition(i);
+                Vector2 targetPos = GetBasePosition(openedIndex) + new Vector2(openOffset + (i - openedIndex - 1) * stackedSpacing, 0f);
+
+                StartCoroutine(MoveTo(rect, startPos, targetPos));
+            }
 
 
-        return startPosition_Double + new Vector2(index * (cardSpacing + cardWidth), 0f);
-	}
-
-	/// <summary>
-	/// 重排卡牌：只移动右侧的卡牌
-	/// </summary>
-	/// <param name="openedIndex">当前点击的卡牌索引</param>
-	/// <param name="isClosing">是否是在关闭展开卡牌</param>
-	void RearrangeCards(int openedIndex, bool isClosing)
-	{
-		StopAllCoroutines();
-		if (isClosing)
-		{
-			for (int i = 0; i < cards.Count; i++)
-			{
-				RectTransform rect = cards[i].GetComponent<RectTransform>();
-				Vector2 startPos = rect.anchoredPosition;
-				Vector2 targetPos= GetBasePosition(i);
-
-				StartCoroutine(MoveTo(rect, startPos, targetPos));
-			}
-		}
-		else
-		{
-			for (int i = 0; i < cards.Count; i++)
-			{
-				if(i<=openedIndex)continue;
-
-				RectTransform rect = cards[i].GetComponent<RectTransform>();
-				Vector2 startPos = GetBasePosition(i);
-				Vector2 targetPos = GetBasePosition(openedIndex)+ new Vector2(openOffset + (i - openedIndex - 1) * stackedSpacing, 0f);
-		
-				StartCoroutine(MoveTo(rect, startPos, targetPos));
-			}
+        }
 
 
-		}
-	}
+    }
 
+    /// <summary>关闭所有展开的卡牌</summary>
     public void CloseAllCards()
     {
         bool findOpenCard = false;
@@ -396,19 +466,28 @@ public class UnitCardManager : MonoBehaviour
 
     }
 
-
+    /// <summary>平滑移动到目标位置</summary>
     private IEnumerator MoveTo(RectTransform rect, Vector2 start, Vector2 target)
-	{
-		float t = 0f;
-		while (t < 1f)
-		{
-			t += Time.deltaTime * 6f;
-			rect.anchoredPosition = Vector2.Lerp(start, target, t);
-			yield return null;
-		}
-		rect.anchoredPosition = target;
-	}
+    {
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime * 6f;
+            rect.anchoredPosition = Vector2.Lerp(start, target, t);
+            yield return null;
+        }
+        rect.anchoredPosition = target;
+    }
 
+
+
+    #endregion
+
+
+    #region ==== 模式与状态 ====
+
+    /// <summary>设置牌山选中与否：牌山选中的时候，背景变色，点击购买会买到牌山里</summary>
+    /// <param name="tf"></param>
     public void SetDeckSelected(bool tf)
     {
 
@@ -424,6 +503,13 @@ public class UnitCardManager : MonoBehaviour
 
     }
 
+    /// <summary>牌山是否处于选中状态</summary>
+    public bool IsDeckSelected()
+    {
+        return isDeckSelected;
+    }
+
+    /// <summary>教皇的单张卡显示模式</summary>
     public void EnableSingleMode(bool tf)
     {
         if (enableSingleMode == tf) return;
@@ -448,15 +534,18 @@ public class UnitCardManager : MonoBehaviour
 
     }
 
-
+    /// <summary>设置目前被选中表示的卡牌种类</summary>
     public void SetTargetCardType(CardType type)
     {
 
         targetCardType = type;
+        if (type == CardType.Pope) targetCardCount = 1;
 
+        //targetCardCount=PlayerDataManager.Instance.GetPl
 
     }
 
+    /// <summary>设置目前被选中表示的卡牌种类 需要PlayerDataManager去用</summary>
     public void AddCardCount(int num)
     {
         if (isDeckSelected)
@@ -474,7 +563,15 @@ public class UnitCardManager : MonoBehaviour
 
 
 
+
+
+
     #endregion
+
+
+
+
+
 
 
 
