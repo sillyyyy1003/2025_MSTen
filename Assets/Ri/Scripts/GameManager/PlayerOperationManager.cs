@@ -328,6 +328,8 @@ public class PlayerOperationManager : MonoBehaviour
     //         公有函数
     // *************************
 
+  
+
     /// <summary>
     /// 尝试在当前选中的空格子创建单位
     /// </summary>
@@ -426,6 +428,10 @@ public class PlayerOperationManager : MonoBehaviour
             PlayerDataManager.Instance.OnUnitMoved += OnUnitMovedHandler;
         }
     }
+
+    // *************************
+    //        回合相关
+    // *************************
 
     // 回合开始
     public void TurnStart()
@@ -537,7 +543,7 @@ public class PlayerOperationManager : MonoBehaviour
     // *************************
 
 
-    // 在指定位置创建单位实例
+    // 在指定的格子创建单位实例
     private void CreateUnitAtPosition(CardType unitType, int cellId)
     {
         BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(cellId);
@@ -593,6 +599,7 @@ public class PlayerOperationManager : MonoBehaviour
                 break;
             case PieceType.Pope:
                 unitData = unit.GetComponent<Pope>().GetUnitDataSO();
+                _HexGrid.GetCell(cellId).Walled = true ;
                 break;
         }
 
@@ -640,6 +647,9 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
+    // *************************
+    //         单位相关
+    // *************************
 
     // 创建玩家教皇
     private void CreatePlayerPope(int startBoardID)
@@ -654,30 +664,9 @@ public class PlayerOperationManager : MonoBehaviour
 
         CreateUnitAtPosition(CardType.Pope, startBoardID);
 
-
-        //// 在起始位置创建一个初始单位
-        //int2 startPos = GameManage.Instance.GetBoardInfor(startBoardID).Cells2DPos;
-        //Vector3 worldPos = GameManage.Instance.GetBoardInfor(startBoardID).Cells3DPos;
-
-        //// 添加到数据
+      
+        GameManage.Instance._GameCamera.GetPlayerPosition(GameManage.Instance.FindCell(startBoardID).Cells3DPos);
         
-        //PlayerDataManager.Instance.AddUnit(localPlayerId, CardType.Pope, startPos);
-
-        //// 创建GameObject
-        //GameObject prefab = FarmerPrefab != null ? FarmerPrefab : GameObject.CreatePrimitive(PrimitiveType.Cube);
-        //GameObject unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
-
-        //unit.transform.position = new Vector3(
-        //    unit.transform.position.x,
-        //    unit.transform.position.y + 6.5f,
-        //    unit.transform.position.z
-        //);
-
-        //// 保存引用
-        //localPlayerUnits[startPos] = unit;
-        //GameManage.Instance.SetCellObject(startPos, unit);
-
-        //Debug.Log($"在 ({startPos.x},{startPos.y}) 创建了初始单位");
     }
 
     // 创建敌方单位
@@ -827,6 +816,11 @@ public class PlayerOperationManager : MonoBehaviour
     {
         _HexGrid.GetCell(cell).EnableHighlight(Color.red);
     }
+
+    // *************************
+    //      单位动作相关
+    // *************************
+
 
     // 攻击单位(示例实现)
     private void AttackUnit(int2 targetPos, int targetCellId)
