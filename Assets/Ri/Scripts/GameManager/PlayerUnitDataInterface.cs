@@ -37,7 +37,11 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // **********接口部分***********
     // *****************************
 
-    // 拿到某种棋子的已上场的key列表
+    /// <summary>
+    /// 拿到某种棋子的已上场的key列表
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
     public List<int> GetUnitDListByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type);

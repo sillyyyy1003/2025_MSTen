@@ -615,24 +615,23 @@ public class GameManage : MonoBehaviour
     public void SetGameBoardInfor(BoardInfor infor)
     {
         // 如果已经储存数据 清除当前数据
-        GameBoardInfor.Clear();
-        GameBoardInforDict.Clear();
-
+        //GameBoardInfor.Clear();
+        //GameBoardInforDict.Clear();
         GameBoardInfor.Add(infor);
         GameBoardInforDict.Add(infor.id, infor);
 
         // 正确的添加起始位置方式  
-        //if (infor.bIsStartPos)
-        //{
-        //    Debug.Log("Add start pos id :" + infor.id);
-        //    PlayerStartPositions.Add(infor.id);
-        //}
-        // 测试用
-        if (infor.id==24|| infor.id ==277)
+        if (infor.bIsStartPos)
         {
             Debug.Log("Add start pos id :" + infor.id);
             PlayerStartPositions.Add(infor.id);
         }
+        // 测试用
+        //if (infor.id==24|| infor.id ==277)
+        //{
+        //    Debug.Log("Add start pos id :" + infor.id);
+        //    PlayerStartPositions.Add(infor.id);
+        //}
     }
 
   
