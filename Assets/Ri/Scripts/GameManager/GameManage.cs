@@ -615,8 +615,8 @@ public class GameManage : MonoBehaviour
     public void SetGameBoardInfor(BoardInfor infor)
     {
         // 如果已经储存数据 清除当前数据
-        //GameBoardInfor.Clear();
-        //GameBoardInforDict.Clear();
+        GameBoardInfor.Clear();
+        GameBoardInforDict.Clear();
         GameBoardInfor.Add(infor);
         GameBoardInforDict.Add(infor.id, infor);
 
