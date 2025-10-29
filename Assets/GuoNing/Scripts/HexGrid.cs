@@ -912,9 +912,9 @@ public class HexGrid : MonoBehaviour
 		}
 		else
 		{
-			if (cell.UrbanLevel > 1)
+			if (cell.PlantIndex==(int)PlantType.Forest|| cell.PlantIndex == (int)PlantType.FallingForest|| cell.PlantIndex == (int)PlantType.RainForest|| cell.PlantIndex == (int)PlantType.Swamp)
 			{
-				infor.type = TerrainType.Passable;	// 可通行 可占领
+				infor.type = TerrainType.Passable;	// 可通行 不可占领
 			}
 			else
 			{
