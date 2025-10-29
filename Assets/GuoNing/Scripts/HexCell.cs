@@ -30,6 +30,22 @@ public enum SpecialIndexType
 	Pope = 1, // 教皇的初始位置	
 	Gold = 2 // 金矿
 };
+public enum PlantType
+{
+	BigStone = 1,       // 冰原 (大石头)
+	Wasteland = 2,    // 荒地 (中石头+草)
+	SmallStone = 3,   // 岩石地 (小石头+草)
+	DessertGrass = 4,// 沙漠 (小石头+仙人掌)
+	Grass = 5,        // 草地 (草)
+	Bush = 6,           // 灌木
+	Forest = 7,       // 森林 (小树)
+	FallingForest = 8,// 落叶林 (落叶树)
+	RainForest = 9,   // 雨林 (大树)
+	Swamp = 10,        // 沼泽
+	DessertTree = 11// 沙漠树
+
+}
+
 
 
 /// <summary>
@@ -251,6 +267,19 @@ public class HexCell : MonoBehaviour
 		}
 	}
 
+	public int PlantIndex
+	{
+		get=> plantIndex;
+		set
+		{
+			if (plantIndex != value)
+			{
+				plantIndex = value;
+				RefreshSelfOnly();
+			}
+		}
+	}
+
 	/// <summary>
 	/// Special feature index.
 	/// </summary>
@@ -397,6 +426,8 @@ public class HexCell : MonoBehaviour
 	int waterLevel;
 
 	int urbanLevel, farmLevel, plantLevel;
+
+	int plantIndex;	//植被种类
 
 	int specialIndex;
 
@@ -692,6 +723,7 @@ public class HexCell : MonoBehaviour
 		writer.Write((byte)urbanLevel);
 		writer.Write((byte)farmLevel);
 		writer.Write((byte)plantLevel);
+		writer.Write((byte)plantIndex);	// 2025.10.29 
 		writer.Write((byte)specialIndex);
 		writer.Write(Walled);
 
@@ -736,6 +768,7 @@ public class HexCell : MonoBehaviour
 		urbanLevel = reader.ReadByte();
 		farmLevel = reader.ReadByte();
 		plantLevel = reader.ReadByte();
+		plantIndex = reader.ReadByte();
 		specialIndex = reader.ReadByte();
 
 		if (reader.ReadBoolean())

@@ -18,7 +18,7 @@ public class HexMapEditor : MonoBehaviour
 	int activeElevation;
 	int activeWaterLevel;
 
-	int activeUrbanLevel, activeFarmLevel, activePlantLevel, activeSpecialIndex;
+	int activeUrbanLevel, activeFarmLevel, activePlantLevel, activeSpecialIndex,activePlantIndex;
 
 	int activeTerrainTypeIndex;
 
@@ -27,7 +27,7 @@ public class HexMapEditor : MonoBehaviour
 	bool applyElevation = true;
 	bool applyWaterLevel = true;
 
-	bool applyUrbanLevel, applyFarmLevel, applyPlantLevel, applySpecialIndex;
+	bool applyUrbanLevel, applyFarmLevel, applyPlantLevel,applySpecialIndex;
 
 	enum OptionalToggle
 	{
@@ -41,6 +41,8 @@ public class HexMapEditor : MonoBehaviour
 	int previousCellIndex = -1;
 
 	public void SetTerrainTypeIndex(int index) => activeTerrainTypeIndex = index;
+
+	public void SetTerrainPlantIndex(int index) => activePlantIndex = index;
 
 	public void SetApplyElevation(bool toggle) => applyElevation = toggle;
 
@@ -243,6 +245,10 @@ public class HexMapEditor : MonoBehaviour
 			if (activeTerrainTypeIndex >= 0)
 			{
 				cell.TerrainTypeIndex = activeTerrainTypeIndex;
+			}
+			if (activePlantIndex >= 0)
+			{
+				cell.PlantIndex = activePlantIndex;
 			}
 			if (applyElevation)
 			{
