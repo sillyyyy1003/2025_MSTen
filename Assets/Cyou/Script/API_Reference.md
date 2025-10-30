@@ -1134,6 +1134,47 @@ if (hpCost > 0)
 
 ---
 
+#### アップグレード可能かチェック
+
+**シグネチャ:**
+```csharp
+public bool CanUpgrade(UpgradeType type)
+```
+
+**パラメータ:**
+- `type`: アップグレード項目（`PieceUpgradeType.HP` または `PieceUpgradeType.AP`）
+
+**戻り値:**
+- `true`: アップグレード可能
+- `false`: 最大レベル到達またはアップグレード不可
+
+**使用例:**
+```csharp
+Piece unit = GetComponent<Piece>();
+
+// UIボタンの有効/無効を切り替え
+hpUpgradeButton.interactable = unit.CanUpgrade(PieceUpgradeType.HP);
+apUpgradeButton.interactable = unit.CanUpgrade(PieceUpgradeType.AP);
+
+// アップグレード前のチェック
+if (unit.CanUpgrade(PieceUpgradeType.HP))
+{
+    int cost = unit.GetUpgradeCost(PieceUpgradeType.HP);
+    // アップグレード処理...
+}
+else
+{
+    Debug.Log("HPは既に最大レベルです");
+}
+```
+
+**主な用途:**
+- UIボタンの有効/無効の切り替え
+- アップグレード可能な項目のフィルタリング
+- 最大レベル到達の簡易チェック
+
+---
+
 ### 農民（Farmer）専用アップグレード
 
 #### `UpgradeSacrifice()`
@@ -1164,6 +1205,39 @@ if (farmer.UpgradeSacrifice())
 
 ---
 
+#### アップグレード可能かチェック（農民専用項目）
+
+**シグネチャ:**
+```csharp
+public bool CanUpgradeFarmer(FarmerUpgradeType type)
+```
+
+**パラメータ:**
+- `type`: 農民専用アップグレード項目（`FarmerUpgradeType.Sacrifice`）
+
+**戻り値:**
+- `true`: アップグレード可能
+- `false`: 最大レベル到達またはアップグレード不可
+
+**使用例:**
+```csharp
+Farmer farmer = GetComponent<Farmer>();
+
+// UIボタンの制御
+sacrificeUpgradeButton.interactable = farmer.CanUpgradeFarmer(FarmerUpgradeType.Sacrifice);
+
+// アップグレード前のチェック
+if (farmer.CanUpgradeFarmer(FarmerUpgradeType.Sacrifice))
+{
+    int cost = farmer.GetFarmerUpgradeCost(FarmerUpgradeType.Sacrifice);
+    // アップグレード処理...
+}
+```
+
+**実装箇所:** `farmer.cs:330-334`
+
+---
+
 ### 軍隊（Military）専用アップグレード
 
 #### `UpgradeAttackPower()`
@@ -1191,6 +1265,32 @@ if (soldier.UpgradeAttackPower())
 ```
 
 **実装箇所:** `military.cs:165-195`
+
+---
+
+#### アップグレード可能かチェック（軍隊専用項目）
+
+**シグネチャ:**
+```csharp
+public bool CanUpgradeMilitary(MilitaryUpgradeType type)
+```
+
+**パラメータ:**
+- `type`: 軍隊専用アップグレード項目（`MilitaryUpgradeType.AttackPower`）
+
+**戻り値:**
+- `true`: アップグレード可能
+- `false`: 最大レベル到達またはアップグレード不可
+
+**使用例:**
+```csharp
+MilitaryUnit soldier = GetComponent<MilitaryUnit>();
+
+// UIボタンの制御
+attackPowerUpgradeButton.interactable = soldier.CanUpgradeMilitary(MilitaryUpgradeType.AttackPower);
+```
+
+**実装箇所:** `military.cs:217-221`
 
 ---
 
@@ -1254,6 +1354,35 @@ if (missionary.UpgradeConvertEnemy())
 
 ---
 
+#### アップグレード可能かチェック（宣教師専用項目）
+
+**シグネチャ:**
+```csharp
+public bool CanUpgradeMissionary(MissionaryUpgradeType type)
+```
+
+**パラメータ:**
+- `type`: 宣教師専用アップグレード項目
+  - `MissionaryUpgradeType.Occupy` - 占領成功率
+  - `MissionaryUpgradeType.ConvertEnemy` - 魅惑成功率
+
+**戻り値:**
+- `true`: アップグレード可能
+- `false`: 最大レベル到達またはアップグレード不可
+
+**使用例:**
+```csharp
+Missionary missionary = GetComponent<Missionary>();
+
+// UIボタンの制御
+occupyUpgradeButton.interactable = missionary.CanUpgradeMissionary(MissionaryUpgradeType.Occupy);
+convertUpgradeButton.interactable = missionary.CanUpgradeMissionary(MissionaryUpgradeType.ConvertEnemy);
+```
+
+**実装箇所:** `missionary.cs:361-365`
+
+---
+
 ### 教皇（Pope）専用アップグレード
 
 教皇は2つの独立したアップグレード項目を持ちます。
@@ -1311,6 +1440,35 @@ if (pope.UpgradeBuff())
 ```
 
 **実装箇所:** `pope.cs:165-198`
+
+---
+
+#### アップグレード可能かチェック（教皇専用項目）
+
+**シグネチャ:**
+```csharp
+public bool CanUpgradePope(PopeUpgradeType type)
+```
+
+**パラメータ:**
+- `type`: 教皇専用アップグレード項目
+  - `PopeUpgradeType.SwapCooldown` - 位置交換クールダウン
+  - `PopeUpgradeType.Buff` - バフ効果
+
+**戻り値:**
+- `true`: アップグレード可能
+- `false`: 最大レベル到達またはアップグレード不可
+
+**使用例:**
+```csharp
+Pope pope = GetComponent<Pope>();
+
+// UIボタンの制御
+swapCooldownUpgradeButton.interactable = pope.CanUpgradePope(PopeUpgradeType.SwapCooldown);
+buffUpgradeButton.interactable = pope.CanUpgradePope(PopeUpgradeType.Buff);
+```
+
+**実装箇所:** `pope.cs:226-230`
 
 ---
 
@@ -1427,6 +1585,47 @@ if (building.UpgradeBuildCost())
 ```
 
 **実装箇所:** `building.cs:531-569`
+
+---
+
+#### アップグレード可能かチェック（建物）
+
+**シグネチャ:**
+```csharp
+public bool CanUpgrade(BuildingUpgradeType type)
+```
+
+**パラメータ:**
+- `type`: 建物アップグレード項目
+  - `BuildingUpgradeType.HP` - 最大HP
+  - `BuildingUpgradeType.AttackRange` - 攻撃範囲
+  - `BuildingUpgradeType.Slots` - スロット数
+  - `BuildingUpgradeType.BuildCost` - 建築コスト
+
+**戻り値:**
+- `true`: アップグレード可能
+- `false`: 最大レベル到達、建物未完成、またはアップグレード不可
+
+**使用例:**
+```csharp
+Building building = GetComponent<Building>();
+
+// UIボタンの制御
+hpUpgradeButton.interactable = building.CanUpgrade(BuildingUpgradeType.HP);
+attackRangeUpgradeButton.interactable = building.CanUpgrade(BuildingUpgradeType.AttackRange);
+slotsUpgradeButton.interactable = building.CanUpgrade(BuildingUpgradeType.Slots);
+buildCostUpgradeButton.interactable = building.CanUpgrade(BuildingUpgradeType.BuildCost);
+
+// アップグレード前のチェック
+if (!building.CanUpgrade(BuildingUpgradeType.HP))
+{
+    Debug.Log("建物HPはアップグレードできません");
+}
+```
+
+**注意:** 建物の場合、`BuildingState.Inactive`または`BuildingState.Active`状態でのみアップグレード可能です。建築中（`UnderConstruction`）や廃墟（`Ruined`）状態ではアップグレードできません。
+
+**実装箇所:** `building.cs:606-613`
 
 ---
 

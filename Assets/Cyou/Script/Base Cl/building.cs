@@ -16,6 +16,7 @@ namespace Buildings
         [SerializeField] private BuildingDataSO buildingData;
 
         // ===== 実行時の状態管理 =====
+        private int buildingID = -1; // 建物の一意なID（BuildingManagerが設定）
         private BuildingState currentState;
         private int currentHp;
         private int remainingBuildCost;
@@ -39,6 +40,7 @@ namespace Buildings
         public event Action<int> OnResourceGenerated;
 
         // ===== プロパティ =====
+        public int BuildingID => buildingID;
         public BuildingDataSO Data => buildingData;
         public BuildingState State => currentState;
         public bool IsAlive => currentState != BuildingState.Ruined;
@@ -54,6 +56,14 @@ namespace Buildings
         public int AttackRangeLevel => attackRangeLevel;
         public int SlotsLevel => slotsLevel;
         public int BuildCostLevel => buildCostLevel;
+
+        /// <summary>
+        /// 建物IDを設定（BuildingManagerのみが呼び出し）
+        /// </summary>
+        public void SetBuildingID(int id)
+        {
+            buildingID = id;
+        }
 
         #region 初期化
 
