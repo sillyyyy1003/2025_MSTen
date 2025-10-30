@@ -28,6 +28,7 @@ public struct BoardInfor
     public bool bIsStartPos;
 
 
+
 };
 
 // 游戏开始数据

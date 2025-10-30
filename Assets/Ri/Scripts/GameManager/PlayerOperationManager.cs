@@ -64,7 +64,10 @@ public class PlayerOperationManager : MonoBehaviour
 
     private int selectCellID;
 
-
+    // 是否选中了农民
+    private bool bIsChooseFarmer;
+    // 是否选中了传教士
+    private bool bIsChooseMissionary;
     // 双击检测
     // 定义双击的最大时间间隔
     public float doubleClickTimeThreshold = 0.3f;
@@ -121,12 +124,18 @@ public class PlayerOperationManager : MonoBehaviour
             HandleMouseInput();
 
         }
-        if(Input.GetKeyDown(KeyCode.F))
+        if(Input.GetKeyDown(KeyCode.F)&&bIsChooseFarmer)
         {
             // 农民生成建筑
 
+
         }
-        
+        if (Input.GetKeyDown(KeyCode.G)&&bIsChooseMissionary)
+        {
+            // 传教士占领
+            _HexGrid.GetCell(selectCellID).Walled = true;
+            PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(selectCellID);
+        }
     }
 
 
@@ -253,7 +262,11 @@ public class PlayerOperationManager : MonoBehaviour
 
 
                 PlayerDataManager.Instance.nowChooseUnitID = PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos);
-
+                PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
+                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+                    bIsChooseFarmer = true;
+                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+                    bIsChooseMissionary = true;
                 Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID}");
             }
             else
@@ -262,15 +275,21 @@ public class PlayerOperationManager : MonoBehaviour
                 ReturnToDefault();
                 SelectingUnit = null;
 
+                if (!bIsChooseFarmer)
+                {
+                    PlayerDataManager.Instance.nowChooseUnitID = -1;
+                    PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+                }
+
                 // 检查是否是空格子
                 if (!PlayerDataManager.Instance.IsPositionOccupied(clickPos)&& _HexGrid.IsValidDestination(_HexGrid.GetCell(ClickCellid)))
                 { 
                     ChooseEmptyCell(ClickCellid);
                     selectCellID = ClickCellid;
                     SelectedEmptyCellID = ClickCellid; // 保存选中的空格子
-                                                       //Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
+                    //Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
 
-                  
+                
                 }
                 else
                 {
@@ -558,6 +577,7 @@ public class PlayerOperationManager : MonoBehaviour
         {
             if(_HexGrid.GetCell(i).enabled)
                 _HexGrid.GetCell(i).Walled = true;
+            PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(i);
         }
     }
 
@@ -690,6 +710,23 @@ public class PlayerOperationManager : MonoBehaviour
         
     }
 
+    // 单位使用技能
+    public void UnitUseSkill(CardType type)
+    {
+        switch (type)
+        {
+            case CardType.Farmer:
+
+                break;
+
+            case CardType.Missionary:
+                
+                break;
+        
+        
+        }
+
+    }
     // 创建敌方单位
     private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
     {
