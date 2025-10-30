@@ -9,6 +9,7 @@ public class PieceDataSOEditor : Editor
     {
         serializedObject.Update();
 
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("piecePrefabResourcePath"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("originalPID"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("pieceName"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("populationCost"));

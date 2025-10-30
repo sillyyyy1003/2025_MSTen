@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dac1587c651fb62439cebad99caba672, type: 3}
   m_Name: RI_SilkReligionPopeData
   m_EditorClassIdentifier: 
+  piecePrefabResourcePath: Cyou/Prefab/pope
   originalPID: 0
   pieceName: "\u7D72\u7E54\u6559_\u6559\u7687"
   populationCost: 5

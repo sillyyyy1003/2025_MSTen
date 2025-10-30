@@ -10,13 +10,12 @@ namespace GameData
     [CreateAssetMenu(fileName = "PieceData", menuName = "GameData/BasePieces/PieceData")]
     public class PieceDataSO : ScriptableObject
     {
+        [Header("Prefab Path")]
+        public string piecePrefabResourcePath;
         [Header("基本パラメータ")]
         public int originalPID;//最初にどのプレイヤーに属すか
         public string pieceName;
 
-        // 添加资源标识符,用于网络同步时查找对应的预制体
-        [Tooltip("预制体资源路径,用于网络同步(例如: Prefabs/Units/Farmer)")]
-        public string piecePrefabResourcePath;
 
         public int populationCost = 1;//コマ一つの人口消費量
         public int resourceCost = 10;//資源消費量
@@ -42,6 +41,8 @@ namespace GameData
         [Header("各項目のアップグレードコスト")]
         public int[] hpUpgradeCost = new int[3]; // 血量アップグレード資源コスト(0→1, 1→2, 2→3)。0=アップグレード不可
         public int[] apUpgradeCost = new int[3]; // 行動力アップグレード資源コスト(0→1, 1→2, 2→3)
+                                                 // 添加资源标识符,用于网络同步时查找对应的预制体
+       
 
         [Header("Prefab")]
         public GameObject piecePrefab;

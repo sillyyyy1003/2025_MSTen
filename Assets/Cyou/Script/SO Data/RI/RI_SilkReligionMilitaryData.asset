@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed41a46d664f4324e88e57bd495150e4, type: 3}
   m_Name: RI_SilkReligionMilitaryData
   m_EditorClassIdentifier: 
+  piecePrefabResourcePath: Cyou/Prefab/military
   originalPID: 0
   pieceName: "\u7D72\u7E54\u6559_\u5341\u5B57\u8ECD"
   populationCost: 3
