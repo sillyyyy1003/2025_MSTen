@@ -749,9 +749,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
 
         // 选择预制体
-        GameObject prefab = unitData.UnitType == CardType.Farmer ?
-            (EnemyFarmerPrefab != null ? EnemyFarmerPrefab : FarmerPrefab) :
-            (EnemySoldierPrefab != null ? EnemySoldierPrefab : SoldierPrefab);
+        GameObject prefab = unitData.PlayerUnitObject;
 
         if (prefab == null)
             prefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -1266,12 +1264,12 @@ public class PlayerOperationManager : MonoBehaviour
         // 先更新数据
         if (PlayerDataManager.Instance != null)
         {
-            PlayerDataManager.Instance.AddUnit(msg.PlayerId, unitType, pos, null, unitDataSO);
+            PlayerDataManager.Instance.AddUnit(msg.PlayerId, unitType, pos, unitDataSO.piecePrefab, unitDataSO);
             Debug.Log($"[网络创建] 已更新数据管理器");
         }
 
         // 创建单位数据
-        PlayerUnitData unitData = new PlayerUnitData(1, unitType, pos, null, unitDataSO, msg.IsUsed);
+        PlayerUnitData unitData = new PlayerUnitData(1, unitType, pos, unitDataSO.piecePrefab, unitDataSO, msg.IsUsed);
 
         // 创建视觉对象
         CreateEnemyUnit(msg.PlayerId, unitData);
