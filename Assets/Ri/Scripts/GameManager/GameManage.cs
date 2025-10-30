@@ -578,7 +578,7 @@ public class GameManage : MonoBehaviour
                     if(GameBoardInforDict2D.ContainsKey(pos))
                     {
                         startPos.Add(GameBoardInforDict2D[pos].id);
-                        Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                        //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
                     }
             }
         }

@@ -775,7 +775,7 @@ public class NetGameSystem : MonoBehaviour
             // 简单分配: 第一个玩家在0, 最后一个玩家在最后一个格子
             for (int i = 0; i < positions.Length; i++)
             {
-                positions[0] = gameManage.GetStartPosForNetGame(i);
+                positions[i] = gameManage.GetStartPosForNetGame(i);
                 // 更改为保存的起始位置
                 //if (i == 0)
                 //    positions[i] = 0;
