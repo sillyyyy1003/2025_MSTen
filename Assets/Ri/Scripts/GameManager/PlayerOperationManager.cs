@@ -749,7 +749,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
 
         // 选择预制体
-        GameObject prefab = unitData.PlayerUnitObject;
+        GameObject prefab = unitData.PlayerUnitDataSO.piecePrefab;
 
         if (prefab == null)
             prefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);
