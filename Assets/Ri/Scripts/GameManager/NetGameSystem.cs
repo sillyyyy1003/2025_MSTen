@@ -7,6 +7,7 @@ using System.Threading;
 using UnityEngine;
 using Newtonsoft.Json;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 
 
@@ -24,6 +25,12 @@ public enum NetworkMessageType
     // 游戏流程
     GAME_START,
     GAME_OVER,
+    
+    
+    // 房间管理 
+    PLAYER_READY,      // 玩家准备
+    PLAYER_NOT_READY,  // 玩家取消准备
+    ROOM_STATUS_UPDATE, // 房间状态更新
 
     // 回合管理
     TURN_START,
@@ -64,7 +71,8 @@ public class NetworkMessage
 [Serializable]
 public class ConnectMessage
 {
-    public string PlayerName;
+    public string PlayerName; 
+    public string PlayerIP;  
 }
 
 [Serializable]
@@ -74,11 +82,38 @@ public class ConnectedMessage
     public List<uint> ExistingPlayerIds;
 }
 
+// 房间内玩家信息
+[Serializable]
+public class PlayerInfo
+{
+    public uint PlayerId;
+    public string PlayerName;
+    public string PlayerIP;
+    public bool IsReady;
+}
+
+// 玩家加入消息
 [Serializable]
 public class PlayerJoinedMessage
 {
     public uint PlayerId;
-    public string PlayerName;
+    public string PlayerName; 
+    public string PlayerIP;   
+}
+
+// 玩家准备消息
+[Serializable]
+public class PlayerReadyMessage
+{
+    public uint PlayerId;
+    public bool IsReady;
+}
+
+// 房间状态更新消息
+[Serializable]
+public class RoomStatusUpdateMessage
+{
+    public List<PlayerInfo> Players;
 }
 
 [Serializable]
@@ -97,7 +132,9 @@ public class UnitAddMessage
     public int PlayerId;
     public int UnitType; // PlayerUnitType as int
     public int PosX;
-    public int PosY;
+    public int PosY; 
+    public string UnitDataSOJson; // PieceDataSO序列化为JSON字符串
+    public bool IsUsed; // 单位是否已使用
 }
 
 [Serializable]
@@ -108,6 +145,17 @@ public class UnitRemoveMessage
     public int PosY;
 }
 
+// 攻击消息
+[Serializable]
+public class UnitAttackMessage
+{
+    public int AttackerPlayerId;
+    public int AttackerPosX;
+    public int AttackerPosY;
+    public int TargetPlayerId;
+    public int TargetPosX;
+    public int TargetPosY;
+}
 [Serializable]
 public class TurnEndMessage
 {
@@ -128,6 +176,10 @@ public class TurnStartMessage
 // *************************
 public class NetGameSystem : MonoBehaviour
 {
+    // 单例
+    public static NetGameSystem Instance { get; private set; }
+
+
     [Header("网络配置")]
     [SerializeField] private bool isServer = false;
     [SerializeField] private string serverIP = "127.0.0.1";
@@ -145,9 +197,23 @@ public class NetGameSystem : MonoBehaviour
     private bool isRunning = false;
     private Thread networkThread;
 
+    // 房间相关
+    // 玩家IP
+    private string playerIP = "";
     // 游戏状态
     private bool isGameStarted = false;
     private List<uint> connectedPlayers = new List<uint>();
+
+    // 客户端准备状态和IP
+    private Dictionary<uint, bool> clientReadyStatus; // 服务器: 客户端准备状态
+    private Dictionary<uint, string> clientIPs; // 服务器: 客户端IP地址
+
+
+    // 本地准备状态
+    private bool isLocalReady = false;
+
+    // 所有玩家信息列表
+    private List<PlayerInfo> roomPlayers = new List<PlayerInfo>();
 
     // 消息处理器
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> messageHandlers;
@@ -155,28 +221,52 @@ public class NetGameSystem : MonoBehaviour
     // 事件
     public event Action<NetworkMessage> OnMessageReceived;
     public event Action<uint> OnClientConnected;  // 服务器端
-    public event Action<uint> OnClientDisconnected;
-    public event Action OnConnectedToServer;      // 客户端端
+    //public event Action<uint> OnClientDisconnected;
+
+    public event Action OnConnectedToServer;      // 客户端
     public event Action OnDisconnected;
     public event Action OnGameStarted;
 
+    // 房间状态更新事件
+    public event Action<List<PlayerInfo>> OnRoomStatusUpdated;
+    public event Action<bool> OnAllPlayersReady; // 所有玩家准备完毕
+
     // 属性
-    public bool IsConnected => isRunning;
-    public bool IsServer => isServer;
-    public uint LocalClientId => localClientId;
+    public bool bIsConnected => isRunning;
+    public bool bIsServer => isServer;
+    public uint bLocalClientId => localClientId;
     public List<uint> ConnectedPlayers => new List<uint>(connectedPlayers);
     public int PlayerCount => connectedPlayers.Count;
+
+
+    // 获取房间玩家信息
+    public List<PlayerInfo> RoomPlayers => new List<PlayerInfo>(roomPlayers);
+    public bool IsLocalReady => isLocalReady;
 
     // 引用
     private GameManage gameManage;
     private PlayerDataManager playerDataManager;
+
+
 
     // *************************
     //      Unity生命周期
     // *************************
 
     private void Awake()
-    {
+    { 
+        // 单例设置
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         // 确保MainThreadDispatcher存在
         if (FindObjectOfType<MainThreadDispatcher>() == null)
         {
@@ -185,14 +275,35 @@ public class NetGameSystem : MonoBehaviour
         }
 
         // 初始化消息处理器
-        InitializeMessageHandlers();
+        InitializeMessageHandlers();   
+
+        // 初始化房间相关字典 
+        clientReadyStatus = new Dictionary<uint, bool>();
+        clientIPs = new Dictionary<uint, string>();
+
     }
 
     private void Start()
     {
+        // 从SceneStateManager
+        if (SceneStateManager.Instance != null)
+        {
+            isServer = SceneStateManager.Instance.GetIsServer();
+            playerName = SceneStateManager.Instance.PlayerName;
+            playerIP = SceneStateManager.Instance.PlayerIP; // 获取本地IP
 
-        // 延迟启动网络,确保所有单例初始化完成
-        StartCoroutine(DelayedNetworkStart());
+          
+                // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                if (!isServer)
+                {
+
+                    // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                    //serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+                }
+                // 延迟启动网络,确保所有单例初始化完成
+                StartCoroutine(DelayedNetworkStart());
+        }
+           
     }
 
     private IEnumerator DelayedNetworkStart()
@@ -203,14 +314,21 @@ public class NetGameSystem : MonoBehaviour
         // 获取 GameManage 引用
         GetGameManage();
 
-        // 自动启动网络
-        if (isServer)
+        if (SceneStateManager.Instance.bIsSingle)
         {
-            StartServer();
+            gameManage.StartGameFromRoomUI();
         }
         else
         {
-            ConnectToServer();
+            // 自动启动网络
+            if (isServer)
+            {
+                StartServer();
+            }
+            else
+            {
+                ConnectToServer();
+            }
         }
     }
     private void OnDestroy()
@@ -254,21 +372,31 @@ public class NetGameSystem : MonoBehaviour
     {
         messageHandlers = new Dictionary<NetworkMessageType, Action<NetworkMessage>>
         {
+                // 网络状态相关
                 { NetworkMessageType.CONNECT, HandleConnect },
                 { NetworkMessageType.CONNECTED, HandleConnected },
                 { NetworkMessageType.PLAYER_JOINED, HandlePlayerJoined },
+                
+                // 房间状态相关
+                { NetworkMessageType.PLAYER_LEFT, HandlePlayerLeft }, 
+                { NetworkMessageType.PLAYER_READY, HandlePlayerReady }, 
+                { NetworkMessageType.PLAYER_NOT_READY, HandlePlayerNotReady }, 
+                { NetworkMessageType.ROOM_STATUS_UPDATE, HandleRoomStatusUpdate }, 
+               
+                // 游戏流程相关
                 { NetworkMessageType.GAME_START, HandleGameStart },
                 { NetworkMessageType.TURN_START, HandleTurnStart },
                 { NetworkMessageType.TURN_END, HandleTurnEnd },
                 { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
                 { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
+                { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },  
                 { NetworkMessageType.PING, HandlePing },
                 { NetworkMessageType.PONG, HandlePong }
         };
 
-        Debug.Log($"=== 消息处理器注册完成 ===");
-        Debug.Log($"共注册 {messageHandlers.Count} 个处理器");
+        //Debug.Log($"=== 消息处理器注册完成 ===");
+        //Debug.Log($"共注册 {messageHandlers.Count} 个处理器");
     }
 
     // *************************
@@ -287,76 +415,236 @@ public class NetGameSystem : MonoBehaviour
         {
             clients = new Dictionary<uint, IPEndPoint>();
             clientNames = new Dictionary<uint, string>();
-            connectedPlayers.Clear();
+
+            clientReadyStatus = new Dictionary<uint, bool>();
+            clientIPs = new Dictionary<uint, string>();
+
+            //connectedPlayers.Clear();
 
             udpClient = new UdpClient(port);
             isRunning = true;
-            localClientId = 0; // 服务器ID为0
 
+            // 服务器自己算作第一个玩家
+            localClientId = 0;
+            connectedPlayers.Add(0);
+
+            //添加服务器自己到房间玩家列表
+            roomPlayers.Add(new PlayerInfo
+            {
+                PlayerId = 0,
+                PlayerName = playerName,
+                PlayerIP = playerIP,
+                IsReady = true
+            });
+
+            // 启动接收线程
             networkThread = new Thread(ServerLoop) { IsBackground = true };
             networkThread.Start();
 
             Debug.Log($"[服务器] 启动成功 - 端口: {port}");
 
-            // 服务器自己也算一个玩家
-            connectedPlayers.Add(0);
+            // 通知UI更新房间状态 
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                OnRoomStatusUpdated?.Invoke(roomPlayers);
+
+            });
+
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[服务器] 启动失败: {ex.Message}");
+            Debug.LogError($"[服务器] 启动失败: {ex.Message}"); 
+            isRunning = false;
         }
     }
 
+    // 服务器接收循环
     private void ServerLoop()
     {
         while (isRunning)
         {
             try
             {
-                IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Any, 0);
-                byte[] data = udpClient.Receive(ref clientEndPoint);
-                string jsonData = Encoding.UTF8.GetString(data);
-
-                NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
-
-                Debug.Log($"[服务器] 消息类型: {message.MessageType}");
-                Debug.Log($"[服务器] 发送者ID: {message.SenderId}");
-
-                if (message.MessageType == NetworkMessageType.CONNECT)
+                IPEndPoint clientEP = null;
+                byte[] data = udpClient.Receive(ref clientEP);
+                string json = Encoding.UTF8.GetString(data);
+             
+                if (json == "PingCheck")
                 {
-                    // 处理新客户端连接
-                    HandleNewClientConnection(clientEndPoint, message);
+                    // 告知客户端“服务器在线”
+                    byte[] response = Encoding.UTF8.GetBytes("ServerAlive");
+                    udpClient.Send(response, response.Length, clientEP);
+                    continue; // 跳过本次循环，不继续解析
                 }
-                else
-                {
-                    // 处理其他消息
-                    uint senderId = GetClientId(clientEndPoint);
-                    message.SenderId = senderId;
 
-                    // 在主线程处理
-                    MainThreadDispatcher.Enqueue(() =>
+                NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(json);
+
+                // 处理消息
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    if (messageHandlers.ContainsKey(message.MessageType))
                     {
-                        ProcessMessage(message);
-                    });
+                        messageHandlers[message.MessageType](message);
+                    }
 
-                    // 广播给其他客户端(除了发送者)
-                    BroadcastToClients(message, senderId);
-                }
+                    // 如果是新连接请求，记录客户端
+                    if (message.MessageType == NetworkMessageType.CONNECT)
+                    {
+                        ConnectMessage connectData = JsonConvert.DeserializeObject<ConnectMessage>(message.JsonData);
+                        uint clientId = nextClientId++;
+                        clients[clientId] = clientEP;
+                        clientNames[clientId] = connectData.PlayerName;
+                        clientReadyStatus[clientId] = false; // 初始化为未准备
+                        clientIPs[clientId] = connectData.PlayerIP; // 保存IP
+                        connectedPlayers.Add(clientId);
+
+                        // 发送确认
+                        ConnectedMessage connectedMsg = new ConnectedMessage
+                        {
+                            AssignedClientId = clientId,
+                            ExistingPlayerIds = connectedPlayers
+                        };
+
+                        NetworkMessage response = new NetworkMessage
+                        {
+                            MessageType = NetworkMessageType.CONNECTED,
+                            SenderId = 0,
+                            JsonData = JsonConvert.SerializeObject(connectedMsg)
+                        };
+
+                        SendToClient(clientId, response);
+
+                        // 通知其他客户端
+                        PlayerJoinedMessage joinedMsg = new PlayerJoinedMessage
+                        {
+                            PlayerId = clientId,
+                            PlayerName = connectData.PlayerName,
+                            PlayerIP = connectData.PlayerIP
+                        };
+
+                        NetworkMessage joinedMessage = new NetworkMessage
+                        {
+                            MessageType = NetworkMessageType.PLAYER_JOINED,
+                            SenderId = 0,
+                            JsonData = JsonConvert.SerializeObject(joinedMsg)
+                        };
+
+                        BroadcastToClients(joinedMessage, clientId);
+
+                        // 更新房间玩家列表并发送房间状态
+                        UpdateRoomPlayersList();
+                        SendRoomStatusToAll();
+
+                        OnClientConnected?.Invoke(clientId);
+                    }
+                 
+                    // 转发其他消息
+                    else if (message.MessageType != NetworkMessageType.PING &&
+                             message.MessageType != NetworkMessageType.PONG &&
+                             message.MessageType != NetworkMessageType.PLAYER_READY &&  // 不广播准备消息
+                             message.MessageType != NetworkMessageType.PLAYER_NOT_READY)  // 不广播取消准备消息
+                    {
+                        BroadcastToClients(message, message.SenderId);
+                    }
+                });
             }
-            catch (SocketException)
+            catch (Exception e)
             {
                 if (isRunning)
-                {
-                    Thread.Sleep(10);
-                }
-            }
-            catch (Exception ex)
-            {
-                if (isRunning)
-                    Debug.LogError($"[服务器] 错误: {ex.Message}");
+                    Debug.LogError($"服务器接收错误: {e.Message}");
             }
         }
     }
+
+    // 更新房间玩家列表
+    private void UpdateRoomPlayersList()
+    {
+        roomPlayers.Clear();
+
+        // 添加服务器自己
+        roomPlayers.Add(new PlayerInfo
+        {
+            PlayerId = 0,
+            PlayerName = playerName,
+            PlayerIP = playerIP,
+            IsReady = true
+        });
+
+        // 添加所有客户端
+        foreach (var clientId in connectedPlayers)
+        {
+            if (clientId != 0 && clientNames.ContainsKey(clientId))
+            {
+                bool clientReady = false;
+                if (clientReadyStatus.ContainsKey(clientId))
+                {
+                    clientReady = clientReadyStatus[clientId];
+                }
+
+                roomPlayers.Add(new PlayerInfo
+                {
+                    PlayerId = clientId,
+                    PlayerName = clientNames[clientId],
+                    PlayerIP = clientIPs.ContainsKey(clientId) ? clientIPs[clientId] : "Unknown",
+                    IsReady = clientReady
+                });
+                // 调试输出
+                Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
+            }
+        }
+    }
+
+    // 发送房间状态给所有玩家
+    private void SendRoomStatusToAll()
+    {
+        RoomStatusUpdateMessage statusMsg = new RoomStatusUpdateMessage
+        {
+            Players = roomPlayers
+        };
+
+        NetworkMessage message = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.ROOM_STATUS_UPDATE,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(statusMsg)
+        };
+
+        // 广播给所有客户端
+        BroadcastToClients(message, uint.MaxValue);
+
+        // 服务器自己也更新
+        MainThreadDispatcher.Enqueue(() => {
+            OnRoomStatusUpdated?.Invoke(roomPlayers);
+
+            Debug.Log("SendRoomStatusToAll");
+            CheckAllPlayersReady();
+        });
+    }
+
+    // 检查所有玩家是否准备完毕
+    private void CheckAllPlayersReady()
+    {
+        Debug.Log("CheckAllPlayersReady");
+        if (roomPlayers.Count < 2) // 至少需要2个玩家
+        {
+            OnAllPlayersReady?.Invoke(false);
+            return;
+        }
+
+        bool allReady = true;
+        foreach (var player in roomPlayers)
+        {
+            Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
+            if (!player.IsReady)
+            {
+                allReady = false;
+                break;
+            }
+        }
+
+        OnAllPlayersReady?.Invoke(allReady);
+    }
+
 
     private void HandleNewClientConnection(IPEndPoint clientEndPoint, NetworkMessage message)
     {
@@ -435,13 +723,11 @@ public class NetGameSystem : MonoBehaviour
             return;
         }
 
-        if (connectedPlayers.Count < 2)
+        if (connectedPlayers.Count < maxPlayers)
         {
             Debug.LogWarning("玩家不足,无法开始游戏!");
             return;
         }
-
-        isGameStarted = true;
 
         // 创建游戏开始数据
 
@@ -479,7 +765,7 @@ public class NetGameSystem : MonoBehaviour
 
     private int[] AssignStartPositions()
     {
-        // 根据玩家数量分配起始位置
+        // 根据玩家数量分配起始位置，后续起始位置实装后不需要
         if (gameManage != null && gameManage.GetBoardCount() > 0)
         {
             int boardCount = gameManage.GetBoardCount();
@@ -488,6 +774,14 @@ public class NetGameSystem : MonoBehaviour
             // 简单分配: 第一个玩家在0, 最后一个玩家在最后一个格子
             for (int i = 0; i < positions.Length; i++)
             {
+                // 更改为保存的起始位置
+                //if (i == 0)
+                //    positions[i] = 0;
+                //else if (i == positions.Length - 1)
+                //    positions[i] = boardCount - 1;
+                //else
+                //    positions[i] = (boardCount / positions.Length) * i;
+
                 if (i == 0)
                     positions[i] = 0;
                 else if (i == positions.Length - 1)
@@ -507,13 +801,54 @@ public class NetGameSystem : MonoBehaviour
     //      客户端功能
     // *************************
 
-    public void ConnectToServer()
+    public void  ConnectToServer()
     {
-        if (isRunning)
+        // 添加服务器检测
+        bool serverExists = false;
+        using (UdpClient testClient = new UdpClient())
         {
-            Debug.LogWarning("已经连接!");
-            return;
+            try
+            {
+                testClient.Connect(serverIP, port);
+                //Debug.Log("Server IP is "+serverIP+" server port is "+port);
+                // 发送一个测试Ping包
+                byte[] testData = Encoding.UTF8.GetBytes("PingCheck");
+                testClient.Send(testData, testData.Length);
+
+                // 设置超时
+                testClient.Client.ReceiveTimeout = 500;
+                IPEndPoint remote = new IPEndPoint(IPAddress.Any, 0);
+
+                // 等待服务器响应
+                DateTime startTime = DateTime.Now;
+                while ((DateTime.Now - startTime).TotalMilliseconds < 500)
+                {
+                    if (testClient.Available > 0)
+                    {
+                        byte[] recv = testClient.Receive(ref remote);
+                        string reply = Encoding.UTF8.GetString(recv);
+                        if (reply.Contains("ServerAlive"))
+                        {
+                            serverExists = true;
+                            break;
+                        }
+                    }
+                    Thread.Sleep(10); // 短暂等待避免占满CPU
+                }
+            }
+            catch (SocketException)
+            {
+                serverExists = false;
+            }
         }
+
+        if (!serverExists)
+        {
+            Debug.LogWarning("[客户端] 未检测到服务器，连接失败。");
+            SceneManager.LoadScene("SelectScene");
+            return ;
+        }
+
 
         try
         {
@@ -524,7 +859,8 @@ public class NetGameSystem : MonoBehaviour
             // 发送连接请求
             ConnectMessage connectMsg = new ConnectMessage
             {
-                PlayerName = playerName
+                PlayerName = playerName, 
+                PlayerIP = playerIP
             };
 
             NetworkMessage message = new NetworkMessage
@@ -559,15 +895,16 @@ public class NetGameSystem : MonoBehaviour
                 byte[] data = udpClient.Receive(ref remoteEndPoint);
                 string jsonData = Encoding.UTF8.GetString(data);
 
-                Debug.Log($"=== 客户端收到原始网络数据 ===");
-
                 NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
 
                 // 在主线程处理消息
                 MainThreadDispatcher.Enqueue(() =>
                 {
-                    Debug.Log($"主线程准备处理消息: {message.MessageType}");
-                    ProcessMessage(message);
+                    if (messageHandlers.ContainsKey(message.MessageType))
+                    {
+                        messageHandlers[message.MessageType](message);
+                    }
+                    OnMessageReceived?.Invoke(message);
                 });
             }
             catch (SocketException)
@@ -608,20 +945,14 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
+    // 发送消息到服务器
     private void SendToServer(NetworkMessage message)
     {
-        try
-        {
-            Debug.Log($"发送到服务");
+        if (!isRunning || isServer) return;
 
-            string jsonData = JsonConvert.SerializeObject(message);
-            byte[] data = Encoding.UTF8.GetBytes(jsonData);
-            udpClient.Send(data, data.Length, serverEndPoint);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"发送到服务器失败: {ex.Message}");
-        }
+        message.SenderId = localClientId;
+        byte[] data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+        udpClient.Send(data, data.Length, serverEndPoint);
     }
 
     private void SendToClient(uint clientId, NetworkMessage message)
@@ -634,8 +965,7 @@ public class NetGameSystem : MonoBehaviour
 
         try
         {
-            string jsonData = JsonConvert.SerializeObject(message);
-            byte[] data = Encoding.UTF8.GetBytes(jsonData);
+            byte[] data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
             udpClient.Send(data, data.Length, clients[clientId]);
         }
         catch (Exception ex)
@@ -644,13 +974,46 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
+    // 设置准备状态
+    public void SetReadyStatus(bool ready)
+    {
+        Debug.Log("Ready? = "+ready);
+        isLocalReady = ready;
+
+        if (isServer)
+        {
+            // 服务器更新自己的准备状态
+            UpdateRoomPlayersList();
+            SendRoomStatusToAll();
+        }
+        else
+        {
+            // 客户端发送准备状态给服务器
+            PlayerReadyMessage readyMsg = new PlayerReadyMessage
+            {
+                PlayerId = localClientId,
+                IsReady = ready
+            };
+
+            NetworkMessage message = new NetworkMessage
+            {
+                MessageType = ready ? NetworkMessageType.PLAYER_READY : NetworkMessageType.PLAYER_NOT_READY,
+                SenderId = localClientId,
+                JsonData = JsonConvert.SerializeObject(readyMsg)
+            };
+
+            SendToServer(message);
+        }
+    }
+
+
     private void BroadcastToClients(NetworkMessage message, uint excludeClientId)
     {
-        Debug.Log($"=== BroadcastToClients 开始 ===");
-        Debug.Log($"消息类型: {message.MessageType}");
-        Debug.Log($"排除ID: {excludeClientId}");
-        Debug.Log($"当前是服务器: {isServer}");
-        Debug.Log($"clients 状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
+        //Debug.Log($"=== BroadcastToClients 开始 ===");
+        //Debug.Log($"消息类型: {message.MessageType}");
+        //Debug.Log($"排除ID: {excludeClientId}");
+        //Debug.Log($"当前是服务器: {isServer}");
+        //Debug.Log($"clients 状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
 
 
         if (!isServer)
@@ -671,33 +1034,27 @@ public class NetGameSystem : MonoBehaviour
             return;
         }
 
-        int broadcastCount = 0;
-        foreach (var kvp in clients)
-        {
-            Debug.Log($"[广播] 检查客户端 {kvp.Key}");
+        byte[] data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
 
-            if (excludeClientId == uint.MaxValue || kvp.Key != excludeClientId)
+        foreach (var client in clients)
+        {
+            if (client.Key != excludeClientId)
             {
                 try
                 {
-                    Debug.Log($"[广播] 发送给客户端 {kvp.Key}");
-                    SendToClient(kvp.Key, message);
-                    broadcastCount++;
-                    Debug.Log($"[广播]  发送成功");
+                    udpClient.Send(data, data.Length, client.Value);
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-                    Debug.LogError($"[广播]  发送失败: {ex.Message}");
+                    Debug.LogError($"发送到客户端 {client.Key} 失败: {e.Message}");
                 }
-            }
-            else
-            {
-                Debug.Log($"[广播] 跳过客户端 {kvp.Key} (被排除)");
             }
         }
 
-        Debug.Log($"=== BroadcastToClients 完成，共发送 {broadcastCount} 条 ===");
+        //Debug.Log($"=== BroadcastToClients 完成，共发送 {broadcastCount} 条 ===");
     }
+
+
     // *************************
     //      消息处理
     // *************************
@@ -733,20 +1090,168 @@ public class NetGameSystem : MonoBehaviour
         Debug.Log($"消息处理完成: {message.MessageType}");
     }
 
-    // 连接消息(客户端不应该收到此消息)
+    // 连接消息
     private void HandleConnect(NetworkMessage message)
     {
-        Debug.LogWarning("[客户端] 收到CONNECT消息,这不应该发生");
+        //Debug.LogWarning("[客户端] 收到CONNECT消息,这不应该发生");
     }
 
+    private void HandleConnected(NetworkMessage message)
+    {
+        // 客户端收到连接确认
+        ConnectedMessage data = JsonConvert.DeserializeObject<ConnectedMessage>(message.JsonData);
+        localClientId = data.AssignedClientId;
+        connectedPlayers = data.ExistingPlayerIds;
 
+        Debug.Log($"成功连接到服务器，分配ID: {localClientId}");
+        OnConnectedToServer?.Invoke();
+    }
+    private void HandlePlayerJoined(NetworkMessage message)
+    {
+        PlayerJoinedMessage data = JsonConvert.DeserializeObject<PlayerJoinedMessage>(message.JsonData);
+
+        if (!connectedPlayers.Contains(data.PlayerId))
+        {
+            connectedPlayers.Add(data.PlayerId);
+        }
+
+        Debug.Log($"玩家 {data.PlayerName} (ID: {data.PlayerId}, IP: {data.PlayerIP}) 加入游戏");
+    }
+
+    // 处理玩家离开
+    private void HandlePlayerLeft(NetworkMessage message)
+    {
+        // TODO: 玩家离开逻辑
+    }
+
+    // 处理玩家准备
+    private void HandlePlayerReady(NetworkMessage message)
+    {
+        if (isServer)
+        {
+            PlayerReadyMessage data = JsonConvert.DeserializeObject<PlayerReadyMessage>(message.JsonData);
+           
+            Debug.Log($"[服务器] 收到玩家 {data.PlayerId} 的准备请求");
+            Debug.Log($"[服务器] clientReadyStatus包含该ID? {clientReadyStatus.ContainsKey(data.PlayerId)}");
+            Debug.Log($"[服务器] 当前房间人数: {roomPlayers.Count}");
+          
+            if (clientReadyStatus.ContainsKey(data.PlayerId)&& roomPlayers.Count >=2)
+            {
+                clientReadyStatus[data.PlayerId] = true;
+                UpdateRoomPlayersList();
+                SendRoomStatusToAll();
+              
+                Debug.Log($"玩家 {data.PlayerId} 准备完毕");
+            }
+            else
+            {
+                Debug.LogError($"[服务器] 找不到玩家 {data.PlayerId} 的准备状态记录");
+            }
+        }
+    }
+
+    // 处理玩家取消准备
+    private void HandlePlayerNotReady(NetworkMessage message)
+    {
+        if (isServer)
+        {
+            PlayerReadyMessage data = JsonConvert.DeserializeObject<PlayerReadyMessage>(message.JsonData);
+            if (clientReadyStatus.ContainsKey(data.PlayerId))
+            {
+                clientReadyStatus[data.PlayerId] = false;
+                UpdateRoomPlayersList();
+                SendRoomStatusToAll();
+                Debug.Log($"玩家 {data.PlayerId} 取消准备");
+            }
+        }
+    }
+
+    // 处理房间状态更新
+    private void HandleRoomStatusUpdate(NetworkMessage message)
+    {
+        RoomStatusUpdateMessage data = JsonConvert.DeserializeObject<RoomStatusUpdateMessage>(message.JsonData);
+        roomPlayers = data.Players;
+
+        foreach (var player in roomPlayers)
+        {
+            Debug.Log($"  - 玩家 {player.PlayerId}: {player.PlayerName}, 准备: {player.IsReady}");
+        }
+        OnRoomStatusUpdated?.Invoke(roomPlayers);
+        CheckAllPlayersReady();
+    }
+
+   
+
+    // 添加重试协程
+    private IEnumerator RetryHandleTurnStart(NetworkMessage message, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        Debug.Log("=== 重试 HandleTurnStart ===");
+        HandleTurnStart(message);
+    }
+
+    //// 连接确认
+    //private void HandleConnected(NetworkMessage message)
+    //{
+    //    ConnectedMessage data = JsonConvert.DeserializeObject<ConnectedMessage>(message.JsonData);
+    //    localClientId = data.AssignedClientId;
+    //    connectedPlayers = data.ExistingPlayerIds;
+
+    //    Debug.Log($"[客户端] 已连接到服务器! 分配ID: {localClientId}");
+    //    OnConnectedToServer?.Invoke();
+    //}
+
+    //// 玩家加入
+    //private void HandlePlayerJoined(NetworkMessage message)
+    //{
+    //    PlayerJoinedMessage data = JsonConvert.DeserializeObject<PlayerJoinedMessage>(message.JsonData);
+
+    //    if (!connectedPlayers.Contains(data.PlayerId))
+    //    {
+    //        connectedPlayers.Add(data.PlayerId);
+    //        Debug.Log($"玩家 {data.PlayerId} ({data.PlayerName}) 加入游戏 - 当前玩家数: {connectedPlayers.Count}");
+    //    }
+    //}
+
+    // 游戏开始
+    private void HandleGameStart(NetworkMessage message)
+    {
+        //isGameStarted = true;
+        //Debug.Log("游戏开始!");
+        //OnGameStarted?.Invoke();
+        GameStartData data = JsonConvert.DeserializeObject<GameStartData>(message.JsonData);
+
+        Debug.Log($"游戏开始! 玩家数: {data.PlayerIds.Length}");
+
+        isGameStarted = true;
+        OnGameStarted?.Invoke();
+
+        // 通知GameManage初始化游戏
+        if (gameManage != null)
+        {
+            gameManage.InitGameWithNetworkData(data);
+        }
+        else
+        {
+            gameManage = GameManage.Instance;
+            if (gameManage != null)
+            {
+                gameManage.InitGameWithNetworkData(data);
+            }
+            else
+            {
+                Debug.LogError("无法找到 GameManage 来初始化游戏!");
+            }
+        }
+    }
     // 添加回合开始消息
     private void HandleTurnStart(NetworkMessage message)
     {
         try
         {
-            Debug.Log($"当前是服务器: {isServer}");
-            Debug.Log($"消息发送者ID: {message.SenderId}");
+            //Debug.Log($"当前是服务器: {isServer}");
+            //Debug.Log($"消息发送者ID: {message.SenderId}");
 
             var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
             Debug.Log($"目标玩家: {data.PlayerId}");
@@ -777,44 +1282,43 @@ public class NetGameSystem : MonoBehaviour
             {
                 Debug.Log($" 调用 StartTurn({data.PlayerId})");
                 gameManage.StartTurn(data.PlayerId);
-                Debug.Log($" StartTurn 调用完成");
+                //Debug.Log($" StartTurn 调用完成");
             }
             else
             {
                 Debug.LogError(" 无法找到 GameManage，延迟重试");
 
-                // 列出场景中所有对象（调试用）
-                GameObject[] allObjects = FindObjectsOfType<GameObject>();
-                Debug.Log($"场景中共有 {allObjects.Length} 个 GameObject");
+                //// 列出场景中所有对象（调试用）
+                //GameObject[] allObjects = FindObjectsOfType<GameObject>();
+                //Debug.Log($"场景中共有 {allObjects.Length} 个 GameObject");
 
-                bool foundGameManage = false;
-                foreach (var obj in allObjects)
-                {
-                    if (obj.name.Contains("GameManage") || obj.name.Contains("GameManager"))
-                    {
-                        Debug.Log($"找到可能的对象: {obj.name}, 激活: {obj.activeInHierarchy}");
-                        var gm = obj.GetComponent<GameManage>();
-                        if (gm != null)
-                        {
-                            Debug.Log($" 这个对象有 GameManage 组件!");
-                            gameManage = gm;
-                            foundGameManage = true;
-                            break;
-                        }
-                    }
-                }
+                //bool foundGameManage = false;
+                //foreach (var obj in allObjects)
+                //{
+                //    if (obj.name.Contains("GameManage") || obj.name.Contains("GameManager"))
+                //    {
+                //        Debug.Log($"找到可能的对象: {obj.name}, 激活: {obj.activeInHierarchy}");
+                //        var gm = obj.GetComponent<GameManage>();
+                //        if (gm != null)
+                //        {
+                //            Debug.Log($" 这个对象有 GameManage 组件!");
+                //            gameManage = gm;
+                //            foundGameManage = true;
+                //            break;
+                //        }
+                //    }
+                //}
 
-                if (!foundGameManage)
-                {
-                    Debug.LogError("场景中完全找不到 GameManage 组件!");
-                    StartCoroutine(RetryHandleTurnStart(message, 0.5f));
-                }
-                else
-                {
-                    // 找到了，再次尝试调用
-                    Debug.Log($" 通过遍历找到 GameManage，调用 StartTurn({data.PlayerId})");
-                    gameManage.StartTurn(data.PlayerId);
-                }
+                //if (!foundGameManage)
+                //{
+                //    Debug.LogError("场景中完全找不到 GameManage 组件!");
+                //    StartCoroutine(RetryHandleTurnStart(message, 0.5f));
+                //}
+                //else
+                //{
+                //    Debug.Log($" 通过遍历找到 GameManage，调用 StartTurn({data.PlayerId})");
+                //    gameManage.StartTurn(data.PlayerId);
+                //}
             }
         }
         catch (Exception ex)
@@ -823,74 +1327,12 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
-
-    // 添加重试协程
-    private IEnumerator RetryHandleTurnStart(NetworkMessage message, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        Debug.Log("=== 重试 HandleTurnStart ===");
-        HandleTurnStart(message);
-    }
-
-    // 连接确认
-    private void HandleConnected(NetworkMessage message)
-    {
-        ConnectedMessage data = JsonConvert.DeserializeObject<ConnectedMessage>(message.JsonData);
-        localClientId = data.AssignedClientId;
-        connectedPlayers = data.ExistingPlayerIds;
-
-        Debug.Log($"[客户端] 已连接到服务器! 分配ID: {localClientId}");
-        OnConnectedToServer?.Invoke();
-    }
-
-    // 玩家加入
-    private void HandlePlayerJoined(NetworkMessage message)
-    {
-        PlayerJoinedMessage data = JsonConvert.DeserializeObject<PlayerJoinedMessage>(message.JsonData);
-
-        if (!connectedPlayers.Contains(data.PlayerId))
-        {
-            connectedPlayers.Add(data.PlayerId);
-            Debug.Log($"玩家 {data.PlayerId} ({data.PlayerName}) 加入游戏 - 当前玩家数: {connectedPlayers.Count}");
-        }
-    }
-
-    // 游戏开始
-    private void HandleGameStart(NetworkMessage message)
-    {
-        GameStartData data = JsonConvert.DeserializeObject<GameStartData>(message.JsonData);
-
-        Debug.Log($"游戏开始! 玩家数: {data.PlayerIds.Length}");
-
-        isGameStarted = true;
-        OnGameStarted?.Invoke();
-
-        // 通知GameManage初始化游戏
-        if (gameManage != null)
-        {
-            gameManage.InitGameWithNetworkData(data);
-        }
-        else
-        {
-            gameManage = GameManage.Instance;
-            if (gameManage != null)
-            {
-                gameManage.InitGameWithNetworkData(data);
-            }
-            else
-            {
-                Debug.LogError("无法找到 GameManage 来初始化游戏!");
-            }
-        }
-    }
-
     // 回合结束
     private void HandleTurnEnd(NetworkMessage message)
     {
         Debug.Log($"=== HandleTurnEnd 被调用 ===");
-        Debug.Log($"当前是服务器: {isServer}");
-        Debug.Log($"gameManage 是否为空: {gameManage == null}");
+        //Debug.Log($"当前是服务器: {isServer}");
+        //Debug.Log($"gameManage 是否为空: {gameManage == null}");
 
 
         if (gameManage == null)
@@ -1036,38 +1478,39 @@ public class NetGameSystem : MonoBehaviour
         Unity.Mathematics.int2 fromPos = new Unity.Mathematics.int2(data.FromX, data.FromY);
         Unity.Mathematics.int2 toPos = new Unity.Mathematics.int2(data.ToX, data.ToY);
 
-        Debug.Log($"玩家 {data.PlayerId} 移动单位: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+        Debug.Log($"[网络] 玩家 {data.PlayerId} 移动单位: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
 
-        if (playerDataManager != null)
+        // 确保管理器存在
+        if (gameManage == null)
         {
-            playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+            gameManage = GameManage.Instance;
         }
-        else
+
+        // 只通知 PlayerOperationManager 处理视觉效果
+        if (gameManage != null && gameManage._PlayerOperation != null)
         {
-            playerDataManager = PlayerDataManager.Instance;
-            playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+            gameManage._PlayerOperation.HandleNetworkMove(data);
         }
     }
-
     // 单位添加
     private void HandleUnitAdd(NetworkMessage message)
     {
         UnitAddMessage data = JsonConvert.DeserializeObject<UnitAddMessage>(message.JsonData);
 
         Unity.Mathematics.int2 pos = new Unity.Mathematics.int2(data.PosX, data.PosY);
-        PlayerUnitType unitType = (PlayerUnitType)data.UnitType;
+        CardType unitType = (CardType)data.UnitType;
 
-        Debug.Log($"玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
+        Debug.Log($"[网络] 玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
 
-        if (playerDataManager != null)
+        if (gameManage == null)
         {
-            playerDataManager.AddUnit(data.PlayerId, unitType, pos);
+            gameManage = GameManage.Instance;
         }
-        else
-        {
 
-            playerDataManager = PlayerDataManager.Instance;
-            playerDataManager.AddUnit(data.PlayerId, unitType, pos);
+        // 只通知 PlayerOperationManager 处理
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkAddUnit(data);
         }
     }
 
@@ -1088,6 +1531,29 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager = PlayerDataManager.Instance;
             playerDataManager.RemoveUnit(data.PlayerId, pos);
+        }
+    }
+
+    // 单位攻击
+    private void HandleUnitAttack(NetworkMessage message)
+    {
+        UnitAttackMessage data = JsonConvert.DeserializeObject<UnitAttackMessage>(message.JsonData);
+
+        Unity.Mathematics.int2 attackerPos = new Unity.Mathematics.int2(data.AttackerPosX, data.AttackerPosY);
+        Unity.Mathematics.int2 targetPos = new Unity.Mathematics.int2(data.TargetPosX, data.TargetPosY);
+
+        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // 通知 PlayerOperationManager 处理
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkAttack(data);
         }
     }
 
@@ -1170,10 +1636,10 @@ public class NetGameSystem : MonoBehaviour
         maxPlayers = maxPlayerCount;
     }
 
-    public void SetPlayerName(string name)
-    {
-        playerName = name;
-    }
+    //public void SetPlayerName(string name)
+    //{
+    //    playerName = name;
+    //}
 }
 
 // *************************

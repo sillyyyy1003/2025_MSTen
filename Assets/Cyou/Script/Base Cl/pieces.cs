@@ -12,6 +12,7 @@ namespace GamePieces
     public abstract class Piece : VisualGameObject
     {
         [SerializeField] protected PieceDataSO pieceData;
+        public DemoUITest GM;
 
         // ===== 実行時の状態 =====
         protected float currentMaxHP;
@@ -21,13 +22,35 @@ namespace GamePieces
         protected int currentPID; // 現在所属しているプレイヤーID
         protected int originalPID; // 元々所属していたプレイヤーID
         protected PieceState currentState = PieceState.Idle;
-        protected int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2、3:升級3
+        protected int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2、3:升級3（全体レベル・互換性のため残す）
+
+        // ===== 各項目の個別レベル =====
+        protected int hpLevel = 0; // HP レベル (0-3)
+        protected int apLevel = 0; // AP レベル (0-3)
+
+
+        /// <summary>
+        /// 変換した駒の情報を保持する構造体
+        /// </summary>
+        public struct ConvertedPieceInfo
+        {
+            public Piece convertedPiece;
+            public int originalPlayerID;
+            public float convertedTurn;
+
+        }
 
 
 
         // ===== イベント =====
+
+        //GameManagerとの連絡用
+        public static event Action<Piece, Piece> OnAnyCharmed;    // グローバルイベント
+        public static event Action<Piece> OnAnyUncharmed;         // グローバルイベント
+
         public event Action<Piece> OnPieceDeath;
         public event Action<Piece,Piece> OnCharmed;//(魅惑された駒、魅惑した駒)
+        public event Action<Piece> OnUncharmed;//魅惑状態が解除して元の陣営に戻った駒
         public event Action<float, float> OnHPChanged;
         public event Action<float, float> OnAPChanged;
         public event Action<PieceState, PieceState> OnStateChanged;
@@ -37,11 +60,15 @@ namespace GamePieces
         public int CurrentPID => currentPID;
         public int OriginalPID => originalPID;
         public float CurrentHP => currentHP;
+        public float CurrentMaxHP => currentMaxHP;
         public float CurrentAP => currentAP;
+        public float CurrentMaxAP => currentMaxAP;
         public bool IsAlive => currentHP > 0;
         public bool CanMove => currentAP >= pieceData.moveAPCost;
         public PieceState State => currentState;
         public int UpgradeLevel => upgradeLevel;
+        public int HPLevel => hpLevel;
+        public int APLevel => apLevel;
         
         #region 初期化
 
@@ -58,29 +85,64 @@ namespace GamePieces
 
             currentMaxHP = data.maxHPByLevel[0];
             currentHP = currentMaxHP;
+            if (CurrentHP <= 0)
+                Debug.LogError($"{data.pieceName}のHP初期値定義が0以下です！");
             currentMaxAP = data.maxAPByLevel[0];
             currentAP = currentMaxAP;
+            if (CurrentAP <= 0)
+                Debug.LogError($"{data.pieceName}のAP初期値定義が0以下です！");
+
 
             SetupComponents();
-            StartCoroutine(ActionPointRecoveryCoroutine());
+            //StartCoroutine(ActionPointRecoveryCoroutine());
         }
 
         /// <summary>
         /// プレイヤーIDを変更（陣営変更）
+        /// 変更なので勿論元戻りも含まれている
         /// </summary>
         /// <param name="newPlayerID">新しいプレイヤーID</param>
-        public virtual void ChangePID(int newPlayerID,Piece charmer=null)
+        public virtual void ChangePID(int newPlayerID, int charmTurns=0,Piece charmer=null)
         {
             currentPID = newPlayerID;
-            OnCharmed?.Invoke(this,charmer);
-            Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
+            if (newPlayerID != OriginalPID)
+            {
+                OnCharmed?.Invoke(this, charmer);
+                Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
+            }
+            else if(newPlayerID==OriginalPID)
+            {
+                OnUncharmed?.Invoke(this);
+                Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}に復帰しました。");
+            }
+
+            if(charmTurns>0)
+                StartCoroutine(RevertCharmAfterTurns(charmTurns,OriginalPID));
+
+
+        }
+
+
+        private IEnumerator RevertCharmAfterTurns(int charmTurns,int originalPID)
+        {
+            int remainingTurns=charmTurns;
+            int endTurn = remainingTurns + DemoUITest.GetTurn();//魅惑が解除されるターンの数字
+
+            while (remainingTurns > 0)
+            {
+                yield return new WaitUntil(() => DemoUITest.GetTurn() >= endTurn);//GameManagerからターンの終了宣告を貰う
+                    remainingTurns--;
+            }
+            
+            currentPID = originalPID;
+            OnUncharmed?.Invoke(this);
+            Debug.Log($"{OriginalPID}の駒{this.pieceData.pieceName}の魅惑が解けました");
         }
 
         protected virtual void SetupComponents()
         {
-            SetupVisualComponents();
-            ApplySprite(pieceData.pieceSprite, Color.white);
-            ApplyMesh(pieceData.pieceMesh, pieceData.pieceMaterial);
+            // SetupVisualComponents(); // Prefabの外見をそのまま使用するため不要
+            // Prefabの外見をそのまま使用するため、動的な適用は不要
         }
 
         #endregion
@@ -93,7 +155,7 @@ namespace GamePieces
             {
                 if (currentAP < currentMaxAP && currentState != PieceState.InBuilding)
                 {
-                    ModifyAP(pieceData.aPRecoveryRate * Time.deltaTime);
+                    ModifyAP(pieceData.aPRecoveryRate * Time.deltaTime);//ターン数へ移行
                 }
                 yield return null;
             }
@@ -167,7 +229,7 @@ namespace GamePieces
         #region アップグレード管理
 
         /// <summary>
-        /// 駒をアップグレードする
+        /// 駒をアップグレードする（旧システム・互換性のため残す）
         /// </summary>
         public virtual bool UpgradePiece()
         {
@@ -192,6 +254,121 @@ namespace GamePieces
             // 派生クラスで具体的な効果を実装
         }
 
+        /// <summary>
+        /// HPをアップグレードする
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeHP()
+        {
+            // 最大レベルチェック
+            if (hpLevel >= 3)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} のHPは既に最大レベル(3)です");
+                return false;
+            }
+
+            // アップグレードコスト配列の境界チェック
+            if (pieceData.hpUpgradeCost == null || hpLevel >= pieceData.hpUpgradeCost.Length)
+            {
+                Debug.LogError($"{pieceData.pieceName} のhpUpgradeCostが正しく設定されていません");
+                return false;
+            }
+
+            int cost = pieceData.hpUpgradeCost[hpLevel];
+
+            // コストが0の場合はアップグレード不可
+            if (cost <= 0)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} のHPレベル{hpLevel}→{hpLevel + 1}へのアップグレードは設定されていません（コスト0）");
+                return false;
+            }
+
+            // レベルアップ実行
+            hpLevel++;
+            float newMaxHP = pieceData.GetMaxHPByLevel(hpLevel);
+            float hpRatio = currentHP / currentMaxHP; // 現在のHP割合を保持
+            currentMaxHP = newMaxHP;
+            currentHP = newMaxHP * hpRatio; // 割合を維持してHPを再計算
+
+            OnHPChanged?.Invoke(currentHP, currentMaxHP);
+
+            Debug.Log($"{pieceData.pieceName} のHPがレベル{hpLevel}にアップグレードしました（最大HP: {currentMaxHP}）");
+            return true;
+        }
+
+        /// <summary>
+        /// APをアップグレードする
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeAP()
+        {
+            // 最大レベルチェック
+            if (apLevel >= 3)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} のAPは既に最大レベル(3)です");
+                return false;
+            }
+
+            // アップグレードコスト配列の境界チェック
+            if (pieceData.apUpgradeCost == null || apLevel >= pieceData.apUpgradeCost.Length)
+            {
+                Debug.LogError($"{pieceData.pieceName} のapUpgradeCostが正しく設定されていません");
+                return false;
+            }
+
+            int cost = pieceData.apUpgradeCost[apLevel];
+
+            // コストが0の場合はアップグレード不可
+            if (cost <= 0)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} のAPレベル{apLevel}→{apLevel + 1}へのアップグレードは設定されていません（コスト0）");
+                return false;
+            }
+
+            // レベルアップ実行
+            apLevel++;
+            float newMaxAP = pieceData.GetMaxAPByLevel(apLevel);
+            float apRatio = currentAP / currentMaxAP; // 現在のAP割合を保持
+            currentMaxAP = newMaxAP;
+            currentAP = newMaxAP * apRatio; // 割合を維持してAPを再計算
+
+            OnAPChanged?.Invoke(currentAP, currentMaxAP);
+
+            Debug.Log($"{pieceData.pieceName} のAPがレベル{apLevel}にアップグレードしました（最大AP: {currentMaxAP}）");
+            return true;
+        }
+
+        /// <summary>
+        /// 指定項目のアップグレードコストを取得
+        /// </summary>
+        public int GetUpgradeCost(UpgradeType type)
+        {
+            switch (type)
+            {
+                case UpgradeType.HP:
+                    if (hpLevel >= 3 || pieceData.hpUpgradeCost == null || hpLevel >= pieceData.hpUpgradeCost.Length)
+                        return -1; // アップグレード不可
+                    return pieceData.hpUpgradeCost[hpLevel];
+
+                case UpgradeType.AP:
+                    if (apLevel >= 3 || pieceData.apUpgradeCost == null || apLevel >= pieceData.apUpgradeCost.Length)
+                        return -1; // アップグレード不可
+                    return pieceData.apUpgradeCost[apLevel];
+
+                default:
+                    return -1;
+            }
+        }
+
+        /// <summary>
+        /// 指定項目がアップグレード可能かチェック
+        /// </summary>
+        public bool CanUpgrade(UpgradeType type)
+        {
+            int cost = GetUpgradeCost(type);
+            return cost > 0;
+        }
+
         #endregion
 
         #region 死亡処理
@@ -200,7 +377,8 @@ namespace GamePieces
         {
             ChangeState(PieceState.Dead);
             OnPieceDeath?.Invoke(this);
-            StartCoroutine(DeathAnimation());
+            Destroy(gameObject);
+            //StartCoroutine(DeathAnimation());//死亡アニメーションも一応
         }
         
         protected virtual IEnumerator DeathAnimation()
@@ -239,6 +417,15 @@ namespace GamePieces
         InBuilding, // 建物内
         Dead        // 死亡
     }
-    
+
+    /// <summary>
+    /// アップグレード項目タイプ
+    /// </summary>
+    public enum UpgradeType
+    {
+        HP,         // 最大HP
+        AP          // 最大AP
+    }
+
 
 }

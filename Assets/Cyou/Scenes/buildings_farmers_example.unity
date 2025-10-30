@@ -1006,6 +1006,7 @@ GameObject:
   - component: {fileID: 452418424}
   - component: {fileID: 452418423}
   - component: {fileID: 452418422}
+  - component: {fileID: 452418425}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1087,6 +1088,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &452418425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 452418421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
+  m_TaaSettings:
+    quality: 3
+    frameInfluence: 0.1
+    jitterScale: 1
+    mipBias: 0
+    varianceClampScale: 0.9
+    contrastAdaptiveSharpening: 0
 --- !u!1 &835652772
 GameObject:
   m_ObjectHideFlags: 0
@@ -1667,6 +1712,58 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1636497161}
   m_CullTransparentMesh: 1
+--- !u!1 &1695341310
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1695341312}
+  - component: {fileID: 1695341311}
+  m_Layer: 0
+  m_Name: DemoUITest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1695341311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1695341310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99279b1604eee814d97d44f3ecf37243, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  unitListTable: {fileID: 0}
+  buildingRegistry: {fileID: 0}
+  defaultReligion: 5
+  defaultPlayerID: 1
+  uiCanvas: {fileID: 0}
+  buttonContainer: {fileID: 0}
+  infoText: {fileID: 0}
+  turnText: {fileID: 0}
+--- !u!4 &1695341312
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1695341310}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 871.3468, y: 519.5777, z: -34.423706}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1788878274
 GameObject:
   m_ObjectHideFlags: 0
@@ -1846,7 +1943,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d1554efbc8126f47b88e7298bc601ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pieceDataEntries: []
+  pieceDataEntries:
+  - pieceType: 2
+    religion: 1
+    pieceDataSO: {fileID: 11400000, guid: ae53624264a7525448b31cc1079e5758, type: 2}
+  - pieceType: 3
+    religion: 1
+    pieceDataSO: {fileID: 11400000, guid: caf75aa74a14ce3488d40ef7c9af0943, type: 2}
+  - pieceType: 1
+    religion: 1
+    pieceDataSO: {fileID: 0}
+  - pieceType: 2
+    religion: 2
+    pieceDataSO: {fileID: 11400000, guid: b071b4efd1569404eaa31d7ab5742cde, type: 2}
 --- !u!1 &1826658662
 GameObject:
   m_ObjectHideFlags: 0
@@ -1999,7 +2108,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2118761175
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2097,3 +2206,4 @@ SceneRoots:
   - {fileID: 2118761178}
   - {fileID: 1141019393}
   - {fileID: 1789075466}
+  - {fileID: 1695341312}

@@ -11,12 +11,15 @@ using UnityEngine;
 public class Missionary : Piece
 {
     private MissionaryDataSO missionaryData;
-    private int currentSkillLevel = 1; // 現在のスキルレベル
 
     // 占領状態
     private bool isOccupying = false;
 
     // 変換した駒の管理はGMに任せた
+
+    // ===== 宣教師専用の個別レベル =====
+    private int occupyLevel = 0;        // 占領成功率レベル (0-3)
+    private int convertEnemyLevel = 0;  // 魅惑成功率レベル (0-3)
 
     // イベント
     public event Action<bool> OnOccupyCompleted; // 占領完了(成功/失敗)
@@ -24,7 +27,6 @@ public class Missionary : Piece
     public event Action<int> OnSkillLevelChanged; // スキルレベル変更
 
     public bool IsOccupying => isOccupying;
-    public int SkillLevel => currentSkillLevel;
 
     public override void Initialize(PieceDataSO data, int playerID)
     {
@@ -38,6 +40,11 @@ public class Missionary : Piece
         base.Initialize(data, playerID);
     }
 
+    //25.10.26 RI 添加SOData回调
+    public PieceDataSO GetUnitDataSO()
+    {
+        return missionaryData;
+    }
     #region スキルレベル管理
 
     /// <summary>
@@ -45,13 +52,13 @@ public class Missionary : Piece
     /// </summary>
     public void SetSkillLevel(int level)
     {
-        int oldLevel = currentSkillLevel;
-        currentSkillLevel = Mathf.Clamp(level, 1, missionaryData.convertFarmerChanceByLevel.Length);
+        int oldLevel = UpgradeLevel;
+        upgradeLevel = Mathf.Clamp(level, 1, missionaryData.convertFarmerChanceByLevel.Length);
 
-        if (oldLevel != currentSkillLevel)
+        if (oldLevel != UpgradeLevel)
         {
-            OnSkillLevelChanged?.Invoke(currentSkillLevel);
-            Debug.Log($"宣教師のスキルレベルが{currentSkillLevel}になりました");
+            OnSkillLevelChanged?.Invoke(UpgradeLevel);
+            Debug.Log($"宣教師のスキルレベルが{UpgradeLevel}になりました");
         }
     }
 
@@ -60,9 +67,9 @@ public class Missionary : Piece
     /// </summary>
     public void LevelUp()
     {
-        if (currentSkillLevel < missionaryData.convertFarmerChanceByLevel.Length)
+        if (upgradeLevel < missionaryData.convertFarmerChanceByLevel.Length)
         {
-            SetSkillLevel(currentSkillLevel + 1);
+            SetSkillLevel(UpgradeLevel + 1);
         }
     }
 
@@ -71,7 +78,7 @@ public class Missionary : Piece
     /// </summary>
     public float GetOccupyEmptySuccessRate()
     {
-        return missionaryData.GetOccupyEmptySuccessRate(upgradeLevel);
+        return missionaryData.GetOccupyEmptySuccessRate(UpgradeLevel);
     }
 
     /// <summary>
@@ -79,7 +86,7 @@ public class Missionary : Piece
     /// </summary>
     public float GetOccupyEnemySuccessRate()
     {
-        return missionaryData.GetOccupyEnemySuccessRate(upgradeLevel);
+        return missionaryData.GetOccupyEnemySuccessRate(UpgradeLevel);
     }
 
     /// <summary>
@@ -89,15 +96,15 @@ public class Missionary : Piece
     {
         if (target is Missionary)
         {
-            return missionaryData.GetConvertMissionaryChance(upgradeLevel);
+            return missionaryData.GetConvertMissionaryChance(UpgradeLevel);
         }
         else if (target is Farmer)
         {
-            return missionaryData.GetConvertFarmerChance(upgradeLevel);
+            return missionaryData.GetConvertFarmerChance(UpgradeLevel);
         }
         else if (target is MilitaryUnit)
         {
-            return missionaryData.GetConvertMilitaryChance(upgradeLevel);
+            return missionaryData.GetConvertMilitaryChance(UpgradeLevel);
         }
         else
         {
@@ -111,7 +118,7 @@ public class Missionary : Piece
     /// </summary>
     public bool HasAntiConversionSkill()
     {
-        return missionaryData.HasAntiConversionSkill(upgradeLevel);
+        return missionaryData.HasAntiConversionSkill(UpgradeLevel);
     }
 
     #endregion
@@ -195,7 +202,7 @@ public class Missionary : Piece
             return false;
         }
 
-        if (!ConsumeAP(missionaryData.attackAPCost))
+        if (!ConsumeAP(missionaryData.convertAPCost))//間違ってattackAPCostを使わないように
         {
             Debug.LogWarning("攻撃に必要な行動力が不足しています");
             return false;
@@ -297,7 +304,7 @@ public class Missionary : Piece
 
 
         // プレイヤーIDを変更（陣営変更）
-        enemy.ChangePID(currentPID,this);
+        enemy.ChangePID(currentPID, missionaryData.conversionTurnDuration[UpgradeLevel],this);
 
         // 変換情報を記録
         var convertInfo = new ConvertedPieceInfo
@@ -314,6 +321,10 @@ public class Missionary : Piece
     #endregion
 
     #region アップグレード管理
+
+    // ===== プロパティ =====
+    public int OccupyLevel => occupyLevel;
+    public int ConvertEnemyLevel => convertEnemyLevel;
 
     /// <summary>
     /// アップグレード効果を適用
@@ -332,7 +343,7 @@ public class Missionary : Piece
 
         // 新しい最大値に基づいて現在値を更新
         currentHP = newMaxHP * hpRatio;
-        
+
 
         // 現在のアップグレードレベルに応じたスキル効果を取得
         float occupyOwnRate = GetOccupyEmptySuccessRate();
@@ -352,6 +363,115 @@ public class Missionary : Piece
         }
     }
 
+    /// <summary>
+    /// 占領成功率をアップグレードする（リソース消費は呼び出し側で行う）
+    /// </summary>
+    /// <returns>アップグレード成功したらtrue</returns>
+    public bool UpgradeOccupy()
+    {
+        // 最大レベルチェック
+        if (occupyLevel >= 3)
+        {
+            Debug.LogWarning($"{missionaryData.pieceName} の占領成功率は既に最大レベル(3)です");
+            return false;
+        }
+
+        // アップグレードコスト配列の境界チェック
+        if (missionaryData.occupyUpgradeCost == null || occupyLevel >= missionaryData.occupyUpgradeCost.Length)
+        {
+            Debug.LogError($"{missionaryData.pieceName} のoccupyUpgradeCostが正しく設定されていません");
+            return false;
+        }
+
+        int cost = missionaryData.occupyUpgradeCost[occupyLevel];
+
+        // コストが0の場合はアップグレード不可
+        if (cost <= 0)
+        {
+            Debug.LogWarning($"{missionaryData.pieceName} の占領成功率レベル{occupyLevel}→{occupyLevel + 1}へのアップグレードは設定されていません（コスト0）");
+            return false;
+        }
+
+        // レベルアップ実行
+        occupyLevel++;
+        float newOccupyEmptyRate = missionaryData.GetOccupyEmptySuccessRate(occupyLevel);
+        float newOccupyEnemyRate = missionaryData.GetOccupyEnemySuccessRate(occupyLevel);
+
+        Debug.Log($"{missionaryData.pieceName} の占領成功率がレベル{occupyLevel}にアップグレードしました（空白領地: {newOccupyEmptyRate * 100:F0}%, 敵領地: {newOccupyEnemyRate * 100:F0}%）");
+        return true;
+    }
+
+    /// <summary>
+    /// 魅惑成功率をアップグレードする（リソース消費は呼び出し側で行う）
+    /// </summary>
+    /// <returns>アップグレード成功したらtrue</returns>
+    public bool UpgradeConvertEnemy()
+    {
+        // 最大レベルチェック
+        if (convertEnemyLevel >= 3)
+        {
+            Debug.LogWarning($"{missionaryData.pieceName} の魅惑成功率は既に最大レベル(3)です");
+            return false;
+        }
+
+        // アップグレードコスト配列の境界チェック
+        if (missionaryData.convertEnemyUpgradeCost == null || convertEnemyLevel >= missionaryData.convertEnemyUpgradeCost.Length)
+        {
+            Debug.LogError($"{missionaryData.pieceName} のconvertEnemyUpgradeCostが正しく設定されていません");
+            return false;
+        }
+
+        int cost = missionaryData.convertEnemyUpgradeCost[convertEnemyLevel];
+
+        // コストが0の場合はアップグレード不可
+        if (cost <= 0)
+        {
+            Debug.LogWarning($"{missionaryData.pieceName} の魅惑成功率レベル{convertEnemyLevel}→{convertEnemyLevel + 1}へのアップグレードは設定されていません（コスト0）");
+            return false;
+        }
+
+        // レベルアップ実行
+        convertEnemyLevel++;
+        float newConvertMissionaryChance = missionaryData.GetConvertMissionaryChance(convertEnemyLevel);
+        float newConvertFarmerChance = missionaryData.GetConvertFarmerChance(convertEnemyLevel);
+        float newConvertMilitaryChance = missionaryData.GetConvertMilitaryChance(convertEnemyLevel);
+
+        Debug.Log($"{missionaryData.pieceName} の魅惑成功率がレベル{convertEnemyLevel}にアップグレードしました");
+        Debug.Log($"宣教師: {newConvertMissionaryChance * 100:F0}%, 信徒: {newConvertFarmerChance * 100:F0}%, 十字軍: {newConvertMilitaryChance * 100:F0}%");
+        return true;
+    }
+
+    /// <summary>
+    /// 指定項目のアップグレードコストを取得
+    /// </summary>
+    public int GetMissionaryUpgradeCost(MissionaryUpgradeType type)
+    {
+        switch (type)
+        {
+            case MissionaryUpgradeType.Occupy:
+                if (occupyLevel >= 3 || missionaryData.occupyUpgradeCost == null || occupyLevel >= missionaryData.occupyUpgradeCost.Length)
+                    return -1;
+                return missionaryData.occupyUpgradeCost[occupyLevel];
+
+            case MissionaryUpgradeType.ConvertEnemy:
+                if (convertEnemyLevel >= 3 || missionaryData.convertEnemyUpgradeCost == null || convertEnemyLevel >= missionaryData.convertEnemyUpgradeCost.Length)
+                    return -1;
+                return missionaryData.convertEnemyUpgradeCost[convertEnemyLevel];
+
+            default:
+                return -1;
+        }
+    }
+
+    /// <summary>
+    /// 指定項目がアップグレード可能かチェック
+    /// </summary>
+    public bool CanUpgradeMissionary(MissionaryUpgradeType type)
+    {
+        int cost = GetMissionaryUpgradeCost(type);
+        return cost > 0;
+    }
+
     #endregion
 
     #region クリーンアップ
@@ -368,13 +488,14 @@ public class Missionary : Piece
 
     #endregion
 
-    /// <summary>
-    /// 変換した駒の情報を保持する構造体
-    /// </summary>
-    private class ConvertedPieceInfo
-    {
-        public Piece convertedPiece;
-        public int originalPlayerID;
-        public float convertedTurn;
-    }
+
+}
+
+/// <summary>
+/// 宣教師のアップグレード項目タイプ
+/// </summary>
+public enum MissionaryUpgradeType
+{
+    Occupy,         // 占領成功率
+    ConvertEnemy    // 魅惑成功率
 }

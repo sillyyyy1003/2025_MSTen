@@ -22,7 +22,13 @@ namespace Buildings
         private int currentSkillUses;//現時点まだ使用可能のスロットの数
         private int lastResourceGenTurn;
         private int apCostperTurn;
-        private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2
+        private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2（全体レベル・互換性のため残す）
+
+        // ===== 各項目の個別レベル =====
+        private int hpLevel = 0;            // HP レベル (0-2)
+        private int attackRangeLevel = 0;   // 攻撃範囲レベル (0-2)
+        private int slotsLevel = 0;         // スロット数レベル (0-2)
+        private int buildCostLevel = 0;     // 建築コストレベル (0-2)
 
         // 配置された農民のリスト
         private List<FarmerSlot> farmerSlots = new List<FarmerSlot>();
@@ -36,7 +42,7 @@ namespace Buildings
         public BuildingDataSO Data => buildingData;
         public BuildingState State => currentState;
         public bool IsAlive => currentState != BuildingState.Ruined;
-        public bool IsOperational => (currentState == BuildingState.Disabled || currentState == BuildingState.Active) && currentSkillUses > 0;
+        public bool IsOperational => (currentState == BuildingState.Inactive || currentState == BuildingState.Active) && currentSkillUses > 0;
         public int CurrentHP => currentHp;
         public float BuildProgress => buildingData.buildingAPCost > 0 ?
             1f - (float)remainingBuildCost / buildingData.buildingAPCost : 1f;
@@ -44,6 +50,10 @@ namespace Buildings
         public List<FarmerSlot> FarmerSlots => farmerSlots;
         public int APCostPerTurn => apCostperTurn;
         public int UpgradeLevel => upgradeLevel;
+        public int HPLevel => hpLevel;
+        public int AttackRangeLevel => attackRangeLevel;
+        public int SlotsLevel => slotsLevel;
+        public int BuildCostLevel => buildCostLevel;
 
         #region 初期化
 
@@ -54,6 +64,8 @@ namespace Buildings
             remainingBuildCost = data.buildingAPCost;
             apCostperTurn = data.apCostperTurn;
             currentSkillUses = data.GetMaxSlotsByLevel(0);
+            //地面に金鉱があるか否かを判断すべき
+
 
             ChangeState(BuildingState.UnderConstruction);
 
@@ -72,9 +84,7 @@ namespace Buildings
 
         protected virtual void SetupComponents()
         {
-            SetupVisualComponents();
-            ApplySprite(buildingData.buildingSprite, Color.white);
-            ApplyMesh(buildingData.buildingMesh, buildingData.buildingMaterial);
+            // SetupVisualComponents(); // Prefabの外見をそのまま使用するため不要
         }
 
         #endregion
@@ -102,8 +112,34 @@ namespace Buildings
 
         private void CompleteConstruction()
         {
-            ChangeState(BuildingState.Disabled);//未稼働状態へ移行
+            ChangeState(BuildingState.Inactive);//未稼働状態へ移行
             OnBuildingCompleted?.Invoke(this);
+        }
+
+        /// <summary>
+        /// 建築をキャンセルする
+        /// 注意: 消耗された農民と行動力は返されない
+        /// </summary>
+        public bool CancelConstruction()
+        {
+            if (currentState != BuildingState.UnderConstruction)
+            {
+                Debug.LogWarning("建築中でない建物はキャンセルできません");
+                return false;
+            }
+
+            Debug.Log($"建物 {buildingData.buildingName} の建築がキャンセルされました。消耗された農民と行動力は返されません。");
+
+            // 建物を廃墟状態に変更
+            ChangeState(BuildingState.Ruined);
+
+            // 破壊イベントを発火（DemoUITestのリストから自動削除される）
+            OnBuildingDestroyed?.Invoke(this);
+
+            // 建物オブジェクトを破棄
+            Destroy(gameObject);
+
+            return true;
         }
 
         #endregion
@@ -123,7 +159,7 @@ namespace Buildings
         /// </summary>
         public bool AssignFarmer(Farmer farmer)
         {
-            if (!buildingData.isSpecialBuilding || (currentState != BuildingState.Disabled&&currentState!=BuildingState.Active))
+            if (!buildingData.isSpecialBuilding || (currentState != BuildingState.Inactive&&currentState!=BuildingState.Active))
             {
                 Debug.Log("建物が未完成又は廃墟になってます。");
                 return false;
@@ -147,18 +183,29 @@ namespace Buildings
         public void ProcessTurn(int currentTurn)
         {
             if (!IsOperational)
+            {
+                Debug.Log($"建物 {buildingData.buildingName} は稼働可能な状態ではありません (状態: {currentState}, スロット: {currentSkillUses})");
                 return;
+            }
 
             // APがある農民がいるかチェック
             bool hasActiveFarmer = farmerSlots.Any(slot => slot.IsOccupied && slot.HasAP);
             if (!hasActiveFarmer)
+            {
+                Debug.Log($"建物 {buildingData.buildingName} にAPを持つ農民がいません");
                 return;
+            }
 
             // APがある農民がいる場合のみActiveに変更
-            if (currentState == BuildingState.Disabled)
+            if (currentState == BuildingState.Inactive)
+            {
                 ChangeState(BuildingState.Active);
+                Debug.Log($"建物 {buildingData.buildingName} がActiveに変更されました");
+            }
 
-            if (currentTurn - lastResourceGenTurn >= buildingData.resourceGenInterval)
+            // 資源生成間隔チェック
+            int turnsSinceLastGen = currentTurn - lastResourceGenTurn;
+            if (turnsSinceLastGen >= buildingData.resourceGenInterval)
             {
                 GenerateResources();
                 lastResourceGenTurn = currentTurn;
@@ -166,11 +213,16 @@ namespace Buildings
                 // 農民の行動力を消費
                 ProcessFarmerAP();
             }
+            else
+            {
+                Debug.Log($"建物 {buildingData.buildingName} は資源生成間隔待ち中 ({turnsSinceLastGen}/{buildingData.resourceGenInterval}ターン)");
+            }
         }
 
         private void GenerateResources()
         {
             int totalProduction = CalculateProduction();
+            Debug.Log($"建物 {buildingData.buildingName} が資源 {totalProduction} を生成しました！");
             OnResourceGenerated?.Invoke(totalProduction);
         }
 
@@ -181,8 +233,9 @@ namespace Buildings
             {
                 if (slot.IsOccupied && slot.HasAP)
                 {
+                    int baseProduction = Data.GetBuildingResourceProduction();
                     // 基本生産量にスキルレベルによる倍率を適用
-                    totalProduction += buildingData.baseProductionAmount;
+                    totalProduction += baseProduction;
                 }
             }
 
@@ -222,13 +275,13 @@ namespace Buildings
         {
             if (currentState == BuildingState.Active)
             {
-                // Active状態で稼働中農民がいない場合はDisabledに戻す
+                // Active状態で稼働中農民がいない場合はInactiveに戻す
                 bool hasActiveFarmer = farmerSlots.Any(slot => slot.IsOccupied && slot.HasAP);
                 
                 if (!hasActiveFarmer)
                 {
-                    ChangeState(BuildingState.Disabled);
-                    Debug.Log($"建物 {buildingData.buildingName} の農民のAPが尽きたため、Disabledに状態変更しました");
+                    ChangeState(BuildingState.Inactive);
+                    Debug.Log($"建物 {buildingData.buildingName} の農民のAPが尽きたため、Inactiveに状態変更しました");
                 }
             }
         }
@@ -263,7 +316,7 @@ namespace Buildings
         #region アップグレード管理
 
         /// <summary>
-        /// 建物をアップグレードする
+        /// 建物をアップグレードする（旧システム・互換性のため残す）
         /// </summary>
         public bool UpgradeBuilding()
         {
@@ -273,7 +326,7 @@ namespace Buildings
                 return false;
             }
 
-            if (currentState != BuildingState.Disabled && currentState != BuildingState.Active)
+            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
             {
                 Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
                 return false;
@@ -327,11 +380,244 @@ namespace Buildings
         }
 
         /// <summary>
+        /// HPをアップグレードする
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeHP()
+        {
+            // 建物状態チェック
+            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
+            {
+                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
+                return false;
+            }
+
+            // 最大レベルチェック
+            if (hpLevel >= 2)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} のHPは既に最大レベル(2)です");
+                return false;
+            }
+
+            // アップグレードコスト配列の境界チェック
+            if (buildingData.hpUpgradeCost == null || hpLevel >= buildingData.hpUpgradeCost.Length)
+            {
+                Debug.LogError($"{buildingData.buildingName} のhpUpgradeCostが正しく設定されていません");
+                return false;
+            }
+
+            int cost = buildingData.hpUpgradeCost[hpLevel];
+
+            // コストが0の場合はアップグレード不可
+            if (cost <= 0)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} のHPレベル{hpLevel}→{hpLevel + 1}へのアップグレードは設定されていません（コスト0）");
+                return false;
+            }
+
+            // レベルアップ実行
+            hpLevel++;
+            int newMaxHp = buildingData.GetMaxHpByLevel(hpLevel);
+            float hpRatio = (float)currentHp / buildingData.GetMaxHpByLevel(hpLevel - 1);
+            currentHp = Mathf.RoundToInt(newMaxHp * hpRatio);
+
+            Debug.Log($"{buildingData.buildingName} のHPがレベル{hpLevel}にアップグレードしました（最大HP: {newMaxHp}）");
+            return true;
+        }
+
+        /// <summary>
+        /// 攻撃範囲をアップグレードする
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeAttackRange()
+        {
+            // 建物状態チェック
+            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
+            {
+                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
+                return false;
+            }
+
+            // 最大レベルチェック
+            if (attackRangeLevel >= 2)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} の攻撃範囲は既に最大レベル(2)です");
+                return false;
+            }
+
+            // アップグレードコスト配列の境界チェック
+            if (buildingData.attackRangeUpgradeCost == null || attackRangeLevel >= buildingData.attackRangeUpgradeCost.Length)
+            {
+                Debug.LogError($"{buildingData.buildingName} のattackRangeUpgradeCostが正しく設定されていません");
+                return false;
+            }
+
+            int cost = buildingData.attackRangeUpgradeCost[attackRangeLevel];
+
+            // コストが0の場合はアップグレード不可
+            if (cost <= 0)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} の攻撃範囲レベル{attackRangeLevel}→{attackRangeLevel + 1}へのアップグレードは設定されていません（コスト0）");
+                return false;
+            }
+
+            // レベルアップ実行
+            attackRangeLevel++;
+            int newAttackRange = buildingData.GetAttackRangeByLevel(attackRangeLevel);
+
+            Debug.Log($"{buildingData.buildingName} の攻撃範囲がレベル{attackRangeLevel}にアップグレードしました（攻撃範囲: {newAttackRange}）");
+            return true;
+        }
+
+        /// <summary>
+        /// スロット数をアップグレードする
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeSlots()
+        {
+            // 建物状態チェック
+            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
+            {
+                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
+                return false;
+            }
+
+            // 最大レベルチェック
+            if (slotsLevel >= 2)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} のスロット数は既に最大レベル(2)です");
+                return false;
+            }
+
+            // アップグレードコスト配列の境界チェック
+            if (buildingData.slotsUpgradeCost == null || slotsLevel >= buildingData.slotsUpgradeCost.Length)
+            {
+                Debug.LogError($"{buildingData.buildingName} のslotsUpgradeCostが正しく設定されていません");
+                return false;
+            }
+
+            int cost = buildingData.slotsUpgradeCost[slotsLevel];
+
+            // コストが0の場合はアップグレード不可
+            if (cost <= 0)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} のスロット数レベル{slotsLevel}→{slotsLevel + 1}へのアップグレードは設定されていません（コスト0）");
+                return false;
+            }
+
+            // レベルアップ実行
+            slotsLevel++;
+            int newMaxSlots = buildingData.GetMaxSlotsByLevel(slotsLevel);
+
+            // スロット数を増やす
+            if (newMaxSlots > farmerSlots.Count)
+            {
+                int slotsToAdd = newMaxSlots - farmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    farmerSlots.Add(new FarmerSlot());
+                }
+                currentSkillUses += slotsToAdd;
+            }
+
+            Debug.Log($"{buildingData.buildingName} のスロット数がレベル{slotsLevel}にアップグレードしました（スロット数: {newMaxSlots}）");
+            return true;
+        }
+
+        /// <summary>
+        /// 建築コストをアップグレードする（建築に必要なAPを減少させる）
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeBuildCost()
+        {
+            // 建物状態チェック
+            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
+            {
+                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
+                return false;
+            }
+
+            // 最大レベルチェック
+            if (buildCostLevel >= 2)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} の建築コストは既に最大レベル(2)です");
+                return false;
+            }
+
+            // アップグレードコスト配列の境界チェック
+            if (buildingData.buildCostUpgradeCost == null || buildCostLevel >= buildingData.buildCostUpgradeCost.Length)
+            {
+                Debug.LogError($"{buildingData.buildingName} のbuildCostUpgradeCostが正しく設定されていません");
+                return false;
+            }
+
+            int cost = buildingData.buildCostUpgradeCost[buildCostLevel];
+
+            // コストが0の場合はアップグレード不可
+            if (cost <= 0)
+            {
+                Debug.LogWarning($"{buildingData.buildingName} の建築コストレベル{buildCostLevel}→{buildCostLevel + 1}へのアップグレードは設定されていません（コスト0）");
+                return false;
+            }
+
+            // レベルアップ実行
+            buildCostLevel++;
+            int newBuildCost = buildingData.GetBuildingAPCostByLevel(buildCostLevel);
+
+            Debug.Log($"{buildingData.buildingName} の建築コストがレベル{buildCostLevel}にアップグレードしました（建築AP: {newBuildCost}）");
+            return true;
+        }
+
+        /// <summary>
+        /// 指定項目のアップグレードコストを取得
+        /// </summary>
+        public int GetUpgradeCost(BuildingUpgradeType type)
+        {
+            switch (type)
+            {
+                case BuildingUpgradeType.HP:
+                    if (hpLevel >= 2 || buildingData.hpUpgradeCost == null || hpLevel >= buildingData.hpUpgradeCost.Length)
+                        return -1;
+                    return buildingData.hpUpgradeCost[hpLevel];
+
+                case BuildingUpgradeType.AttackRange:
+                    if (attackRangeLevel >= 2 || buildingData.attackRangeUpgradeCost == null || attackRangeLevel >= buildingData.attackRangeUpgradeCost.Length)
+                        return -1;
+                    return buildingData.attackRangeUpgradeCost[attackRangeLevel];
+
+                case BuildingUpgradeType.Slots:
+                    if (slotsLevel >= 2 || buildingData.slotsUpgradeCost == null || slotsLevel >= buildingData.slotsUpgradeCost.Length)
+                        return -1;
+                    return buildingData.slotsUpgradeCost[slotsLevel];
+
+                case BuildingUpgradeType.BuildCost:
+                    if (buildCostLevel >= 2 || buildingData.buildCostUpgradeCost == null || buildCostLevel >= buildingData.buildCostUpgradeCost.Length)
+                        return -1;
+                    return buildingData.buildCostUpgradeCost[buildCostLevel];
+
+                default:
+                    return -1;
+            }
+        }
+
+        /// <summary>
+        /// 指定項目がアップグレード可能かチェック
+        /// </summary>
+        public bool CanUpgrade(BuildingUpgradeType type)
+        {
+            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
+                return false;
+
+            int cost = GetUpgradeCost(type);
+            return cost > 0;
+        }
+
+        /// <summary>
         /// レベルに応じた攻撃範囲を取得
         /// </summary>
         public int GetAttackRange()
         {
-            return buildingData.GetAttackRangeByLevel(upgradeLevel);
+            return buildingData.GetAttackRangeByLevel(attackRangeLevel);
         }
 
         /// <summary>
@@ -386,8 +672,19 @@ namespace Buildings
     {
         UnderConstruction,  // 建築中
         Active,            // 稼働中
-        Disabled,          // 未稼働（効果を発揮してない）
+        Inactive,          // 未稼働（効果を発揮してない）
         Ruined            // 廃墟
+    }
+
+    /// <summary>
+    /// 建物のアップグレード項目タイプ
+    /// </summary>
+    public enum BuildingUpgradeType
+    {
+        HP,             // 最大HP
+        AttackRange,    // 攻撃範囲
+        Slots,          // スロット数
+        BuildCost       // 建築コスト
     }
 
 }

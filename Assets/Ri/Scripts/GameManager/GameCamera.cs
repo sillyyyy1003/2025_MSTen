@@ -26,6 +26,8 @@ public class GameCamera : MonoBehaviour
     float zoom = 0.5f;    // 当前缩放 (0~1)
     float yaw;            // 水平旋转角
     float pitch = 45f;    // 固定一个俯视角（RTS 常用）
+
+    public bool bCanUseCamera;
   
     void Start()
     {
@@ -36,20 +38,33 @@ public class GameCamera : MonoBehaviour
 
     void Update()
     {
-        HandleZoom();
-        HandleRotation();
-        HandleMovement();
-      
+        if(bCanUseCamera)
+        {
+            HandleZoom();
+            HandleRotation();
+            HandleMovement();
+        }
+    }
+
+
+    public void SetCanUseCamera(bool canNot)
+    {
+        if (canNot)
+            bCanUseCamera = true;
+        else
+            bCanUseCamera = false;
     }
 
     /// <summary>
-    /// 得到玩家位置
+    /// 设置玩家跟踪的位置
     /// </summary>
     public void GetPlayerPosition(Vector3 playerPos)
     {
         this.transform.position = new Vector3(playerPos.x, 30, playerPos.z-21);
     }
 
+
+   
 
     void HandleZoom()
     {
@@ -143,10 +158,10 @@ public class GameCamera : MonoBehaviour
         Vector3 origin = grid.transform.position;
 
         // X 最大值（保持和你最初近似公式一致）
-        float xMax =(grid.cellCountX-1) * 10*Mathf.Sqrt(3);
+        float xMax =(grid.CellCountX-1) * 10*Mathf.Sqrt(3);
         float xMin = 0;
         // Z 最大值（修正过的公式）
-        float zMax = (grid.cellCountZ-1)*10+10;
+        float zMax = (grid.CellCountZ-1)*10+10;
         float zMin = -15 ;
 
         // 如果地图原点不是 (0,0)，把 origin 加进来
