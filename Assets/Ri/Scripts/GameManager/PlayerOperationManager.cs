@@ -133,8 +133,8 @@ public class PlayerOperationManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.G)&&bIsChooseMissionary)
         {
             // 传教士占领
-            _HexGrid.GetCell(selectCellID).Walled = true;
-            PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(selectCellID);
+            _HexGrid.GetCell(LastSelectingCellID).Walled = true;
+            PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
         }
     }
 
@@ -577,7 +577,8 @@ public class PlayerOperationManager : MonoBehaviour
         {
             if(_HexGrid.GetCell(i).enabled)
                 _HexGrid.GetCell(i).Walled = true;
-            PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(i);
+
+                PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(i);
         }
     }
 

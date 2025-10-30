@@ -306,6 +306,7 @@ public class GameManage : MonoBehaviour
             _LocalPlayerID = 0;
             AllPlayerIds.Add(0);
 
+
             _PlayerDataManager.CreatePlayer(0);
 
             // 添加玩家初始格子位置的id

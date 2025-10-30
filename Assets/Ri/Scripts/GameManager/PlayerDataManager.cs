@@ -68,7 +68,7 @@ public struct PlayerData
         PlayerUnits = new List<PlayerUnitData>();
         Resources = 0;
         PlayerReligion = Religion.None;
-        PlayerOwnedCells = null;
+        PlayerOwnedCells = new List<int>();
     }
 
     public void AddOwnedCell(int id)
