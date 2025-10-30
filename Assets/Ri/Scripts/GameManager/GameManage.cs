@@ -636,7 +636,10 @@ public class GameManage : MonoBehaviour
             CellObjects[toPos] = obj;
         }
     }
-
+    public int GetStartPosForNetGame(int i)
+    {
+        return PlayerStartPositions[i];
+    }
     // 设置棋盘结构体信息
     public void SetGameBoardInfor(BoardInfor infor)
     {

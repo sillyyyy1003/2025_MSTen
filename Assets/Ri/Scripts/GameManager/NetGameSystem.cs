@@ -770,10 +770,12 @@ public class NetGameSystem : MonoBehaviour
         {
             int boardCount = gameManage.GetBoardCount();
             int[] positions = new int[connectedPlayers.Count];
+            
 
             // 简单分配: 第一个玩家在0, 最后一个玩家在最后一个格子
             for (int i = 0; i < positions.Length; i++)
             {
+                positions[0] = gameManage.GetStartPosForNetGame(i);
                 // 更改为保存的起始位置
                 //if (i == 0)
                 //    positions[i] = 0;
@@ -782,12 +784,12 @@ public class NetGameSystem : MonoBehaviour
                 //else
                 //    positions[i] = (boardCount / positions.Length) * i;
 
-                if (i == 0)
-                    positions[i] = 0;
-                else if (i == positions.Length - 1)
-                    positions[i] = boardCount - 1;
-                else
-                    positions[i] = (boardCount / positions.Length) * i;
+                //if (i == 0)
+                //    positions[i] = 0;
+                //else if (i == positions.Length - 1)
+                //    positions[i] = boardCount - 1;
+                //else
+                //    positions[i] = (boardCount / positions.Length) * i;
             }
 
             return positions;
