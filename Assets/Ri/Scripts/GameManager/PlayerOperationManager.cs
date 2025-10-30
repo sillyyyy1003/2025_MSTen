@@ -121,6 +121,12 @@ public class PlayerOperationManager : MonoBehaviour
             HandleMouseInput();
 
         }
+        if(Input.GetKeyDown(KeyCode.F))
+        {
+            // 农民生成建筑
+
+        }
+        
     }
 
 
@@ -337,8 +343,8 @@ public class PlayerOperationManager : MonoBehaviour
     /// <returns>是否成功创建</returns>
     public bool TryCreateUnit(CardType unitType)
     {
-        // 检查是否选中了空格子
-        if (SelectedEmptyCellID == -1)
+        // 检查是否选中了空格子或领土内
+        if (SelectedEmptyCellID == -1|| !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
         {
             Debug.LogWarning("未选中任何空格子");
             return false;
@@ -357,6 +363,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
 
         // 创建单位
+      
         CreateUnitAtPosition(unitType, SelectedEmptyCellID);
 
         // 清除选择
@@ -370,7 +377,7 @@ public class PlayerOperationManager : MonoBehaviour
     public bool TryCreateUnit(CardType unitType,int cellID)
     {
         // 检查是否选中了空格子
-        if (SelectedEmptyCellID == -1)
+        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
         {
             Debug.LogWarning("未选中任何空格子");
             return false;
@@ -388,8 +395,9 @@ public class PlayerOperationManager : MonoBehaviour
             return false;
         }
 
-        // 创建单位
-        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
+        // 在领土内创建单位
+      
+         CreateUnitAtPosition(unitType, SelectedEmptyCellID);
 
         // 清除选择
         _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
@@ -542,6 +550,16 @@ public class PlayerOperationManager : MonoBehaviour
     //        私有函数
     // *************************
 
+    // 获得初始领地
+    private void GetStartWall(int cellID)
+    {
+        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(cellID);
+       foreach(var i in pos)
+        {
+            if(_HexGrid.GetCell(i).enabled)
+                _HexGrid.GetCell(i).Walled = true;
+        }
+    }
 
     // 在指定的格子创建单位实例
     private void CreateUnitAtPosition(CardType unitType, int cellId)
@@ -549,6 +567,8 @@ public class PlayerOperationManager : MonoBehaviour
         BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(cellId);
         int2 position = cellInfo.Cells2DPos;
         Vector3 worldPos = cellInfo.Cells3DPos;
+
+       
 
         // 选择对应的预制体
         //Piece prefab = null;
@@ -599,7 +619,8 @@ public class PlayerOperationManager : MonoBehaviour
                 break;
             case PieceType.Pope:
                 unitData = unit.GetComponent<Pope>().GetUnitDataSO();
-                _HexGrid.GetCell(cellId).Walled = true ;
+                //_HexGrid.GetCell(cellId).Walled = true ;
+                GetStartWall(cellId);
                 break;
         }
 
@@ -643,8 +664,8 @@ public class PlayerOperationManager : MonoBehaviour
                 UnitDataSOJson = unitDataJson,
                 IsUsed = false // 新创建的单位默认未使用
             };
-            GameManage.Instance._NetGameSystem.SendMessage(NetworkMessageType.UNIT_ADD, msg);
-        }
+                GameManage.Instance._NetGameSystem.SendMessage(NetworkMessageType.UNIT_ADD, msg);
+            }
     }
 
     // *************************
@@ -820,7 +841,12 @@ public class PlayerOperationManager : MonoBehaviour
     // *************************
     //      单位动作相关
     // *************************
+ 
+    // 生成建筑
+    private void CreateBuilding()
+    {
 
+    }
 
     // 攻击单位(示例实现)
     private void AttackUnit(int2 targetPos, int targetCellId)
