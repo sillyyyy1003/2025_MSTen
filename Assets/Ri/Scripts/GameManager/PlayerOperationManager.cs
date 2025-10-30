@@ -672,21 +672,15 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 发送网络消息
         if (GameManage.Instance._NetGameSystem != null)
-        { 
-            // 序列化PieceDataSO
-            string unitDataJson = unitData != null ? JsonUtility.ToJson(unitData) : "";
-
-            UnitAddMessage msg = new UnitAddMessage
-            {
-                PlayerId = localPlayerId,
-                UnitType = (int)unitType,
-                PosX = position.x,
-                PosY = position.y,
-                UnitDataSOJson = unitDataJson,
-                IsUsed = false // 新创建的单位默认未使用
-            };
-                GameManage.Instance._NetGameSystem.SendMessage(NetworkMessageType.UNIT_ADD, msg);
-            }
+        {
+            GameManage.Instance._NetGameSystem.SendUnitAdd(
+                localPlayerId,
+                unitType,
+                position,
+                unitData,
+                false
+            );
+        }
     }
 
     // *************************
@@ -1234,7 +1228,7 @@ public class PlayerOperationManager : MonoBehaviour
     {
         if (msg.PlayerId == localPlayerId)
         {
-            Debug.Log("[网络创建] 这是本地玩家的创建，已处理");
+            Debug.Log("[网络创建] 这是本地玩家的创建,已处理");
             return;
         }
 
@@ -1243,35 +1237,61 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
 
-        // 反序列化PieceDataSO
+        // 使用 UnitListTable 查找 PieceDataSO
         PieceDataSO unitDataSO = null;
-        if (!string.IsNullOrEmpty(msg.UnitDataSOJson))
+
+        if (msg.UnitData != null && !string.IsNullOrEmpty(msg.UnitData.piecePrefabResourcePath))
         {
-            try
+            // 从 UnitListTable 获取
+            if (UnitListTable.Instance != null)
             {
-                // 如果PieceDataSO是ScriptableObject，可能需要特殊处理
-                unitDataSO = ScriptableObject.CreateInstance<PieceDataSO>();
-                JsonUtility.FromJsonOverwrite(msg.UnitDataSOJson, unitDataSO);
-                Debug.Log($"[网络创建] 成功反序列化单位数据");
+                unitDataSO = UnitListTable.Instance.GetPieceDataByPath(
+                    msg.UnitData.piecePrefabResourcePath);
+
+                if (unitDataSO != null)
+                {
+                    Debug.Log($"[网络创建] 找到: {unitDataSO.pieceName}");
+                }
             }
-            catch (System.Exception e)
+
+            // 后备方案：从 Resources 加载
+            if (unitDataSO == null)
             {
-                Debug.LogWarning($"[网络创建] 反序列化PieceDataSO失败: {e.Message}");
+                unitDataSO = Resources.Load<PieceDataSO>(msg.UnitData.piecePrefabResourcePath);
+            }
+
+            // 最后手段：创建临时对象
+            if (unitDataSO == null)
+            {
+                unitDataSO = ScriptableObject.CreateInstance<PieceDataSO>();
+                msg.UnitData.ApplyToPieceDataSO(unitDataSO);
+
+                GameObject prefab = Resources.Load<GameObject>(msg.UnitData.piecePrefabResourcePath);
+                if (prefab != null)
+                {
+                    unitDataSO.piecePrefab = prefab;
+                }
             }
         }
 
+        if (unitDataSO == null || unitDataSO.piecePrefab == null)
+        {
+            Debug.LogError($"[网络创建] 失败! CardType: {unitType}");
+            return;
+        }
 
-        // 先更新数据
+        // 更新数据
         if (PlayerDataManager.Instance != null)
         {
-            PlayerDataManager.Instance.AddUnit(msg.PlayerId, unitType, pos, unitDataSO.piecePrefab, unitDataSO);
-            Debug.Log($"[网络创建] 已更新数据管理器");
+            PlayerDataManager.Instance.AddUnit(msg.PlayerId, unitType, pos,
+                unitDataSO.piecePrefab, unitDataSO);
         }
 
-        // 创建单位数据
-        PlayerUnitData unitData = new PlayerUnitData(1, unitType, pos, unitDataSO.piecePrefab, unitDataSO, msg.IsUsed);
+        // 创建单位
+        int unitId = PlayerDataManager.Instance.GetUnitIDBy2DPos(pos);
+        PlayerUnitData unitData = new PlayerUnitData(unitId, unitType, pos,
+            unitDataSO.piecePrefab, unitDataSO, msg.IsUsed);
 
-        // 创建视觉对象
         CreateEnemyUnit(msg.PlayerId, unitData);
 
         Debug.Log($"[网络创建] 完成");

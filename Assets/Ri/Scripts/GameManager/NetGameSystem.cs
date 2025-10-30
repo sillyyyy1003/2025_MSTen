@@ -8,6 +8,7 @@ using UnityEngine;
 using Newtonsoft.Json;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using GameData;
 
 
 
@@ -133,7 +134,7 @@ public class UnitAddMessage
     public int UnitType; // PlayerUnitType as int
     public int PosX;
     public int PosY; 
-    public string UnitDataSOJson; // PieceDataSO序列化为JSON字符串
+    public SerializablePieceData UnitData; // PieceDataSO序列化为JSON字符串
     public bool IsUsed; // 单位是否已使用
 }
 
@@ -946,6 +947,50 @@ public class NetGameSystem : MonoBehaviour
             SendToServer(message);
         }
     }
+
+    /// <summary>
+    /// 发送单位添加消息
+    /// </summary>
+    public void SendUnitAdd(int playerId, CardType unitType, Unity.Mathematics.int2 pos,
+        PieceDataSO unitDataSO, bool isUsed = false)
+    {
+        if (!isRunning)
+        {
+            Debug.LogWarning("[SendUnitAdd] 网络未运行，无法发送消息");
+            return;
+        }
+
+        if (unitDataSO == null)
+        {
+            Debug.LogError("[SendUnitAdd] unitDataSO 为 null!");
+            return;
+        }
+
+        // 转换为可序列化数据
+        SerializablePieceData serializableData = SerializablePieceData.FromPieceDataSO(unitDataSO);
+
+        if (serializableData == null)
+        {
+            Debug.LogError("[SendUnitAdd] 转换为 SerializablePieceData 失败!");
+            return;
+        }
+
+        UnitAddMessage data = new UnitAddMessage
+        {
+            PlayerId = playerId,
+            UnitType = (int)unitType,
+            PosX = pos.x,
+            PosY = pos.y,
+            UnitData = serializableData,  // 使用正确的字段名
+            IsUsed = isUsed
+        };
+
+        // 使用现有的 SendMessage 方法
+        SendMessage(NetworkMessageType.UNIT_ADD, data);
+
+        Debug.Log($"[网络发送] 单位添加: PlayerId={playerId}, Type={unitType}, Pos=({pos.x},{pos.y}), Path={serializableData.piecePrefabResourcePath}");
+    }
+
 
     // 发送消息到服务器
     private void SendToServer(NetworkMessage message)
