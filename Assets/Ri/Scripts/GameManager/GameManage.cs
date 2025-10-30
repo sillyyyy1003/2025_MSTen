@@ -425,7 +425,7 @@ public class GameManage : MonoBehaviour
         TurnEndMessage turnEndMsg = new TurnEndMessage
         {
             PlayerId = LocalPlayerID,
-            
+
             PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
 
