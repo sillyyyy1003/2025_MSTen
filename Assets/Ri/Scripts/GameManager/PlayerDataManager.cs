@@ -40,6 +40,10 @@ public struct PlayerUnitData
         PlayerUnitDataSO = unitData;
         bUnitIsUsed = isUsed;
     }
+    public void ChangeUnitDataSO(PieceDataSO unitData)
+    {
+        PlayerUnitDataSO = unitData;
+    }
 }
 
 

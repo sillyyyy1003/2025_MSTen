@@ -1,13 +1,13 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using UnityEngine;
 
-// Íæ¼Òµ¥Î»Êı¾İ½Ó¿Ú£¬¸ºÔğ±»Íâ²¿µ÷ÓÃÒÔ»ñÈ¡ĞèÒªÊı¾İ
+// ç©å®¶å•ä½æ•°æ®æ¥å£ï¼Œè´Ÿè´£è¢«å¤–éƒ¨è°ƒç”¨ä»¥è·å–éœ€è¦æ•°æ®
 public class PlayerUnitDataInterface : MonoBehaviour
 {  
     
-    // µ¥Àı
+    // å•ä¾‹
     public static PlayerUnitDataInterface Instance { get; private set; }
 
 
@@ -28,17 +28,17 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
     // *****************************
-    // ********ÄÚ²¿Êı¾İ´¦Àí*********
+    // ********å†…éƒ¨æ•°æ®å¤„ç†*********
     // *****************************
 
 
 
     // *****************************
-    // **********½Ó¿Ú²¿·Ö***********
+    // **********æ¥å£éƒ¨åˆ†***********
     // *****************************
 
     /// <summary>
-    /// ÄÃµ½Ä³ÖÖÆå×ÓµÄÒÑÉÏ³¡µÄkeyÁĞ±í
+    /// æ‹¿åˆ°æŸç§æ£‹å­çš„å·²ä¸Šåœºçš„keyåˆ—è¡¨
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
@@ -47,69 +47,69 @@ public class PlayerUnitDataInterface : MonoBehaviour
         return PlayerDataManager.Instance.GetActivateUnitKey(type);
     }
 
-    // ÄÃµ½Ò»¸öÆå×ÓµÄÊı¾İ
+    // æ‹¿åˆ°ä¸€ä¸ªæ£‹å­çš„æ•°æ®
     public void GetUnitData(int id)
     {
 
     }
 
-    // ÄÃµ½ËùÓĞÒÑ¾­ÉÏ³¡µÄµ¥Î»ÊıÁ¿
+    // æ‹¿åˆ°æ‰€æœ‰å·²ç»ä¸Šåœºçš„å•ä½æ•°é‡
     public int GetAllActivatedUnitCount()
     {
         return PlayerDataManager.Instance.GetActivateUnitCount(true);
     }
 
 
-    // ÄÃµ½ÌØ¶¨ÀàĞÍµ¥Î»µÄËùÓĞÒÑ¾­ÉÏ³¡µÄµ¥Î»ÊıÁ¿
+    // æ‹¿åˆ°ç‰¹å®šç±»å‹å•ä½çš„æ‰€æœ‰å·²ç»ä¸Šåœºçš„å•ä½æ•°é‡
     public int GetUnitCountByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type).Count ;
     }
 
-    // ÄÃµ½ÌØ¶¨ÀàĞÍµ¥Î»µÄËùÓĞÎ´ÉÏ³¡µÄµ¥Î»ÊıÁ¿
+    // æ‹¿åˆ°ç‰¹å®šç±»å‹å•ä½çš„æ‰€æœ‰æœªä¸Šåœºçš„å•ä½æ•°é‡
     public int GetDeckNumByType(CardType type)
     {
         return PlayerDataManager.Instance.GetUnActivateUnitCount(type);
     }
 
-    // ÄÃµ½ÉĞÎ´ĞĞ¶¯µÄÆå×ÓÊıÁ¿
+    // æ‹¿åˆ°å°šæœªè¡ŒåŠ¨çš„æ£‹å­æ•°é‡
     public int GetInactiveUnitCount()
     {
         int count = 1;
         return count;
     }
 
-    // ÄÃµ½ÉãÏñ»ú×·×ÙµÄÆå×Óid
+    // æ‹¿åˆ°æ‘„åƒæœºè¿½è¸ªçš„æ£‹å­id
     public int GetFocusedUnitID()
     {
         return PlayerDataManager.Instance.nowChooseUnitID;
     }
 
-    // ÄÃµ½×ÊÔ´ÊıÁ¿
+    // æ‹¿åˆ°èµ„æºæ•°é‡
     public int GetResourceNum()
     {
         return PlayerDataManager.Instance.GetPlayerResource();
     }
 
-    // ¹ºÂòÄ³ÖÖµ¥Î»
+    // è´­ä¹°æŸç§å•ä½
     public void AddDeckNumByType(CardType type)
     {
 
     }
 
-    // ½«Ò»¸öµ¥Î»ÉÏ³¡
+    // å°†ä¸€ä¸ªå•ä½ä¸Šåœº
     public void ActivateUnitFromDeck(int id)
     {
         
     }
 
-    // Ä³Æå×ÓÊ¹ÓÃ¼¼ÄÜ
+    // æŸæ£‹å­ä½¿ç”¨æŠ€èƒ½
     public void UseCardSkill(int id)
     {
 
     }
 
-    // Éı¼¶Ä³ÖÖÆå×ÓµÄÄ³Ò»ÏîÊôĞÔ
+    // å‡çº§æŸç§æ£‹å­çš„æŸä¸€é¡¹å±æ€§
     public void UpgradeCard(CardType type)
     {
 
