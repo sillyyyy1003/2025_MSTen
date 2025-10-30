@@ -425,7 +425,8 @@ public class GameManage : MonoBehaviour
         TurnEndMessage turnEndMsg = new TurnEndMessage
         {
             PlayerId = LocalPlayerID,
-            PlayerDataJson = JsonUtility.ToJson(localData)
+            
+            PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
 
         // 发送到网络

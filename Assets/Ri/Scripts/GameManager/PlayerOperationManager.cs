@@ -689,6 +689,7 @@ public class PlayerOperationManager : MonoBehaviour
                 break;
             case PieceType.Pope:
                 unitData = unit.GetComponent<Pope>().GetUnitDataSO();
+                Debug.Log("unit pope data is "+unitData.name);
                 //_HexGrid.GetCell(cellId).Walled = true ;
                 GetStartWall(cellId);
                 break;

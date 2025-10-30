@@ -161,7 +161,7 @@ public class UnitAttackMessage
 public class TurnEndMessage
 {
     public int PlayerId;
-    public string PlayerDataJson; // PlayerData序列化
+    public SerializablePlayerData PlayerDataJson; // PlayerData序列化
 }
 
 // 辅助消息类
@@ -171,6 +171,86 @@ public class TurnStartMessage
     public int PlayerId;
 }
 
+[Serializable]
+public struct SerializablePlayerUnitData
+{
+    public int UnitID;
+    public int UnitType;
+    public int PositionX;
+    public int PositionY;
+    public bool bUnitIsUsed;
+
+    public static SerializablePlayerUnitData FromPlayerUnitData(PlayerUnitData data)
+    {
+        return new SerializablePlayerUnitData
+        {
+            UnitID = data.UnitID,
+            UnitType = (int)data.UnitType,
+            PositionX = data.Position.x,
+            PositionY = data.Position.y,
+            bUnitIsUsed = data.bUnitIsUsed
+        };
+    }
+
+    public PlayerUnitData ToPlayerUnitData()
+    {
+        return new PlayerUnitData(
+            UnitID,
+            (CardType)UnitType,
+            new Unity.Mathematics.int2(PositionX, PositionY),
+            null,
+            null,
+            bUnitIsUsed
+        );
+    }
+}
+
+[Serializable]
+public struct SerializablePlayerData
+{
+    public int PlayerID;
+    public List<SerializablePlayerUnitData> PlayerUnits;
+    public int Resources;
+    public int PlayerReligion;
+    public List<int> PlayerOwnedCells;
+
+    public static SerializablePlayerData FromPlayerData(PlayerData data)
+    {
+        SerializablePlayerData serializableData = new SerializablePlayerData
+        {
+            PlayerID = data.PlayerID,
+            Resources = data.Resources,
+            PlayerReligion = (int)data.PlayerReligion,
+            PlayerOwnedCells = new List<int>(data.PlayerOwnedCells),
+            PlayerUnits = new List<SerializablePlayerUnitData>()
+        };
+
+        foreach (var unit in data.PlayerUnits)
+        {
+            serializableData.PlayerUnits.Add(
+                SerializablePlayerUnitData.FromPlayerUnitData(unit)
+            );
+        }
+
+        return serializableData;
+    }
+
+    public PlayerData ToPlayerData()
+    {
+        PlayerData playerData = new PlayerData(PlayerID);
+        playerData.Resources = Resources;
+        playerData.PlayerReligion = (Religion)PlayerReligion;
+        playerData.PlayerOwnedCells = new List<int>(PlayerOwnedCells);
+        playerData.PlayerUnits = new List<PlayerUnitData>();
+
+        foreach (var unit in PlayerUnits)
+        {
+            playerData.PlayerUnits.Add(unit.ToPlayerUnitData());
+        }
+
+        return playerData;
+    }
+}
 
 // *************************
 //      主要网络系统
@@ -981,7 +1061,7 @@ public class NetGameSystem : MonoBehaviour
             UnitType = (int)unitType,
             PosX = pos.x,
             PosY = pos.y,
-            UnitData = serializableData,  // 使用正确的字段名
+            UnitData = serializableData,  
             IsUsed = isUsed
         };
 
@@ -1395,14 +1475,32 @@ public class NetGameSystem : MonoBehaviour
 
         Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
 
-        // 解析玩家数据
-        if (!string.IsNullOrEmpty(data.PlayerDataJson))
+        //  转换为 PlayerData
+        PlayerData playerData = data.PlayerDataJson.ToPlayerData();
+
+        Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
+
+        // 重新加载所有单位的 PieceDataSO
+        for (int i = 0; i < playerData.PlayerUnits.Count; i++)
         {
-            PlayerData playerData = JsonUtility.FromJson<PlayerData>(data.PlayerDataJson);
+            PlayerUnitData unit = playerData.PlayerUnits[i];
 
-            Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
+            if (unit.PlayerUnitDataSO == null)
+            {
+                PieceDataSO pieceData = LoadPieceDataSO(unit.UnitType);
 
-
+                if (pieceData != null)
+                {
+                    unit.PlayerUnitDataSO = pieceData;
+                    playerData.PlayerUnits[i] = unit;
+                    Debug.Log($" 重新加载 {unit.UnitType} 的 PieceDataSO: {pieceData.name}");
+                }
+                else
+                {
+                    Debug.LogError($"❌ 无法加载 {unit.UnitType} 的 PieceDataSO");
+                }
+            }
+        }
             // 更新数据
             if (playerDataManager != null)
             {
@@ -1418,7 +1516,7 @@ public class NetGameSystem : MonoBehaviour
                 Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
             }
 
-        }
+        
 
         // 如果是服务器,切换到下一个回合
         if (isServer)
@@ -1517,6 +1615,53 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
         }
     }
+
+    /// <summary>
+    /// 统一的 PieceDataSO 加载方法
+    /// </summary>
+    private PieceDataSO LoadPieceDataSO(CardType cardType)
+    {
+        PieceDataSO pieceData = null;
+
+        // 方法1: 从 UnitListTable 加载
+        if (UnitListTable.Instance != null)
+        {
+            pieceData = UnitListTable.Instance.GetPieceDataByCardType(cardType);
+            if (pieceData != null)
+            {
+                return pieceData;
+            }
+        }
+
+        // 方法2: 从 Resources 加载
+        string resourcePath = GetResourcePathForCardType(cardType);
+        if (!string.IsNullOrEmpty(resourcePath))
+        {
+            pieceData = Resources.Load<PieceDataSO>(resourcePath);
+            if (pieceData != null)
+            {
+                return pieceData;
+            }
+        }
+
+        Debug.LogError($"无法加载 PieceDataSO for CardType: {cardType}");
+        return null;
+    }
+
+    private string GetResourcePathForCardType(CardType cardType)
+    {
+        switch (cardType)
+        {
+            case CardType.Farmer: return "Cyou/Prefab/farmer";
+            case CardType.Solider: return "Cyou/Prefab/military";
+            case CardType.Missionary: return "Cyou/Prefab/Missionary";
+            case CardType.Pope: return "Cyou/Prefab/pope";
+            default: return null;
+        }
+    }
+
+
+
     // 单位移动
     private void HandleUnitMove(NetworkMessage message)
     {
