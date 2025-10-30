@@ -39,6 +39,7 @@ public struct PlayerUnitData
         PlayerUnitDataSO = unitData;
         bUnitIsUsed = isUsed;
     }
+
 }
 
 
@@ -172,6 +173,7 @@ public struct PlayerData
     {
         return PlayerUnits.Count;
     }
+
 }
 
 public class PlayerDataManager : MonoBehaviour
