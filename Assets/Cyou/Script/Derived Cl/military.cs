@@ -13,6 +13,9 @@ public class MilitaryUnit : Piece
     private bool specialSkillAvailable;
     private float lastAttackTime;
 
+    // ===== 軍隊専用の個別レベル =====
+    private int attackPowerLevel = 0; // 攻撃力レベル (0-3)
+
     public override void Initialize(PieceDataSO data, int playerID)
     {
         militaryData = data as MilitaryDataSO;
@@ -121,6 +124,9 @@ public class MilitaryUnit : Piece
 
     #region アップグレード管理
 
+    // ===== プロパティ =====
+    public int AttackPowerLevel => attackPowerLevel;
+
     /// <summary>
     /// アップグレード効果を適用
     /// </summary>
@@ -139,7 +145,7 @@ public class MilitaryUnit : Piece
 
         // 新しい最大値に基づいて現在値を更新
         currentHP = newMaxHP * hpRatio;
-        
+
 
         Debug.Log($"十字軍のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}, 攻撃力={newAttackPower}");
 
@@ -158,5 +164,75 @@ public class MilitaryUnit : Piece
         }
     }
 
+    /// <summary>
+    /// 攻撃力をアップグレードする（リソース消費は呼び出し側で行う）
+    /// </summary>
+    /// <returns>アップグレード成功したらtrue</returns>
+    public bool UpgradeAttackPower()
+    {
+        // 最大レベルチェック
+        if (attackPowerLevel >= 3)
+        {
+            Debug.LogWarning($"{militaryData.pieceName} の攻撃力は既に最大レベル(3)です");
+            return false;
+        }
+
+        // アップグレードコスト配列の境界チェック
+        if (militaryData.attackPowerUpgradeCost == null || attackPowerLevel >= militaryData.attackPowerUpgradeCost.Length)
+        {
+            Debug.LogError($"{militaryData.pieceName} のattackPowerUpgradeCostが正しく設定されていません");
+            return false;
+        }
+
+        int cost = militaryData.attackPowerUpgradeCost[attackPowerLevel];
+
+        // コストが0の場合はアップグレード不可
+        if (cost <= 0)
+        {
+            Debug.LogWarning($"{militaryData.pieceName} の攻撃力レベル{attackPowerLevel}→{attackPowerLevel + 1}へのアップグレードは設定されていません（コスト0）");
+            return false;
+        }
+
+        // レベルアップ実行
+        attackPowerLevel++;
+        float newAttackPower = militaryData.attackPowerByLevel[attackPowerLevel];
+
+        Debug.Log($"{militaryData.pieceName} の攻撃力がレベル{attackPowerLevel}にアップグレードしました（攻撃力: {newAttackPower}）");
+        return true;
+    }
+
+    /// <summary>
+    /// 指定項目のアップグレードコストを取得
+    /// </summary>
+    public int GetMilitaryUpgradeCost(MilitaryUpgradeType type)
+    {
+        switch (type)
+        {
+            case MilitaryUpgradeType.AttackPower:
+                if (attackPowerLevel >= 3 || militaryData.attackPowerUpgradeCost == null || attackPowerLevel >= militaryData.attackPowerUpgradeCost.Length)
+                    return -1;
+                return militaryData.attackPowerUpgradeCost[attackPowerLevel];
+            default:
+                return -1;
+        }
+    }
+
+    /// <summary>
+    /// 指定項目がアップグレード可能かチェック
+    /// </summary>
+    public bool CanUpgradeMilitary(MilitaryUpgradeType type)
+    {
+        int cost = GetMilitaryUpgradeCost(type);
+        return cost > 0;
+    }
+
     #endregion
+}
+
+/// <summary>
+/// 軍隊のアップグレード項目タイプ
+/// </summary>
+public enum MilitaryUpgradeType
+{
+    AttackPower  // 攻撃力
 }
