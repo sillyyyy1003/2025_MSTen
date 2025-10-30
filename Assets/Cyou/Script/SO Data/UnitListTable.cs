@@ -75,8 +75,7 @@ public class UnitListTable : MonoBehaviour
             {
                 // 主字典：通过 PieceDetail 查找
                 var key = new PieceDetail(entry.PieceType, entry.Religion);
-                pieceDataDict[key] = entry.PieceDataSO;
-
+                pieceDataDict[key] = entry.PieceDataSO; 
                 // 新增：通过资源路径查找
                 if (!string.IsNullOrEmpty(entry.PieceDataSO.piecePrefabResourcePath))
                 {
@@ -115,7 +114,7 @@ public class UnitListTable : MonoBehaviour
             }
         }
 
-        Debug.Log($"[UnitListTable] 初始化完成 - 有效条目: {validCount}, 错误: {errorCount}");
+        Debug.LogWarning($"[UnitListTable] 初始化完成 - 有效条目: {validCount}, 错误: {errorCount}");
     }
 
     // ==========================================

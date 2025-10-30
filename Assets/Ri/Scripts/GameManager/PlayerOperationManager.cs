@@ -543,6 +543,14 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
         }
 
+        // 更新占领
+        for(int i=0;i<PlayerDataManager.Instance.GetPlayerCount();i++)
+        {
+            for( int j=0;j<PlayerDataManager.Instance.GetPlayerData(i).PlayerOwnedCells.Count;j++)
+            {
+                _HexGrid.GetCell(PlayerDataManager.Instance.GetPlayerData(i).PlayerOwnedCells[j]).Walled=true;
+            }
+        }
 
 
         // 清除旧的单位显示
