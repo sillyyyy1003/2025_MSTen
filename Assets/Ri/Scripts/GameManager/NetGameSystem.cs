@@ -431,14 +431,14 @@ public class NetGameSystem : MonoBehaviour
             gameManage = GameObject.Find("GameManager").GetComponent<GameManage>();
         }
 
-        if (gameManage == null)
-        {
-            Debug.LogError("无法找到 GameManage!");
-        }
-        else
-        {
-            Debug.Log($"成功获取 GameManage");
-        }
+        //if (gameManage == null)
+        //{
+        //    Debug.LogError("无法找到 GameManage!");
+        //}
+        //else
+        //{
+        //    Debug.Log($"成功获取 GameManage");
+        //}
 
         playerDataManager = PlayerDataManager.Instance;
 
@@ -697,7 +697,7 @@ public class NetGameSystem : MonoBehaviour
         MainThreadDispatcher.Enqueue(() => {
             OnRoomStatusUpdated?.Invoke(roomPlayers);
 
-            Debug.Log("SendRoomStatusToAll");
+            //Debug.Log("SendRoomStatusToAll");
             CheckAllPlayersReady();
         });
     }
