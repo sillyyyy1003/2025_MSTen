@@ -22,7 +22,11 @@ namespace GamePieces
         protected int currentPID; // 現在所属しているプレイヤーID
         protected int originalPID; // 元々所属していたプレイヤーID
         protected PieceState currentState = PieceState.Idle;
-        protected int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2、3:升級3
+        protected int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2、3:升級3（全体レベル・互換性のため残す）
+
+        // ===== 各項目の個別レベル =====
+        protected int hpLevel = 0; // HP レベル (0-3)
+        protected int apLevel = 0; // AP レベル (0-3)
 
 
         /// <summary>
@@ -56,11 +60,15 @@ namespace GamePieces
         public int CurrentPID => currentPID;
         public int OriginalPID => originalPID;
         public float CurrentHP => currentHP;
+        public float CurrentMaxHP => currentMaxHP;
         public float CurrentAP => currentAP;
+        public float CurrentMaxAP => currentMaxAP;
         public bool IsAlive => currentHP > 0;
         public bool CanMove => currentAP >= pieceData.moveAPCost;
         public PieceState State => currentState;
         public int UpgradeLevel => upgradeLevel;
+        public int HPLevel => hpLevel;
+        public int APLevel => apLevel;
         
         #region 初期化
 
@@ -221,7 +229,7 @@ namespace GamePieces
         #region アップグレード管理
 
         /// <summary>
-        /// 駒をアップグレードする
+        /// 駒をアップグレードする（旧システム・互換性のため残す）
         /// </summary>
         public virtual bool UpgradePiece()
         {
@@ -244,6 +252,121 @@ namespace GamePieces
         {
             // 基底クラスでは何もしない
             // 派生クラスで具体的な効果を実装
+        }
+
+        /// <summary>
+        /// HPをアップグレードする
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeHP()
+        {
+            // 最大レベルチェック
+            if (hpLevel >= 3)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} のHPは既に最大レベル(3)です");
+                return false;
+            }
+
+            // アップグレードコスト配列の境界チェック
+            if (pieceData.hpUpgradeCost == null || hpLevel >= pieceData.hpUpgradeCost.Length)
+            {
+                Debug.LogError($"{pieceData.pieceName} のhpUpgradeCostが正しく設定されていません");
+                return false;
+            }
+
+            int cost = pieceData.hpUpgradeCost[hpLevel];
+
+            // コストが0の場合はアップグレード不可
+            if (cost <= 0)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} のHPレベル{hpLevel}→{hpLevel + 1}へのアップグレードは設定されていません（コスト0）");
+                return false;
+            }
+
+            // レベルアップ実行
+            hpLevel++;
+            float newMaxHP = pieceData.GetMaxHPByLevel(hpLevel);
+            float hpRatio = currentHP / currentMaxHP; // 現在のHP割合を保持
+            currentMaxHP = newMaxHP;
+            currentHP = newMaxHP * hpRatio; // 割合を維持してHPを再計算
+
+            OnHPChanged?.Invoke(currentHP, currentMaxHP);
+
+            Debug.Log($"{pieceData.pieceName} のHPがレベル{hpLevel}にアップグレードしました（最大HP: {currentMaxHP}）");
+            return true;
+        }
+
+        /// <summary>
+        /// APをアップグレードする
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeAP()
+        {
+            // 最大レベルチェック
+            if (apLevel >= 3)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} のAPは既に最大レベル(3)です");
+                return false;
+            }
+
+            // アップグレードコスト配列の境界チェック
+            if (pieceData.apUpgradeCost == null || apLevel >= pieceData.apUpgradeCost.Length)
+            {
+                Debug.LogError($"{pieceData.pieceName} のapUpgradeCostが正しく設定されていません");
+                return false;
+            }
+
+            int cost = pieceData.apUpgradeCost[apLevel];
+
+            // コストが0の場合はアップグレード不可
+            if (cost <= 0)
+            {
+                Debug.LogWarning($"{pieceData.pieceName} のAPレベル{apLevel}→{apLevel + 1}へのアップグレードは設定されていません（コスト0）");
+                return false;
+            }
+
+            // レベルアップ実行
+            apLevel++;
+            float newMaxAP = pieceData.GetMaxAPByLevel(apLevel);
+            float apRatio = currentAP / currentMaxAP; // 現在のAP割合を保持
+            currentMaxAP = newMaxAP;
+            currentAP = newMaxAP * apRatio; // 割合を維持してAPを再計算
+
+            OnAPChanged?.Invoke(currentAP, currentMaxAP);
+
+            Debug.Log($"{pieceData.pieceName} のAPがレベル{apLevel}にアップグレードしました（最大AP: {currentMaxAP}）");
+            return true;
+        }
+
+        /// <summary>
+        /// 指定項目のアップグレードコストを取得
+        /// </summary>
+        public int GetUpgradeCost(UpgradeType type)
+        {
+            switch (type)
+            {
+                case UpgradeType.HP:
+                    if (hpLevel >= 3 || pieceData.hpUpgradeCost == null || hpLevel >= pieceData.hpUpgradeCost.Length)
+                        return -1; // アップグレード不可
+                    return pieceData.hpUpgradeCost[hpLevel];
+
+                case UpgradeType.AP:
+                    if (apLevel >= 3 || pieceData.apUpgradeCost == null || apLevel >= pieceData.apUpgradeCost.Length)
+                        return -1; // アップグレード不可
+                    return pieceData.apUpgradeCost[apLevel];
+
+                default:
+                    return -1;
+            }
+        }
+
+        /// <summary>
+        /// 指定項目がアップグレード可能かチェック
+        /// </summary>
+        public bool CanUpgrade(UpgradeType type)
+        {
+            int cost = GetUpgradeCost(type);
+            return cost > 0;
         }
 
         #endregion
@@ -294,6 +417,15 @@ namespace GamePieces
         InBuilding, // 建物内
         Dead        // 死亡
     }
-    
+
+    /// <summary>
+    /// アップグレード項目タイプ
+    /// </summary>
+    public enum UpgradeType
+    {
+        HP,         // 最大HP
+        AP          // 最大AP
+    }
+
 
 }
