@@ -543,14 +543,19 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
         }
 
-        // 更新占领
-        for(int i=0;i<PlayerDataManager.Instance.GetPlayerCount();i++)
+        if (data.PlayerOwnedCells != null && data.PlayerOwnedCells.Count > 0)
         {
-            for( int j=0;j<PlayerDataManager.Instance.GetPlayerData(i).PlayerOwnedCells.Count;j++)
+            Debug.Log($"[显示更新] 玩家 {playerId} 拥有 {data.PlayerOwnedCells.Count} 个格子");
+            foreach (int cellId in data.PlayerOwnedCells)
             {
-                _HexGrid.GetCell(PlayerDataManager.Instance.GetPlayerData(i).PlayerOwnedCells[j]).Walled=true;
+                if (_HexGrid.GetCell(cellId) != null)
+                {
+                    _HexGrid.GetCell(cellId).Walled = true; // 设置墙壁/领土效果
+                }
             }
+           
         }
+
 
 
         // 清除旧的单位显示
