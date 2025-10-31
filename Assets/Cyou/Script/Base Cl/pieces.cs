@@ -359,16 +359,16 @@ namespace GamePieces
         /// <summary>
         /// 指定項目のアップグレードコストを取得
         /// </summary>
-        public int GetUpgradeCost(UpgradeType type)
+        public int GetUpgradeCost(PieceUpgradeType type)
         {
             switch (type)
             {
-                case UpgradeType.HP:
+                case PieceUpgradeType.HP:
                     if (hpLevel >= 3 || pieceData.hpUpgradeCost == null || hpLevel >= pieceData.hpUpgradeCost.Length)
                         return -1; // アップグレード不可
                     return pieceData.hpUpgradeCost[hpLevel];
 
-                case UpgradeType.AP:
+                case PieceUpgradeType.AP:
                     if (apLevel >= 3 || pieceData.apUpgradeCost == null || apLevel >= pieceData.apUpgradeCost.Length)
                         return -1; // アップグレード不可
                     return pieceData.apUpgradeCost[apLevel];
@@ -381,7 +381,7 @@ namespace GamePieces
         /// <summary>
         /// 指定項目がアップグレード可能かチェック
         /// </summary>
-        public bool CanUpgrade(UpgradeType type)
+        public bool CanUpgrade(PieceUpgradeType type)
         {
             int cost = GetUpgradeCost(type);
             return cost > 0;
@@ -439,11 +439,6 @@ namespace GamePieces
     /// <summary>
     /// アップグレード項目タイプ
     /// </summary>
-    public enum UpgradeType
-    {
-        HP,         // 最大HP
-        AP          // 最大AP
-    }
 
 
 }

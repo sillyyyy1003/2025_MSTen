@@ -846,7 +846,62 @@ public float GetBuildProgress(int buildingID)
 public bool DoesBuildingExist(int buildingID)
 ```
 
-**实现位置:** `BuildingManager.cs:340-343`
+**实现位置:** `BuildingManager.cs:352-355`
+
+---
+
+#### `GetBuildingPlayerID()`
+获取建筑所属玩家 ID。
+
+**函数签名:**
+```csharp
+public int GetBuildingPlayerID(int buildingID)
+```
+
+**返回值:**
+- 成功: 玩家 ID
+- 失败: -1
+
+**使用示例:**
+```csharp
+int ownerID = buildingManager.GetBuildingPlayerID(buildingID);
+if (ownerID >= 0)
+{
+    Debug.Log($"建筑ID={buildingID}的所有者是玩家{ownerID}");
+}
+```
+
+**实现位置:** `BuildingManager.cs:360-368`
+
+---
+
+#### `GetPlayerBuildings()`
+获取指定玩家的所有建筑 ID。
+
+**函数签名:**
+```csharp
+public List<int> GetPlayerBuildings(int playerID)
+```
+
+**参数:**
+- `playerID`: 玩家 ID
+
+**返回值:**
+- 建筑 ID 列表
+
+**使用示例:**
+```csharp
+List<int> player1Buildings = buildingManager.GetPlayerBuildings(1);
+Debug.Log($"玩家1的建筑数: {player1Buildings.Count}");
+
+foreach (int buildingID in player1Buildings)
+{
+    BuildingState state = buildingManager.GetBuildingState(buildingID);
+    Debug.Log($"建筑ID={buildingID}, 状态={state}");
+}
+```
+
+**实现位置:** `BuildingManager.cs:373-379`
 
 ---
 
@@ -858,7 +913,7 @@ public bool DoesBuildingExist(int buildingID)
 public List<int> GetAllBuildingIDs()
 ```
 
-**实现位置:** `BuildingManager.cs:350-353`
+**实现位置:** `BuildingManager.cs:384-387`
 
 ---
 
@@ -870,7 +925,7 @@ public List<int> GetAllBuildingIDs()
 public List<int> GetOperationalBuildings()
 ```
 
-**实现位置:** `BuildingManager.cs:358-364`
+**实现位置:** `BuildingManager.cs:392-398`
 
 ---
 
@@ -882,7 +937,7 @@ public List<int> GetOperationalBuildings()
 public List<int> GetBuildingsUnderConstruction()
 ```
 
-**实现位置:** `BuildingManager.cs:369-375`
+**实现位置:** `BuildingManager.cs:403-409`
 
 ---
 

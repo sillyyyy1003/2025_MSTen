@@ -11,6 +11,11 @@ using GamePieces;
 /// </summary>
 public class PieceManager : MonoBehaviour
 {
+    struct syncPieceData
+    {
+
+    }
+
     // ===== 駒の管理 =====
     private Dictionary<int, Piece> pieces = new Dictionary<int, Piece>();
     private int nextPieceID = 1;
