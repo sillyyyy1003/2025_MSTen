@@ -1,13 +1,13 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using UnityEngine;
 
-// 玩家单位数据接口，负责被外部调用以获取需要数据
+// ��ҵ�λ���ݽӿڣ������ⲿ�����Ի�ȡ��Ҫ����
 public class PlayerUnitDataInterface : MonoBehaviour
 {  
     
-    // 单例
+    // ����
     public static PlayerUnitDataInterface Instance { get; private set; }
 
 
@@ -28,17 +28,17 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
     // *****************************
-    // ********内部数据处理*********
+    // ********�ڲ����ݴ���*********
     // *****************************
 
 
 
     // *****************************
-    // **********接口部分***********
+    // **********�ӿڲ���***********
     // *****************************
 
     /// <summary>
-    /// 拿到某种棋子的已上场的key列表
+    /// �õ�ĳ�����ӵ����ϳ���key�б�
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
@@ -47,69 +47,69 @@ public class PlayerUnitDataInterface : MonoBehaviour
         return PlayerDataManager.Instance.GetActivateUnitKey(type);
     }
 
-    // 拿到一个棋子的数据
+    // �õ�һ�����ӵ�����
     public void GetUnitData(int id)
     {
 
     }
 
-    // 拿到所有已经上场的单位数量
+    // �õ������Ѿ��ϳ��ĵ�λ����
     public int GetAllActivatedUnitCount()
     {
         return PlayerDataManager.Instance.GetActivateUnitCount(true);
     }
 
 
-    // 拿到特定类型单位的所有已经上场的单位数量
+    // �õ��ض����͵�λ�������Ѿ��ϳ��ĵ�λ����
     public int GetUnitCountByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type).Count ;
     }
 
-    // 拿到特定类型单位的所有未上场的单位数量
+    // �õ��ض����͵�λ������δ�ϳ��ĵ�λ����
     public int GetDeckNumByType(CardType type)
     {
         return PlayerDataManager.Instance.GetUnActivateUnitCount(type);
     }
 
-    // 拿到尚未行动的棋子数量
+    // �õ���δ�ж�����������
     public int GetInactiveUnitCount()
     {
         int count = 1;
         return count;
     }
 
-    // 拿到摄像机追踪的棋子id
+    // �õ������׷�ٵ�����id
     public int GetFocusedUnitID()
     {
         return PlayerDataManager.Instance.nowChooseUnitID;
     }
 
-    // 拿到资源数量
+    // �õ���Դ����
     public int GetResourceNum()
     {
         return PlayerDataManager.Instance.GetPlayerResource();
     }
 
-    // 购买某种单位
+    // ����ĳ�ֵ�λ
     public void AddDeckNumByType(CardType type)
     {
 
     }
 
-    // 将一个单位上场
+    // ��һ����λ�ϳ�
     public void ActivateUnitFromDeck(int id)
     {
         
     }
 
-    // 某棋子使用技能
+    // ĳ����ʹ�ü���
     public void UseCardSkill(int id)
     {
 
     }
 
-    // 升级某种棋子的某一项属性
+    // ����ĳ�����ӵ�ĳһ������
     public void UpgradeCard(CardType type)
     {
 

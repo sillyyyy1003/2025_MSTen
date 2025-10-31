@@ -92,6 +92,9 @@ public class GameManage : MonoBehaviour
     private Dictionary<int2, GameObject> CellObjects = new Dictionary<int2, GameObject>();
 
     private bool bIsStartSingleGame = false;
+
+    // 回合数
+    private int TurnCount=0;
     // *************************
     //         公有属性
     // *************************
@@ -384,6 +387,9 @@ public class GameManage : MonoBehaviour
         {
             // 本地玩家回合
             _PlayerOperation.TurnStart();
+            // 每次玩家开始回合使回合数+1
+            TurnCount++;
+            Debug.Log("回合数: "+TurnCount);
 
             // 更新UI
             if (GameSceneUIManager.Instance != null)
