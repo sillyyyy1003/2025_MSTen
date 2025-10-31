@@ -846,7 +846,62 @@ public float GetBuildProgress(int buildingID)
 public bool DoesBuildingExist(int buildingID)
 ```
 
-**実装箇所:** `BuildingManager.cs:340-343`
+**実装箇所:** `BuildingManager.cs:352-355`
+
+---
+
+#### `GetBuildingPlayerID()`
+建物の所属プレイヤーIDを取得します。
+
+**シグネチャ:**
+```csharp
+public int GetBuildingPlayerID(int buildingID)
+```
+
+**戻り値:**
+- 成功: プレイヤーID
+- 失敗: -1
+
+**使用例:**
+```csharp
+int ownerID = buildingManager.GetBuildingPlayerID(buildingID);
+if (ownerID >= 0)
+{
+    Debug.Log($"建物ID={buildingID}の所有者はプレイヤー{ownerID}です");
+}
+```
+
+**実装箇所:** `BuildingManager.cs:360-368`
+
+---
+
+#### `GetPlayerBuildings()`
+指定プレイヤーのすべての建物IDを取得します。
+
+**シグネチャ:**
+```csharp
+public List<int> GetPlayerBuildings(int playerID)
+```
+
+**パラメータ:**
+- `playerID`: プレイヤーID
+
+**戻り値:**
+- 建物IDのリスト
+
+**使用例:**
+```csharp
+List<int> player1Buildings = buildingManager.GetPlayerBuildings(1);
+Debug.Log($"プレイヤー1の建物数: {player1Buildings.Count}");
+
+foreach (int buildingID in player1Buildings)
+{
+    BuildingState state = buildingManager.GetBuildingState(buildingID);
+    Debug.Log($"建物ID={buildingID}, 状態={state}");
+}
+```
+
+**実装箇所:** `BuildingManager.cs:373-379`
 
 ---
 
@@ -858,7 +913,7 @@ public bool DoesBuildingExist(int buildingID)
 public List<int> GetAllBuildingIDs()
 ```
 
-**実装箇所:** `BuildingManager.cs:350-353`
+**実装箇所:** `BuildingManager.cs:384-387`
 
 ---
 
@@ -870,7 +925,7 @@ public List<int> GetAllBuildingIDs()
 public List<int> GetOperationalBuildings()
 ```
 
-**実装箇所:** `BuildingManager.cs:358-364`
+**実装箇所:** `BuildingManager.cs:392-398`
 
 ---
 
@@ -882,7 +937,7 @@ public List<int> GetOperationalBuildings()
 public List<int> GetBuildingsUnderConstruction()
 ```
 
-**実装箇所:** `BuildingManager.cs:369-375`
+**実装箇所:** `BuildingManager.cs:403-409`
 
 ---
 

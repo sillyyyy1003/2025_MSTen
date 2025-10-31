@@ -14,6 +14,7 @@ public class BuildingManager : MonoBehaviour
 {
     // ===== 建物の管理 =====
     private Dictionary<int, Building> buildings = new Dictionary<int, Building>();
+    private Dictionary<int, int> buildingOwners = new Dictionary<int, int>(); // <buildingID, playerID>
     private int nextBuildingID = 1;
 
     // ===== 依存関係 =====
@@ -60,6 +61,7 @@ public class BuildingManager : MonoBehaviour
         int buildingID = nextBuildingID++;
         building.SetBuildingID(buildingID);
         buildings[buildingID] = building;
+        buildingOwners[buildingID] = playerID; // プレイヤーIDを記録
 
         // イベントを購読
         building.OnBuildingCompleted += (completedBuilding) => HandleBuildingCompleted(completedBuilding.BuildingID);
@@ -353,9 +355,31 @@ public class BuildingManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 建物の所属プレイヤーIDを取得
+    /// </summary>
+    public int GetBuildingPlayerID(int buildingID)
+    {
+        if (!buildingOwners.TryGetValue(buildingID, out int playerID))
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return -1;
+        }
+        return playerID;
+    }
+
+    /// <summary>
     /// 指定プレイヤーのすべての建物IDを取得
-    /// Note: Buildingクラスは現在playerIDを持っていないため、
-    /// 別途管理が必要（将来の拡張として）
+    /// </summary>
+    public List<int> GetPlayerBuildings(int playerID)
+    {
+        return buildingOwners
+            .Where(kvp => kvp.Value == playerID && buildings.ContainsKey(kvp.Key))
+            .Select(kvp => kvp.Key)
+            .ToList();
+    }
+
+    /// <summary>
+    /// すべての建物IDを取得
     /// </summary>
     public List<int> GetAllBuildingIDs()
     {
@@ -406,6 +430,7 @@ public class BuildingManager : MonoBehaviour
         {
             Debug.Log($"建物が破壊されました: ID={buildingID}");
             buildings.Remove(buildingID);
+            buildingOwners.Remove(buildingID); // プレイヤーID管理からも削除
             OnBuildingDestroyed?.Invoke(buildingID);
 
             if (building != null && building.gameObject != null)
@@ -427,6 +452,7 @@ public class BuildingManager : MonoBehaviour
         }
 
         buildings.Remove(buildingID);
+        buildingOwners.Remove(buildingID); // プレイヤーID管理からも削除
         if (building != null && building.gameObject != null)
         {
             Destroy(building.gameObject);
