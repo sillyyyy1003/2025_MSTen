@@ -12,25 +12,25 @@ public class UIGameDataManager : MonoBehaviour
     [System.Serializable]
     public struct UIPlayerData
     {
-        public int playerId;    // Íæ¼ÒId
-        public int avatarSpriteId;  // Íæ¼ÒÍ·Ïñ(Î´Öª´æ´¢ÀàÐÍ)
+        public int playerId;    // ï¿½ï¿½ï¿½Id
+        public int avatarSpriteId;  // ï¿½ï¿½ï¿½Í·ï¿½ï¿½(Î´Öªï¿½æ´¢ï¿½ï¿½ï¿½ï¿½)
 
 
-        public Religion religion;//×Ú½Ì
-        public int Resources;             //×ÊÔ´
-        public int AllUnitCount;       // µ±Ç°×ÜÈË¿Ú
-        public int AllUnitCountLimit;   // ×ÜÈË¿ÚÉÏÏÞ
-        public int ActivateMissionaryCount;//´«½ÌÊ¿¼¤»îÊý
-        public int ActivateSoliderCount;//Ê¿±ø¼¤»îÊý
-        public int ActivateFarmerCount;//Å©Ãñ¼¤»îÊý
-        //public int ActivateBuildingCount;//½¨Öþ¼¤»îÊý
-        public int UnusedUnitCount;//Î´Ê¹ÓÃµÄ¸öÌåÊý
+        public Religion religion;//ï¿½Ú½ï¿½
+        public int Resources;             //ï¿½ï¿½Ô´
+        public int AllUnitCount;       // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ë¿ï¿½
+        public int AllUnitCountLimit;   // ï¿½ï¿½ï¿½Ë¿ï¿½ï¿½ï¿½ï¿½ï¿½
+        public int ActivateMissionaryCount;//ï¿½ï¿½ï¿½ï¿½Ê¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        public int ActivateSoliderCount;//Ê¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        public int ActivateFarmerCount;//Å©ï¿½ñ¼¤»ï¿½ï¿½ï¿½
+        //public int ActivateBuildingCount;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        public int UnusedUnitCount;//Î´Ê¹ï¿½ÃµÄ¸ï¿½ï¿½ï¿½ï¿½ï¿½
 
 
-        public int DeckMissionaryCount;//´«½ÌÊ¿ÅÆÉ½Êý
-        public int DeckSoliderCount;//Ê¿±øÅÆÉ½Êý
-        public int DeckFarmerCount;//Å©ÃñÅÆÉ½Êý
-        public int DeckBuildingCount;//½¨ÖþÅÆÉ½Êý
+        public int DeckMissionaryCount;//ï¿½ï¿½ï¿½ï¿½Ê¿ï¿½ï¿½É½ï¿½ï¿½
+        public int DeckSoliderCount;//Ê¿ï¿½ï¿½ï¿½ï¿½É½ï¿½ï¿½
+        public int DeckFarmerCount;//Å©ï¿½ï¿½ï¿½ï¿½É½ï¿½ï¿½
+        public int DeckBuildingCount;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É½ï¿½ï¿½
 
 
 
@@ -45,11 +45,11 @@ public class UIGameDataManager : MonoBehaviour
     public struct UIUnitData
     {
 
-        // µ¥Î»µÄId
+        // ï¿½ï¿½Î»ï¿½ï¿½Id
         public int UnitId;
-        // µ¥Î»µÄÖÖÀà
-        public PlayerUnitType UnitType;
-        // µ¥Î»µÄ2Î¬×ø±ê
+        // ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        public CardType UnitType;
+        // ï¿½ï¿½Î»ï¿½ï¿½2Î¬ï¿½ï¿½ï¿½ï¿½
         public int2 Position;
 
     }
@@ -57,13 +57,13 @@ public class UIGameDataManager : MonoBehaviour
 
 
     [Header("UI Elements")]
-    public Image religionIcon;//×Ú½ÌÍ¼±ê
-    public TextMeshProUGUI resourcesValue;             //×ÊÔ´Êý
-    public TextMeshProUGUI activateMissionaryValue;//´«½ÌÊ¿¼¤»îÊý
-    public TextMeshProUGUI activateSoliderValue;//Ê¿±ø¼¤»îÊý
-    public TextMeshProUGUI activateFarmerValue;//Å©Ãñ¼¤»îÊý
-    public TextMeshProUGUI allUnitValue;       // µ±Ç°×ÜÈË¿Ú/ÈË¿ÚÉÏÏÞ
-    public TextMeshProUGUI unusedUnitValue;//Î´Ê¹ÓÃµÄ¸öÌåÊý
+    public Image religionIcon;//ï¿½Ú½ï¿½Í¼ï¿½ï¿½
+    public TextMeshProUGUI resourcesValue;             //ï¿½ï¿½Ô´ï¿½ï¿½
+    public TextMeshProUGUI activateMissionaryValue;//ï¿½ï¿½ï¿½ï¿½Ê¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    public TextMeshProUGUI activateSoliderValue;//Ê¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    public TextMeshProUGUI activateFarmerValue;//Å©ï¿½ñ¼¤»ï¿½ï¿½ï¿½
+    public TextMeshProUGUI allUnitValue;       // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ë¿ï¿½/ï¿½Ë¿ï¿½ï¿½ï¿½ï¿½ï¿½
+    public TextMeshProUGUI unusedUnitValue;//Î´Ê¹ï¿½ÃµÄ¸ï¿½ï¿½ï¿½ï¿½ï¿½
 
     public Image player01_Icon;
     public Image player02_Icon;
