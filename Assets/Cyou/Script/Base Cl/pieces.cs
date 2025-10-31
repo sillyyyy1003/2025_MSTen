@@ -15,6 +15,7 @@ namespace GamePieces
         public DemoUITest GM;
 
         // ===== 実行時の状態 =====
+        protected int pieceID = -1; // 駒の一意なID（PieceManagerが設定）
         protected float currentMaxHP;
         protected float currentHP;
         protected float currentMaxAP;
@@ -56,6 +57,7 @@ namespace GamePieces
         public event Action<PieceState, PieceState> OnStateChanged;
 
         // ===== プロパティ =====
+        public int PieceID => pieceID;
         public PieceDataSO Data => pieceData;
         public int CurrentPID => currentPID;
         public int OriginalPID => originalPID;
@@ -69,6 +71,14 @@ namespace GamePieces
         public int UpgradeLevel => upgradeLevel;
         public int HPLevel => hpLevel;
         public int APLevel => apLevel;
+
+        /// <summary>
+        /// 駒IDを設定（PieceManagerのみが呼び出し）
+        /// </summary>
+        public void SetPieceID(int id)
+        {
+            pieceID = id;
+        }
         
         #region 初期化
 
@@ -175,13 +185,21 @@ namespace GamePieces
         {
             float oldValue = currentAP;
             currentAP = Mathf.Clamp(currentAP + amount, 0, currentMaxAP);
-            
+
             if (!Mathf.Approximately(oldValue, currentAP))
             {
                 OnAPChanged?.Invoke(currentAP, currentMaxAP);
             }
         }
-        
+
+        /// <summary>
+        /// APを回復（PieceManagerから呼び出し可能）
+        /// </summary>
+        public void RecoverAP(float amount)
+        {
+            ModifyAP(amount);
+        }
+
         #endregion
         
         #region ダメージ処理
