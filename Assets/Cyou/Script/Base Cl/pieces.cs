@@ -15,6 +15,7 @@ namespace GamePieces
         public DemoUITest GM;
 
         // ===== 実行時の状態 =====
+        protected int pieceID = -1; // 駒の一意なID（PieceManagerが設定）
         protected float currentMaxHP;
         protected float currentHP;
         protected float currentMaxAP;
@@ -56,6 +57,7 @@ namespace GamePieces
         public event Action<PieceState, PieceState> OnStateChanged;
 
         // ===== プロパティ =====
+        public int PieceID => pieceID;
         public PieceDataSO Data => pieceData;
         public int CurrentPID => currentPID;
         public int OriginalPID => originalPID;
@@ -69,6 +71,14 @@ namespace GamePieces
         public int UpgradeLevel => upgradeLevel;
         public int HPLevel => hpLevel;
         public int APLevel => apLevel;
+
+        /// <summary>
+        /// 駒IDを設定（PieceManagerのみが呼び出し）
+        /// </summary>
+        public void SetPieceID(int id)
+        {
+            pieceID = id;
+        }
         
         #region 初期化
 
@@ -175,13 +185,21 @@ namespace GamePieces
         {
             float oldValue = currentAP;
             currentAP = Mathf.Clamp(currentAP + amount, 0, currentMaxAP);
-            
+
             if (!Mathf.Approximately(oldValue, currentAP))
             {
                 OnAPChanged?.Invoke(currentAP, currentMaxAP);
             }
         }
-        
+
+        /// <summary>
+        /// APを回復（PieceManagerから呼び出し可能）
+        /// </summary>
+        public void RecoverAP(float amount)
+        {
+            ModifyAP(amount);
+        }
+
         #endregion
         
         #region ダメージ処理
@@ -341,16 +359,16 @@ namespace GamePieces
         /// <summary>
         /// 指定項目のアップグレードコストを取得
         /// </summary>
-        public int GetUpgradeCost(UpgradeType type)
+        public int GetUpgradeCost(PieceUpgradeType type)
         {
             switch (type)
             {
-                case UpgradeType.HP:
+                case PieceUpgradeType.HP:
                     if (hpLevel >= 3 || pieceData.hpUpgradeCost == null || hpLevel >= pieceData.hpUpgradeCost.Length)
                         return -1; // アップグレード不可
                     return pieceData.hpUpgradeCost[hpLevel];
 
-                case UpgradeType.AP:
+                case PieceUpgradeType.AP:
                     if (apLevel >= 3 || pieceData.apUpgradeCost == null || apLevel >= pieceData.apUpgradeCost.Length)
                         return -1; // アップグレード不可
                     return pieceData.apUpgradeCost[apLevel];
@@ -363,7 +381,7 @@ namespace GamePieces
         /// <summary>
         /// 指定項目がアップグレード可能かチェック
         /// </summary>
-        public bool CanUpgrade(UpgradeType type)
+        public bool CanUpgrade(PieceUpgradeType type)
         {
             int cost = GetUpgradeCost(type);
             return cost > 0;
@@ -421,11 +439,6 @@ namespace GamePieces
     /// <summary>
     /// アップグレード項目タイプ
     /// </summary>
-    public enum UpgradeType
-    {
-        HP,         // 最大HP
-        AP          // 最大AP
-    }
 
 
 }

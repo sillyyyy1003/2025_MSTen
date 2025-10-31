@@ -1134,6 +1134,47 @@ if (hpCost > 0)
 
 ---
 
+#### 检查是否可升级
+
+**函数签名:**
+```csharp
+public bool CanUpgrade(UpgradeType type)
+```
+
+**参数:**
+- `type`: 升级项目（`PieceUpgradeType.HP` 或 `PieceUpgradeType.AP`）
+
+**返回值:**
+- `true`: 可以升级
+- `false`: 已达最大等级或无法升级
+
+**使用示例:**
+```csharp
+Piece unit = GetComponent<Piece>();
+
+// 控制UI按钮的启用/禁用
+hpUpgradeButton.interactable = unit.CanUpgrade(PieceUpgradeType.HP);
+apUpgradeButton.interactable = unit.CanUpgrade(PieceUpgradeType.AP);
+
+// 升级前检查
+if (unit.CanUpgrade(PieceUpgradeType.HP))
+{
+    int cost = unit.GetUpgradeCost(PieceUpgradeType.HP);
+    // 升级处理...
+}
+else
+{
+    Debug.Log("HP已达最大等级");
+}
+```
+
+**主要用途:**
+- 控制UI按钮的启用/禁用
+- 筛选可升级项目
+- 快速检查是否达到最大等级
+
+---
+
 ### 农民（Farmer）专用升级
 
 #### `UpgradeSacrifice()`
@@ -1164,6 +1205,39 @@ if (farmer.UpgradeSacrifice())
 
 ---
 
+#### 检查是否可升级（农民专用项目）
+
+**函数签名:**
+```csharp
+public bool CanUpgradeFarmer(FarmerUpgradeType type)
+```
+
+**参数:**
+- `type`: 农民专用升级项目（`FarmerUpgradeType.Sacrifice`）
+
+**返回值:**
+- `true`: 可以升级
+- `false`: 已达最大等级或无法升级
+
+**使用示例:**
+```csharp
+Farmer farmer = GetComponent<Farmer>();
+
+// 控制UI按钮
+sacrificeUpgradeButton.interactable = farmer.CanUpgradeFarmer(FarmerUpgradeType.Sacrifice);
+
+// 升级前检查
+if (farmer.CanUpgradeFarmer(FarmerUpgradeType.Sacrifice))
+{
+    int cost = farmer.GetFarmerUpgradeCost(FarmerUpgradeType.Sacrifice);
+    // 升级处理...
+}
+```
+
+**实现位置:** `farmer.cs:330-334`
+
+---
+
 ### 军队（Military）专用升级
 
 #### `UpgradeAttackPower()`
@@ -1191,6 +1265,32 @@ if (soldier.UpgradeAttackPower())
 ```
 
 **实现位置:** `military.cs:165-195`
+
+---
+
+#### 检查是否可升级（军队专用项目）
+
+**函数签名:**
+```csharp
+public bool CanUpgradeMilitary(MilitaryUpgradeType type)
+```
+
+**参数:**
+- `type`: 军队专用升级项目（`MilitaryUpgradeType.AttackPower`）
+
+**返回值:**
+- `true`: 可以升级
+- `false`: 已达最大等级或无法升级
+
+**使用示例:**
+```csharp
+MilitaryUnit soldier = GetComponent<MilitaryUnit>();
+
+// 控制UI按钮
+attackPowerUpgradeButton.interactable = soldier.CanUpgradeMilitary(MilitaryUpgradeType.AttackPower);
+```
+
+**实现位置:** `military.cs:217-221`
 
 ---
 
@@ -1254,6 +1354,35 @@ if (missionary.UpgradeConvertEnemy())
 
 ---
 
+#### 检查是否可升级（传教士专用项目）
+
+**函数签名:**
+```csharp
+public bool CanUpgradeMissionary(MissionaryUpgradeType type)
+```
+
+**参数:**
+- `type`: 传教士专用升级项目
+  - `MissionaryUpgradeType.Occupy` - 占领成功率
+  - `MissionaryUpgradeType.ConvertEnemy` - 魅惑成功率
+
+**返回值:**
+- `true`: 可以升级
+- `false`: 已达最大等级或无法升级
+
+**使用示例:**
+```csharp
+Missionary missionary = GetComponent<Missionary>();
+
+// 控制UI按钮
+occupyUpgradeButton.interactable = missionary.CanUpgradeMissionary(MissionaryUpgradeType.Occupy);
+convertUpgradeButton.interactable = missionary.CanUpgradeMissionary(MissionaryUpgradeType.ConvertEnemy);
+```
+
+**实现位置:** `missionary.cs:361-365`
+
+---
+
 ### 教皇（Pope）专用升级
 
 教皇有2个独立的升级项目。
@@ -1311,6 +1440,35 @@ if (pope.UpgradeBuff())
 ```
 
 **实现位置:** `pope.cs:165-198`
+
+---
+
+#### 检查是否可升级（教皇专用项目）
+
+**函数签名:**
+```csharp
+public bool CanUpgradePope(PopeUpgradeType type)
+```
+
+**参数:**
+- `type`: 教皇专用升级项目
+  - `PopeUpgradeType.SwapCooldown` - 位置交换冷却时间
+  - `PopeUpgradeType.Buff` - 增益效果
+
+**返回值:**
+- `true`: 可以升级
+- `false`: 已达最大等级或无法升级
+
+**使用示例:**
+```csharp
+Pope pope = GetComponent<Pope>();
+
+// 控制UI按钮
+swapCooldownUpgradeButton.interactable = pope.CanUpgradePope(PopeUpgradeType.SwapCooldown);
+buffUpgradeButton.interactable = pope.CanUpgradePope(PopeUpgradeType.Buff);
+```
+
+**实现位置:** `pope.cs:226-230`
 
 ---
 
@@ -1427,6 +1585,47 @@ if (building.UpgradeBuildCost())
 ```
 
 **实现位置:** `building.cs:531-569`
+
+---
+
+#### 检查是否可升级（建筑）
+
+**函数签名:**
+```csharp
+public bool CanUpgrade(BuildingUpgradeType type)
+```
+
+**参数:**
+- `type`: 建筑升级项目
+  - `BuildingUpgradeType.HP` - 最大HP
+  - `BuildingUpgradeType.AttackRange` - 攻击范围
+  - `BuildingUpgradeType.Slots` - 槽位数
+  - `BuildingUpgradeType.BuildCost` - 建造成本
+
+**返回值:**
+- `true`: 可以升级
+- `false`: 已达最大等级、建筑未完成或无法升级
+
+**使用示例:**
+```csharp
+Building building = GetComponent<Building>();
+
+// 控制UI按钮
+hpUpgradeButton.interactable = building.CanUpgrade(BuildingUpgradeType.HP);
+attackRangeUpgradeButton.interactable = building.CanUpgrade(BuildingUpgradeType.AttackRange);
+slotsUpgradeButton.interactable = building.CanUpgrade(BuildingUpgradeType.Slots);
+buildCostUpgradeButton.interactable = building.CanUpgrade(BuildingUpgradeType.BuildCost);
+
+// 升级前检查
+if (!building.CanUpgrade(BuildingUpgradeType.HP))
+{
+    Debug.Log("建筑HP无法升级");
+}
+```
+
+**注意:** 建筑只能在`BuildingState.Inactive`或`BuildingState.Active`状态下升级。建造中（`UnderConstruction`）或废墟（`Ruined`）状态无法升级。
+
+**实现位置:** `building.cs:606-613`
 
 ---
 
