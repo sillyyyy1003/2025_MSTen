@@ -289,6 +289,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nowChooseUnitID: 0
+  nowChooseUnitType: 0
+  buildingRegistry: {fileID: 11400000, guid: 7173f6d9ba6e94243abc74c054f4d749, type: 2}
 --- !u!114 &131122553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1680,8 +1682,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ecc24a2b133f9c438e582bf7aeb4392, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnTimeLimit: 60
-  timePoolInitial: 300
+  turnTimeLimit: 30
+  timePoolInitial: 40
 --- !u!1 &1006675385
 GameObject:
   m_ObjectHideFlags: 0
@@ -2091,7 +2093,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1805311232}
   hexGrid: {fileID: 1913528995}
-  isLoadMap: 0
+  isLoadMap: 1
   mapFileName: Example.map
   mapSize: 0
 --- !u!1 &1475043584

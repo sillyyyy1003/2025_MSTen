@@ -28,6 +28,7 @@ public struct BoardInfor
     public bool bIsStartPos;
 
 
+
 };
 
 // 游戏开始数据
@@ -305,6 +306,7 @@ public class GameManage : MonoBehaviour
             _LocalPlayerID = 0;
             AllPlayerIds.Add(0);
 
+
             _PlayerDataManager.CreatePlayer(0);
 
             // 添加玩家初始格子位置的id
@@ -423,7 +425,8 @@ public class GameManage : MonoBehaviour
         TurnEndMessage turnEndMsg = new TurnEndMessage
         {
             PlayerId = LocalPlayerID,
-            PlayerDataJson = JsonUtility.ToJson(localData)
+
+            PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
 
         // 发送到网络
@@ -576,7 +579,7 @@ public class GameManage : MonoBehaviour
                     if(GameBoardInforDict2D.ContainsKey(pos))
                     {
                         startPos.Add(GameBoardInforDict2D[pos].id);
-                        Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                        //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
                     }
             }
         }
@@ -634,7 +637,10 @@ public class GameManage : MonoBehaviour
             CellObjects[toPos] = obj;
         }
     }
-
+    public int GetStartPosForNetGame(int i)
+    {
+        return PlayerStartPositions[i];
+    }
     // 设置棋盘结构体信息
     public void SetGameBoardInfor(BoardInfor infor)
     {
