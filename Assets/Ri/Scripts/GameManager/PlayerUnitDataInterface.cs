@@ -42,7 +42,6 @@ public class PlayerUnitDataInterface : MonoBehaviour
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public List<int> GetUnitDListByType(CardType type)
     public List<int> GetUnitIDListByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type);
