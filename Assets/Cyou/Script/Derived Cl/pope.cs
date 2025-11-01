@@ -107,12 +107,12 @@ public class Pope : Piece
         if (popeData == null) return;
 
         // レベルに応じてHP、AP、攻撃力を更新
-        float newMaxHP = popeData.GetMaxHPByLevel(upgradeLevel);
-        float newMaxAP = popeData.GetMaxAPByLevel(upgradeLevel);
+        int newMaxHP = popeData.GetMaxHPByLevel(upgradeLevel);
+        int newMaxAP = popeData.GetMaxAPByLevel(upgradeLevel);
 
         // 現在のHPとAPの割合を保持
-        float hpRatio = currentHP / currentMaxHP;
-        float apRatio = currentAP / currentMaxAP;
+        int hpRatio = currentHP / currentMaxHP;
+        int apRatio = currentAP / currentMaxAP;
 
         // 新しい最大値に基づいて現在値を更新
         currentHP = newMaxHP * hpRatio;
@@ -227,6 +227,26 @@ public class Pope : Piece
     {
         int cost = GetPopeUpgradeCost(type);
         return cost > 0;
+    }
+
+    #endregion
+
+    #region セッター（同期用）
+
+    /// <summary>
+    /// 位置交換CDレベルを直接設定（ネットワーク同期用）
+    /// </summary>
+    public void SetSwapCooldownLevel(int level)
+    {
+        swapCooldownLevel = Mathf.Clamp(level, 0, 2);
+    }
+
+    /// <summary>
+    /// バフレベルを直接設定（ネットワーク同期用）
+    /// </summary>
+    public void SetBuffLevel(int level)
+    {
+        buffLevel = Mathf.Clamp(level, 0, 3);
     }
 
     #endregion

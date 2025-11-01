@@ -10,7 +10,6 @@ namespace GameData
     public class MilitaryDataSO : PieceDataSO
     {
         [Header("軍隊特有パラメータ")]
-        public float armorValue = 10f;
         public float criticalChance = 0.1f;
         public DamageType damageType = DamageType.Physical;
 
@@ -27,7 +26,7 @@ namespace GameData
         /// <summary>
         /// レベルに応じた攻撃力係数を取得
         /// </summary>
-        public float GetAttackRangeByLevel(int level)
+        public int GetAttackRangeByLevel(int level)
         {
             level = Mathf.Clamp(level, 0, attackPowerByLevel.Length - 1);
             return attackPowerByLevel[level];
@@ -48,7 +47,7 @@ namespace GameData
             canAttack = true; // 軍隊は必ず攻撃可能
             if (attackPower <= 0)
             {
-                attackPower = 25f;
+                attackPower = 25;
                 attackRange = 2f;
             }
         }
