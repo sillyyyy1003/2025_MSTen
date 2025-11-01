@@ -43,6 +43,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     /// <param name="type"></param>
     /// <returns></returns>
     public List<int> GetUnitDListByType(CardType type)
+    public List<int> GetUnitIDListByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type);
     }
@@ -50,6 +51,8 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // 拿到一个棋子的数据
     public void GetUnitData(int id)
     {
+
+        return PlayerDataManager.Instance.GetUnitDataById(id);
 
     }
 
@@ -95,23 +98,41 @@ public class PlayerUnitDataInterface : MonoBehaviour
     public void AddDeckNumByType(CardType type)
     {
 
+
+
+
+
+
     }
 
     // 将一个单位上场
     public void ActivateUnitFromDeck(int id)
     {
         
+
+
+
+
     }
 
     // 某棋子使用技能
     public void UseCardSkill(int id)
     {
 
+
+
+
+
+
     }
 
     // 升级某种棋子的某一项属性
     public void UpgradeCard(CardType type)
     {
+
+
+
+
 
     }
 

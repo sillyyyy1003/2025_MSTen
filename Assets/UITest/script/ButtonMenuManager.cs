@@ -71,7 +71,6 @@ public class ButtonMenuManager : MonoBehaviour
     public static ButtonMenuManager Instance { get; private set; }
 
 
-
     private void Awake()
     {
 
