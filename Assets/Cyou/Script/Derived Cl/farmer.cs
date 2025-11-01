@@ -78,11 +78,11 @@ public class Farmer : Piece
         }
 
         // 回復量を取得（配列範囲外アクセス防止）
-        int healAmount = farmerData.maxSacrificeLevel[Mathf.Clamp(UpgradeLevel, 0, farmerData.maxSacrificeLevel.Length - 1)];
+        int healAmount = farmerData.maxSacrificeLevel[Mathf.Clamp(sacrificeLevel, 0, farmerData.maxSacrificeLevel.Length - 1)];
 
         if (healAmount <= 0)
         {
-            Debug.LogWarning($"回復量が0以下です (レベル: {UpgradeLevel}, 回復量: {healAmount})");
+            Debug.LogWarning($"回復量が0以下です (Sacrificeレベル: {sacrificeLevel}, 回復量: {healAmount})");
             return false;
         }
 
@@ -96,6 +96,14 @@ public class Farmer : Piece
         target.Heal(healAmount);
 
         Debug.Log($"農民が{target.Data.pieceName}を{healAmount}回復しました (HP: {targetOldHP:F1} → {target.CurrentHP:F1})");
+
+        // APを使い切ったら自分は死亡
+        if (currentAP <= 0)
+        {
+            Debug.Log($"農民がSacrificeスキルによりAPを使い切り死亡しました");
+            Die();
+        }
+
         return true;
     }
 
@@ -253,12 +261,12 @@ public class Farmer : Piece
         if (farmerData == null) return;
 
         // レベルに応じてHP、AP、攻撃力を更新
-        float newMaxHP = farmerData.GetMaxHPByLevel(upgradeLevel);
-        float newMaxAP = farmerData.GetMaxAPByLevel(upgradeLevel);
+        int newMaxHP = farmerData.GetMaxHPByLevel(upgradeLevel);
+        int newMaxAP = farmerData.GetMaxAPByLevel(upgradeLevel);
 
         // 現在のHPとAPの割合を保持
-        float hpRatio = currentHP / currentMaxHP;
-        float apRatio = currentAP / currentMaxAP;
+        int hpRatio = currentHP / currentMaxHP;
+        int apRatio = currentAP / currentMaxAP;
 
         // 新しい最大値に基づいて現在値を更新
         currentHP = newMaxHP * hpRatio;
@@ -337,6 +345,18 @@ public class Farmer : Piece
     {
         int cost = GetFarmerUpgradeCost(type);
         return cost > 0;
+    }
+
+    #endregion
+
+    #region セッター（同期用）
+
+    /// <summary>
+    /// 獻祭レベルを直接設定（ネットワーク同期用）
+    /// </summary>
+    public void SetSacrificeLevel(int level)
+    {
+        sacrificeLevel = Mathf.Clamp(level, 0, 2);
     }
 
     #endregion

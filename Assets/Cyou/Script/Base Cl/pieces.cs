@@ -12,14 +12,13 @@ namespace GamePieces
     public abstract class Piece : VisualGameObject
     {
         [SerializeField] protected PieceDataSO pieceData;
-        public DemoUITest GM;
 
         // ===== 実行時の状態 =====
         protected int pieceID = -1; // 駒の一意なID（PieceManagerが設定）
-        protected float currentMaxHP;
-        protected float currentHP;
-        protected float currentMaxAP;
-        protected float currentAP;
+        protected int currentMaxHP;
+        protected int currentHP;
+        protected int currentMaxAP;
+        protected int currentAP;
         protected int currentPID; // 現在所属しているプレイヤーID
         protected int originalPID; // 元々所属していたプレイヤーID
         protected PieceState currentState = PieceState.Idle;
@@ -52,8 +51,7 @@ namespace GamePieces
         public event Action<Piece> OnPieceDeath;
         public event Action<Piece,Piece> OnCharmed;//(魅惑された駒、魅惑した駒)
         public event Action<Piece> OnUncharmed;//魅惑状態が解除して元の陣営に戻った駒
-        public event Action<float, float> OnHPChanged;
-        public event Action<float, float> OnAPChanged;
+
         public event Action<PieceState, PieceState> OnStateChanged;
 
         // ===== プロパティ =====
@@ -61,10 +59,10 @@ namespace GamePieces
         public PieceDataSO Data => pieceData;
         public int CurrentPID => currentPID;
         public int OriginalPID => originalPID;
-        public float CurrentHP => currentHP;
-        public float CurrentMaxHP => currentMaxHP;
-        public float CurrentAP => currentAP;
-        public float CurrentMaxAP => currentMaxAP;
+        public int CurrentHP => currentHP;
+        public int CurrentMaxHP => currentMaxHP;
+        public int CurrentAP => currentAP;
+        public int CurrentMaxAP => currentMaxAP;
         public bool IsAlive => currentHP > 0;
         public bool CanMove => currentAP >= pieceData.moveAPCost;
         public PieceState State => currentState;
@@ -165,13 +163,13 @@ namespace GamePieces
             {
                 if (currentAP < currentMaxAP && currentState != PieceState.InBuilding)
                 {
-                    ModifyAP(pieceData.aPRecoveryRate * Time.deltaTime);//ターン数へ移行
+                    //ModifyAP(pieceData.aPRecoveryRate * );//ターン数へ移行
                 }
                 yield return null;
             }
         }
         
-        public bool ConsumeAP(float amount)
+        public bool ConsumeAP(int amount)
         {
             if (currentAP >= amount)
             {
@@ -181,21 +179,20 @@ namespace GamePieces
             return false;
         }
         
-        protected void ModifyAP(float amount)
+        protected void ModifyAP(int amount)
         {
             float oldValue = currentAP;
-            currentAP = Mathf.Clamp(currentAP + amount, 0, currentMaxAP);
+            currentAP = Math.Clamp(currentAP + amount, 0, currentMaxAP);
 
             if (!Mathf.Approximately(oldValue, currentAP))
             {
-                OnAPChanged?.Invoke(currentAP, currentMaxAP);
             }
         }
 
         /// <summary>
         /// APを回復（PieceManagerから呼び出し可能）
         /// </summary>
-        public void RecoverAP(float amount)
+        public void RecoverAP(int amount)
         {
             ModifyAP(amount);
         }
@@ -204,12 +201,11 @@ namespace GamePieces
         
         #region ダメージ処理
         
-        public virtual void TakeDamage(float damage, Piece attacker = null)
+        public virtual void TakeDamage(int damage, Piece attacker = null)
         {
-            float oldHP = currentHP;
-            currentHP = Mathf.Max(0, currentHP - damage);
+            int oldHP = currentHP;
+            currentHP = currentHP - damage;
             
-            OnHPChanged?.Invoke(currentHP, currentMaxHP);
             
             if (currentHP <= 0 && oldHP > 0)
             {
@@ -217,14 +213,13 @@ namespace GamePieces
             }
         }
         
-        public virtual void Heal(float amount)
+        public virtual void Heal(int amount)
         {
             float oldHP = currentHP;
             currentHP = Mathf.Min(currentMaxHP, currentHP + amount);
             
             if (!Mathf.Approximately(oldHP, currentHP))
             {
-                OnHPChanged?.Invoke(currentHP, currentMaxHP);
             }
         }
         
@@ -303,12 +298,12 @@ namespace GamePieces
 
             // レベルアップ実行
             hpLevel++;
-            float newMaxHP = pieceData.GetMaxHPByLevel(hpLevel);
-            float hpRatio = currentHP / currentMaxHP; // 現在のHP割合を保持
+            int newMaxHP = pieceData.GetMaxHPByLevel(hpLevel);
+            int hpRatio = currentHP / currentMaxHP; // 現在のHP割合を保持
             currentMaxHP = newMaxHP;
             currentHP = newMaxHP * hpRatio; // 割合を維持してHPを再計算
 
-            OnHPChanged?.Invoke(currentHP, currentMaxHP);
+
 
             Debug.Log($"{pieceData.pieceName} のHPがレベル{hpLevel}にアップグレードしました（最大HP: {currentMaxHP}）");
             return true;
@@ -345,12 +340,10 @@ namespace GamePieces
 
             // レベルアップ実行
             apLevel++;
-            float newMaxAP = pieceData.GetMaxAPByLevel(apLevel);
-            float apRatio = currentAP / currentMaxAP; // 現在のAP割合を保持
+            int newMaxAP = pieceData.GetMaxAPByLevel(apLevel);
+            int apRatio = currentAP / currentMaxAP; // 現在のAP割合を保持
             currentMaxAP = newMaxAP;
             currentAP = newMaxAP * apRatio; // 割合を維持してAPを再計算
-
-            OnAPChanged?.Invoke(currentAP, currentMaxAP);
 
             Debug.Log($"{pieceData.pieceName} のAPがレベル{apLevel}にアップグレードしました（最大AP: {currentMaxAP}）");
             return true;
@@ -385,6 +378,44 @@ namespace GamePieces
         {
             int cost = GetUpgradeCost(type);
             return cost > 0;
+        }
+
+        #endregion
+
+        #region セッター（同期用）
+
+        /// <summary>
+        /// HPを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetHP(int hp)
+        {
+            currentHP = Mathf.Clamp(hp, 0, currentMaxHP);
+        }
+
+        /// <summary>
+        /// HPレベルを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetHPLevel(int level)
+        {
+            hpLevel = Mathf.Clamp(level, 0, 3);
+            currentMaxHP = pieceData.GetMaxHPByLevel(hpLevel);
+        }
+
+        /// <summary>
+        /// APレベルを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetAPLevel(int level)
+        {
+            apLevel = Mathf.Clamp(level, 0, 3);
+            currentMaxAP = pieceData.GetMaxAPByLevel(apLevel);
+        }
+
+        /// <summary>
+        /// プレイヤーIDを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetPlayerID(int playerID)
+        {
+            currentPID = playerID;
         }
 
         #endregion

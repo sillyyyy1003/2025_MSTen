@@ -244,7 +244,7 @@ public class Missionary : Piece
     /// <summary>
     /// ダメージを受ける際に特殊防御を発動
     /// </summary>
-    public override void TakeDamage(float damage, Piece attacker = null)
+    public override void TakeDamage(int damage, Piece attacker = null)
     {
         if (HasAntiConversionSkill() && attacker is Missionary)
         {
@@ -334,12 +334,12 @@ public class Missionary : Piece
         if (missionaryData == null) return;
 
         // レベルに応じてHP、AP、攻撃力を更新
-        float newMaxHP = missionaryData.GetMaxHPByLevel(upgradeLevel);
-        float newMaxAP = missionaryData.GetMaxAPByLevel(upgradeLevel);
+        int newMaxHP = missionaryData.GetMaxHPByLevel(upgradeLevel);
+        int newMaxAP = missionaryData.GetMaxAPByLevel(upgradeLevel);
 
         // 現在のHPとAPの割合を保持
-        float hpRatio = currentHP / currentMaxHP;
-        float apRatio = currentAP / currentMaxAP;
+        int hpRatio = currentHP / currentMaxHP;
+        int apRatio = currentAP / currentMaxAP;
 
         // 新しい最大値に基づいて現在値を更新
         currentHP = newMaxHP * hpRatio;
@@ -484,6 +484,26 @@ public class Missionary : Piece
         ///復帰しない
 
         base.Die();
+    }
+
+    #endregion
+
+    #region セッター（同期用）
+
+    /// <summary>
+    /// 占領レベルを直接設定（ネットワーク同期用）
+    /// </summary>
+    public void SetOccupyLevel(int level)
+    {
+        occupyLevel = Mathf.Clamp(level, 0, 3);
+    }
+
+    /// <summary>
+    /// 魅惑レベルを直接設定（ネットワーク同期用）
+    /// </summary>
+    public void SetConvertEnemyLevel(int level)
+    {
+        convertEnemyLevel = Mathf.Clamp(level, 0, 3);
     }
 
     #endregion
