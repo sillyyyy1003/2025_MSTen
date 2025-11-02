@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using UnityEngine;
+using GamePieces;
+using GameData;
+using GameData.UI;
 
 // 玩家单位数据接口，负责被外部调用以获取需要数据
 public class PlayerUnitDataInterface : MonoBehaviour
@@ -48,10 +51,16 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
     // 拿到一个棋子的数据
-    public void GetUnitData(int id)
+    public Piece GetUnitData(int id)
     {
+        //PlayerDataManager.Instance.GetUnitDataById(id).Value.PlayerUnitDataSO;
 
-        return PlayerDataManager.Instance.GetUnitDataById(id);
+        Vector3 pos = new Vector3(0,0,0);
+        syncPieceData? pieceData = PieceManager.Instance.CreatePiece(PieceType.Farmer,Religion.G,1, pos);
+
+        int ID = pieceData.Value.pieceID;
+
+        return PieceManager.Instance.GetPiece(ID);
 
     }
 
@@ -115,7 +124,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
     // 某棋子使用技能
-    public void UseCardSkill(int id)
+    public void UseCardSkill(int id,CardSkill skill)
     {
 
 
@@ -126,7 +135,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
     // 升级某种棋子的某一项属性
-    public void UpgradeCard(CardType type)
+    public void UpgradeCard(CardType type,TechTree tech)
     {
 
 

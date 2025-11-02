@@ -5,16 +5,16 @@ using UnityEngine.UI;
 using TMPro;
 using GameData;
 using Unity.Mathematics;
-
+using GamePieces;
 
 [System.Serializable]
 public struct UIUnitData
 {
-    // ��λ��Id
+    // 单位的Id
     public int UnitId;
-    // ��λ������
+    // 单位的种类
     public CardType UnitType;
-    // ��λ��2ά����
+    // 单位的2维坐标
     public int2 Position;
     // HP
     public int HP;
@@ -26,103 +26,57 @@ public struct UIUnitData
 [System.Serializable]
 public struct UIPlayerData
 {
-    // ��ҵ����
+    // 玩家ID
     public int PlayerID;
-    // ���ͷ��(δ֪�洢����)
+    // 玩家头像（未知存储类型）
     public int avatarSpriteId;
-    // ����Ƿ���
+    // 玩家是否存活
     public bool isAlive;
-    // ����Ƿ����ڲ���
+    // 玩家是否正在操作
     public bool isOperating;
-    // ����ڽ�
+    // 玩家宗教
     public Religion religion;
 
 }
 
 public class UIGameDataManager : MonoBehaviour
 {
-    public int localPlayerId;    // ���Id
+    public int localPlayerId;              // 本地玩家ID
 
-    [System.Serializable]
-    public struct UIPlayerData
-    {
-        public int playerId;    // ���Id
-        public int avatarSpriteId;  // ���ͷ��(δ֪�洢����)
+    public Religion playerReligion;        // 宗教
+    public int Resources;                  // 资源
+    public int AllUnitCount;               // 当前总人口
+    public int AllUnitCountLimit;          // 总人口上限
+    public int ActivateMissionaryCount;    // 传教士激活数
+    public int ActivateSoliderCount;       // 士兵激活数
+    public int ActivateFarmerCount;        // 农民激活数
+    public int ActivateBuildingCount;      // 建筑激活数
+    public int UnusedUnitCount;            // 未使用的单位数
 
-
-        public Religion religion;//�ڽ�
-        public int Resources;             //��Դ
-        public int AllUnitCount;       // ��ǰ���˿�
-        public int AllUnitCountLimit;   // ���˿�����
-        public int ActivateMissionaryCount;//����ʿ������
-        public int ActivateSoliderCount;//ʿ��������
-        public int ActivateFarmerCount;//ũ�񼤻���
-        //public int ActivateBuildingCount;//����������
-        public int UnusedUnitCount;//δʹ�õĸ�����
+    public int DeckMissionaryCount;        // 传教士卡组数量
+    public int DeckSoliderCount;           // 士兵卡组数量
+    public int DeckFarmerCount;            // 农民卡组数量
+    public int DeckBuildingCount;          // 建筑卡组数量
 
 
-        public int DeckMissionaryCount;//����ʿ��ɽ��
-        public int DeckSoliderCount;//ʿ����ɽ��
-        public int DeckFarmerCount;//ũ����ɽ��
-        public int DeckBuildingCount;//������ɽ��
-
-
-
-        
-
-
-
-
-    }
-
-    [System.Serializable]
-    public struct UIUnitData
-    {
-
-        // ��λ��Id
-        public int UnitId;
-        // ��λ������
-        public CardType UnitType;
-        // ��λ��2ά����
-        public int2 Position;
-
-    }
-    public Religion playerReligion;//�ڽ�
-    public int Resources;             //��Դ
-    public int AllUnitCount;       // ��ǰ���˿�
-    public int AllUnitCountLimit;   // ���˿�����
-    public int ActivateMissionaryCount;//����ʿ������
-    public int ActivateSoliderCount;//ʿ��������
-    public int ActivateFarmerCount;//ũ�񼤻���
-    public int ActivateBuildingCount;//����������
-    public int UnusedUnitCount;//δʹ�õĸ�����
-
-
-    public int DeckMissionaryCount;//����ʿ��ɽ��
-    public int DeckSoliderCount;//ʿ����ɽ��
-    public int DeckFarmerCount;//ũ����ɽ��
-    public int DeckBuildingCount;//������ɽ��
-
-
-    // �����õ��������ݼ�
+    // 当前使用中的单位轻量数据集
     public List<UIUnitData> MissionaryUnits;
     public List<UIUnitData> SoliderUnits;
     public List<UIUnitData> FarmerUnits;
     public List<UIUnitData> BuildingUnits;
 
-    // ���List
+    // 全部玩家轻量数据
     private Dictionary<int, UIPlayerData> allPlayersData;
 
 
-
     [Header("UI Elements")]
-    public Image religionIcon;//�ڽ�ͼ��
-    public TextMeshProUGUI resourcesValue;             //��Դ��
-    public TextMeshProUGUI activateMissionaryValue;//����ʿ������
-    public TextMeshProUGUI activateSoliderValue;//ʿ��������
-    public TextMeshProUGUI activateFarmerValue;//ũ�񼤻���
-    public TextMeshProUGUI allUnitValue;       // ��ǰ���˿�/�˿�����
-    public TextMeshProUGUI unusedUnitValue;//δʹ�õĸ�����
+    public Image religionIcon;                 // 宗教图标
+    public TextMeshProUGUI resourcesValue;     // 资源值
+    public TextMeshProUGUI activateMissionaryValue; // 传教士激活数
+    public TextMeshProUGUI activateSoliderValue;    // 士兵激活数
+    public TextMeshProUGUI activateFarmerValue;     // 农民激活数
+    public TextMeshProUGUI allUnitValue;       // 当前人口 / 人口上限
+    public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
 
     public Image player01_Icon;
     public Image player02_Icon;
@@ -134,7 +88,6 @@ public class UIGameDataManager : MonoBehaviour
     public TextMeshProUGUI CountdownTime;
 
 
-    private Dictionary<int, UIPlayerData> uiPlayerDataDict = new Dictionary<int, UIPlayerData>();
 
     public static UIGameDataManager Instance { get; private set; }
 
@@ -222,7 +175,6 @@ public class UIGameDataManager : MonoBehaviour
         ActivateBuildingCount= PlayerUnitDataInterface.Instance.GetUnitCountByType(CardType.Building);
         UnusedUnitCount = PlayerUnitDataInterface.Instance.GetInactiveUnitCount();
 
-
         DeckMissionaryCount = PlayerUnitDataInterface.Instance.GetDeckNumByType(CardType.Missionary);
         DeckSoliderCount = PlayerUnitDataInterface.Instance.GetDeckNumByType(CardType.Solider);
         DeckFarmerCount = PlayerUnitDataInterface.Instance.GetDeckNumByType(CardType.Farmer);
@@ -230,7 +182,9 @@ public class UIGameDataManager : MonoBehaviour
 
 
         MissionaryUnits = GetUIUnitDataList(CardType.Missionary);
-
+        SoliderUnits = GetUIUnitDataList(CardType.Solider);
+        FarmerUnits = GetUIUnitDataList(CardType.Farmer);
+        BuildingUnits = GetUIUnitDataList(CardType.Building);
 
 
 
@@ -244,19 +198,19 @@ public class UIGameDataManager : MonoBehaviour
 
         foreach (int id in UnitIDs)
         {
-            PlayerUnitData? unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
+            Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
 
             uiList.Add(new UIUnitData
             {
                 UnitId = id,
-                UnitType = unitData.Value.UnitType,
-                Position = unitData.Value.Position,
-                HP = 3,
-                AP = 5,
-            }); 
+                UnitType = type,
+                HP = (int)unitData.CurrentHP,
+                AP = (int)unitData.CurrentAP,
+            }) ; 
         }
 
         return uiList;
+
     }
 
 
