@@ -41,18 +41,6 @@ public class UnitCardManager : MonoBehaviour
     public float deckstartSpacing = 1f;//仓库里的卡牌与卡牌的间距
     public bool isDeckSelected = false;
 
-
-    [Header("Fake Player Data")]
-	public int currentCardCount = 5;
-    public int targetCardCount = 5;
-    public int currentDeckCount = 5;
-    public int targetDeckCount = 5;
-
-    //内部保存用
-    private List<UnitCard> cards = new List<UnitCard>();//目前场上显示的卡牌的列表
-    private List<StoredCard> deck = new List<StoredCard>();//目前场上显示的卡组的列表
-
-
     //内部计算用
 	private float cardWidth = 1f;//卡牌宽度
     private float detailCardWidth = 1f;//展开卡牌宽度
@@ -61,16 +49,28 @@ public class UnitCardManager : MonoBehaviour
     private float viewWidth = 1f;//卡牌滚动窗口的固定大小
     private Vector2 startPosition_Container = new Vector2(0, 0);
 
+    private bool enableSingleMode = true;
+
+
+    //UI
+    public int openIndex = -1;//-->choosedUnitId
+
+    private List<UnitCard> cards = new List<UnitCard>();//目前场上显示的卡牌的列表
+    private List<StoredCard> deck = new List<StoredCard>();//目前场上显示的卡组的列表
+
+    //GameData
+    private int choosedUnitId = -1;//-->openIndex
+    private int targetUnitId = -1;
+
+    private List<UIUnitData> ShowUnits;//直接不要这个参数使用UIGameDataManager的
+
     private CardType currentCardType = CardType.None;
     private CardType targetCardType = CardType.None;
 
-    private bool enableSingleMode = true;
-
-    public int openIndex = -1;
-
-    //fake data
-
-
+    private int currentCardCount = 5;
+    private int targetCardCount = 5;
+    private int currentDeckCount = 5;
+    private int targetDeckCount = 5;
 
 
 
@@ -122,7 +122,7 @@ public class UnitCardManager : MonoBehaviour
     #region ==== 卡牌生成与销毁 ====
 
     /// <summary>根据玩家数据生成卡牌（暂留）PlayerData==>UIData</summary>
-    void GenerateCardList(PlayerData playerData)
+    void GenerateCardList(CardType type)
     {
 
 
@@ -561,7 +561,14 @@ public class UnitCardManager : MonoBehaviour
     }
 
 
+    public int GetChoosedUnitId()
+    {
 
+
+
+        return 0;
+
+    }
 
 
 

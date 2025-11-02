@@ -246,16 +246,20 @@ public class ButtonMenuManager : MonoBehaviour
             case CardSkillButtonData skill:
                 UnitCardManager.Instance.SetDeckSelected(false);
 
-                //UnitCardManager.Instance.GetChoosedCardId()
+                //UnitCardManager.Instance.GetChoosedUnitId();
                 Debug.Log($"[Broadcast] CardSkillUsed: {skill.cardType} - {skill.cardSkill}");
                 OnCardSkillUsed?.Invoke(skill.cardType, skill.cardSkill);
+
+                //PlayerUnitDataInterface.Instance.UseCardSkill(skill.cardType, skill.cardSkill);
 
                 break;
 
             case ParamUpdateButtonData param:
-                //UnitCardManager.Instance.GetChoosedCardId()
+                //UnitCardManager.Instance.GetChoosedUnitId()
                 Debug.Log($"[Broadcast] TechUpdated: {param.cardType} - {param.targetParameter}");
                 OnTechUpdated?.Invoke(param.cardType, param.targetParameter);
+
+                //PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter);
 
                 break;
 
@@ -266,11 +270,16 @@ public class ButtonMenuManager : MonoBehaviour
                     UnitCardManager.Instance.AddCardCount(1);
                     Debug.Log($"[Broadcast] CardPurchasedIntoDeck: {purchase.cardType}");
                     OnCardPurchasedIntoDeck?.Invoke(purchase.cardType);
+
+                    //PlayerUnitDataInterface.Instance.AddDeckNumByType(purchase.cardType);
+
                 }
                 else
                 {
                     Debug.Log($"[Broadcast] CardPurchasedIntoMap: {purchase.cardType}");
                     OnCardPurchasedIntoMap?.Invoke(purchase.cardType);
+
+                    //bool isCreateSuccess = PlayerUnitDataInterface.Instance.BuyUnitToMapByType(purchase.cardType);
 
                 }
 

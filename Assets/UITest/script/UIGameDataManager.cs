@@ -14,8 +14,6 @@ public struct UIUnitData
     public int UnitId;
     // 单位的种类
     public CardType UnitType;
-    // 单位的2维坐标
-    public int2 Position;
     // HP
     public int HP;
     // AP
@@ -86,6 +84,10 @@ public class UIGameDataManager : MonoBehaviour
 
     public Button EndTurn;
     public TextMeshProUGUI CountdownTime;
+
+
+    // === Event 定义区域 ===
+    public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
 
 
 
@@ -181,17 +183,15 @@ public class UIGameDataManager : MonoBehaviour
         DeckBuildingCount = PlayerUnitDataInterface.Instance.GetDeckNumByType(CardType.Building);
 
 
-        MissionaryUnits = GetUIUnitDataList(CardType.Missionary);
-        SoliderUnits = GetUIUnitDataList(CardType.Solider);
-        FarmerUnits = GetUIUnitDataList(CardType.Farmer);
-        BuildingUnits = GetUIUnitDataList(CardType.Building);
-
-
+        MissionaryUnits = UpdateUIUnitDataList(CardType.Missionary);
+        SoliderUnits = UpdateUIUnitDataList(CardType.Solider);
+        FarmerUnits = UpdateUIUnitDataList(CardType.Farmer);
+        BuildingUnits = UpdateUIUnitDataList(CardType.Building);
 
     }
 
 
-    public static List<UIUnitData> GetUIUnitDataList(CardType type)
+    public static List<UIUnitData> UpdateUIUnitDataList(CardType type)
     {
         List<int> UnitIDs = PlayerUnitDataInterface.Instance.GetUnitIDListByType(type);
         List<UIUnitData> uiList = new List<UIUnitData>();
@@ -212,12 +212,6 @@ public class UIGameDataManager : MonoBehaviour
         return uiList;
 
     }
-
-
-
-
-
-
 
 
 }

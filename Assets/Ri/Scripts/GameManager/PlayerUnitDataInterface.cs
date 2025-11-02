@@ -144,4 +144,10 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     }
 
+    // 购买某种棋子直接生成到地图
+    public bool BuyUnitToMapByType(CardType type)
+    {
+        //PlayerOperationManager的public bool TryCreateUnit(CardType unitType)
+        return true;
+    }
 }
