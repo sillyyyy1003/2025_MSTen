@@ -13,7 +13,7 @@ namespace GameData
         //public int maxMoveRangeOutsideTerritory = 1; // 領地外での最大移動マス数
 
         [Header("占領設定")]
-        public float occupyAPCost = 30f; // 占領試行のAP消費量
+        public int occupyAPCost = 30; // 占領試行のAP消費量
         //public float occupyDuration = 5f; // 占領判定までの時間(秒)（廃止）
 
         [Header("特殊攻撃設定")]
@@ -96,7 +96,7 @@ namespace GameData
             {
                 pieceName = "宣教師";
                 canAttack = true;//魅惑スキルは軍の「攻撃」と違うが一応こう書いとく
-                attackAPCost = 25f;
+                attackAPCost = 25;
             }
         }
     }
