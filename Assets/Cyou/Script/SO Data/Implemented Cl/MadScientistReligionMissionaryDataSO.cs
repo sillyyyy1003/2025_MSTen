@@ -19,18 +19,18 @@ namespace GameData
             populationCost = 3;
 
             // 移動AP
-            moveAPCost = 1f;
+            moveAPCost = 1;
 
             // HP・AP（初始, 升級1, 升級2, 升級3）
-            maxHPByLevel = new float[4] { 7f, 9f, 12f, 12f };
-            maxAPByLevel = new float[4] { 5f, 7f, 8f, 8f };
+            maxHPByLevel = new int[4] { 7, 9, 12, 12 };
+            maxAPByLevel = new int[4] { 5, 7, 8, 8 };
 
             // 各項目のアップグレードコスト (Excel行97-103)
             hpUpgradeCost = new int[3] { 5, 6, 0 }; // 血量: 7→9(5資源), 9→12(6資源), 升級3なし
             apUpgradeCost = new int[3] { 6, 7, 0 }; // 行動力: 5→7(6資源), 7→8(7資源), 升級3なし
 
             // 占領設定
-            occupyAPCost = 2f;
+            occupyAPCost = 2;
             occupyEmptySuccessRateByLevel = new float[4] { 0.8f, 0.9f, 1.0f, 1.0f };
             occupyEnemySuccessRateByLevel = new float[4] { 0.5f, 0.6f, 0.7f, 0.7f };
             occupyUpgradeCost = new int[3] { 4, 5, 0 }; // 佔領空白: 0.8→0.9(4資源), 0.9→1.0(5資源), 升級3なし

@@ -17,6 +17,7 @@ namespace Buildings
 
         // ===== 実行時の状態管理 =====
         private int buildingID = -1; // 建物の一意なID（BuildingManagerが設定）
+        private int playerID = -1; // 建物の所有者プレイヤーID
         private BuildingState currentState;
         private int currentHp;
         private int remainingBuildCost;
@@ -41,6 +42,7 @@ namespace Buildings
 
         // ===== プロパティ =====
         public int BuildingID => buildingID;
+        public int PlayerID => playerID;
         public BuildingDataSO Data => buildingData;
         public BuildingState State => currentState;
         public bool IsAlive => currentState != BuildingState.Ruined;
@@ -67,9 +69,10 @@ namespace Buildings
 
         #region 初期化
 
-        public void Initialize(BuildingDataSO data)
+        public void Initialize(BuildingDataSO data, int ownerPlayerID)
         {
             buildingData = data;
+            playerID = ownerPlayerID;
             currentHp = data.maxHp;
             remainingBuildCost = data.buildingAPCost;
             apCostperTurn = data.apCostperTurn;
@@ -636,6 +639,78 @@ namespace Buildings
         public bool CanAttack()
         {
             return GetAttackRange() > 0 && IsOperational;
+        }
+
+        #endregion
+
+        #region ネットワーク同期用セッター
+
+        /// <summary>
+        /// HPを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetHP(int hp)
+        {
+            currentHp = Mathf.Clamp(hp, 0, buildingData.GetMaxHpByLevel(hpLevel));
+        }
+
+        /// <summary>
+        /// HPレベルを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetHPLevel(int level)
+        {
+            hpLevel = Mathf.Clamp(level, 0, 2);
+            // HPレベルに応じて最大HPを更新（現在HPは変更しない）
+        }
+
+        /// <summary>
+        /// 攻撃範囲レベルを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetAttackRangeLevel(int level)
+        {
+            attackRangeLevel = Mathf.Clamp(level, 0, 2);
+        }
+
+        /// <summary>
+        /// スロット数レベルを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetSlotsLevel(int level)
+        {
+            slotsLevel = Mathf.Clamp(level, 0, 2);
+
+            // スロット数を更新
+            int newMaxSlots = buildingData.GetMaxSlotsByLevel(slotsLevel);
+            if (newMaxSlots > farmerSlots.Count)
+            {
+                int slotsToAdd = newMaxSlots - farmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    farmerSlots.Add(new FarmerSlot());
+                }
+            }
+        }
+
+        /// <summary>
+        /// 建築コストレベルを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetBuildCostLevel(int level)
+        {
+            buildCostLevel = Mathf.Clamp(level, 0, 2);
+        }
+
+        /// <summary>
+        /// 残り建築コストを直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetRemainingBuildCost(int cost)
+        {
+            remainingBuildCost = Mathf.Max(0, cost);
+        }
+
+        /// <summary>
+        /// 建物の状態を直接設定（ネットワーク同期用）
+        /// </summary>
+        public void SetState(BuildingState state)
+        {
+            currentState = state;
         }
 
         #endregion

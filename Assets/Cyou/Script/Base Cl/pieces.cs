@@ -134,11 +134,11 @@ namespace GamePieces
         private IEnumerator RevertCharmAfterTurns(int charmTurns,int originalPID)
         {
             int remainingTurns=charmTurns;
-            int endTurn = remainingTurns + DemoUITest.GetTurn();//魅惑が解除されるターンの数字
+            //int endTurn = remainingTurns + DemoUITest.GetTurn();//魅惑が解除されるターンの数字
 
             while (remainingTurns > 0)
             {
-                yield return new WaitUntil(() => DemoUITest.GetTurn() >= endTurn);//GameManagerからターンの終了宣告を貰う
+                yield return new WaitUntil(() =>1 >= 0);//GameManagerからターンの終了宣告を貰う
                     remainingTurns--;
             }
             

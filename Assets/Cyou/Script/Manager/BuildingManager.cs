@@ -12,10 +12,16 @@ using Buildings;
 /// </summary>
 public class BuildingManager : MonoBehaviour
 {
+    // ===== ネットワーク同期用 =====
+    private int localPlayerID = -1; // このBuildingManagerが管理するプレイヤーID
+
     // ===== 建物の管理 =====
-    private Dictionary<int, Building> buildings = new Dictionary<int, Building>();
-    private Dictionary<int, int> buildingOwners = new Dictionary<int, int>(); // <buildingID, playerID>
+    private Dictionary<int, Building> buildings = new Dictionary<int, Building>(); // 己方の建物
+    private Dictionary<int, Building> enemyBuildings = new Dictionary<int, Building>(); // 敵方の建物
     private int nextBuildingID = 0;
+
+    // ===== 破壊データのキャッシュ =====
+    private syncBuildingData? lastDestroyedBuildingData = null;
 
     // ===== 依存関係 =====
     [SerializeField] private List<BuildingDataSO> availableBuildingTypes; // 利用可能な建物タイプのリスト
@@ -23,8 +29,29 @@ public class BuildingManager : MonoBehaviour
     // ===== イベント（内部使用・GameManagerには通知しない） =====
     public event Action<int> OnBuildingCreated;       // 建物ID
     public event Action<int> OnBuildingCompleted;     // 建物ID（建築完了時）
-    public event Action<int> OnBuildingDestroyed;     // 建物ID
+    public event Action<int> OnBuildingDestroyed;     // 建物ID（己方の建物が破壊された時のみ）
     public event Action<int, int> OnResourceGenerated; // (建物ID, 資源量)
+
+    #region 初期化
+
+    /// <summary>
+    /// ローカルプレイヤーIDを設定（己方/敵方を区別するため）
+    /// </summary>
+    public void SetLocalPlayerID(int playerID)
+    {
+        localPlayerID = playerID;
+        Debug.Log($"BuildingManagerのローカルプレイヤーIDを設定しました: {playerID}");
+    }
+
+    /// <summary>
+    /// ローカルプレイヤーIDを取得
+    /// </summary>
+    public int GetLocalPlayerID()
+    {
+        return localPlayerID;
+    }
+
+    #endregion
 
     #region 建物の生成
 
@@ -55,13 +82,12 @@ public class BuildingManager : MonoBehaviour
         }
 
         // 建物を初期化
-        building.Initialize(buildingData);
+        building.Initialize(buildingData, playerID);
 
         // IDを割り当てて登録
         int buildingID = nextBuildingID;
         building.SetBuildingID(buildingID);
         buildings[buildingID] = building;
-        buildingOwners[buildingID] = playerID; // プレイヤーIDを記録
         nextBuildingID++;
 
         // イベントを購読
@@ -93,6 +119,82 @@ public class BuildingManager : MonoBehaviour
         }
 
         return CreateBuilding(buildingData, playerID, position);
+    }
+
+    /// <summary>
+    /// 敵方の建物を同期データから生成（ネットワーク同期用）
+    /// </summary>
+    /// <param name="sbd">建物同期データ</param>
+    /// <returns>生成成功したらtrue</returns>
+    public bool CreateEnemyBuilding(syncBuildingData sbd)
+    {
+        // 建物データを検索（建物名から）
+        BuildingDataSO buildingData = availableBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
+
+        if (buildingData == null)
+        {
+            Debug.LogError($"建物データが見つかりません: {sbd.buildingName}");
+            return false;
+        }
+
+        // Prefabから建物を生成
+        GameObject buildingObj = Instantiate(buildingData.buildingPrefab, sbd.position, Quaternion.identity);
+        Building building = buildingObj.GetComponent<Building>();
+
+        if (building == null)
+        {
+            Debug.LogError($"Buildingコンポーネントがありません: {sbd.buildingName}");
+            Destroy(buildingObj);
+            return false;
+        }
+
+        // 建物を初期化
+        building.Initialize(buildingData, sbd.playerID);
+        building.SetBuildingID(sbd.buildingID);
+
+        // 同期データから状態を設定
+        if (sbd.currentHP > 0)
+        {
+            building.SetHP(sbd.currentHP);
+        }
+
+        if (sbd.hpLevel > 0)
+        {
+            building.SetHPLevel(sbd.hpLevel);
+        }
+
+        if (sbd.attackRangeLevel > 0)
+        {
+            building.SetAttackRangeLevel(sbd.attackRangeLevel);
+        }
+
+        if (sbd.slotsLevel > 0)
+        {
+            building.SetSlotsLevel(sbd.slotsLevel);
+        }
+
+        if (sbd.buildCostLevel > 0)
+        {
+            building.SetBuildCostLevel(sbd.buildCostLevel);
+        }
+
+        // 建築進捗を設定
+        if (sbd.state == BuildingState.UnderConstruction && sbd.remainingBuildCost > 0)
+        {
+            building.SetRemainingBuildCost(sbd.remainingBuildCost);
+        }
+
+        // 状態を設定
+        if (sbd.state != BuildingState.UnderConstruction)
+        {
+            building.SetState(sbd.state);
+        }
+
+        // 敵方の建物として登録
+        enemyBuildings[sbd.buildingID] = building;
+
+        Debug.Log($"敵方の建物を生成しました: ID={sbd.buildingID}, Name={sbd.buildingName}, PlayerID={sbd.playerID}");
+        return true;
     }
 
     #endregion
@@ -239,6 +341,115 @@ public class BuildingManager : MonoBehaviour
 
     #endregion
 
+    #region ネットワーク同期
+
+    /// <summary>
+    /// 敵方の建物の状態を同期（ネットワーク同期用）
+    /// </summary>
+    /// <param name="sbd">建物同期データ</param>
+    /// <returns>同期成功したらtrue</returns>
+    public bool SyncEnemyBuildingState(syncBuildingData sbd)
+    {
+        // 建物を検索（己方・敵方両方から）
+        Building building = null;
+        bool found = buildings.TryGetValue(sbd.buildingID, out building) ||
+                     enemyBuildings.TryGetValue(sbd.buildingID, out building);
+
+        if (!found || building == null)
+        {
+            Debug.LogWarning($"建物が見つかりません: ID={sbd.buildingID}");
+            return false;
+        }
+
+        // 状態を同期
+        if (sbd.currentHP > 0)
+        {
+            building.SetHP(sbd.currentHP);
+        }
+
+        if (sbd.hpLevel > 0)
+        {
+            building.SetHPLevel(sbd.hpLevel);
+        }
+
+        if (sbd.attackRangeLevel > 0)
+        {
+            building.SetAttackRangeLevel(sbd.attackRangeLevel);
+        }
+
+        if (sbd.slotsLevel > 0)
+        {
+            building.SetSlotsLevel(sbd.slotsLevel);
+        }
+
+        if (sbd.buildCostLevel > 0)
+        {
+            building.SetBuildCostLevel(sbd.buildCostLevel);
+        }
+
+        // 建築進捗を同期
+        if (sbd.state == BuildingState.UnderConstruction && sbd.remainingBuildCost >= 0)
+        {
+            building.SetRemainingBuildCost(sbd.remainingBuildCost);
+        }
+
+        // 状態を同期
+        if (sbd.state != building.State)
+        {
+            building.SetState(sbd.state);
+        }
+
+        // 位置を同期
+        if (building.transform.position != sbd.position)
+        {
+            building.transform.position = sbd.position;
+        }
+
+        Debug.Log($"建物の状態を同期しました: ID={sbd.buildingID}");
+        return true;
+    }
+
+    /// <summary>
+    /// 建物の完全な同期データを作成（送信用）
+    /// </summary>
+    /// <param name="buildingID">建物ID</param>
+    /// <returns>同期データ（失敗時はnull）</returns>
+    public syncBuildingData? CreateCompleteSyncData(int buildingID)
+    {
+        // 建物を検索（己方・敵方両方から）
+        Building building = null;
+        bool found = buildings.TryGetValue(buildingID, out building) ||
+                     enemyBuildings.TryGetValue(buildingID, out building);
+
+        if (!found || building == null)
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return null;
+        }
+
+        // 同期データを作成
+        syncBuildingData sbd = new syncBuildingData
+        {
+            buildingID = buildingID,
+            buildingName = building.Data.buildingName,
+            playerID = building.PlayerID,
+            position = building.transform.position,
+            currentHP = building.CurrentHP,
+            state = building.State,
+            remainingBuildCost = building.RemainingBuildCost,
+
+            // アップグレードレベル
+            hpLevel = building.HPLevel,
+            attackRangeLevel = building.AttackRangeLevel,
+            slotsLevel = building.SlotsLevel,
+            buildCostLevel = building.BuildCostLevel
+        };
+
+        return sbd;
+    }
+
+    #endregion
+
     #region アップグレード関連
 
     /// <summary>
@@ -355,26 +566,14 @@ public class BuildingManager : MonoBehaviour
         return buildings.ContainsKey(buildingID);
     }
 
-    /// <summary>
-    /// 建物の所属プレイヤーIDを取得
-    /// </summary>
-    public int GetBuildingPlayerID(int buildingID)
-    {
-        if (!buildingOwners.TryGetValue(buildingID, out int playerID))
-        {
-            Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return -1;
-        }
-        return playerID;
-    }
 
     /// <summary>
     /// 指定プレイヤーのすべての建物IDを取得
     /// </summary>
     public List<int> GetPlayerBuildings(int playerID)
     {
-        return buildingOwners
-            .Where(kvp => kvp.Value == playerID && buildings.ContainsKey(kvp.Key))
+        return buildings
+            .Where(kvp => kvp.Value.PlayerID == playerID)
             .Select(kvp => kvp.Key)
             .ToList();
     }
@@ -423,22 +622,110 @@ public class BuildingManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 建物破壊時の内部処理
+    /// 建物破壊時の内部処理（己方の建物が破壊された時）
     /// </summary>
     private void HandleBuildingDestroyed(int buildingID)
     {
-        if (buildings.TryGetValue(buildingID, out Building building))
-        {
-            Debug.Log($"建物が破壊されました: ID={buildingID}");
-            buildings.Remove(buildingID);
-            buildingOwners.Remove(buildingID); // プレイヤーID管理からも削除
-            OnBuildingDestroyed?.Invoke(buildingID);
+        Building building = null;
+        bool found = buildings.TryGetValue(buildingID, out building) ||
+                     enemyBuildings.TryGetValue(buildingID, out building);
 
-            if (building != null && building.gameObject != null)
+        if (!found || building == null)
+        {
+            Debug.LogWarning($"破壊された建物が見つかりません: ID={buildingID}");
+            return;
+        }
+
+        // 所有者IDを取得
+        int ownerID = building.PlayerID;
+
+        // 破壊データをキャッシュ（己方の建物の場合のみ）
+        if (localPlayerID != -1 && ownerID == localPlayerID)
+        {
+            lastDestroyedBuildingData = new syncBuildingData
             {
-                Destroy(building.gameObject);
+                buildingID = buildingID,
+                buildingName = building.Data.buildingName,
+                playerID = ownerID,
+                position = building.transform.position,
+                currentHP = 0, // 破壊されたのでHP=0
+                state = BuildingState.Ruined
+            };
+        }
+
+        // 建物を削除
+        RemoveBuildingInternal(buildingID, building);
+
+        // イベント発火（己方の建物の場合のみ）
+        if (localPlayerID != -1 && ownerID == localPlayerID)
+        {
+            OnBuildingDestroyed?.Invoke(buildingID);
+        }
+    }
+
+    /// <summary>
+    /// 敵方の建物破壊通知を受信（ネットワーク同期用）
+    /// </summary>
+    /// <param name="sbd">破壊された建物の同期データ</param>
+    /// <returns>削除成功したらtrue</returns>
+    public bool HandleEnemyBuildingDestruction(syncBuildingData sbd)
+    {
+        // 建物を検索
+        Building building = null;
+        bool found = buildings.TryGetValue(sbd.buildingID, out building) ||
+                     enemyBuildings.TryGetValue(sbd.buildingID, out building);
+
+        if (!found || building == null)
+        {
+            Debug.LogWarning($"破壊通知を受けましたが、建物が見つかりません: ID={sbd.buildingID}");
+            return false;
+        }
+
+        // 建物を削除（イベントは発火しない）
+        RemoveBuildingInternal(sbd.buildingID, building);
+        Debug.Log($"敵方の建物破壊通知を受信し、削除しました: ID={sbd.buildingID}");
+        return true;
+    }
+
+    /// <summary>
+    /// 最後に破壊された建物の同期データを取得（送信用）
+    /// </summary>
+    /// <returns>破壊データ（キャッシュがない場合はnull）</returns>
+    public syncBuildingData? GetLastDestroyedBuildingData()
+    {
+        syncBuildingData? data = lastDestroyedBuildingData;
+        lastDestroyedBuildingData = null; // 取得後はクリア
+        return data;
+    }
+
+    /// <summary>
+    /// 建物を内部的に削除する共通処理
+    /// </summary>
+    private void RemoveBuildingInternal(int buildingID, Building building)
+    {
+        // 辞書から削除（己方/敵方の判定）
+        if (localPlayerID != -1 && building.PlayerID == localPlayerID)
+        {
+            if (buildings.ContainsKey(buildingID))
+            {
+                buildings.Remove(buildingID);
             }
         }
+        else
+        {
+            if (enemyBuildings.ContainsKey(buildingID))
+            {
+                enemyBuildings.Remove(buildingID);
+            }
+        }
+
+        // GameObjectを破棄
+        if (building != null && building.gameObject != null)
+        {
+            Destroy(building.gameObject);
+        }
+
+        Debug.Log($"建物を削除しました: ID={buildingID}");
     }
 
     /// <summary>
@@ -446,20 +733,17 @@ public class BuildingManager : MonoBehaviour
     /// </summary>
     public bool RemoveBuilding(int buildingID)
     {
-        if (!buildings.TryGetValue(buildingID, out Building building))
+        Building building = null;
+        bool found = buildings.TryGetValue(buildingID, out building) ||
+                     enemyBuildings.TryGetValue(buildingID, out building);
+
+        if (!found || building == null)
         {
             Debug.LogError($"建物が見つかりません: ID={buildingID}");
             return false;
         }
 
-        buildings.Remove(buildingID);
-        buildingOwners.Remove(buildingID); // プレイヤーID管理からも削除
-        if (building != null && building.gameObject != null)
-        {
-            Destroy(building.gameObject);
-        }
-
-        Debug.Log($"建物を削除しました: ID={buildingID}");
+        RemoveBuildingInternal(buildingID, building);
         return true;
     }
 
@@ -508,4 +792,28 @@ public class BuildingManager : MonoBehaviour
     }
 
     #endregion
+}
+
+/// <summary>
+/// 建物の同期データ構造体（ネットワーク同期用）
+/// </summary>
+[System.Serializable]
+public struct syncBuildingData
+{
+    // 基本情報
+    public int buildingID;
+    public string buildingName;
+    public int playerID;
+    public Vector3 position;
+
+    // 状態情報
+    public int currentHP;
+    public BuildingState state;
+    public int remainingBuildCost; // 残り建築コスト
+
+    // アップグレードレベル
+    public int hpLevel;            // HP等級 (0-3)
+    public int attackRangeLevel;   // 攻撃範囲等級 (0-3)
+    public int slotsLevel;         // スロット数等級 (0-3)
+    public int buildCostLevel;     // 建造コスト等級 (0-3)
 }
