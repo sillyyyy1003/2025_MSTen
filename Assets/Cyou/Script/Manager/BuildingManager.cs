@@ -15,7 +15,7 @@ public class BuildingManager : MonoBehaviour
     // ===== 建物の管理 =====
     private Dictionary<int, Building> buildings = new Dictionary<int, Building>();
     private Dictionary<int, int> buildingOwners = new Dictionary<int, int>(); // <buildingID, playerID>
-    private int nextBuildingID = 1;
+    private int nextBuildingID = 0;
 
     // ===== 依存関係 =====
     [SerializeField] private List<BuildingDataSO> availableBuildingTypes; // 利用可能な建物タイプのリスト
@@ -58,10 +58,11 @@ public class BuildingManager : MonoBehaviour
         building.Initialize(buildingData);
 
         // IDを割り当てて登録
-        int buildingID = nextBuildingID++;
+        int buildingID = nextBuildingID;
         building.SetBuildingID(buildingID);
         buildings[buildingID] = building;
         buildingOwners[buildingID] = playerID; // プレイヤーIDを記録
+        nextBuildingID++;
 
         // イベントを購読
         building.OnBuildingCompleted += (completedBuilding) => HandleBuildingCompleted(completedBuilding.BuildingID);

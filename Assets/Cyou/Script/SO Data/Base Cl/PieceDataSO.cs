@@ -28,15 +28,15 @@ namespace GameData
 
         [Header("戦闘パラメータ")]
         public bool canAttack = false;
-        public float attackPower = 0f;//一応残しておくが、廃止してもいい感じ
+        public int attackPower = 0;//一応残しておくが、廃止してもいい感じ
         public float attackRange = 0f;
         public float attackCooldown = 1f;
-        public float attackAPCost = 20f;
+        public int attackAPCost = 20;
 
 
-        public float[] maxHPByLevel = new float[4]; // レベルごとの最大HP
-        public float[] maxAPByLevel = new float[4]; // レベルごとの最大AP
-        public float[] attackPowerByLevel = new float[4]; // レベルごとの攻撃力
+        public int[] maxHPByLevel = new int[4]; // レベルごとの最大HP
+        public int[] maxAPByLevel = new int[4]; // レベルごとの最大AP
+        public int[] attackPowerByLevel = new int[4]; // レベルごとの攻撃力
 
         [Header("各項目のアップグレードコスト")]
         public int[] hpUpgradeCost = new int[3]; // 血量アップグレード資源コスト(0→1, 1→2, 2→3)。0=アップグレード不可
@@ -50,7 +50,7 @@ namespace GameData
         /// <summary>
         /// レベルに応じたHP取得
         /// </summary>
-        public float GetMaxHPByLevel(int level)
+        public int GetMaxHPByLevel(int level)
         {
             if (maxHPByLevel == null || maxHPByLevel.Length == 0)
             {
@@ -74,7 +74,7 @@ namespace GameData
         /// <summary>
         /// レベルに応じたAP取得
         /// </summary>
-        public float GetMaxAPByLevel(int level)
+        public int GetMaxAPByLevel(int level)
         {
             if (maxAPByLevel == null || maxAPByLevel.Length == 0)
             {

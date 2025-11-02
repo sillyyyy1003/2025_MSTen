@@ -16,6 +16,7 @@ public class MilitaryUnit : Piece
     // ===== 軍隊専用の個別レベル =====
     private int attackPowerLevel = 0; // 攻撃力レベル (0-3)
 
+
     public override void Initialize(PieceDataSO data, int playerID)
     {
         militaryData = data as MilitaryDataSO;
@@ -60,18 +61,18 @@ public class MilitaryUnit : Piece
 
     protected virtual void PerformAttack(Piece target)
     {
-        float finalDamage = CalculateDamage();
+        int finalDamage = CalculateDamage();
         target.TakeDamage(finalDamage, this);
 
         // クリティカル判定
         if (UnityEngine.Random.value < militaryData.criticalChance)
         {
-            finalDamage *= 2f;
+            finalDamage *= 2;
             // クリティカルエフェクト表示
         }
     }
 
-    private float CalculateDamage()
+    private int CalculateDamage()
     {
         return militaryData.attackPower;
     }
@@ -79,20 +80,19 @@ public class MilitaryUnit : Piece
     /// <summary>
     /// ダメージを受ける（アーマー考慮）
     /// </summary>
-    public override void TakeDamage(float damage, Piece attacker = null)
+    public override void TakeDamage(int damage, Piece attacker = null)
     {
         // 魅惑耐性スキル（升級3）: 宣教師による変換を無効化
         if (HasAntiConversionSkill() && attacker is Missionary)
         {
             Debug.Log("魅惑耐性スキル発動：敵の変換を無効化しました");
-            float reducedDamage = damage - militaryData.armorValue;
-            reducedDamage = Mathf.Max(1f, reducedDamage);
+            int reducedDamage = Mathf.Max(1, damage);
             base.TakeDamage(reducedDamage, attacker);
             return;
         }
 
-        float finalReducedDamage = damage - militaryData.armorValue;
-        finalReducedDamage = Mathf.Max(1f, finalReducedDamage); // 最小1ダメージ
+        int finalReducedDamage = damage;
+        finalReducedDamage = Mathf.Max(1, finalReducedDamage); // 最小1ダメージ
 
         base.TakeDamage(finalReducedDamage, attacker);
     }
@@ -100,7 +100,7 @@ public class MilitaryUnit : Piece
     /// <summary>
     /// レベルに応じた攻撃力を取得
     /// </summary>
-    public float GetAttackPowerByLevel()
+    public int GetAttackPowerByLevel()
     {
         return militaryData.GetAttackRangeByLevel(upgradeLevel);
     }
@@ -135,13 +135,13 @@ public class MilitaryUnit : Piece
         if (militaryData == null) return;
 
         // レベルに応じてHP、AP、攻撃力を更新
-        float newMaxHP = militaryData.GetMaxHPByLevel(upgradeLevel);
-        float newMaxAP = militaryData.GetMaxAPByLevel(upgradeLevel);
-        float newAttackPower = GetAttackPowerByLevel();
+        int newMaxHP = militaryData.GetMaxHPByLevel(upgradeLevel);
+        int newMaxAP = militaryData.GetMaxAPByLevel(upgradeLevel);
+        int newAttackPower = GetAttackPowerByLevel();
 
         // 現在のHPとAPの割合を保持
-        float hpRatio = currentHP / currentMaxHP;
-        float apRatio = currentAP / currentMaxAP;
+        int hpRatio = currentHP / currentMaxHP;
+        int apRatio = currentAP / currentMaxAP;
 
         // 新しい最大値に基づいて現在値を更新
         currentHP = newMaxHP * hpRatio;
@@ -224,6 +224,18 @@ public class MilitaryUnit : Piece
     {
         int cost = GetMilitaryUpgradeCost(type);
         return cost > 0;
+    }
+
+    #endregion
+
+    #region セッター（同期用）
+
+    /// <summary>
+    /// 攻撃力レベルを直接設定（ネットワーク同期用）
+    /// </summary>
+    public void SetAttackPowerLevel(int level)
+    {
+        attackPowerLevel = Mathf.Clamp(level, 0, 3);
     }
 
     #endregion

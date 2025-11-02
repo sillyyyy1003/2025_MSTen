@@ -8,20 +8,17 @@
 
 1. [概要](#1-概要)
 2. [PieceManager - 駒管理](#2-piecemanager---駒管理)
+   - [初期化](#初期化)
    - [駒の生成](#駒の生成)
+   - [ネットワーク同期](#ネットワーク同期)
    - [アップグレード管理](#アップグレード管理)
    - [情報取得](#情報取得)
    - [駒の行動](#駒の行動)
    - [AP管理](#ap管理)
+   - [駒の削除](#駒の削除)
    - [ターン処理](#ターン処理)
 3. [BuildingManager - 建物管理](#3-buildingmanager---建物管理)
-   - [建物の生成](#建物の生成)
-   - [建築処理](#建築処理)
-   - [農民配置](#農民配置)
-   - [建物のアップグレード](#建物のアップグレード)
-   - [建物の情報取得](#建物の情報取得)
-   - [建物のダメージ処理](#建物のダメージ処理)
-   - [建物のターン処理](#建物のターン処理)
+4. [列挙型（Enums）](#列挙型enums)
 
 ---
 
@@ -32,9 +29,10 @@
 PieceManagerとBuildingManagerは、具体的なユニットクラス（Farmer, Military, Missionary, Pope）や建物クラスを**IDベースで管理**するラッパー層です。
 
 **メリット:**
-- GameManagerは具体的な型（Farmer, Military等）を意識せずに操作可能
-- 整数IDのみで全ての駒・建物を管理
-- 型安全性を保ちつつ、インターフェースをシンプルに
+- ✅ GameManagerは具体的な型（Farmer, Military等）を意識せずに操作可能
+- ✅ 整数IDのみで全ての駒・建物を管理
+- ✅ 型安全性を保ちつつ、インターフェースをシンプルに
+- ✅ **ネットワーク同期対応**：己方の駒と敵駒を分離管理
 
 **アーキテクチャ:**
 ```
@@ -50,14 +48,52 @@ GameManager → BuildingManager (ID管理層) → Building (実装層)
 
 ## 2. PieceManager - 駒管理
 
-### 駒の生成
+### 初期化
 
-#### `CreatePiece()`
-駒を生成してIDを返します。
+#### `SetLocalPlayerID()`
+PieceManagerが管理するプレイヤーIDを設定します（ネットワーク同期に必要）。
 
 **シグネチャ:**
 ```csharp
-public int CreatePiece(PieceType pieceType, Religion religion, int playerID, Vector3 position)
+public void SetLocalPlayerID(int playerID)
+```
+
+**パラメータ:**
+- `playerID`: このPieceManagerが管理するローカルプレイヤーのID
+
+**使用例:**
+```csharp
+// ゲーム開始時に設定
+PieceManager.Instance.SetLocalPlayerID(1); // プレイヤー1として設定
+```
+
+**実装箇所:** `PieceManager.cs:108-112`
+
+---
+
+#### `GetLocalPlayerID()`
+設定されたローカルプレイヤーIDを取得します。
+
+**シグネチャ:**
+```csharp
+public int GetLocalPlayerID()
+```
+
+**戻り値:**
+- ローカルプレイヤーID（未設定の場合は-1）
+
+**実装箇所:** `PieceManager.cs:117-120`
+
+---
+
+### 駒の生成
+
+#### `CreatePiece()`
+自分の駒を生成し、同期データを返します。
+
+**シグネチャ:**
+```csharp
+public syncPieceData? CreatePiece(PieceType pieceType, Religion religion, int playerID, Vector3 position)
 ```
 
 **パラメータ:**
@@ -67,39 +103,167 @@ public int CreatePiece(PieceType pieceType, Religion religion, int playerID, Vec
 - `position`: 生成位置
 
 **戻り値:**
-- 成功: 生成された駒のID（正の整数）
-- 失敗: -1
+- 成功: `syncPieceData`（ネットワークに送信するための同期データ）
+- 失敗: null
 
 **使用例:**
 ```csharp
-PieceManager pieceManager = // PieceManagerの参照を取得
-
 // 農民を生成
-int farmerID = pieceManager.CreatePiece(
+syncPieceData? farmerData = PieceManager.Instance.CreatePiece(
     PieceType.Farmer,
     Religion.Maya,
     playerID: 1,
     new Vector3(10, 0, 10)
 );
 
-if (farmerID >= 0)
+if (farmerData.HasValue)
 {
-    Debug.Log($"農民を生成しました: ID={farmerID}");
+    Debug.Log($"農民を生成しました: ID={farmerData.Value.pieceID}");
+    // ネットワーク経由で相手に送信
+    SendToNetwork(farmerData.Value);
 }
 ```
 
-**実装箇所:** `PieceManager.cs:36-74`
+**実装箇所:** `PieceManager.cs:217-266`
+
+---
+
+#### `CreateEnemyPiece()`
+ネットワークから受信した同期データを使って敵駒を生成します。
+
+**シグネチャ:**
+```csharp
+public bool CreateEnemyPiece(syncPieceData spd)
+```
+
+**パラメータ:**
+- `spd`: 敵駒の同期データ（ネットワークから受信）
+
+**戻り値:**
+- `true`: 生成成功
+- `false`: 失敗
+
+**使用例:**
+```csharp
+// ネットワークから敵駒データを受信
+syncPieceData enemyData = ReceiveFromNetwork();
+
+// 敵駒を生成
+if (PieceManager.Instance.CreateEnemyPiece(enemyData))
+{
+    Debug.Log($"敵駒を生成しました: ID={enemyData.pieceID}");
+}
+```
+
+**処理の流れ:**
+1. UnitListTableから駒データSOを取得
+2. Prefabから駒を生成
+3. 駒を初期化
+4. enemyPieces辞書に登録
+5. syncPieceDataから状態を設定（HP、レベル、職業別スキルレベル等）
+
+**実装箇所:** `PieceManager.cs:273-366`
+
+---
+
+### ネットワーク同期
+
+#### `SyncEnemyPieceState()`
+既に存在する敵駒の状態を同期します（アップグレードやHP変更時など）。
+
+**シグネチャ:**
+```csharp
+public bool SyncEnemyPieceState(syncPieceData spd)
+```
+
+**パラメータ:**
+- `spd`: 同期データ
+
+**戻り値:**
+- `true`: 同期成功
+- `false`: 失敗
+
+**使用例:**
+```csharp
+// 敵がアップグレードした通知を受信
+syncPieceData updateData = ReceiveFromNetwork();
+
+if (PieceManager.Instance.SyncEnemyPieceState(updateData))
+{
+    Debug.Log($"敵駒の状態を同期しました: ID={updateData.pieceID}");
+}
+```
+
+**実装箇所:** `PieceManager.cs:321-385`
+
+---
+
+#### 各種同期データ生成関数
+
+以下の関数は、各種操作後に同期データを生成してネットワークに送信するために使用します。
+
+##### `ChangeHPData()`
+```csharp
+public syncPieceData ChangeHPData(int pieceID, int hp)
+```
+
+##### `ChangeHPLevelData()`
+```csharp
+public syncPieceData ChangeHPLevelData(int pieceID, int hplevel)
+```
+
+##### `ChangeFarmerLevelData()`
+```csharp
+public syncPieceData ChangeFarmerLevelData(int pieceID, int sacrificelevel)
+```
+
+##### `ChangeMilitaryAtkLevelData()`
+```csharp
+public syncPieceData ChangeMilitaryAtkLevelData(int pieceID, int atklevel)
+```
+
+##### `ChangePopeSwapCDLevelData()`
+```csharp
+public syncPieceData ChangePopeSwapCDLevelData(int pieceID, int cdlevel)
+```
+
+##### `ChangePopeBuffLevelData()`
+```csharp
+public syncPieceData ChangePopeBuffLevelData(int pieceID, int bufflevel)
+```
+
+##### `ChangeMissionaryConvertLevelData()`
+```csharp
+public syncPieceData ChangeMissionaryConvertLevelData(int pieceID, int convertlevel)
+```
+
+##### `ChangeMissionaryOccupyLevelData()`
+```csharp
+public syncPieceData ChangeMissionaryOccupyLevelData(int pieceID, int occupylevel)
+```
+
+##### `ChangePieceCurrentPID()`
+```csharp
+public syncPieceData ChangePieceCurrentPID(int pieceID, int currentpid)
+```
+
+##### `ChangePiecePosData()`
+```csharp
+public syncPieceData ChangePiecePosData(int pieceID, Vector3 position)
+```
+
+**実装箇所:** `PieceManager.cs:110-203`
 
 ---
 
 ### アップグレード管理
 
 #### `UpgradePiece()`
-駒の共通項目（HP/AP）をアップグレードします。
+駒の共通項目（HP/AP）をアップグレードし、同期データを返します。
 
 **シグネチャ:**
 ```csharp
-public bool UpgradePiece(int pieceID, PieceUpgradeType upgradeType)
+public syncPieceData? UpgradePiece(int pieceID, PieceUpgradeType upgradeType)
 ```
 
 **パラメータ:**
@@ -107,34 +271,32 @@ public bool UpgradePiece(int pieceID, PieceUpgradeType upgradeType)
 - `upgradeType`: アップグレード項目（PieceUpgradeType.HP または AP）
 
 **戻り値:**
-- `true`: アップグレード成功
-- `false`: 失敗（駒が存在しない、最大レベル、コスト不足等）
+- 成功: `syncPieceData`（ネットワークに送信するための同期データ）
+- 失敗: null
 
 **使用例:**
 ```csharp
 // HPをアップグレード
-if (pieceManager.UpgradePiece(farmerID, PieceUpgradeType.HP))
+syncPieceData? upgradeData = PieceManager.Instance.UpgradePiece(farmerID, PieceUpgradeType.HP);
+
+if (upgradeData.HasValue)
 {
     Debug.Log("HPアップグレード成功");
-}
-
-// APをアップグレード
-if (pieceManager.UpgradePiece(farmerID, PieceUpgradeType.AP))
-{
-    Debug.Log("APアップグレード成功");
+    // ネットワーク経由で相手に送信
+    SendToNetwork(upgradeData.Value);
 }
 ```
 
-**実装箇所:** `PieceManager.cs:86-104`
+**実装箇所:** `PieceManager.cs:414-434`
 
 ---
 
 #### `UpgradePieceSpecial()`
-駒の職業別専用項目をアップグレードします。
+駒の職業別専用項目をアップグレードし、同期データを返します。
 
 **シグネチャ:**
 ```csharp
-public bool UpgradePieceSpecial(int pieceID, SpecialUpgradeType specialUpgradeType)
+public syncPieceData? UpgradePieceSpecial(int pieceID, SpecialUpgradeType specialUpgradeType)
 ```
 
 **パラメータ:**
@@ -148,25 +310,25 @@ public bool UpgradePieceSpecial(int pieceID, SpecialUpgradeType specialUpgradeTy
   - `SpecialUpgradeType.PopeBuff` - 教皇のバフ効果
 
 **戻り値:**
-- `true`: アップグレード成功
-- `false`: 失敗
+- 成功: `syncPieceData`
+- 失敗: null
 
 **使用例:**
 ```csharp
 // 農民の獻祭回復量をアップグレード
-if (pieceManager.UpgradePieceSpecial(farmerID, SpecialUpgradeType.FarmerSacrifice))
+syncPieceData? upgradeData = PieceManager.Instance.UpgradePieceSpecial(
+    farmerID,
+    SpecialUpgradeType.FarmerSacrifice
+);
+
+if (upgradeData.HasValue)
 {
     Debug.Log("農民の獻祭回復量アップグレード成功");
-}
-
-// 軍隊の攻撃力をアップグレード
-if (pieceManager.UpgradePieceSpecial(militaryID, SpecialUpgradeType.MilitaryAttackPower))
-{
-    Debug.Log("軍隊の攻撃力アップグレード成功");
+    SendToNetwork(upgradeData.Value);
 }
 ```
 
-**実装箇所:** `PieceManager.cs:112-150`
+**実装箇所:** `PieceManager.cs:442-500`
 
 ---
 
@@ -186,16 +348,7 @@ public int GetUpgradeCost(int pieceID, PieceUpgradeType upgradeType)
 - 成功: コスト（正の整数）
 - 失敗: -1（駒が存在しない、またはアップグレード不可）
 
-**使用例:**
-```csharp
-int hpCost = pieceManager.GetUpgradeCost(farmerID, PieceUpgradeType.HP);
-if (hpCost > 0)
-{
-    Debug.Log($"HPアップグレードには{hpCost}の資源が必要です");
-}
-```
-
-**実装箇所:** `PieceManager.cs:158-167`
+**実装箇所:** `PieceManager.cs:508-517`
 
 ---
 
@@ -207,28 +360,30 @@ if (hpCost > 0)
 public bool CanUpgrade(int pieceID, PieceUpgradeType upgradeType)
 ```
 
-**パラメータ:**
-- `pieceID`: 駒ID
-- `upgradeType`: アップグレード項目
-
-**戻り値:**
-- `true`: アップグレード可能
-- `false`: アップグレード不可
-
-**使用例:**
-```csharp
-if (pieceManager.CanUpgrade(farmerID, PieceUpgradeType.HP))
-{
-    // HPアップグレードボタンを有効化
-    hpUpgradeButton.interactable = true;
-}
-```
-
-**実装箇所:** `PieceManager.cs:175-183`
+**実装箇所:** `PieceManager.cs:525-533`
 
 ---
 
 ### 情報取得
+
+#### `GetPiece()`
+駒のインスタンスを取得します（己方・敵駒どちらでも取得可能）。
+
+**シグネチャ:**
+```csharp
+public Piece GetPiece(int pieceID)
+```
+
+**パラメータ:**
+- `pieceID`: 駒ID
+
+**戻り値:**
+- 成功: Pieceインスタンス
+- 失敗: null
+
+**実装箇所:** `PieceManager.cs:661-672`
+
+---
 
 #### `GetPieceHP()`
 駒の現在HPを取得します。
@@ -238,7 +393,7 @@ if (pieceManager.CanUpgrade(farmerID, PieceUpgradeType.HP))
 public float GetPieceHP(int pieceID)
 ```
 
-**実装箇所:** `PieceManager.cs:192-200`
+**実装箇所:** `PieceManager.cs:542-550`
 
 ---
 
@@ -250,7 +405,7 @@ public float GetPieceHP(int pieceID)
 public float GetPieceAP(int pieceID)
 ```
 
-**実装箇所:** `PieceManager.cs:205-213`
+**実装箇所:** `PieceManager.cs:555-563`
 
 ---
 
@@ -262,7 +417,7 @@ public float GetPieceAP(int pieceID)
 public int GetPiecePlayerID(int pieceID)
 ```
 
-**実装箇所:** `PieceManager.cs:218-226`
+**実装箇所:** `PieceManager.cs:568-576`
 
 ---
 
@@ -277,7 +432,7 @@ public PieceType GetPieceType(int pieceID)
 **戻り値:**
 - PieceType.Farmer, Military, Missionary, Pope, またはNone
 
-**実装箇所:** `PieceManager.cs:231-247`
+**実装箇所:** `PieceManager.cs:674-687`
 
 ---
 
@@ -289,7 +444,7 @@ public PieceType GetPieceType(int pieceID)
 public bool DoesPieceExist(int pieceID)
 ```
 
-**実装箇所:** `PieceManager.cs:252-255`
+**実装箇所:** `PieceManager.cs:692-695`
 
 ---
 
@@ -304,19 +459,7 @@ public List<int> GetPlayerPieces(int playerID)
 **戻り値:**
 - 駒IDのリスト
 
-**使用例:**
-```csharp
-List<int> player1Pieces = pieceManager.GetPlayerPieces(1);
-Debug.Log($"プレイヤー1の駒数: {player1Pieces.Count}");
-
-foreach (int pieceID in player1Pieces)
-{
-    float hp = pieceManager.GetPieceHP(pieceID);
-    Debug.Log($"駒ID={pieceID}, HP={hp}");
-}
-```
-
-**実装箇所:** `PieceManager.cs:260-266`
+**実装箇所:** `PieceManager.cs:700-706`
 
 ---
 
@@ -328,25 +471,18 @@ foreach (int pieceID in player1Pieces)
 public List<int> GetPlayerPiecesByType(int playerID, PieceType pieceType)
 ```
 
-**使用例:**
-```csharp
-// プレイヤー1の農民をすべて取得
-List<int> farmers = pieceManager.GetPlayerPiecesByType(1, PieceType.Farmer);
-Debug.Log($"プレイヤー1の農民数: {farmers.Count}");
-```
-
-**実装箇所:** `PieceManager.cs:271-276`
+**実装箇所:** `PieceManager.cs:711-716`
 
 ---
 
 ### 駒の行動
 
 #### `AttackEnemy()`
-軍隊が敵を攻撃します。
+軍隊が敵を攻撃し、同期データを返します。
 
 **シグネチャ:**
 ```csharp
-public bool AttackEnemy(int attackerID, int targetID)
+public syncPieceData? AttackEnemy(int attackerID, int targetID)
 ```
 
 **パラメータ:**
@@ -354,27 +490,30 @@ public bool AttackEnemy(int attackerID, int targetID)
 - `targetID`: ターゲットの駒ID
 
 **戻り値:**
-- `true`: 攻撃成功
-- `false`: 失敗（駒が存在しない、攻撃者が軍隊ではない等）
+- 成功: `syncPieceData`（ターゲットの現在HPを含む）
+- 失敗: null
 
 **使用例:**
 ```csharp
-if (pieceManager.AttackEnemy(militaryID, enemyID))
+syncPieceData? attackData = PieceManager.Instance.AttackEnemy(militaryID, enemyID);
+
+if (attackData.HasValue)
 {
     Debug.Log("攻撃成功");
+    SendToNetwork(attackData.Value);
 }
 ```
 
-**実装箇所:** `PieceManager.cs:331-352`
+**実装箇所:** `PieceManager.cs:803-820`
 
 ---
 
 #### `ConvertEnemy()`
-宣教師が敵を魅惑します。
+宣教師が敵を魅惑し、同期データを返します。
 
 **シグネチャ:**
 ```csharp
-public bool ConvertEnemy(int missionaryID, int targetID)
+public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
 ```
 
 **パラメータ:**
@@ -382,18 +521,10 @@ public bool ConvertEnemy(int missionaryID, int targetID)
 - `targetID`: ターゲットの駒ID
 
 **戻り値:**
-- `true`: 魅惑試行成功（成功率判定は内部で実施）
-- `false`: 失敗
+- 成功: `syncPieceData`（ターゲットの現在PIDを含む）
+- 失敗: null
 
-**使用例:**
-```csharp
-if (pieceManager.ConvertEnemy(missionaryID, enemyID))
-{
-    Debug.Log("魅惑を試みました");
-}
-```
-
-**実装箇所:** `PieceManager.cs:360-381`
+**実装箇所:** `PieceManager.cs:828-849`
 
 ---
 
@@ -413,16 +544,16 @@ public bool OccupyTerritory(int missionaryID, Vector3 targetPosition)
 - `true`: 占領試行成功
 - `false`: 失敗
 
-**実装箇所:** `PieceManager.cs:389-404`
+**実装箇所:** `PieceManager.cs:857-872`
 
 ---
 
 #### `SacrificeToPiece()`
-農民が他の駒を回復（獻祭）します。
+農民が他の駒を回復（獻祭）し、同期データを返します。
 
 **シグネチャ:**
 ```csharp
-public bool SacrificeToPiece(int farmerID, int targetID)
+public syncPieceData? SacrificeToPiece(int farmerID, int targetID)
 ```
 
 **パラメータ:**
@@ -430,19 +561,19 @@ public bool SacrificeToPiece(int farmerID, int targetID)
 - `targetID`: 回復対象の駒ID
 
 **戻り値:**
-- `true`: 回復成功
-- `false`: 失敗
+- 成功: `syncPieceData`（ターゲットの現在HPを含む）
+- 失敗: null
 
-**実装箇所:** `PieceManager.cs:412-433`
+**実装箇所:** `PieceManager.cs:880-901`
 
 ---
 
 #### `SwapPositions()`
-教皇が味方駒と位置を交換します。
+教皇が味方駒と位置を交換し、同期データを返します。
 
 **シグネチャ:**
 ```csharp
-public bool SwapPositions(int popeID, int targetID)
+public swapPieceData? SwapPositions(int popeID, int targetID)
 ```
 
 **パラメータ:**
@@ -450,19 +581,19 @@ public bool SwapPositions(int popeID, int targetID)
 - `targetID`: 交換対象の駒ID
 
 **戻り値:**
-- `true`: 交換成功
-- `false`: 失敗
+- 成功: `swapPieceData`（両方の駒の位置データを含む）
+- 失敗: null
 
-**実装箇所:** `PieceManager.cs:441-462`
+**実装箇所:** `PieceManager.cs:909-932`
 
 ---
 
 #### `DamagePiece()`
-駒にダメージを与えます。
+駒にダメージを与え、同期データを返します。
 
 **シグネチャ:**
 ```csharp
-public void DamagePiece(int pieceID, float damage, int attackerID = -1)
+public syncPieceData? DamagePiece(int pieceID, int damage, int attackerID = -1)
 ```
 
 **パラメータ:**
@@ -470,23 +601,29 @@ public void DamagePiece(int pieceID, float damage, int attackerID = -1)
 - `damage`: ダメージ量
 - `attackerID`: 攻撃者ID（オプション）
 
-**実装箇所:** `PieceManager.cs:470-487`
+**戻り値:**
+- `syncPieceData`（ダメージ後のHPを含む）
+
+**実装箇所:** `PieceManager.cs:940-958`
 
 ---
 
 #### `HealPiece()`
-駒を回復します。
+駒を回復し、同期データを返します。
 
 **シグネチャ:**
 ```csharp
-public void HealPiece(int pieceID, float amount)
+public syncPieceData? HealPiece(int pieceID, int amount)
 ```
 
 **パラメータ:**
 - `pieceID`: 駒ID
 - `amount`: 回復量
 
-**実装箇所:** `PieceManager.cs:494-503`
+**戻り値:**
+- `syncPieceData`（回復後のHPを含む）
+
+**実装箇所:** `PieceManager.cs:966-978`
 
 ---
 
@@ -497,7 +634,7 @@ public void HealPiece(int pieceID, float amount)
 
 **シグネチャ:**
 ```csharp
-public bool ConsumePieceAP(int pieceID, float amount)
+public bool ConsumePieceAP(int pieceID, int amount)
 ```
 
 **パラメータ:**
@@ -508,19 +645,7 @@ public bool ConsumePieceAP(int pieceID, float amount)
 - `true`: 消費成功
 - `false`: 失敗（AP不足等）
 
-**使用例:**
-```csharp
-if (pieceManager.ConsumePieceAP(farmerID, 5.0f))
-{
-    Debug.Log("5APを消費しました");
-}
-else
-{
-    Debug.Log("AP不足");
-}
-```
-
-**実装箇所:** `PieceManager.cs:515-524`
+**実装箇所:** `PieceManager.cs:990-999`
 
 ---
 
@@ -529,19 +654,104 @@ else
 
 **シグネチャ:**
 ```csharp
-public void RecoverPieceAP(int pieceID, float amount)
+public void RecoverPieceAP(int pieceID, int amount)
 ```
 
 **パラメータ:**
 - `pieceID`: 駒ID
 - `amount`: 回復量
 
-**使用例:**
+**実装箇所:** `PieceManager.cs:1006-1015`
+
+---
+
+### 駒の削除
+
+#### `HandleEnemyPieceDeath()`
+ネットワークから駒の死亡通知を受信した時に呼び出します（受信側）。
+
+**シグネチャ:**
 ```csharp
-pieceManager.RecoverPieceAP(farmerID, 10.0f);
+public bool HandleEnemyPieceDeath(syncPieceData spd)
 ```
 
-**実装箇所:** `PieceManager.cs:531-540`
+**パラメータ:**
+- `spd`: 死亡した駒の同期データ
+
+**戻り値:**
+- `true`: 削除成功
+- `false`: 失敗
+
+**使用例:**
+```csharp
+// ネットワークから駒の死亡通知を受信
+syncPieceData deathData = ReceiveFromNetwork();
+
+if (PieceManager.Instance.HandleEnemyPieceDeath(deathData))
+{
+    Debug.Log($"敵駒を削除しました: ID={deathData.pieceID}");
+}
+```
+
+**注意:** この関数は送信処理を行いません（無限ループ防止）。
+
+**実装箇所:** `PieceManager.cs:775-793`
+
+---
+
+#### `GetLastDeadPieceData()`
+最後に死亡した駒の同期データを取得します（送信側）。
+
+**シグネチャ:**
+```csharp
+public syncPieceData? GetLastDeadPieceData()
+```
+
+**戻り値:**
+- 成功: `syncPieceData`（currentHP = 0）
+- 失敗: null
+
+**使用例:**
+```csharp
+void Start()
+{
+    // OnPieceDeathイベントを購読
+    PieceManager.Instance.OnPieceDied += OnPieceDied;
+}
+
+void OnPieceDied(int pieceID)
+{
+    // 死亡した駒のデータを取得
+    syncPieceData? deathData = PieceManager.Instance.GetLastDeadPieceData();
+
+    if (deathData.HasValue)
+    {
+        Debug.Log($"駒が死亡しました: ID={pieceID}");
+        // ネットワーク経由で相手に送信
+        SendToNetwork(deathData.Value);
+    }
+}
+```
+
+**注意:** 取得後は自動的にクリアされます（1回だけ取得可能）。
+
+**実装箇所:** `PieceManager.cs:784-789`
+
+---
+
+#### `RemovePiece()`
+駒を強制削除します（デバッグ・特殊用途）。
+
+**シグネチャ:**
+```csharp
+public syncPieceData? RemovePiece(int pieceID)
+```
+
+**戻り値:**
+- 成功: `syncPieceData`
+- 失敗: null
+
+**実装箇所:** `PieceManager.cs:836-905`
 
 ---
 
@@ -561,10 +771,10 @@ public void ProcessTurnStart(int playerID)
 **使用例:**
 ```csharp
 // ターン開始時に呼び出し
-pieceManager.ProcessTurnStart(currentPlayerID);
+PieceManager.Instance.ProcessTurnStart(currentPlayerID);
 ```
 
-**実装箇所:** `PieceManager.cs:577-590`
+**実装箇所:** `PieceManager.cs:1052-1065`
 
 ---
 
@@ -589,20 +799,7 @@ public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 pos
 - 成功: 生成された建物のID（正の整数）
 - 失敗: -1
 
-**使用例:**
-```csharp
-BuildingManager buildingManager = // BuildingManagerの参照を取得
-BuildingDataSO buildingData = // 建物データを取得
-
-int buildingID = buildingManager.CreateBuilding(buildingData, playerID: 1, new Vector3(10, 0, 10));
-
-if (buildingID >= 0)
-{
-    Debug.Log($"建物を生成しました: ID={buildingID}");
-}
-```
-
-**実装箇所:** `BuildingManager.cs:40-77`
+**実装箇所:** `BuildingManager.cs:38-76`
 
 ---
 
@@ -614,21 +811,7 @@ if (buildingID >= 0)
 public int CreateBuildingByName(string buildingName, int playerID, Vector3 position)
 ```
 
-**パラメータ:**
-- `buildingName`: 建物名
-- `playerID`: プレイヤーID
-- `position`: 生成位置
-
-**戻り値:**
-- 成功: 生成された建物のID
-- 失敗: -1
-
-**使用例:**
-```csharp
-int buildingID = buildingManager.CreateBuildingByName("祭壇", 1, new Vector3(10, 0, 10));
-```
-
-**実装箇所:** `BuildingManager.cs:85-97`
+**実装箇所:** `BuildingManager.cs:85-96`
 
 ---
 
@@ -642,31 +825,7 @@ int buildingID = buildingManager.CreateBuildingByName("祭壇", 1, new Vector3(1
 public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
 ```
 
-**パラメータ:**
-- `buildingID`: 建物ID
-- `farmerID`: 投入する農民の駒ID
-- `pieceManager`: PieceManagerの参照
-
-**戻り値:**
-- `true`: 建築進行成功
-- `false`: 失敗
-
-**使用例:**
-```csharp
-if (buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager))
-{
-    Debug.Log("建築が進みました");
-}
-```
-
-**処理の流れ:**
-1. 農民のAPを確認
-2. 建物の残り建築コストを確認
-3. 農民のAPを消費
-4. 建物の建築を進行
-5. 完成した場合はログ出力
-
-**実装箇所:** `BuildingManager.cs:106-158`
+**実装箇所:** `BuildingManager.cs:109-161`
 
 ---
 
@@ -678,16 +837,7 @@ if (buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager))
 public bool CancelConstruction(int buildingID)
 ```
 
-**パラメータ:**
-- `buildingID`: 建物ID
-
-**戻り値:**
-- `true`: キャンセル成功
-- `false`: 失敗
-
-**注意:** 消耗された農民と行動力は返されません。
-
-**実装箇所:** `BuildingManager.cs:165-175`
+**実装箇所:** `BuildingManager.cs:168-177`
 
 ---
 
@@ -701,28 +851,7 @@ public bool CancelConstruction(int buildingID)
 public bool EnterBuilding(int buildingID, int farmerID, PieceManager pieceManager)
 ```
 
-**パラメータ:**
-- `buildingID`: 建物ID
-- `farmerID`: 農民の駒ID
-- `pieceManager`: PieceManagerの参照
-
-**戻り値:**
-- `true`: 配置成功
-- `false`: 失敗（スロットが満員、建物が未完成等）
-
-**使用例:**
-```csharp
-if (buildingManager.EnterBuilding(buildingID, farmerID, pieceManager))
-{
-    Debug.Log("農民を建物に配置しました");
-}
-else
-{
-    Debug.Log("配置失敗（スロットが満員または建物が未完成）");
-}
-```
-
-**実装箇所:** `BuildingManager.cs:182-230`
+**実装箇所:** `BuildingManager.cs:190-238`
 
 ---
 
@@ -736,350 +865,47 @@ else
 public bool UpgradeBuilding(int buildingID, BuildingUpgradeType upgradeType)
 ```
 
-**パラメータ:**
-- `buildingID`: 建物ID
-- `upgradeType`: アップグレード項目
-  - `BuildingUpgradeType.HP` - 最大HP
-  - `BuildingUpgradeType.AttackRange` - 攻撃範囲
-  - `BuildingUpgradeType.Slots` - スロット数
-  - `BuildingUpgradeType.BuildCost` - 建築コスト
-
-**戻り値:**
-- `true`: アップグレード成功
-- `false`: 失敗
-
-**使用例:**
-```csharp
-// HPをアップグレード
-if (buildingManager.UpgradeBuilding(buildingID, BuildingUpgradeType.HP))
-{
-    Debug.Log("建物のHPをアップグレードしました");
-}
-
-// スロット数をアップグレード
-if (buildingManager.UpgradeBuilding(buildingID, BuildingUpgradeType.Slots))
-{
-    Debug.Log("建物のスロット数をアップグレードしました");
-}
-```
-
-**実装箇所:** `BuildingManager.cs:240-258`
-
----
-
-#### `GetUpgradeCost()` (Building)
-建物のアップグレードコストを取得します。
-
-**シグネチャ:**
-```csharp
-public int GetUpgradeCost(int buildingID, BuildingUpgradeType upgradeType)
-```
-
-**実装箇所:** `BuildingManager.cs:266-276`
-
----
-
-#### `CanUpgrade()` (Building)
-建物がアップグレード可能かチェックします。
-
-**シグネチャ:**
-```csharp
-public bool CanUpgrade(int buildingID, BuildingUpgradeType upgradeType)
-```
-
-**実装箇所:** `BuildingManager.cs:284-293`
+**実装箇所:** `BuildingManager.cs:250-272`
 
 ---
 
 ### 建物の情報取得
 
-#### `GetBuildingHP()`
-建物の現在HPを取得します。
-
-**シグネチャ:**
-```csharp
-public int GetBuildingHP(int buildingID)
-```
-
-**実装箇所:** `BuildingManager.cs:301-309`
-
----
-
-#### `GetBuildingState()`
-建物の状態を取得します。
-
-**シグネチャ:**
-```csharp
-public BuildingState GetBuildingState(int buildingID)
-```
-
-**戻り値:**
-- `BuildingState.UnderConstruction` - 建築中
-- `BuildingState.Active` - 稼働中
-- `BuildingState.Inactive` - 未稼働
-- `BuildingState.Ruined` - 廃墟
-
-**実装箇所:** `BuildingManager.cs:314-322`
-
----
-
-#### `GetBuildProgress()`
-建築進捗を取得します（0.0～1.0）。
-
-**シグネチャ:**
-```csharp
-public float GetBuildProgress(int buildingID)
-```
-
-**戻り値:**
-- 0.0～1.0の範囲（0.0=未着手、1.0=完成）
-
-**実装箇所:** `BuildingManager.cs:327-335`
-
----
-
-#### `DoesBuildingExist()`
-建物が存在するかチェックします。
-
-**シグネチャ:**
-```csharp
-public bool DoesBuildingExist(int buildingID)
-```
-
-**実装箇所:** `BuildingManager.cs:352-355`
-
----
-
-#### `GetBuildingPlayerID()`
-建物の所属プレイヤーIDを取得します。
-
-**シグネチャ:**
-```csharp
-public int GetBuildingPlayerID(int buildingID)
-```
-
-**戻り値:**
-- 成功: プレイヤーID
-- 失敗: -1
-
-**使用例:**
-```csharp
-int ownerID = buildingManager.GetBuildingPlayerID(buildingID);
-if (ownerID >= 0)
-{
-    Debug.Log($"建物ID={buildingID}の所有者はプレイヤー{ownerID}です");
-}
-```
-
-**実装箇所:** `BuildingManager.cs:360-368`
-
----
-
-#### `GetPlayerBuildings()`
-指定プレイヤーのすべての建物IDを取得します。
-
-**シグネチャ:**
-```csharp
-public List<int> GetPlayerBuildings(int playerID)
-```
-
-**パラメータ:**
-- `playerID`: プレイヤーID
-
-**戻り値:**
-- 建物IDのリスト
-
-**使用例:**
-```csharp
-List<int> player1Buildings = buildingManager.GetPlayerBuildings(1);
-Debug.Log($"プレイヤー1の建物数: {player1Buildings.Count}");
-
-foreach (int buildingID in player1Buildings)
-{
-    BuildingState state = buildingManager.GetBuildingState(buildingID);
-    Debug.Log($"建物ID={buildingID}, 状態={state}");
-}
-```
-
-**実装箇所:** `BuildingManager.cs:373-379`
-
----
-
-#### `GetAllBuildingIDs()`
-すべての建物IDを取得します。
-
-**シグネチャ:**
-```csharp
-public List<int> GetAllBuildingIDs()
-```
-
-**実装箇所:** `BuildingManager.cs:384-387`
-
----
-
-#### `GetOperationalBuildings()`
-稼働中の建物IDリストを取得します。
-
-**シグネチャ:**
-```csharp
-public List<int> GetOperationalBuildings()
-```
-
-**実装箇所:** `BuildingManager.cs:392-398`
-
----
-
-#### `GetBuildingsUnderConstruction()`
-建築中の建物IDリストを取得します。
-
-**シグネチャ:**
-```csharp
-public List<int> GetBuildingsUnderConstruction()
-```
-
-**実装箇所:** `BuildingManager.cs:403-409`
-
----
-
-### 建物のダメージ処理
-
-#### `DamageBuilding()`
-建物にダメージを与えます。
-
-**シグネチャ:**
-```csharp
-public bool DamageBuilding(int buildingID, int damage)
-```
-
-**パラメータ:**
-- `buildingID`: 建物ID
-- `damage`: ダメージ量
-
-**戻り値:**
-- `true`: ダメージ付与成功
-- `false`: 失敗
-
-**実装箇所:** `BuildingManager.cs:413-423`
-
----
-
-#### `RemoveBuilding()`
-建物を強制削除します。
-
-**シグネチャ:**
-```csharp
-public bool RemoveBuilding(int buildingID)
-```
-
-**実装箇所:** `BuildingManager.cs:403-418`
-
----
-
-### 建物のターン処理
-
-#### `ProcessTurnStart()` (Building)
-すべての建物のターン処理（資源生成など）を実行します。
-
-**シグネチャ:**
-```csharp
-public void ProcessTurnStart(int currentTurn)
-```
-
-**パラメータ:**
-- `currentTurn`: 現在のターン数
-
-**使用例:**
-```csharp
-// ターン開始時に呼び出し
-buildingManager.ProcessTurnStart(currentTurn);
-```
-
-**実装箇所:** `BuildingManager.cs:431-443`
-
----
-
-## 使用例: 完全なゲームフロー
-
-```csharp
-public class GameManager : MonoBehaviour
-{
-    [SerializeField] private PieceManager pieceManager;
-    [SerializeField] private BuildingManager buildingManager;
-
-    private int currentPlayerID = 1;
-    private int currentTurn = 0;
-
-    void Start()
-    {
-        // 農民を生成
-        int farmerID = pieceManager.CreatePiece(
-            PieceType.Farmer,
-            Religion.Maya,
-            currentPlayerID,
-            new Vector3(0, 0, 0)
-        );
-
-        // 軍隊を生成
-        int militaryID = pieceManager.CreatePiece(
-            PieceType.Military,
-            Religion.Maya,
-            currentPlayerID,
-            new Vector3(5, 0, 0)
-        );
-
-        // 建物を生成
-        int buildingID = buildingManager.CreateBuildingByName(
-            "祭壇",
-            currentPlayerID,
-            new Vector3(10, 0, 10)
-        );
-
-        // 農民を建築に投入
-        buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager);
-
-        // 建物のアップグレード
-        if (buildingManager.CanUpgrade(buildingID, BuildingUpgradeType.HP))
-        {
-            buildingManager.UpgradeBuilding(buildingID, BuildingUpgradeType.HP);
-        }
-
-        // 駒のアップグレード
-        if (pieceManager.CanUpgrade(militaryID, PieceUpgradeType.HP))
-        {
-            pieceManager.UpgradePiece(militaryID, PieceUpgradeType.HP);
-        }
-    }
-
-    void OnTurnStart()
-    {
-        currentTurn++;
-
-        // ターン処理
-        pieceManager.ProcessTurnStart(currentPlayerID);
-        buildingManager.ProcessTurnStart(currentTurn);
-
-        // 各駒のAPを回復
-        List<int> playerPieces = pieceManager.GetPlayerPieces(currentPlayerID);
-        foreach (int pieceID in playerPieces)
-        {
-            pieceManager.RecoverPieceAP(pieceID, 5.0f);
-        }
-    }
-
-    void OnAttackButtonClick(int attackerID, int targetID)
-    {
-        // 攻撃実行
-        if (pieceManager.AttackEnemy(attackerID, targetID))
-        {
-            Debug.Log("攻撃成功");
-        }
-    }
-}
-```
+各種情報取得関数については、BuildingManagerのインターフェースを参照してください。
 
 ---
 
 ## 列挙型（Enums）
+
+### syncPieceData構造体
+```csharp
+public struct syncPieceData
+{
+    public PieceType piecetype;
+    public Religion religion;
+    public Vector3 piecePos;
+    public int playerID;           // 元々のプレイヤーID
+    public int pieceID;
+    public int currentHP;
+    public int currentHPLevel;
+    public int currentPID;         // 現在のプレイヤーID（魅惑された場合など）
+    public int swapCooldownLevel;  // 教皇専用
+    public int buffLevel;          // 教皇専用
+    public int occupyLevel;        // 宣教師専用
+    public int convertEnemyLevel;  // 宣教師専用
+    public int sacrificeLevel;     // 農民専用
+    public int attackPowerLevel;   // 軍隊専用
+}
+```
+
+### swapPieceData構造体
+```csharp
+public struct swapPieceData
+{
+    public syncPieceData piece1;
+    public syncPieceData piece2;
+}
+```
 
 ### PieceType
 ```csharp
@@ -1127,25 +953,94 @@ public enum SpecialUpgradeType
 }
 ```
 
-### BuildingUpgradeType
-```csharp
-public enum BuildingUpgradeType
-{
-    HP,             // 最大HP
-    AttackRange,    // 攻撃範囲
-    Slots,          // スロット数
-    BuildCost       // 建築コスト
-}
-```
+---
 
-### BuildingState
+## ネットワーク同期の使用例
+
+### 完全なネットワーク同期フロー
+
 ```csharp
-public enum BuildingState
+public class NetworkGameManager : MonoBehaviour
 {
-    UnderConstruction,  // 建築中
-    Active,            // 稼働中
-    Inactive,          // 未稼働
-    Ruined            // 廃墟
+    void Start()
+    {
+        // 初期化: ローカルプレイヤーIDを設定
+        PieceManager.Instance.SetLocalPlayerID(1);
+
+        // イベント購読
+        PieceManager.Instance.OnPieceDied += OnPieceDied;
+    }
+
+    // === 送信側（自分の行動） ===
+
+    void CreateMyPiece()
+    {
+        // 駒を生成
+        syncPieceData? pieceData = PieceManager.Instance.CreatePiece(
+            PieceType.Farmer,
+            Religion.Maya,
+            playerID: 1,
+            new Vector3(10, 0, 10)
+        );
+
+        if (pieceData.HasValue)
+        {
+            // ネットワーク経由で相手に送信
+            NetworkSend("CreatePiece", pieceData.Value);
+        }
+    }
+
+    void AttackEnemyPiece(int myMilitaryID, int enemyPieceID)
+    {
+        // 攻撃実行
+        syncPieceData? attackData = PieceManager.Instance.AttackEnemy(myMilitaryID, enemyPieceID);
+
+        if (attackData.HasValue)
+        {
+            // 相手に送信
+            NetworkSend("Attack", attackData.Value);
+        }
+    }
+
+    void OnPieceDied(int pieceID)
+    {
+        // 駒が死亡したら、死亡データを取得
+        syncPieceData? deathData = PieceManager.Instance.GetLastDeadPieceData();
+
+        if (deathData.HasValue)
+        {
+            // 相手に送信
+            NetworkSend("PieceDeath", deathData.Value);
+        }
+    }
+
+    // === 受信側（相手の行動） ===
+
+    void OnNetworkMessage(string messageType, syncPieceData data)
+    {
+        switch (messageType)
+        {
+            case "CreatePiece":
+                // 敵駒を生成
+                PieceManager.Instance.CreateEnemyPiece(data);
+                break;
+
+            case "Attack":
+                // 攻撃を受けた駒のHPを同期
+                PieceManager.Instance.SyncEnemyPieceState(data);
+                break;
+
+            case "PieceDeath":
+                // 敵駒を削除
+                PieceManager.Instance.HandleEnemyPieceDeath(data);
+                break;
+
+            case "Upgrade":
+                // 敵駒のアップグレードを同期
+                PieceManager.Instance.SyncEnemyPieceState(data);
+                break;
+        }
+    }
 }
 ```
 
@@ -1153,10 +1048,12 @@ public enum BuildingState
 
 ## まとめ
 
-PieceManagerとBuildingManagerを使用することで、GameManagerは：
-- ✅ 具体的なユニットクラス（Farmer, Military等）を意識せずに操作可能
-- ✅ 整数IDのみで全ての駒・建物を管理
-- ✅ 型安全性を保ちつつ、シンプルなインターフェースで実装可能
-- ✅ コードの保守性・拡張性が向上
+PieceManagerは以下の機能を提供します：
 
-すべての操作はIDベースで統一されており、GameManagerのコードがシンプルで読みやすくなります。
+- ✅ **IDベース管理**: 具体的な型を意識せずに操作可能
+- ✅ **ネットワーク同期対応**: 己方と敵駒を分離管理
+- ✅ **同期データ自動生成**: 各種操作後に`syncPieceData`を返す
+- ✅ **送信/受信分離**: 無限ループを防ぐ明確な設計
+- ✅ **イベント駆動**: 駒の死亡などを自動通知
+
+すべての操作はIDベースで統一されており、ネットワーク同期も簡潔に実装できます。
