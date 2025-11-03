@@ -19,13 +19,13 @@ namespace GameData
             populationCost = 3;
 
             // 移動・攻撃AP
-            moveAPCost = 1f;
-            attackAPCost = 1f;
+            moveAPCost = 1;
+            attackAPCost = 1;
 
             // HP・AP・攻撃力（初始, 升級1, 升級2, 升級3）
-            maxHPByLevel = new float[4] { 10f, 12f, 15f, 15f };
-            maxAPByLevel = new float[4] { 5f, 7f, 7f, 7f }; // Excel通り（升級2が空白のため升級1の値を使用）
-            attackPowerByLevel = new float[4] { 2f, 3f, 4f, 4f };
+            maxHPByLevel = new int[4] { 10, 12, 15, 15 };
+            maxAPByLevel = new int[4] { 5, 7, 7, 7 }; // Excel通り（升級2が空白のため升級1の値を使用）
+            attackPowerByLevel = new int[4] { 2, 3, 4, 4};
 
             // 各項目のアップグレードコスト
             hpUpgradeCost = new int[3] { 5, 6, 0 }; // 血量: 10→12(5資源), 12→15(6資源), 升級3なし
@@ -33,7 +33,6 @@ namespace GameData
             attackPowerUpgradeCost = new int[3] { 5, 6, 0 }; // 攻擊力: 2→3(5資源), 3→4(6資源), 升級3なし
 
             // 戦闘パラメータ
-            armorValue = 10f;
             criticalChance = 0.1f;
             damageType = DamageType.Physical;
             attackRange = 2f;

@@ -19,12 +19,12 @@ namespace GameData
             populationCost = 5;
 
             // 移動AP
-            moveAPCost = 10f;
+            moveAPCost = 10;
 
             // HP・AP（初始, 升級1, 升級2, 升級3）
             // 注：教皇のAPは移動CDを意味する
-            maxHPByLevel = new float[4] { 5f, 7f, 9f, 9f };
-            maxAPByLevel = new float[4] { 5f, 3f, 3f, 3f }; // これはCDを表示用に設定（実際の移動CDはswapCooldown）
+            maxHPByLevel = new int[4] { 5, 7, 9, 9 };
+            maxAPByLevel = new int[4] { 5, 3, 3, 3 }; // これはCDを表示用に設定（実際の移動CDはswapCooldown）
 
             // 各項目のアップグレードコスト
             hpUpgradeCost = new int[3] { 6, 8, 0 }; // 血量: 5→7(6資源), 7→9(8資源), 升級3なし

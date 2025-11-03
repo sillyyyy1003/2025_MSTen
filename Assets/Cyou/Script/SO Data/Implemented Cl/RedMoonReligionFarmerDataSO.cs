@@ -19,11 +19,11 @@ namespace GameData
             populationCost = 2;
 
             // 移動AP
-            moveAPCost = 0f; // 領地内のみ移動
+            moveAPCost = 0; // 領地内のみ移動
 
             // HP・AP（初始, 升級1, 升級2, 升級3）
-            maxHPByLevel = new float[4] { 2f, 3f, 4f, 4f };
-            maxAPByLevel = new float[4] { 3f, 5f, 5f, 5f };
+            maxHPByLevel = new int[4] { 2, 3, 4, 4 };
+            maxAPByLevel = new int[4] { 3, 5, 5, 5 };
 
             // 各項目のアップグレードコスト (Excel行61-63)
             hpUpgradeCost = new int[3] { 3, 4, 0 }; // 血量: 2→3(3資源), 3→4(4資源), 升級3なし

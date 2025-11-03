@@ -133,7 +133,7 @@ public class Farmer : Piece
         ConsumeAP(selectedBuilding.buildStartAPCost);
 
         // 建物生成
-        var building = BuildingFactory.CreateBuilding(selectedBuilding, position);
+        var building = BuildingFactory.CreateBuilding(selectedBuilding, this.CurrentPID, position);
         if (building != null)
         {
             ChangeState(PieceState.Building);

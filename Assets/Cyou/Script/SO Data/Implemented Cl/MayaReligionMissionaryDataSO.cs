@@ -19,7 +19,7 @@ namespace GameData
             populationCost = 3;
 
             // 移動AP
-            moveAPCost = 1f;
+            moveAPCost = 1;
 
             // HP・AP（初始, 升級1, 升級2, 升級3）
             maxHPByLevel = new int[4] { 7, 9, 12, 12 };

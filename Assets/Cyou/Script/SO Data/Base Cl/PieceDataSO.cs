@@ -125,10 +125,10 @@ namespace GameData
         public float moveSpeed;
 
         public bool canAttack;
-        public float attackPower;
+        public int attackPower;
         public float attackRange;
         public float attackCooldown;
-        public float attackAPCost;
+        public int attackAPCost;
 
         public float[] maxHPByLevel;
         public float[] maxAPByLevel;
@@ -196,9 +196,9 @@ namespace GameData
             target.attackCooldown = attackCooldown;
             target.attackAPCost = attackAPCost;
 
-            target.maxHPByLevel = maxHPByLevel != null ? (float[])maxHPByLevel.Clone() : null;
-            target.maxAPByLevel = maxAPByLevel != null ? (float[])maxAPByLevel.Clone() : null;
-            target.attackPowerByLevel = attackPowerByLevel != null ? (float[])attackPowerByLevel.Clone() : null;
+            target.maxHPByLevel = maxHPByLevel != null ? (int[])maxHPByLevel.Clone() : null;
+            target.maxAPByLevel = maxAPByLevel != null ? (int[])maxAPByLevel.Clone() : null;
+            target.attackPowerByLevel = attackPowerByLevel != null ? (int[])attackPowerByLevel.Clone() : null;
 
             target.hpUpgradeCost = hpUpgradeCost != null ? (int[])hpUpgradeCost.Clone() : null;
             target.apUpgradeCost = apUpgradeCost != null ? (int[])apUpgradeCost.Clone() : null;

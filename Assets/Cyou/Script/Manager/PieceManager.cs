@@ -760,20 +760,29 @@ public class PieceManager : MonoBehaviour
             return;
         }
 
-        // 死亡した駒のsyncPieceDataを作成してキャッシュ
-        lastDeadPieceData = new syncPieceData
+        // 死亡した駒のsyncPieceDataを作成してキャッシュ（己方の駒の場合のみ）
+        if (isLocalPiece)
         {
-            pieceID = pieceID,
-            currentHP = 0 // 死亡を明示
-        };
+            lastDeadPieceData = new syncPieceData
+            {
+                pieceID = pieceID,
+                currentHP = 0 // 死亡を明示
+            };
+        }
 
         // 駒を削除（内部処理）
         RemovePieceInternal(pieceID, piece);
 
-        // GameManagerに通知（相手に送信するため）
-        OnPieceDied?.Invoke(pieceID);
-
-        Debug.Log($"駒が死亡しました（送信通知）: ID={pieceID}, IsLocal={isLocalPiece}");
+        // GameManagerに通知（己方の駒の場合のみ）
+        if (isLocalPiece)
+        {
+            OnPieceDied?.Invoke(pieceID);
+            Debug.Log($"己方の駒が死亡しました（送信通知）: ID={pieceID}");
+        }
+        else
+        {
+            Debug.Log($"敵駒が死亡しました（通知なし）: ID={pieceID}");
+        }
     }
 
     /// <summary>
