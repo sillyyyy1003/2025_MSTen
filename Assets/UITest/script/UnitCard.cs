@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
-
+using GamePieces;
 
 
 
@@ -88,7 +88,6 @@ public class UnitCard : MonoBehaviour
             if (alwaysOpen)
             {
                 showDataPanel = true;
-                showDataPanel = true;
                 dataPanel.SetActive(true);
 
                 StartCoroutine(SlidePanelIn());
@@ -104,8 +103,8 @@ public class UnitCard : MonoBehaviour
         // 常显数据更新
         if (unitData.UnitType!=CardType.None)
         {
-            HPNum.text = "5";
-            APNum.text = "3";
+            HPNum.text = unitData.HP.ToString();
+            APNum.text = unitData.AP.ToString();
 
 
         }
@@ -113,9 +112,7 @@ public class UnitCard : MonoBehaviour
         // 面板数据更新
         if (showDataPanel)
 		{
-			dataText.text = "HP=5\n"+ "HP=5\n" + "HP=5\n";
-
-            //public void UpdateDataText(Unit unit)
+			SetDetailData();
 
 
 
@@ -143,7 +140,6 @@ public class UnitCard : MonoBehaviour
 
 	public void ShowPanel()
 	{
-		if (showDataPanel) return;
         UnitCardManager.Instance.CloseAllCards();
 
         showDataPanel = true;
@@ -153,9 +149,9 @@ public class UnitCard : MonoBehaviour
 
     }
 
+
 	public void ClosePanel()
 	{
-		if (!showDataPanel) return;
 		showDataPanel = false;
 		StopAllCoroutines();
 		StartCoroutine(SlidePanelOut());
@@ -223,9 +219,36 @@ public class UnitCard : MonoBehaviour
         charaImage.sprite = UISpriteHelper.Instance.GetIconByCardType(type);
 
 	}
-    public void SetCardUnitData( type)
+    public void SetData(UIUnitData data)
 	{
 
+        unitData = data;
 
+        if (unitData.UnitType != CardType.None)
+        {
+            HPNum.text = data.HP.ToString();
+            APNum.text = data.AP.ToString();
+
+        }
+
+
+    }
+
+
+    public void SetDetailData()
+    {
+		//int id = unitData.UnitId;
+
+		//Piece detaildata = PlayerUnitDataInterface.Instance.GetUnitData(id);
+		//dataText.text = "MaxHP=" + detaildata.CurrentMaxAP.ToString() + "\n";
+		dataText.text = "MaxHP=???\n";
+
+
+    }
+
+    public int GetCardUnitID()
+	{
+
+		return unitData.UnitId;
 	}
 }

@@ -57,7 +57,7 @@ public class ButtonMenuManager : MonoBehaviour
 	///4=Pope教皇
 	///5=None
     /// </summary>
-    private CardType unitChoosed = CardType.None;
+    private CardType cardTypeChoosed = CardType.None;
 
     // === Event 定义区域 ===
     public event System.Action<CardType> OnCardTypeSelected;
@@ -108,7 +108,7 @@ public class ButtonMenuManager : MonoBehaviour
         LoadMenu("ButtonMenu_Root");
 
 
-        unitChoosed = 0;
+        cardTypeChoosed = CardType.None;
 
     }
 
@@ -137,24 +137,12 @@ public class ButtonMenuManager : MonoBehaviour
         if(currentMenuData.level==MenuLevel.Root)
         {
             EventSystem.current.SetSelectedGameObject(null);
-            unitChoosed = CardType.None;
-            UnitCardManager.Instance.SetTargetCardType(unitChoosed);
-            UnitCardManager.Instance.EnableSingleMode(true);
+            cardTypeChoosed = CardType.None;
+            UnitCardManager.Instance.SetTargetCardType(cardTypeChoosed);
         }
         else if (currentMenuData.level == MenuLevel.Second)//目标目录为第二目录
         {
-            UnitCardManager.Instance.SetTargetCardType(unitChoosed);
-            if (unitChoosed == CardType.Pope|| unitChoosed == CardType.None)
-            {
-
-                UnitCardManager.Instance.EnableSingleMode(true);
-
-            }
-            else
-            {
-
-                UnitCardManager.Instance.EnableSingleMode(false);
-            }
+            UnitCardManager.Instance.SetTargetCardType(cardTypeChoosed);
 
         }
 
@@ -213,11 +201,10 @@ public class ButtonMenuManager : MonoBehaviour
 
     }
 
-
     public void OnButtonClicked(int index)
     {
         EventSystem.current.SetSelectedGameObject(null);
-        Debug.Log($"[OnButtonClicked] Button {index} clicked");
+        //Debug.Log($"[OnButtonClicked] Button {index} clicked");
 
         if (currentMenuData == null || index >= currentMenuData.buttons.Length)
             return;
@@ -232,7 +219,7 @@ public class ButtonMenuManager : MonoBehaviour
 
                 if (currentMenuLevel == MenuLevel.Root)
                 {
-                    unitChoosed = type;
+                    cardTypeChoosed = type;
                     Debug.Log($"[Broadcast] CardTypeSelected: {type}");
                     OnCardTypeSelected?.Invoke(type);
                 }
@@ -246,20 +233,26 @@ public class ButtonMenuManager : MonoBehaviour
             case CardSkillButtonData skill:
                 UnitCardManager.Instance.SetDeckSelected(false);
 
-                //UnitCardManager.Instance.GetChoosedUnitId();
-                Debug.Log($"[Broadcast] CardSkillUsed: {skill.cardType} - {skill.cardSkill}");
-                OnCardSkillUsed?.Invoke(skill.cardType, skill.cardSkill);
+                int cardID = UnitCardManager.Instance.GetChoosedUnitId();
+                if (cardID == -1) break;
 
-                //PlayerUnitDataInterface.Instance.UseCardSkill(skill.cardType, skill.cardSkill);
+                if(PlayerUnitDataInterface.Instance.UseCardSkill(cardID, skill.cardSkill))
+                {
+                    Debug.Log($"[Broadcast] CardSkillUsed: {skill.cardType} - {skill.cardSkill}");
+                    OnCardSkillUsed?.Invoke(skill.cardType, skill.cardSkill);
+
+                }
 
                 break;
 
             case ParamUpdateButtonData param:
-                //UnitCardManager.Instance.GetChoosedUnitId()
-                Debug.Log($"[Broadcast] TechUpdated: {param.cardType} - {param.targetParameter}");
-                OnTechUpdated?.Invoke(param.cardType, param.targetParameter);
 
-                //PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter);
+                if(PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter))
+                {
+                    Debug.Log($"[Broadcast] TechUpdated: {param.cardType} - {param.targetParameter}");
+                    OnTechUpdated?.Invoke(param.cardType, param.targetParameter);
+
+                }
 
                 break;
 
@@ -267,19 +260,22 @@ public class ButtonMenuManager : MonoBehaviour
 
                 if (UnitCardManager.Instance.IsDeckSelected())
                 {
-                    UnitCardManager.Instance.AddCardCount(1);
-                    Debug.Log($"[Broadcast] CardPurchasedIntoDeck: {purchase.cardType}");
-                    OnCardPurchasedIntoDeck?.Invoke(purchase.cardType);
+                    if (UIGameDataManager.Instance.AddDeckNumByType(purchase.cardType))
+                    {
+                        Debug.Log($"[Broadcast] CardPurchasedIntoDeck: {purchase.cardType}");
+                        OnCardPurchasedIntoDeck?.Invoke(purchase.cardType);
 
-                    //PlayerUnitDataInterface.Instance.AddDeckNumByType(purchase.cardType);
+                    }
 
                 }
                 else
                 {
-                    Debug.Log($"[Broadcast] CardPurchasedIntoMap: {purchase.cardType}");
-                    OnCardPurchasedIntoMap?.Invoke(purchase.cardType);
+                    if (PlayerUnitDataInterface.Instance.BuyUnitToMapByType(purchase.cardType))
+                    {
+                        Debug.Log($"[Broadcast] CardPurchasedIntoMap: {purchase.cardType}");
+                        OnCardPurchasedIntoMap?.Invoke(purchase.cardType);
 
-                    //bool isCreateSuccess = PlayerUnitDataInterface.Instance.BuyUnitToMapByType(purchase.cardType);
+                    }
 
                 }
 
@@ -294,6 +290,16 @@ public class ButtonMenuManager : MonoBehaviour
 
     }
 
+    public CardType GetCardTypeChoosed()
+    {
 
+        return cardTypeChoosed;
+    }
+
+    public void SetCardTypeChoosed(CardType card)
+    {
+
+        cardTypeChoosed = card;
+    }
 }
 
