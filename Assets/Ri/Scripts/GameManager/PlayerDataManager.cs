@@ -22,25 +22,24 @@ public struct PlayerUnitData
     public int2 Position;
 
     // 玩家拥有的单位GameObject
-    public GameObject PlayerUnitObject;
+    //public GameObject PlayerUnitObject;
 
     // 单位的数据
-    public PieceDataSO PlayerUnitDataSO;
+    public syncPieceData PlayerUnitDataSO;
 
     // 该单位是否已经上场
     public bool bUnitIsUsed;
 
 
-    public PlayerUnitData(int unitId, CardType type, int2 pos, GameObject unitObject = null, PieceDataSO unitData = null,bool isUsed=false)
+    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isUsed = false)
     {
         UnitID = unitId;
         UnitType = type;
         Position = pos;
-        PlayerUnitObject = unitObject;
         PlayerUnitDataSO = unitData;
         bUnitIsUsed = isUsed;
     }
-    public void ChangeUnitDataSO(PieceDataSO unitData)
+    public void ChangeUnitDataSO(syncPieceData unitData)
     {
         PlayerUnitDataSO = unitData;
     }
@@ -73,16 +72,29 @@ public struct PlayerData
         PlayerReligion = Religion.None;
         PlayerOwnedCells = new List<int>();
     }
-
+    public bool UpdateUnitSyncDataByPos(int2 position, syncPieceData newData)
+    {
+        for (int i = 0; i < PlayerUnits.Count; i++)
+        {
+            if (PlayerUnits[i].Position.Equals(position))
+            {
+                PlayerUnitData updatedUnit = PlayerUnits[i];
+                updatedUnit.PlayerUnitDataSO = newData;
+                PlayerUnits[i] = updatedUnit;
+                return true;
+            }
+        }
+        return false;
+    }
     public void AddOwnedCell(int id)
     {
         PlayerOwnedCells.Add(id);
     }
 
     // 添加单位，此为单位加入手牌(单位与位置)
-    public void AddUnit(int unitId, CardType type, int2 pos, GameObject unitObject,PieceDataSO unitData)
+    public void AddUnit(int unitId, CardType type, int2 pos, GameObject unitObject, syncPieceData unitData)
     {
-        PlayerUnits.Add(new PlayerUnitData(unitId, type, pos, unitObject, unitData));
+        PlayerUnits.Add(new PlayerUnitData(unitId, type, pos, unitData));
         Debug.Log($"玩家 {PlayerID} 在 ({pos.x},{pos.y}) 添加了 {type}，ID: {unitId}");
     }
 
@@ -95,7 +107,6 @@ public struct PlayerData
             if (PlayerUnits[i].UnitID == unitId)
             {
                 PlayerUnitData updatedUnit = PlayerUnits[i];
-                updatedUnit.PlayerUnitObject = unitObject;
                 PlayerUnits[i] = updatedUnit;
                 return true;
             }
@@ -293,6 +304,42 @@ public class PlayerDataManager : MonoBehaviour
         Debug.Log($"PlayerDataManager: 更新玩家 {playerId} 数据");
     }
 
+    /// <summary>
+    /// 根据位置更新单位的同步数据
+    /// 这个方法对于网络同步非常重要
+    /// </summary>
+    public bool UpdateUnitSyncDataByPos(int playerId, int2 pos, syncPieceData newData)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+            bool success = data.UpdateUnitSyncDataByPos(pos, newData);
+
+            if (success)
+            {
+                allPlayersData[playerId] = data;
+
+                // 触发数据变更事件
+                OnPlayerDataChanged?.Invoke(playerId, data);
+
+                Debug.Log($"[PlayerDataManager] 玩家 {playerId} 位置 ({pos.x},{pos.y}) 的单位同步数据已更新");
+                return true;
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerDataManager] 找不到玩家 {playerId} 在位置 ({pos.x},{pos.y}) 的单位");
+            }
+        }
+        else
+        {
+            Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
+        }
+
+        return false;
+    }
+
+
+
     // 移除玩家
     public void RemovePlayer(int playerId)
     {
@@ -424,7 +471,7 @@ public class PlayerDataManager : MonoBehaviour
     }
 
     // 添加单位(种类与位置) - 返回生成的UnitID
-    public int AddUnit(int playerId, CardType type, int2 pos, GameObject unitObject=null,PieceDataSO unitData = null, bool isUsed = false)
+    public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject=null, bool isUsed = false)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
@@ -440,7 +487,7 @@ public class PlayerDataManager : MonoBehaviour
             unitIdToPlayerIdMap[newUnitId] = playerId;
 
             // 触发事件
-            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitObject, unitData));
+            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitData));
             OnPlayerDataChanged?.Invoke(playerId, data);
 
             return newUnitId;
@@ -448,30 +495,37 @@ public class PlayerDataManager : MonoBehaviour
         return -1; // 失败返回-1
     }
 
-    // 添加单位(完整数据) - 如果UnitData中的ID为0，则生成新ID
-    //public int AddUnit(int playerId, PlayerUnitData unitData)
+    ///// <summary>
+    ///// 添加单位时使用 syncPieceData（重载版本）
+    ///// 这是网络同步版本的 AddUnit
+    ///// </summary>
+    //public void AddUnit(int playerId, CardType type, int2 pos, syncPieceData pieceData, GameObject unitObject)
     //{
     //    if (allPlayersData.ContainsKey(playerId))
     //    {
-    //        // 如果没有ID，生成新的
-    //        if (unitData.UnitID == 0)
-    //        {
-    //            unitData.UnitID = GenerateUnitID();
-    //        }
-
     //        PlayerData data = allPlayersData[playerId];
-    //        data.AddUnit(unitData);
+
+    //        // 使用 syncPieceData 创建单位
+    //        data.AddUnit(nextUnitId, type, pos, pieceData, unitObject);
+
+    //        // 记录ID映射
+    //        unitIdToPlayerIdMap[nextUnitId] = playerId;
+
     //        allPlayersData[playerId] = data;
 
-    //        // 添加ID映射
-    //        unitIdToPlayerIdMap[unitData.UnitID] = playerId;
-
+    //        // 触发事件
+    //        PlayerUnitData unitData = new PlayerUnitData(nextUnitId, type, pos, pieceData, unitObject);
     //        OnUnitAdded?.Invoke(playerId, unitData);
     //        OnPlayerDataChanged?.Invoke(playerId, data);
 
-    //        return unitData.UnitID;
+    //        nextUnitId++;
+
+    //        Debug.Log($"[PlayerDataManager] 玩家 {playerId} 添加单位: {type} at ({pos.x},{pos.y}), UnitID={nextUnitId - 1}, PieceID={pieceData.pieceID}");
     //    }
-    //    return -1;
+    //    else
+    //    {
+    //        Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
+    //    }
     //}
 
     // 更新单位的GameObject引用
@@ -605,10 +659,10 @@ public class PlayerDataManager : MonoBehaviour
 
         PlayerUnitData? unitData = data.FindUnitById(unitId);
 
-        if (unitData.HasValue)
-        {
-            return unitData.Value.PlayerUnitObject;
-        }
+        //if (unitData.HasValue)
+        //{
+        //    return unitData.Value.PlayerUnitObject;
+        //}
 
         return null;
     }
@@ -727,7 +781,7 @@ public class PlayerDataManager : MonoBehaviour
             Debug.Log($"玩家 {kvp.Key}: {kvp.Value.GetUnitCount()} 个单位");
             foreach (var unit in kvp.Value.PlayerUnits)
             {
-                Debug.Log($"  - ID:{unit.UnitID} {unit.UnitType} at ({unit.Position.x},{unit.Position.y}) GameObject:{(unit.PlayerUnitObject != null ? unit.PlayerUnitObject.name : "null")}");
+                Debug.Log($"  - ID:{unit.UnitID} {unit.UnitType} at ({unit.Position.x},{unit.Position.y})");
             }
         }
 

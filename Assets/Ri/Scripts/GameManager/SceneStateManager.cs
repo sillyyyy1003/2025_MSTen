@@ -18,6 +18,9 @@ public class SceneStateManager : MonoBehaviour
     // 玩家id
     public int PlayerID;
 
+    // 玩家单位上限，根据宗教不同来制定
+    public int PlayerUnitLimit=20;
+
     // 玩家选择的宗教
     public Religion PlayerReligion;
 

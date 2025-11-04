@@ -6,14 +6,56 @@ using GameData;
 using GamePieces;
 using DG.Tweening.Core.Easing;
 
+//25.11.4 RI 添加序列化Vector3 变量
 
+/// <summary>
+/// 可序列化的Vector3包装类，用于网络传输
+/// 避免Unity Vector3的循环引用问题
+/// </summary>
+[Serializable]
+public struct SerializableVector3
+{
+    public float x;
+    public float y;
+    public float z;
 
+    public SerializableVector3(float x, float y, float z)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public SerializableVector3(Vector3 vector)
+    {
+        this.x = vector.x;
+        this.y = vector.y;
+        this.z = vector.z;
+    }
+
+    // 隐式转换：SerializableVector3 -> Vector3
+    public static implicit operator Vector3(SerializableVector3 sv)
+    {
+        return new Vector3(sv.x, sv.y, sv.z);
+    }
+
+    // 隐式转换：Vector3 -> SerializableVector3
+    public static implicit operator SerializableVector3(Vector3 v)
+    {
+        return new SerializableVector3(v.x, v.y, v.z);
+    }
+
+    public override string ToString()
+    {
+        return $"({x}, {y}, {z})";
+    }
+}
 
 public struct syncPieceData
 {
     public PieceType piecetype;
     public Religion religion;
-    public Vector3 piecePos;
+    public SerializableVector3 piecePos;
     public int playerID;
     public int pieceID;
     public int currentHP;
@@ -69,6 +111,8 @@ public class PieceManager : MonoBehaviour
     private int nextPieceID = 0;
     private int localPlayerID = -1; // このPieceManagerが管理するプレイヤーのID
 
+    //25.11.1 RI add GameObject
+    private GameObject pieceObject;
     // ===== 依存関係 =====
     [SerializeField] private UnitListTable unitListTable;
 
@@ -223,6 +267,13 @@ public class PieceManager : MonoBehaviour
 
     #region 駒の生成
 
+    // 25.11.1 RI add return piece gameObject
+    public GameObject GetPieceGameObject()
+    {
+        if (pieceObject != null)
+            return pieceObject;
+        return null;
+    }
     /// <summary>
     /// 駒を生成（GameManagerから呼び出し）
     /// </summary>
@@ -244,13 +295,13 @@ public class PieceManager : MonoBehaviour
         }
 
         // Prefabから駒を生成
-        GameObject pieceObj = Instantiate(data.piecePrefab, position, Quaternion.identity);
-        Piece piece = pieceObj.GetComponent<Piece>();
+        pieceObject = Instantiate(data.piecePrefab, position, Quaternion.identity);
+        Piece piece = pieceObject.GetComponent<Piece>();
 
         if (piece == null)
         {
             Debug.LogError($"Pieceコンポーネントがありません: {pieceType}");
-            Destroy(pieceObj);
+            Destroy(pieceObject);
             return null;
         }
 
@@ -300,13 +351,13 @@ public class PieceManager : MonoBehaviour
         }
 
         // Prefabから駒を生成
-        GameObject pieceObj = Instantiate(data.piecePrefab, spd.piecePos, Quaternion.identity);
-        Piece piece = pieceObj.GetComponent<Piece>();
+        pieceObject = Instantiate(data.piecePrefab, spd.piecePos, Quaternion.identity);
+        Piece piece = pieceObject.GetComponent<Piece>();
 
         if (piece == null)
         {
             Debug.LogError($"Pieceコンポーネントがありません: {spd.piecetype}");
-            Destroy(pieceObj);
+            Destroy(pieceObject);
             return false;
         }
 
