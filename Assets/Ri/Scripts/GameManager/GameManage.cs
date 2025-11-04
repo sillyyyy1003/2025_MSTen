@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 using UnityEngine.UIElements;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 // 棋盘每个格子信息的结构体
 public struct BoardInfor
@@ -25,6 +26,7 @@ public struct BoardInfor
     
     // 是否是起始位置
     public bool bIsStartPos;
+
 
 
 };
@@ -83,6 +85,7 @@ public class GameManage : MonoBehaviour
     // 棋盘信息List与Dictionary
     private List<BoardInfor> GameBoardInfor = new List<BoardInfor>();
     private Dictionary<int, BoardInfor> GameBoardInforDict = new Dictionary<int, BoardInfor>();
+    private Dictionary<int2, BoardInfor> GameBoardInforDict2D = new Dictionary<int2, BoardInfor>();
 
 
     // 每个格子上的GameObject (所有玩家)
@@ -303,6 +306,7 @@ public class GameManage : MonoBehaviour
             _LocalPlayerID = 0;
             AllPlayerIds.Add(0);
 
+
             _PlayerDataManager.CreatePlayer(0);
 
             // 添加玩家初始格子位置的id
@@ -421,7 +425,8 @@ public class GameManage : MonoBehaviour
         TurnEndMessage turnEndMsg = new TurnEndMessage
         {
             PlayerId = LocalPlayerID,
-            PlayerDataJson = JsonUtility.ToJson(localData)
+
+            PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
 
         // 发送到网络
@@ -560,6 +565,27 @@ public class GameManage : MonoBehaviour
         return default;
     }
 
+    // 根据格子id返回其周围所有可创建单位的格子id
+    public List<int> GetBoardNineSquareGrid(int id)
+    {
+        Debug.Log("pos is "+GetBoardInfor(id).Cells2DPos);
+        List<int> startPos = new List<int>();
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+              
+                    int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
+                    if(GameBoardInforDict2D.ContainsKey(pos))
+                    {
+                        startPos.Add(GameBoardInforDict2D[pos].id);
+                        //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                    }
+            }
+        }
+        return startPos;
+    }
+
     public int GetBoardCount()
     {
         return GameBoardInforDict.Count;
@@ -570,6 +596,7 @@ public class GameManage : MonoBehaviour
         return GetBoardInfor(id);
     }
 
+   
     // 查找某个格子上是否有单位
     public bool FindUnitOnCell(int2 pos)
     {
@@ -610,16 +637,24 @@ public class GameManage : MonoBehaviour
             CellObjects[toPos] = obj;
         }
     }
-
+    public int GetStartPosForNetGame(int i)
+    {
+        return PlayerStartPositions[i];
+    }
     // 设置棋盘结构体信息
     public void SetGameBoardInfor(BoardInfor infor)
     {
-        // 如果已经储存数据 清除当前数据  
-        GameBoardInfor.Clear();
-        GameBoardInforDict.Clear();
+        // 如果已经储存数据 清除当前数据
+        if(GameBoardInfor.Contains(infor))
+        {
+            GameBoardInfor.Clear();
+            GameBoardInforDict.Clear();
+            GameBoardInforDict2D.Clear();
+        }
 
         GameBoardInfor.Add(infor);
         GameBoardInforDict.Add(infor.id, infor);
+        GameBoardInforDict2D.Add(infor.Cells2DPos, infor);
 
         // 正确的添加起始位置方式  
         if (infor.bIsStartPos)

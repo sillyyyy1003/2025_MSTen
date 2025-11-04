@@ -30,6 +30,7 @@ public struct PlayerUnitData
     // 该单位是否已经上场
     public bool bUnitIsUsed;
 
+
     public PlayerUnitData(int unitId, CardType type, int2 pos, GameObject unitObject = null, PieceDataSO unitData = null,bool isUsed=false)
     {
         UnitID = unitId;
@@ -39,8 +40,11 @@ public struct PlayerUnitData
         PlayerUnitDataSO = unitData;
         bUnitIsUsed = isUsed;
     }
+    public void ChangeUnitDataSO(PieceDataSO unitData)
+    {
+        PlayerUnitDataSO = unitData;
+    }
 }
-
 
 // 玩家数据
 [Serializable]
@@ -58,12 +62,21 @@ public struct PlayerData
     // 玩家宗教
     public Religion PlayerReligion;
 
+    // 玩家占领的格子id
+    public List<int> PlayerOwnedCells;
+
     public PlayerData(int playerId)
     {
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
         Resources = 0;
         PlayerReligion = Religion.None;
+        PlayerOwnedCells = new List<int>();
+    }
+
+    public void AddOwnedCell(int id)
+    {
+        PlayerOwnedCells.Add(id);
     }
 
     // 添加单位，此为单位加入手牌(单位与位置)
@@ -172,6 +185,7 @@ public struct PlayerData
     {
         return PlayerUnits.Count;
     }
+
 }
 
 public class PlayerDataManager : MonoBehaviour
@@ -190,6 +204,12 @@ public class PlayerDataManager : MonoBehaviour
 
     // 当前选择中的单位id
     public int nowChooseUnitID;
+
+    // 当前选择中的单位类型
+    public CardType nowChooseUnitType;
+
+    // 建筑
+    [SerializeField] private BuildingRegistry buildingRegistry;
 
     // 事件: 玩家数据变化
     public event Action<int, PlayerData> OnPlayerDataChanged;
@@ -389,6 +409,20 @@ public class PlayerDataManager : MonoBehaviour
             return 0;
 
     }
+
+    // 得到当前选择的单位类型
+    public CardType GetUnitTypeIDBy2DPos(int2 pos)
+    {
+        PlayerUnitData? foundUnit = allPlayersData[GameManage.Instance.LocalPlayerID].FindUnitAt(pos);
+        if (foundUnit != null)
+        {
+            return foundUnit.Value.UnitType;
+        }
+        else
+            return CardType.None;
+
+    }
+
     // 添加单位(种类与位置) - 返回生成的UnitID
     public int AddUnit(int playerId, CardType type, int2 pos, GameObject unitObject=null,PieceDataSO unitData = null, bool isUsed = false)
     {

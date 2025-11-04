@@ -1,13 +1,20 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using UnityEngine;
+using GamePieces;
+using GameData;
+using GameData.UI;
+using Unity.Mathematics;
+using TMPro;
 
-// Íæ¼Òµ¥Î»Êı¾İ½Ó¿Ú£¬¸ºÔğ±»Íâ²¿µ÷ÓÃÒÔ»ñÈ¡ĞèÒªÊı¾İ
+
+// ç©å®¶å•ä½æ•°æ®æ¥å£ï¼Œè´Ÿè´£è¢«å¤–éƒ¨è°ƒç”¨ä»¥è·å–éœ€è¦æ•°æ®
 public class PlayerUnitDataInterface : MonoBehaviour
-{  
-    
-    // µ¥Àı
+{
+    public PlayerOperationManager _PlayerOpManager;
+
+    // å•ä¾‹
     public static PlayerUnitDataInterface Instance { get; private set; }
 
 
@@ -27,91 +34,161 @@ public class PlayerUnitDataInterface : MonoBehaviour
   
     }
 
+    void Start()
+    {
+        if (_PlayerOpManager!=null)
+        {
+            _PlayerOpManager.OnUnitChoosed += OnUnitChoosed;
+
+        }
+
+    }
+
     // *****************************
-    // ********ÄÚ²¿Êı¾İ´¦Àí*********
+    // ********å†…éƒ¨æ•°æ®å¤„ç†*********
     // *****************************
 
+    private void OnUnitChoosed(int unitid, CardType unittype)
+    {
 
+
+        UnitCardManager.Instance.SetTargetCardType(unittype);
+        UnitCardManager.Instance.SetTargetUnitId(unitid);
+
+        if (ButtonMenuManager.Instance.GetCardTypeChoosed() != unittype)
+        {
+            ButtonMenuManager.Instance.SetCardTypeChoosed(unittype);
+            string nextMenuId = ButtonMenuFactory.GetMenuId(GameData.UI.MenuLevel.Second, unittype);
+            ButtonMenuManager.Instance.LoadMenu(nextMenuId);
+        }
+
+
+    }
 
     // *****************************
-    // **********½Ó¿Ú²¿·Ö***********
+    // **********æ¥å£éƒ¨åˆ†***********
     // *****************************
 
     /// <summary>
-    /// ÄÃµ½Ä³ÖÖÆå×ÓµÄÒÑÉÏ³¡µÄkeyÁĞ±í
+    /// æ‹¿åˆ°æŸç§æ£‹å­çš„å·²ä¸Šåœºçš„keyåˆ—è¡¨
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public List<int> GetUnitDListByType(CardType type)
+    public List<int> GetUnitIDListByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type);
     }
 
-    // ÄÃµ½Ò»¸öÆå×ÓµÄÊı¾İ
-    public void GetUnitData(int id)
+    // æ‹¿åˆ°ä¸€ä¸ªæ£‹å­çš„æ•°æ®
+    public Piece GetUnitData(int id)
     {
+        //PlayerDataManager.Instance.GetUnitDataById(id).Value.PlayerUnitDataSO;
+
+
+        return PieceManager.Instance.GetPiece(id);
 
     }
 
-    // ÄÃµ½ËùÓĞÒÑ¾­ÉÏ³¡µÄµ¥Î»ÊıÁ¿
+    // æ‹¿åˆ°æ‰€æœ‰å·²ç»ä¸Šåœºçš„å•ä½æ•°é‡
     public int GetAllActivatedUnitCount()
     {
-        return PlayerDataManager.Instance.GetActivateUnitCount(true);
+
+        return PlayerDataManager.Instance.GetActivateUnitCount(false);
     }
 
 
-    // ÄÃµ½ÌØ¶¨ÀàĞÍµ¥Î»µÄËùÓĞÒÑ¾­ÉÏ³¡µÄµ¥Î»ÊıÁ¿
+    // æ‹¿åˆ°ç‰¹å®šç±»å‹å•ä½çš„æ‰€æœ‰å·²ç»ä¸Šåœºçš„å•ä½æ•°é‡
     public int GetUnitCountByType(CardType type)
     {
+
         return PlayerDataManager.Instance.GetActivateUnitKey(type).Count ;
     }
 
-    // ÄÃµ½ÌØ¶¨ÀàĞÍµ¥Î»µÄËùÓĞÎ´ÉÏ³¡µÄµ¥Î»ÊıÁ¿
+    // æ‹¿åˆ°ç‰¹å®šç±»å‹å•ä½çš„æ‰€æœ‰æœªä¸Šåœºçš„å•ä½æ•°é‡
     public int GetDeckNumByType(CardType type)
     {
+
         return PlayerDataManager.Instance.GetUnActivateUnitCount(type);
     }
 
-    // ÄÃµ½ÉĞÎ´ĞĞ¶¯µÄÆå×ÓÊıÁ¿
+    // æ‹¿åˆ°å°šæœªè¡ŒåŠ¨çš„æ£‹å­æ•°é‡
     public int GetInactiveUnitCount()
     {
         int count = 1;
         return count;
     }
 
-    // ÄÃµ½ÉãÏñ»ú×·×ÙµÄÆå×Óid
+    // æ‹¿åˆ°æ‘„åƒæœºè¿½è¸ªçš„æ£‹å­id
     public int GetFocusedUnitID()
     {
         return PlayerDataManager.Instance.nowChooseUnitID;
     }
 
-    // ÄÃµ½×ÊÔ´ÊıÁ¿
+    // æ‹¿åˆ°èµ„æºæ•°é‡
     public int GetResourceNum()
     {
         return PlayerDataManager.Instance.GetPlayerResource();
     }
 
-    // ¹ºÂòÄ³ÖÖµ¥Î»
-    public void AddDeckNumByType(CardType type)
+    // è´­ä¹°æŸç§å•ä½
+    public bool AddDeckNumByType(CardType type)
     {
 
+
+        return true;
     }
 
-    // ½«Ò»¸öµ¥Î»ÉÏ³¡
-    public void ActivateUnitFromDeck(int id)
+    // å°†ä¸€ä¸ªå•ä½ä¸Šåœº
+    public bool ActivateUnitFromDeck(CardType type)
     {
-        
+
+
+
+
+        return true;
     }
 
-    // Ä³Æå×ÓÊ¹ÓÃ¼¼ÄÜ
-    public void UseCardSkill(int id)
+    // æŸæ£‹å­ä½¿ç”¨æŠ€èƒ½
+    public bool UseCardSkill(int id,CardSkill skill)
     {
 
+
+
+
+        return true;
     }
 
-    // Éı¼¶Ä³ÖÖÆå×ÓµÄÄ³Ò»ÏîÊôĞÔ
-    public void UpgradeCard(CardType type)
+    // å‡çº§æŸç§æ£‹å­çš„æŸä¸€é¡¹å±æ€§
+    public bool UpgradeCard(CardType type,TechTree tech)
     {
+
+
+
+
+        return true;
+    }
+
+    // è´­ä¹°æŸç§æ£‹å­ç›´æ¥ç”Ÿæˆåˆ°åœ°å›¾
+    public bool BuyUnitToMapByType(CardType type)
+    {
+        //int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
+        //if (ResourcesCount < 10)
+        //{
+        //    Debug.LogWarning("èµ„æºä¸è¶³!");
+        //    return false;
+        //}
+
+        // å°è¯•åˆ›å»ºå•ä½
+        if (_PlayerOpManager.TryCreateUnit(type))
+        {
+            return true;
+
+        }
+        else
+        {
+            Debug.LogWarning("åˆ›å»ºå¤±è´¥ - è¯·å…ˆé€‰æ‹©ä¸€ä¸ªç©ºæ ¼å­");
+            return false;
+        }
 
     }
 

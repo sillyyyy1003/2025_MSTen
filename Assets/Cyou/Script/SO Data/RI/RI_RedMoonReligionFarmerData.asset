@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de9c8be9c0b9344478ecfc9e5c44e3ba, type: 3}
   m_Name: RI_RedMoonReligionFarmerData
   m_EditorClassIdentifier: 
+  piecePrefabResourcePath: Cyou/Prefab/farmer
   originalPID: 0
   pieceName: "\u7D05\u6708\u6559_\u8FB2\u6C11"
   populationCost: 2

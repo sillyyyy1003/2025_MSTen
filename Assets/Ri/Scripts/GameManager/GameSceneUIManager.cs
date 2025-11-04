@@ -346,7 +346,7 @@ public class GameSceneUIManager : MonoBehaviour
         Debug.Log("游戏开始，切换到游戏界面");
 
         // 初始化游戏状态
-        StartTurn();
+        //StartTurn();
     }
 
     // 清理事件订阅

@@ -5,12 +5,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using GameData;
 
 
 public class ButtonMenuManager : MonoBehaviour
 {
 
-    [Header("References")]
+    [Header("Button Menu Elements")]
 
     /// <summary>
     ///当前的面板层的设定
@@ -56,11 +57,18 @@ public class ButtonMenuManager : MonoBehaviour
 	///4=Pope教皇
 	///5=None
     /// </summary>
-    private CardType unitChoosed = CardType.None;
+    private CardType cardTypeChoosed = CardType.None;
+
+    // === Event 定义区域 ===
+    public event System.Action<CardType> OnCardTypeSelected;
+    public event System.Action<CardType> OnCardPurchasedIntoDeck;
+    public event System.Action<CardType> OnCardPurchasedIntoMap;
+    public event System.Action<CardType, CardSkill> OnCardSkillUsed;
+    public event System.Action<CardType, TechTree> OnTechUpdated;
+
 
     //单例
     public static ButtonMenuManager Instance { get; private set; }
-
 
 
     private void Awake()
@@ -81,12 +89,27 @@ public class ButtonMenuManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        foreach (var menu in allMenus)
-            menuDict[menu.menuId] = menu;
+        menuDict.Clear();
 
+        foreach (var entry in ButtonMenuFactory.GetAllMenuKeys())
+        {
+            string id = entry;
+            ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(id, Religion.None);
+
+            if (data != null)
+            {
+                menuDict[id] = data;
+            }
+        }
+
+        Debug.Log($"[ButtonMenuManager] 全メニュー生成完了: {menuDict.Count}件");
+
+        // === 载入根目录 ===
         LoadMenu("ButtonMenu_Root");
 
-        unitChoosed = 0;
+
+        cardTypeChoosed = CardType.None;
+
     }
 
 
@@ -108,57 +131,20 @@ public class ButtonMenuManager : MonoBehaviour
         }
 
 
-        if (!menuDict.TryGetValue(id, out currentMenuData))
-        {
-            Debug.LogError($"Menu not found: {id}");
-            return;
-        }
-
-
         currentMenuData = menuDict[id];
 
         //目标目录为根目录
-        if(id == "ButtonMenu_Root")
+        if(currentMenuData.level==MenuLevel.Root)
         {
             EventSystem.current.SetSelectedGameObject(null);
-            unitChoosed = CardType.None;
-            UnitCardManager.Instance.SetTargetCardType(unitChoosed);
-            UnitCardManager.Instance.EnableSingleMode(true);
+            cardTypeChoosed = CardType.None;
+            UnitCardManager.Instance.SetTargetCardType(cardTypeChoosed);
         }
-        else if (id == "ButtonMenu_Second")//目标目录为第二目录
+        else if (currentMenuData.level == MenuLevel.Second)//目标目录为第二目录
         {
-            UnitCardManager.Instance.SetTargetCardType(unitChoosed);
-            if (unitChoosed == CardType.Pope|| unitChoosed == CardType.None)
-            {
-
-                UnitCardManager.Instance.EnableSingleMode(true);
-
-            }
-            else
-            {
-
-                UnitCardManager.Instance.EnableSingleMode(false);
-            }
+            UnitCardManager.Instance.SetTargetCardType(cardTypeChoosed);
 
         }
-
-
-
-
-
-        //if(id == "ButtonMenu_Root"&& unitChoosed!=CardType.None)
-        //{
-        //    EventSystem.current.SetSelectedGameObject(uiButtons[(int)unitChoosed].gameObject);
-        //}
-        //else
-        //{
-        //
-        //    EventSystem.current.SetSelectedGameObject(null);
-        //}
-
-
-
-
 
 
         Debug.Log($"[LoadMenu] currentMenuData = {(currentMenuData == null ? "NULL" : currentMenuData.menuId)}");
@@ -167,96 +153,153 @@ public class ButtonMenuManager : MonoBehaviour
 
         for (int i = 0; i < uiButtons.Length; i++)
         {
+
             var btnData = currentMenuData.buttons[i];
-            var button = uiButtons[i];
-            var label = uiButtonLabels[i];
-            var icon = uiButtonIcons[i];
+            var index = btnData.slotNo;
+
+            var button = uiButtons[index];
+            var label = uiButtonLabels[index];
+            var icon = uiButtonIcons[index];
+            ColorBlock cb = button.colors;
+            Image backgroundimage = button.GetComponent<Image>();
+
+            button.gameObject.SetActive(true);
 
 
-            button.gameObject.SetActive(btnData.isActive);
-
-            if (!btnData.isActive) continue;
-
-            // --- 显示控制（ButtonMenuManager 的灵活点）---
+            // --- 设定显示 ---
+            backgroundimage.sprite = btnData.backgroundSprite;
             if (btnData.contentType == GameData.UI.ButtonContentType.Text)
             {
-                label.text = btnData.labelText;     // 动态设置文字
+                label.text = btnData.labelText;
                 icon.enabled = false;
             }
             else
             {
-                icon.sprite = btnData.iconSprite;   // 动态设置图标
+                icon.sprite = btnData.iconSprite;
                 icon.enabled = true;
                 label.text = string.Empty;
             }
 
+            cb.normalColor = btnData.baseColor;
+            cb.highlightedColor = btnData.hoverColor;
+            cb.pressedColor = btnData.pressedColor;
+            cb.selectedColor = btnData.selectedColor;
+            cb.disabledColor = btnData.disabledColor;
+            backgroundimage.color = btnData.backgroundColor;
+
+            if (!btnData.isActive) {
+                button.interactable = false;
+                continue;
+            }
+
             // --- 绑定点击事件 ---
-            int index = i;
+            button.interactable = true;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => OnButtonClicked(index));
+            
         }
 
     }
-
 
     public void OnButtonClicked(int index)
     {
         EventSystem.current.SetSelectedGameObject(null);
-        Debug.Log($"[OnButtonClicked] Button {index} clicked");
+        //Debug.Log($"[OnButtonClicked] Button {index} clicked");
 
         if (currentMenuData == null || index >= currentMenuData.buttons.Length)
             return;
 
-        string currentMenuId = currentMenuData.menuId;
-
-        var data = currentMenuData.buttons[index];
-        Debug.Log($"[OnButtonClicked] triggerEvent = {data.triggerEvent}, " +
-            $"nextMenuId = {data.nextMenuId}");
-
-        
-
-        switch (data.triggerEvent)
+        // === 判断是哪种子类 ===
+        ButtonData btn = currentMenuData.GetButtonBySlot(index);
+        switch (btn)
         {
-            case MenuEventType.NextMenu:
-                if (string.IsNullOrEmpty(data.nextMenuId))
-                    break;
-                if (currentMenuId == "ButtonMenu_Root")
+            case NaviButtonData navi:
+                MenuLevel currentMenuLevel = currentMenuData.level;
+                CardType type = navi.cardType;
+
+                if (currentMenuLevel == MenuLevel.Root)
                 {
-                    unitChoosed = (CardType)index;
-                    Debug.Log("CardTypeChanged");
+                    cardTypeChoosed = type;
+                    Debug.Log($"[Broadcast] CardTypeSelected: {type}");
+                    OnCardTypeSelected?.Invoke(type);
                 }
 
-                LoadMenu(data.nextMenuId);
+                string nextMenuId = ButtonMenuFactory.GetMenuId(navi.nextLevel, type);
 
+                LoadMenu(nextMenuId);
 
                 break;
-            case MenuEventType.Purchase:
 
-
-                UnitCardManager.Instance.AddCardCount(1);
-                break;
-            case MenuEventType.UseCardSkill:
-
-
-
-
+            case CardSkillButtonData skill:
                 UnitCardManager.Instance.SetDeckSelected(false);
+
+                int cardID = UnitCardManager.Instance.GetChoosedUnitId();
+                if (cardID == -1) break;
+
+                if(PlayerUnitDataInterface.Instance.UseCardSkill(cardID, skill.cardSkill))
+                {
+                    Debug.Log($"[Broadcast] CardSkillUsed: {skill.cardType} - {skill.cardSkill}");
+                    OnCardSkillUsed?.Invoke(skill.cardType, skill.cardSkill);
+
+                }
+
                 break;
-            case MenuEventType.UpdateCardParameter:
 
+            case ParamUpdateButtonData param:
 
+                if(PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter))
+                {
+                    Debug.Log($"[Broadcast] TechUpdated: {param.cardType} - {param.targetParameter}");
+                    OnTechUpdated?.Invoke(param.cardType, param.targetParameter);
 
+                }
 
                 break;
-            default:
-                break;
 
+            case PurchaseButtonData purchase:
+
+                if (UnitCardManager.Instance.IsDeckSelected())
+                {
+                    if (UIGameDataManager.Instance.AddDeckNumByType(purchase.cardType))
+                    {
+                        Debug.Log($"[Broadcast] CardPurchasedIntoDeck: {purchase.cardType}");
+                        OnCardPurchasedIntoDeck?.Invoke(purchase.cardType);
+
+                    }
+
+                }
+                else
+                {
+                    if (PlayerUnitDataInterface.Instance.BuyUnitToMapByType(purchase.cardType))
+                    {
+                        Debug.Log($"[Broadcast] CardPurchasedIntoMap: {purchase.cardType}");
+                        OnCardPurchasedIntoMap?.Invoke(purchase.cardType);
+
+                    }
+
+                }
+
+                break;
 
 
         }
 
+
+
+    
+
     }
 
+    public CardType GetCardTypeChoosed()
+    {
 
+        return cardTypeChoosed;
+    }
+
+    public void SetCardTypeChoosed(CardType card)
+    {
+
+        cardTypeChoosed = card;
+    }
 }
 

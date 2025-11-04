@@ -2,7 +2,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-
+using TMPro;
+using GamePieces;
 
 
 
@@ -17,18 +18,15 @@ public class UnitCard : MonoBehaviour
     public Image unitCardImage;     // 角色背景图
     public Image charaImage;     // 角色图
     public GameObject dataPanel;        // 数据面板（默认隐藏）
-	public Text dataText_HpText;        // HP 文本
-	public Text dataText_AttackText;    // 攻击力文本
-
-	[Header("Sprite List")]
-	public Sprite missionarySprite;//传教士
-	public Sprite soliderSprite;//士兵
-	public Sprite farmerSprite;//农民
-	public Sprite buildingSprite;//建筑
-	public Sprite popeSprite;//教皇
+    public TextMeshProUGUI HPNum;    // 生命值Icon文本
+    public TextMeshProUGUI APNum;    // 行动力Icon文本
+	public TextMeshProUGUI dataText;        // 数据文本
 
     [Header("Panel Animation Settings")]
 	public float panelSlideSpeed = 6f;      // 滑动速度
+
+    [Header("Card State")]
+    public bool alwaysOpen = false;// 若为true则卡牌始终展开且不可点击
 
     private RectTransform backgroundRect;
     private RectTransform cardRect;
@@ -36,12 +34,11 @@ public class UnitCard : MonoBehaviour
 	private CanvasGroup dataPanelCanvas;
 
     private bool showDataPanel = false;
-	private CardType cardType = CardType.None;
+	private UIUnitData unitData;
+
 
 
     // 滑动起始与结束位置
-    private Vector3 originalPosition;
-    private Vector3 targetPosition;
     private Vector2 panelHiddenPos;
 	private Vector2 panelVisiblePos;
 
@@ -53,9 +50,6 @@ public class UnitCard : MonoBehaviour
 
     void Start()
 	{
-        originalPosition = transform.localPosition;
-		targetPosition = originalPosition;
-
 		if (dataPanel != null && unitCardImage != null)
 		{
             backgroundRect = backgroundImage.GetComponent<RectTransform>();
@@ -77,7 +71,7 @@ public class UnitCard : MonoBehaviour
             //单张卡的宽度,面板宽度和展开后宽度
             normalWidth = cardRect.rect.width;
             panelWidth = dataPanelRect.rect.width;
-            expandWidth = cardRect.rect.width + dataPanelRect.rect.width;
+            expandWidth = normalWidth + panelWidth;
 
             // 卡牌的 anchoredPosition
             Vector2 cardPos = cardRect.anchoredPosition;
@@ -91,32 +85,48 @@ public class UnitCard : MonoBehaviour
             dataPanelRect.anchoredPosition = cardPos;
             backgroundRect.anchoredPosition = cardPos;
 
+            if (alwaysOpen)
+            {
+                showDataPanel = true;
+                dataPanel.SetActive(true);
+
+                StartCoroutine(SlidePanelIn());
+
+            }
+
+
         }
 	}
 
 	void Update()
 	{
-        // 模拟数据更新
+        // 常显数据更新
+        if (unitData.UnitType!=CardType.None)
+        {
+            HPNum.text = unitData.HP.ToString();
+            APNum.text = unitData.AP.ToString();
+
+
+        }
+
+        // 面板数据更新
         if (showDataPanel)
 		{
-			dataText_HpText.text = "HP: 100";
-			dataText_AttackText.text = "Attack: 20";
+			SetDetailData();
 
-			
 
 
         }
 
 
 
-
-
-	}
+    }
 
 	public void PanelEvent()
 	{
+        if (alwaysOpen) return;
 
-		if (showDataPanel)
+        if (showDataPanel)
 		{
 			ClosePanel();
 		}
@@ -124,11 +134,12 @@ public class UnitCard : MonoBehaviour
 		{
 			ShowPanel();
 		}
+
+
 	}
 
 	public void ShowPanel()
 	{
-		if (showDataPanel) return;
         UnitCardManager.Instance.CloseAllCards();
 
         showDataPanel = true;
@@ -138,9 +149,9 @@ public class UnitCard : MonoBehaviour
 
     }
 
+
 	public void ClosePanel()
 	{
-		if (!showDataPanel) return;
 		showDataPanel = false;
 		StopAllCoroutines();
 		StartCoroutine(SlidePanelOut());
@@ -205,38 +216,39 @@ public class UnitCard : MonoBehaviour
 
     public void SetSprite(CardType type)
 	{
-		SetCardType(type);
+        charaImage.sprite = UISpriteHelper.Instance.GetIconByCardType(type);
 
-        switch (type)
-		{
-			case CardType.Missionary:
-				charaImage.sprite = missionarySprite;
+	}
+    public void SetData(UIUnitData data)
+	{
 
-                break;
-			case CardType.Solider:
-                charaImage.sprite = soliderSprite;
-                break;
-			case CardType.Farmer:
-                charaImage.sprite = farmerSprite;
-                break;
-			case CardType.Building:
-                charaImage.sprite = buildingSprite;
-                break;
-			case CardType.Pope:
-                charaImage.sprite = popeSprite;
-                break;
-            default:
-                charaImage.sprite = popeSprite;
-                break;
+        unitData = data;
+
+        if (unitData.UnitType != CardType.None)
+        {
+            HPNum.text = data.HP.ToString();
+            APNum.text = data.AP.ToString();
 
         }
 
 
-	}
-    public void SetCardType(CardType type)
+    }
+
+
+    public void SetDetailData()
+    {
+		//int id = unitData.UnitId;
+
+		//Piece detaildata = PlayerUnitDataInterface.Instance.GetUnitData(id);
+		//dataText.text = "MaxHP=" + detaildata.CurrentMaxAP.ToString() + "\n";
+		dataText.text = "MaxHP=???\n";
+
+
+    }
+
+    public int GetCardUnitID()
 	{
 
-		cardType = type;
-
+		return unitData.UnitId;
 	}
 }
