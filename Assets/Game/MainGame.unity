@@ -381,6 +381,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc6c1792bcff1224487a4159e605d907, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PlayerOpManager: {fileID: 0}
 --- !u!1 &157152612
 GameObject:
   m_ObjectHideFlags: 0
@@ -584,6 +585,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1805311232}
   hexGrid: {fileID: 1913528995}
+  serialNumber: 1001
 --- !u!4 &290168467
 Transform:
   m_ObjectHideFlags: 0

@@ -29,6 +29,7 @@ public class HexMapManager : MonoBehaviour
 	public HexGrid hexGrid;                 // 地图网格
 
 	private MapConfigList configList;       // 配置列表 配置文件地址：Assets\Resources\Config\maps.json
+	public int serialNumber;				 // 当前地图序列号
 
 	/// <summary> 提供外部访问配置列表 </summary>
 	public List<MapConfig> MapConfigs => configList.maps;
@@ -46,6 +47,15 @@ public class HexMapManager : MonoBehaviour
 		LoadConfig(); // 加载地图配置
 	}
 
+	void Start()
+	{
+		// 初始加载默认地图
+		LoadMap(serialNumber);
+	}
+
+
+
+	/*
 	/// <summary>
 	/// 测试：按键加载地图或随机地图
 	/// </summary>
@@ -60,7 +70,7 @@ public class HexMapManager : MonoBehaviour
 		{
 			LoadRandomMap(20, 15); // 测试生成随机地图
 		}
-	}
+	}*/
 
 	/// <summary>
 	/// 从Resources中加载配置文件
