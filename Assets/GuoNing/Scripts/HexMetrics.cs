@@ -163,10 +163,10 @@ public static class HexMetrics
 	};
 
 	static readonly float[][] featureThresholds = {
-		new float[] { 0.0f, 0.25f, 0.5f },
-		new float[] { 0.25f, 0.5f, 0.75f },
-		new float[] { 0.5f, 0.75f, 0.9f },
-		new float[] { 0.75f, 0.9f, 1.0f }
+		new float[] { 0.0f, 0.2f, 0.4f },
+		new float[] { 0.2f, 0.4f, 0.6f },
+		new float[] { 0.4f, 0.6f, 0.72f },
+		new float[] { 0.6f, 0.72f, 0.8f }
 	};
 
 	/// <summary>

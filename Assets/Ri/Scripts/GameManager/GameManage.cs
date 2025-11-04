@@ -614,9 +614,10 @@ public class GameManage : MonoBehaviour
     // 设置棋盘结构体信息
     public void SetGameBoardInfor(BoardInfor infor)
     {
-        // 如果已经储存数据 清除当前数据
-        //GameBoardInfor.Clear();
-        //GameBoardInforDict.Clear();
+        // 如果已经储存数据 清除当前数据  
+        GameBoardInfor.Clear();
+        GameBoardInforDict.Clear();
+
         GameBoardInfor.Add(infor);
         GameBoardInforDict.Add(infor.id, infor);
 
