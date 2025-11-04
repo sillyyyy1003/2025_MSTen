@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
-
+using GamePieces;
 
 
 
@@ -22,13 +22,6 @@ public class UnitCard : MonoBehaviour
     public TextMeshProUGUI APNum;    // 行动力Icon文本
 	public TextMeshProUGUI dataText;        // 数据文本
 
-	[Header("Sprite List")]
-	public Sprite missionarySprite;//传教士
-	public Sprite soliderSprite;//士兵
-	public Sprite farmerSprite;//农民
-	public Sprite buildingSprite;//建筑
-	public Sprite popeSprite;//教皇
-
     [Header("Panel Animation Settings")]
 	public float panelSlideSpeed = 6f;      // 滑动速度
 
@@ -41,7 +34,8 @@ public class UnitCard : MonoBehaviour
 	private CanvasGroup dataPanelCanvas;
 
     private bool showDataPanel = false;
-	private CardType cardType = CardType.None;
+	private UIUnitData unitData;
+
 
 
     // 滑动起始与结束位置
@@ -94,7 +88,6 @@ public class UnitCard : MonoBehaviour
             if (alwaysOpen)
             {
                 showDataPanel = true;
-                showDataPanel = true;
                 dataPanel.SetActive(true);
 
                 StartCoroutine(SlidePanelIn());
@@ -108,10 +101,10 @@ public class UnitCard : MonoBehaviour
 	void Update()
 	{
         // 常显数据更新
-        if (cardType!=CardType.None)
+        if (unitData.UnitType!=CardType.None)
         {
-            HPNum.text = "5";
-            APNum.text = "3";
+            HPNum.text = unitData.HP.ToString();
+            APNum.text = unitData.AP.ToString();
 
 
         }
@@ -119,9 +112,7 @@ public class UnitCard : MonoBehaviour
         // 面板数据更新
         if (showDataPanel)
 		{
-			dataText.text = "HP=5\n"+ "HP=5\n" + "HP=5\n";
-
-            //public void UpdateDataText(Unit unit)
+			SetDetailData();
 
 
 
@@ -149,7 +140,6 @@ public class UnitCard : MonoBehaviour
 
 	public void ShowPanel()
 	{
-		if (showDataPanel) return;
         UnitCardManager.Instance.CloseAllCards();
 
         showDataPanel = true;
@@ -159,9 +149,9 @@ public class UnitCard : MonoBehaviour
 
     }
 
+
 	public void ClosePanel()
 	{
-		if (!showDataPanel) return;
 		showDataPanel = false;
 		StopAllCoroutines();
 		StartCoroutine(SlidePanelOut());
@@ -226,38 +216,39 @@ public class UnitCard : MonoBehaviour
 
     public void SetSprite(CardType type)
 	{
-		SetCardType(type);
+        charaImage.sprite = UISpriteHelper.Instance.GetIconByCardType(type);
 
-        switch (type)
-		{
-			case CardType.Missionary:
-				charaImage.sprite = missionarySprite;
+	}
+    public void SetData(UIUnitData data)
+	{
 
-                break;
-			case CardType.Solider:
-                charaImage.sprite = soliderSprite;
-                break;
-			case CardType.Farmer:
-                charaImage.sprite = farmerSprite;
-                break;
-			case CardType.Building:
-                charaImage.sprite = buildingSprite;
-                break;
-			case CardType.Pope:
-                charaImage.sprite = popeSprite;
-                break;
-            default:
-                charaImage.sprite = popeSprite;
-                break;
+        unitData = data;
+
+        if (unitData.UnitType != CardType.None)
+        {
+            HPNum.text = data.HP.ToString();
+            APNum.text = data.AP.ToString();
 
         }
 
 
-	}
-    public void SetCardType(CardType type)
+    }
+
+
+    public void SetDetailData()
+    {
+		//int id = unitData.UnitId;
+
+		//Piece detaildata = PlayerUnitDataInterface.Instance.GetUnitData(id);
+		//dataText.text = "MaxHP=" + detaildata.CurrentMaxAP.ToString() + "\n";
+		dataText.text = "MaxHP=???\n";
+
+
+    }
+
+    public int GetCardUnitID()
 	{
 
-		cardType = type;
-
+		return unitData.UnitId;
 	}
 }

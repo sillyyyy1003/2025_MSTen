@@ -12,12 +12,7 @@ public class StoredCard : MonoBehaviour
     public Image charaImage;     // 角色图
     public TextMeshProUGUI DataText;    // 文本
 
-    [Header("Sprite List")]
-    public Sprite missionarySprite;//传教士
-    public Sprite soliderSprite;//士兵
-    public Sprite farmerSprite;//农民
-    public Sprite buildingSprite;//建筑
-    public Sprite popeSprite;//教皇
+
 
     public bool showSprite = false;
 
@@ -52,38 +47,10 @@ public class StoredCard : MonoBehaviour
 
     public void SetSprite(CardType type)
     {
-        SetCardType(type);
-
-        switch (type)
-        {
-            case CardType.Missionary:
-                charaImage.sprite = missionarySprite;
-
-                break;
-            case CardType.Solider:
-                charaImage.sprite = soliderSprite;
-                break;
-            case CardType.Farmer:
-                charaImage.sprite = farmerSprite;
-                break;
-            case CardType.Building:
-                charaImage.sprite = buildingSprite;
-                break;
-            case CardType.Pope:
-                charaImage.sprite = popeSprite;
-                break;
-            default:
-                charaImage.sprite = popeSprite;
-                break;
-
-        }
-
-
-    }
-    public void SetCardType(CardType type)
-    {
-
         cardType = type;
+        charaImage.sprite = UISpriteHelper.Instance.GetIconByCardType(type);
+
+
 
     }
 

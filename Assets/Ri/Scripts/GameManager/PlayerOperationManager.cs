@@ -74,6 +74,10 @@ public class PlayerOperationManager : MonoBehaviour
     private float lastClickTime;
     private int clickCount = 0;
 
+    // === Event 定义区域 ===
+    public event System.Action<int,CardType> OnUnitChoosed;
+
+
     // *************************
     //         公有属性
     // *************************
@@ -263,11 +267,17 @@ public class PlayerOperationManager : MonoBehaviour
 
                 PlayerDataManager.Instance.nowChooseUnitID = PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos);
                 PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
+                
+                
                 if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
                     bIsChooseFarmer = true;
                 if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
                     bIsChooseMissionary = true;
-                Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID}");
+
+
+                OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
+                Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
+                
             }
             else
             {
