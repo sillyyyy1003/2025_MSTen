@@ -50,9 +50,6 @@ public class HexGrid : MonoBehaviour
 	public bool Wrapping
 	{ get; private set; }
 
-
-	public HexMapLoader mapLoader;
-
 	Transform[] columns;
 	HexGridChunk[] chunks;
 	HexCell[] cells;
@@ -88,22 +85,6 @@ public class HexGrid : MonoBehaviour
 		cellShaderData.Grid = this;
 		CreateMap(CellCountX, CellCountZ, false);
 	}
-
-	void Start()
-	{
-		mapLoader.LoadMap();
-	}
-
-	/// <summary>
-	/// 延迟一帧生成地图，确保 Start 执行完
-	/// </summary>
-	/// <returns></returns>
-	IEnumerator LoadMapOnce()
-	{
-		yield return null; // 等一帧，确保 Start 执行完
-		if (mapLoader) mapLoader.LoadMap();
-	}
-
 
 	/// <summary>
 	/// Add a unit to the map.
@@ -230,7 +211,7 @@ public class HexGrid : MonoBehaviour
 			HexMetrics.InitializeHashGrid(seed);
 			HexUnit.unitPrefab = unitPrefab;
 			HexMetrics.wrapSize = Wrapping ? CellCountX : 0;
-			//ResetVisibility();
+			ResetVisibility();
 		}
 	}
 
@@ -351,8 +332,11 @@ public class HexGrid : MonoBehaviour
 		label.rectTransform.anchoredPosition =
 			new Vector2(position.x, position.z);
 		cell.UIRect = label.rectTransform;
-
+		
 		cell.Elevation = 0;
+
+		//2025.10.31
+		cell.IsVisible = true;
 
 		AddCellToChunk(x, z, cell);
 	}
@@ -414,7 +398,6 @@ public class HexGrid : MonoBehaviour
 
 		for (int i = 0; i < cells.Length; i++)
 		{
-
 			cells[i].Load(reader, header);
 
 			// 2025.10.20 将更新后的Cell信息拷贝到GameManager里
@@ -428,6 +411,7 @@ public class HexGrid : MonoBehaviour
 		}
 
 		cellShaderData.ImmediateMode = originalImmediateMode;
+		
 	}
 
 	/// <summary>
@@ -570,12 +554,13 @@ public class HexGrid : MonoBehaviour
 				}
 				else
 				{
-					// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
-					moveCost = edgeType == HexEdgeType.Flat ? 2 : 4;
+					//// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
+					//moveCost = edgeType == HexEdgeType.Flat ? 2 : 4;
 
-					int ForestEffecetor = 1, FarmEffecetor = 1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
-					moveCost += neighbor.UrbanLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
-								neighbor.PlantLevel * PlantEffecetor;
+					//int ForestEffecetor = 1, FarmEffecetor = 1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
+					//moveCost += neighbor.UrbanLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
+					//			neighbor.PlantLevel * PlantEffecetor;
+					moveCost = 1;
 
 				}
 
@@ -762,6 +747,7 @@ public class HexGrid : MonoBehaviour
 	/// </summary>
 	public void ResetVisibility()
 	{
+		
 		for (int i = 0; i < cells.Length; i++)
 		{
 			cells[i].ResetVisibility();
@@ -771,6 +757,7 @@ public class HexGrid : MonoBehaviour
 			HexUnit unit = units[i];
 			IncreaseVisibility(unit.Location, unit.VisionRange);
 		}
+	
 	}
 
 	List<HexCell> GetVisibleCells(HexCell fromCell, int range)
