@@ -279,9 +279,8 @@ public class PlayerOperationManager : MonoBehaviour
                 Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
 
             }
-            else if (otherPlayersUnits.Count>=1)  
+            else if (otherPlayersUnits.Count>=1&& otherPlayersUnits[1].ContainsKey(clickPos))  
             {
-                if(otherPlayersUnits[1].ContainsKey(clickPos))
                     PlayerUnitDataInterface.Instance.GetEnemyUnitPosition(clickPos);
             }
             else
