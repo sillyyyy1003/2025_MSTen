@@ -1305,6 +1305,8 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
 
+
+
         // 获取目标GameObject
         GameObject targetUnit = null;
         if (otherPlayersUnits.ContainsKey(targetOwnerId) &&
@@ -1328,6 +1330,21 @@ public class PlayerOperationManager : MonoBehaviour
             bCanContinue = true;
             return;
         }
+
+        bool updateSuccess = PlayerDataManager.Instance.UpdateUnitSyncDataByPos(
+                targetOwnerId,
+                targetPos,
+                targetSyncData.Value);
+
+        if (updateSuccess)
+        {
+            Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
+        }
+        else
+        {
+            Debug.LogError($"[ExecuteAttack] ✗ 同步目标HP失败！");
+        }
+
 
         // 消耗攻击者的AP（攻击消耗1 AP）
         //PieceManager.Instance.ConsumePieceAP(attackerPieceID, 1);
@@ -1490,6 +1507,10 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
             Debug.Log($"[HandleNetworkAttack] 播放攻击者动画");
         }
 
+      
+
+
+
         // 处理目标 - 根据 TargetDestroyed 标志判断
         if (msg.TargetDestroyed)
         {
@@ -1520,11 +1541,22 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
             }
 
             GameManage.Instance.SetCellObject(targetPos, null);
+
+            // ===== 从PieceManager中移除被击杀的目标 =====
+            PlayerUnitData? deadTargetData = PlayerDataManager.Instance.FindUnit(msg.TargetPlayerId, targetPos);
+            if (deadTargetData.HasValue && PieceManager.Instance != null)
+            {
+                PieceManager.Instance.RemovePiece(deadTargetData.Value.UnitID);
+                Debug.Log($"[HandleNetworkAttack] 已从PieceManager移除被击杀单位 ID:{deadTargetData.Value.UnitID}");
+            }
+
         }
         else if (msg.TargetSyncData.HasValue)
         {
             // 目标存活，HP > 0，更新HP数据
             Debug.Log($"[HandleNetworkAttack] 目标存活，当前HP: {msg.TargetSyncData.Value.currentHP}");
+
+
 
             // 获取目标GameObject
             GameObject targetObj = null;

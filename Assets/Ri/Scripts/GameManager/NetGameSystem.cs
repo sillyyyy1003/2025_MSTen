@@ -1882,7 +1882,7 @@ public class NetGameSystem : MonoBehaviour
         int2 attackerPos = new int2(data.AttackerPosX, data.AttackerPosY);
         int2 targetPos = new int2(data.TargetPosX, data.TargetPosY);
 
-        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
+        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y}) ");
 
         // 确保管理器存在
         if (gameManage == null)
