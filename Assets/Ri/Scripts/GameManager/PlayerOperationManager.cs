@@ -279,12 +279,13 @@ public class PlayerOperationManager : MonoBehaviour
                 Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
 
             }
-            else if (otherPlayersUnits.Count>=1&& otherPlayersUnits[1].ContainsKey(clickPos))  
+            else if (otherPlayersUnits.Count>=1&& otherPlayersUnits[localPlayerId==0?1:0].ContainsKey(clickPos))  
             {
                     PlayerUnitDataInterface.Instance.GetEnemyUnitPosition(clickPos);
             }
             else
             {
+                
                 // 点击了空地或其他玩家单位
                 ReturnToDefault();
                 SelectingUnit = null;
