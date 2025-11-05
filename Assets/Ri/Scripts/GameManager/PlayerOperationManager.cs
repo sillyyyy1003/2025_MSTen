@@ -1060,29 +1060,15 @@ public class PlayerOperationManager : MonoBehaviour
     /// <param name="pos1">位置1</param>
     /// <param name="pos2">位置2</param>
     /// <returns>如果相邻返回true</returns>
-    private bool IsAdjacentPosition(int2 pos1, int2 pos2)
+    private bool IsAdjacentPosition(int2 a, int2 b)
     {
         // 计算差值
-        int dx = pos2.x - pos1.x;
-        int dy = pos2.y - pos1.y;
 
-        int d=dx + dy;
-        Debug.Log("distance is "+d);
-        // 六边形网格的6个相邻方向
-        // 具体方向取决于你的六边形网格实现
-        bool isAdjacent =
-            (dx == 1 && dy == 0) ||   // 右
-            (dx == -1 && dy == 0) ||  // 左
-            (dx == 0 && dy == 1) ||   // 上
-            (dx == 0 && dy == -1) ||  // 下
-            (dx == 1 && dy == 1) ||   // 右上
-            (dx == -1 && dy == -1);   // 左下
+        int2 diff = a - b;
 
-        // 或者使用 HexMetrics 的距离计算
-        // int distance = HexMetrics.GetDistance(pos1, pos2);
-        // return distance == 1;
+        return math.abs(diff.x) <= 1 && math.abs(diff.y) <= 1 && !(a.x == b.x && a.y == b.y);
 
-        return isAdjacent;
+
     }
 
     // ============================================
@@ -1344,7 +1330,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 判断目标是否死亡
         bool targetDied = targetSyncData.Value.currentHP <= 0;
-        Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied}");
+        Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
 
         if (targetDied)
         {
@@ -1467,423 +1453,6 @@ public class PlayerOperationManager : MonoBehaviour
     }
 
 
-
-    //// 攻击单位
-    //private void AttackUnit(int2 targetPos, int targetCellId)
-    //{
-    //    if (SelectingUnit == null) return;
-
-    //    bCanContinue = false;
-
-    //    // ========== 获取单位数据 ==========
-    //    // 获取攻击者位置
-    //    int2 attackerPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
-
-    //    // 获取目标单位的拥有者
-    //    int targetOwnerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
-      
-    //    // 获取攻击者数据
-    //    PlayerUnitData? attackerUnitData = PlayerDataManager.Instance.FindUnit(localPlayerId, attackerPos);
-    //    if (!attackerUnitData.HasValue)
-    //    {
-    //        Debug.LogError("[AttackUnit] 找不到攻击者单位数据");
-    //        bCanContinue = true;
-    //        return;
-    //    }
-       
-    //    // 获取目标数据
-    //    PlayerUnitData? targetUnitData = PlayerDataManager.Instance.FindUnit(targetOwnerId, targetPos);
-    //    if (!targetUnitData.HasValue)
-    //    {
-    //        Debug.LogError("[AttackUnit] 找不到目标单位数据");
-    //        bCanContinue = true;
-    //        return;
-    //    }
-
-
-
-
-    //    // 获取目标单位的GameObject
-    //    GameObject targetUnit = null;
-    //    if (otherPlayersUnits.ContainsKey(targetOwnerId) &&
-    //        otherPlayersUnits[targetOwnerId].ContainsKey(targetPos))
-    //    {
-    //        targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
-    //    }
-
-    //    // ========== 战斗计算 ==========
-    //    // 获取双方的 PieceID
-    //    int attackerPieceID = attackerUnitData.Value.PlayerUnitDataSO.pieceID;
-    //    int targetPieceID = targetUnitData.Value.PlayerUnitDataSO.pieceID;
-
-    //    Debug.Log($"[AttackUnit] 战斗开始 - 攻击者ID:{attackerPieceID} 攻击 目标ID:{targetPieceID}");
-
-    //    // 执行攻击，获取目标的HP同步数据
-    //    syncPieceData? targetSyncData = PieceManager.Instance.AttackEnemy(attackerPieceID, targetPieceID);
-
-    //    if (!targetSyncData.HasValue)
-    //    {
-    //        Debug.LogError("[AttackUnit] PieceManager.AttackEnemy 调用失败！");
-    //        bCanContinue = true;
-    //        return;
-    //    }
-
-    //    // 判断目标是否死亡
-    //    bool targetDied = targetSyncData.Value.currentHP <= 0;
-    //    Debug.Log($"[AttackUnit] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied}");
-
-    //    // ========== 计算移动路径 ==========
-
-    //    // ============= 使用AP限制寻路距离 ============= 
-    //    int currentAP = PieceManager.Instance.GetPieceAP(attackerUnitData.Value.UnitID);
-        
-    //    if (currentAP>0)
-    //    {
-    //        _HexGrid.FindPath(LastSelectingCellID, targetCellId, currentAP);
-    //    }
-    //    else
-    //    {
-    //        Debug.Log($"[攻击] AP不足");
-    //        _HexGrid.ClearPath();
-    //        bCanContinue = true;
-    //        return;
-    //    }
-
-    //    if (!_HexGrid.HasPath)
-    //    {
-    //        Debug.LogError("[AttackUnit] 无法找到到目标的路径");
-    //        _HexGrid.ClearPath();
-    //        bCanContinue = true;
-    //        return;
-    //    }
-    //    // 获取路径节点列表
-    //    List<HexCell> listCellPos = _HexGrid.GetPathCells();
-
-    //    int requiredAP = listCellPos.Count - 1;
-       
-
-    //    // ========== 根据目标状态执行移动 ==========
-    //    if (targetDied)
-    //    {
-    //        // Case 1: 目标死亡 - 移动到目标位置（完整路径）
-    //        Debug.Log("[AttackUnit] 目标死亡，攻击者移动到目标位置");
-
-    //        ExecuteMoveToTargetPosition(
-    //            listCellPos,
-    //            targetCellId,
-    //            attackerPos,
-    //            targetPos,
-    //            targetUnit,
-    //            targetOwnerId
-    //        );
-    //    }
-    //    else
-    //    {
-    //        // Case 2: 目标存活 - 移动到前一格
-    //        Debug.Log("[AttackUnit] 目标存活，攻击者移动到前一格");
-
-    //        if (listCellPos.Count < 2)
-    //        {
-    //            Debug.LogWarning("[AttackUnit] 路径太短，无法移动到前一格");
-    //            _HexGrid.ClearPath();
-    //            bCanContinue = true;
-    //            return;
-    //        }
-
-    //        // 计算前一格位置（倒数第二个节点）
-    //        int moveToIndex = listCellPos.Count - 2;
-    //        HexCell finalCell = listCellPos[moveToIndex];
-    //        int finalCellId = finalCell.Index;
-    //        int2 finalPos =new int2(finalCell.Coordinates.X + finalCell.Coordinates.Z / 2, finalCell.Coordinates.Z) ;
-          
-
-    //        // 只使用到前一格的路径
-    //        List<HexCell> movePathCells = listCellPos.GetRange(0, moveToIndex + 1);
-
-    //        ExecuteMoveToBeforeTarget(
-    //            movePathCells,
-    //            finalCellId,
-    //            attackerPos,
-    //            finalPos,
-    //            targetUnit,
-    //            targetPos,
-    //            targetSyncData.Value
-    //        );
-    //    }
-    //}
-
-///// <summary>
-// /// 目标死亡时，攻击者沿完整路径移动到目标位置
-// /// 
-// /// 动画效果：
-// /// - 攻击者沿弧形路径移动（参考 MoveToSelectCell 的实现）
-// /// - 同时播放目标死亡动画（缩放到0 + 旋转360度）
-// /// - 完成后销毁目标，更新数据
-// /// </summary>
-//private void ExecuteMoveToTargetPosition(
-//    List<HexCell> listCellPos,
-//    int targetCellId,
-//    int2 attackerPos,
-//    int2 targetPos,
-//    GameObject targetUnit,
-//    int targetOwnerId)
-//{
-//    Sequence moveSequence = DOTween.Sequence();
-//    Vector3 currentPos = SelectingUnit.transform.position;
-
-//    // 构建完整的移动路径动画（与 MoveToSelectCell 相同的方式）
-//    for (int i = 0; i < listCellPos.Count; i++)
-//    {
-//        Vector3 waypoint = new Vector3(
-//            listCellPos[i].Position.x,
-//            listCellPos[i].Position.y + 2.5f,
-//            listCellPos[i].Position.z
-//        );
-
-//        // 计算弧形路径的中间点
-//        Vector3 midPoint = (currentPos + waypoint) / 2f;
-//        midPoint.y += 5.0f;
-
-//        // 创建三点路径：当前位置 -> 中间点 -> 目标点
-//        Vector3[] path = new Vector3[] { currentPos, midPoint, waypoint };
-
-//        moveSequence.Append(SelectingUnit.transform.DOPath(path, MoveSpeed, PathType.CatmullRom)
-//            .SetEase(Ease.Linear));
-
-//        currentPos = waypoint;
-//    }
-
-//    // 在移动过程中播放目标死亡动画
-//    if (targetUnit != null)
-//    {
-//        // 延迟一段时间后开始死亡动画（让攻击者先靠近）
-//        moveSequence.Join(targetUnit.transform.DOScale(0f, 0.5f)
-//            .SetDelay(MoveSpeed * 0.7f));
-
-//        moveSequence.Join(targetUnit.transform.DORotate(
-//            new Vector3(0, 360, 0),
-//            0.5f,
-//            RotateMode.FastBeyond360
-//        ).SetDelay(MoveSpeed * 0.7f));
-//    }
-
-//    // 动画完成后的数据更新
-//    moveSequence.OnComplete(() =>
-//    {
-//        // 销毁目标单位
-//        if (targetUnit != null)
-//        {
-//            Destroy(targetUnit);
-//        }
-
-//        // 从数据管理器移除目标
-//        PlayerDataManager.Instance.RemoveUnit(targetOwnerId, targetPos);
-       
-//        // 移动攻击者数据
-//        PlayerDataManager.Instance.MoveUnit(localPlayerId, attackerPos, targetPos);
-
-//        // 从PieceManager中移除
-//        PieceManager.Instance.RemovePiece(PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos));
-
-//        // 更新本地单位字典
-//        localPlayerUnits.Remove(attackerPos);
-//        localPlayerUnits[targetPos] = SelectingUnit;
-
-//        // 从目标玩家的单位字典中移除
-//        if (otherPlayersUnits.ContainsKey(targetOwnerId))
-//        {
-//            otherPlayersUnits[targetOwnerId].Remove(targetPos);
-//        }
-
-//        // 更新 GameManage 的格子对象
-//        GameManage.Instance.MoveCellObject(attackerPos, targetPos);
-
-//        // 更新选中的格子ID
-//        LastSelectingCellID = targetCellId;
-
-//        // 清除路径显示
-//        _HexGrid.ClearPath();
-
-//        // 解锁操作
-//        bCanContinue = true;
-
-//        // ============= 攻击移动消耗AP逻辑 ============= 
-//        PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, targetPos);
-//        if (unitData.HasValue)
-//        {
-//            int pieceID = unitData.Value.PlayerUnitDataSO.pieceID;
-
-//            // 消耗AP（移动的格子数）
-//            int apCost = listCellPos.Count - 1;
-//            bool apConsumed = PieceManager.Instance.ConsumePieceAP(pieceID, apCost);
-
-//            if (apConsumed)
-//            {
-//                Debug.Log($"[攻击移动] 单位 PieceID:{pieceID} 消耗{apCost} AP");
-
-//                // 检查AP是否为0
-//                Piece piece = PieceManager.Instance.GetPiece(pieceID);
-//                if (piece != null && piece.CurrentAP <= 0)
-//                {
-//                    PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, targetPos, false);
-//                    Debug.Log($"[攻击移动] 单位 PieceID:{pieceID} AP为0，bCanDoAction设置为false");
-//                }
-//            }
-//            else
-//            {
-//                Debug.LogWarning($"[攻击移动] 单位 PieceID:{pieceID} AP消耗失败");
-//            }
-//        }
-//        Debug.Log($"[AttackUnit] 完成 - 攻击者已移动到目标位置: ({targetPos.x},{targetPos.y})");
-
-//        // 网络同步
-//        SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, true);
-//    });
-//}
-
-
-///// <summary>
-///// 目标存活时，攻击者移动到前一格并播放攻击动画
-///// 
-///// 动画流程：
-///// 1. 移动到前一格（与 MoveToSelectCell 相同的弧形路径）
-///// 2. 短距离冲刺到目标方向（攻击动作）
-///// 3. 目标播放受击效果（缩放弹跳 + 位置抖动）
-///// 4. 返回到前一格位置
-///// 5. 更新目标HP显示
-///// </summary>
-//private void ExecuteMoveToBeforeTarget(
-//    List<HexCell> movePathCells,
-//    int finalCellId,
-//    int2 attackerPos,
-//    int2 finalPos,
-//    GameObject targetUnit,
-//    int2 targetPos,
-//    syncPieceData targetSyncData)
-//{
-//    Sequence moveSequence = DOTween.Sequence();
-//    Vector3 currentPos = SelectingUnit.transform.position;
-
-//    // 第一阶段：移动到前一格（与 MoveToSelectCell 相同的方式）
-//    for (int i = 0; i < movePathCells.Count; i++)
-//    {
-//        Vector3 waypoint = new Vector3(
-//            movePathCells[i].Position.x,
-//            movePathCells[i].Position.y + 2.5f,
-//            movePathCells[i].Position.z
-//        );
-
-//        Vector3 midPoint = (currentPos + waypoint) / 2f;
-//        midPoint.y += 5.0f;
-
-//        Vector3[] path = new Vector3[] { currentPos, midPoint, waypoint };
-
-//        moveSequence.Append(SelectingUnit.transform.DOPath(path, MoveSpeed, PathType.CatmullRom)
-//            .SetEase(Ease.Linear));
-
-//        currentPos = waypoint;
-//    }
-
-//    // 第二阶段：播放攻击动画
-//    moveSequence.AppendCallback(() =>
-//    {
-//        // 获取目标的世界坐标
-//        Vector3 targetWorldPos = new Vector3(
-//            PlayerBoardInforDict[finalCellId].Cells3DPos.x,
-//            PlayerBoardInforDict[finalCellId].Cells3DPos.y + 2.5f,
-//            PlayerBoardInforDict[finalCellId].Cells3DPos.z
-//        );
-
-//        // 计算冲刺位置（向目标方向移动30%）
-//        Vector3 attackPos = Vector3.Lerp(SelectingUnit.transform.position, targetWorldPos, 0.3f);
-
-//        // 创建攻击动画序列
-//        Sequence attackAnim = DOTween.Sequence();
-
-//        // 冲刺
-//        attackAnim.Append(SelectingUnit.transform.DOMove(attackPos, 0.15f));
-
-//        // 目标受击效果
-//        if (targetUnit != null)
-//        {
-//            // 缩放弹跳
-//            attackAnim.Join(targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 1));
-//            // 位置抖动
-//            attackAnim.Join(targetUnit.transform.DOShakePosition(0.3f, 0.5f, 10, 90, false, true));
-//        }
-
-//        // 返回原位
-//        attackAnim.Append(SelectingUnit.transform.DOMove(currentPos, 0.15f));
-
-//        // 攻击动画完成后的处理
-//        attackAnim.OnComplete(() =>
-//        {
-//            // 移动攻击者数据
-//            PlayerDataManager.Instance.MoveUnit(localPlayerId, attackerPos, finalPos);
-
-//            // 更新本地单位字典
-//            localPlayerUnits.Remove(attackerPos);
-//            localPlayerUnits[finalPos] = SelectingUnit;
-
-//            // 更新 GameManage 的格子对象
-//            GameManage.Instance.MoveCellObject(attackerPos, finalPos);
-
-//            // 更新选中的格子ID
-//            LastSelectingCellID = finalCellId;
-
-//            // 清除路径显示
-//            _HexGrid.ClearPath();
-
-//            // 解锁操作
-//            bCanContinue = true;
-
-//            // ============= 攻击移动消耗AP逻辑 ============= 
-//            PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, finalPos);
-//            if (unitData.HasValue)
-//            {
-//                int pieceID = unitData.Value.PlayerUnitDataSO.pieceID;
-
-//                // 消耗AP（移动的格子数）
-//                int apCost = movePathCells.Count - 1;
-//                bool apConsumed = PieceManager.Instance.ConsumePieceAP(pieceID, apCost);
-
-//                if (apConsumed)
-//                {
-//                    Debug.Log($"[攻击移动] 单位 PieceID:{pieceID} 消耗{apCost} AP");
-
-//                    // 检查AP是否为0
-//                    Piece piece = PieceManager.Instance.GetPiece(pieceID);
-//                    if (piece != null && piece.CurrentAP <= 0)
-//                    {
-//                        PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, finalPos, false);
-//                        Debug.Log($"[攻击移动] 单位 PieceID:{pieceID} AP为0，bCanDoAction设置为false");
-//                    }
-//                }
-//                else
-//                {
-//                    Debug.LogWarning($"[攻击移动] 单位 PieceID:{pieceID} AP消耗失败");
-//                }
-//            }
-
-//            //// 更新目标HP显示
-//            //UpdateUnitHPDisplay(targetPos, targetSyncData.currentHP);
-
-//            Debug.Log($"[AttackUnit] 完成 - 攻击者移动到前一格: ({finalPos.x},{finalPos.y}), " +
-//                      $"目标剩余HP: {targetSyncData.currentHP}");
-
-//            // 网络同步
-//            SyncLocalUnitAttack(attackerPos, finalPos, PlayerDataManager.Instance.GetUnitOwner(targetPos), false);
-//        });
-//    });
-//}
-
-
-// *************************
-//        事件处理
-// *************************
-
-
-// 处理来自网络的攻击消息（其他玩家的攻击）
 public void HandleNetworkAttack(UnitAttackMessage msg)
     {
         if (msg.AttackerPlayerId == localPlayerId)
@@ -1895,21 +1464,8 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
         int2 attackerPos = new int2(msg.AttackerPosX, msg.AttackerPosY);
         int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
 
-        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
+        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 玩家 {msg.TargetPlayerId} at ({targetPos.x},{targetPos.y})");
 
-        // 先更新数据
-        if (PlayerDataManager.Instance != null)
-        {
-            // 移除被攻击的单位
-            PlayerDataManager.Instance.RemoveUnit(msg.TargetPlayerId, targetPos);
-            // 移动攻击者
-            PlayerDataManager.Instance.MoveUnit(msg.AttackerPlayerId, attackerPos, targetPos);
-            Debug.Log($"[网络攻击] 已更新数据管理器");
-        }
-
-        // 获取攻击者和目标的GameObject
-        //GameObject attackerUnit = null;
-        //GameObject targetUnit = null;
         // 获取攻击者GameObject（用于播放攻击动画）
         GameObject attackerObj = null;
         if (msg.AttackerPlayerId == localPlayerId && localPlayerUnits.ContainsKey(attackerPos))
@@ -1927,13 +1483,14 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
         {
             // TODO: 播放攻击动画
             // attackerObj.GetComponent<Animator>()?.SetTrigger("Attack");
+            Debug.Log($"[HandleNetworkAttack] 播放攻击者动画");
         }
 
-        // 处理目标
+        // 处理目标 - 根据 TargetDestroyed 标志判断
         if (msg.TargetDestroyed)
         {
-            // 目标被摧毁
-            Debug.Log($"[HandleNetworkAttack] 目标被击杀");
+            // 目标被摧毁，HP <= 0
+            Debug.Log($"[HandleNetworkAttack] 目标被击杀，HP已归零");
 
             // 移除目标GameObject
             if (msg.TargetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
@@ -1962,7 +1519,10 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
         }
         else if (msg.TargetSyncData.HasValue)
         {
-            // 目标存活，播放受击动画
+            // 目标存活，HP > 0，更新HP数据
+            Debug.Log($"[HandleNetworkAttack] 目标存活，当前HP: {msg.TargetSyncData.Value.currentHP}");
+
+            // 获取目标GameObject
             GameObject targetObj = null;
             if (msg.TargetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
             {
@@ -1979,140 +1539,17 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
             {
                 // TODO: 播放受击动画
                 // targetObj.GetComponent<Animator>()?.SetTrigger("Hit");
-                Debug.Log($"[HandleNetworkAttack] 目标受击，当前HP: {msg.TargetSyncData.Value.currentHP}");
+
+                // 如果有血条UI，更新血条显示
+                // UpdateUnitHPDisplay(targetPos, msg.TargetSyncData.Value.currentHP);
             }
         }
-        //// 查找攻击者单位
-        //if (msg.AttackerPlayerId == localPlayerId)
-        //{
-        //    if (localPlayerUnits.ContainsKey(attackerPos))
-        //    {
-        //        attackerUnit = localPlayerUnits[attackerPos];
-        //    }
-        //}
-        //else
-        //{
-        //    if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId) &&
-        //        otherPlayersUnits[msg.AttackerPlayerId].ContainsKey(attackerPos))
-        //    {
-        //        attackerUnit = otherPlayersUnits[msg.AttackerPlayerId][attackerPos];
-        //    }
-        //}
+        else
+        {
+            Debug.LogWarning($"[HandleNetworkAttack] 未收到目标同步数据且未标记为摧毁");
+        }
 
-        //// 查找目标单位
-        //if (msg.TargetPlayerId == localPlayerId)
-        //{
-        //    if (localPlayerUnits.ContainsKey(targetPos))
-        //    {
-        //        targetUnit = localPlayerUnits[targetPos];
-        //    }
-        //}
-        //else
-        //{
-        //    if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId) &&
-        //        otherPlayersUnits[msg.TargetPlayerId].ContainsKey(targetPos))
-        //    {
-        //        targetUnit = otherPlayersUnits[msg.TargetPlayerId][targetPos];
-        //    }
-        //}
-
-        //// 播放攻击动画
-        //if (attackerUnit != null)
-        //{
-        //    // 找到目标位置的世界坐标
-        //    Vector3 targetWorldPos = Vector3.zero;
-        //    foreach (var board in PlayerBoardInforDict.Values)
-        //    {
-        //        if (board.Cells2DPos.Equals(targetPos))
-        //        {
-        //            targetWorldPos = new Vector3(
-        //                board.Cells3DPos.x,
-        //                board.Cells3DPos.y + 6.5f,
-        //                board.Cells3DPos.z
-        //            );
-        //            break;
-        //        }
-        //    }
-
-        //    // 创建攻击动画
-        //    Sequence attackSequence = DOTween.Sequence();
-
-        //    // 冲刺效果
-        //    Vector3 attackPos = Vector3.Lerp(attackerUnit.transform.position, targetWorldPos, 0.7f);
-        //    attackSequence.Append(attackerUnit.transform.DOMove(attackPos, MoveSpeed * 0.3f));
-
-        //    // 目标消失效果
-        //    if (targetUnit != null)
-        //    {
-        //        attackSequence.Join(targetUnit.transform.DOScale(0f, 0.2f));
-        //        attackSequence.Join(targetUnit.transform.DORotate(new Vector3(0, 360, 0), 0.2f, RotateMode.FastBeyond360));
-        //    }
-
-        //    // 移动到目标位置
-        //    attackSequence.Append(attackerUnit.transform.DOMove(targetWorldPos, MoveSpeed * 0.3f));
-
-        //    // 完成后更新引用
-        //    attackSequence.OnComplete(() =>
-        //    {
-        //        // 销毁目标单位
-        //        if (targetUnit != null)
-        //        {
-        //            Destroy(targetUnit);
-        //        }
-
-        //        // 更新攻击者单位的引用
-        //        if (msg.AttackerPlayerId == localPlayerId)
-        //        {
-        //            localPlayerUnits.Remove(attackerPos);
-        //            localPlayerUnits[targetPos] = attackerUnit;
-        //        }
-        //        else
-        //        {
-        //            if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId))
-        //            {
-        //                otherPlayersUnits[msg.AttackerPlayerId].Remove(attackerPos);
-        //                otherPlayersUnits[msg.AttackerPlayerId][targetPos] = attackerUnit;
-        //            }
-        //        }
-
-        //        // 移除目标单位的引用
-        //        if (msg.TargetPlayerId == localPlayerId)
-        //        {
-        //            localPlayerUnits.Remove(targetPos);
-        //        }
-        //        else
-        //        {
-        //            if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId))
-        //            {
-        //                otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
-        //            }
-        //        }
-
-        //        // 更新GameManage
-        //        GameManage.Instance.MoveCellObject(attackerPos, targetPos);
-
-        //        Debug.Log($"[网络攻击] 动画完成: ({attackerPos.x},{attackerPos.y}) -> ({targetPos.x},{targetPos.y})");
-        //    });
-        //}
-        //else
-        //{
-        //    Debug.LogWarning($"[网络攻击] 找不到攻击者单位 at ({attackerPos.x},{attackerPos.y})");
-
-        //    // 如果找不到攻击者单位，至少销毁目标
-        //    if (targetUnit != null)
-        //    {
-        //        Destroy(targetUnit);
-
-        //        if (msg.TargetPlayerId == localPlayerId)
-        //        {
-        //            localPlayerUnits.Remove(targetPos);
-        //        }
-        //        else if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId))
-        //        {
-        //            otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
-        //        }
-        //    }
-        //}
+        Debug.Log($"[HandleNetworkAttack] 攻击处理完成");
     }
 
     // 处理来自网络的移动消息
