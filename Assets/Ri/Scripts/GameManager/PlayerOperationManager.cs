@@ -1464,8 +1464,14 @@ public class PlayerOperationManager : MonoBehaviour
             // 更新选中的格子ID
             LastSelectingCellID = targetCellId;
 
-            // 网络同步攻击
+            // 1发送攻击消息（通知目标被击杀）
             SyncLocalUnitAttack(fromPos, toPos, targetOwnerId, true);
+            Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送攻击消息：击杀目标 at ({toPos.x},{toPos.y})");
+
+            // 发送移动消息（通知攻击者移动到目标位置）
+            SyncLocalUnitMove(fromPos, toPos);
+            Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送移动消息：攻击者 ({fromPos.x},{fromPos.y}) → ({toPos.x},{toPos.y})");
+
 
             Debug.Log($"[ExecuteAttack] 击杀目标，移动到目标位置: ({toPos.x},{toPos.y})");
 
