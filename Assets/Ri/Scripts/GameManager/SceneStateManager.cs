@@ -97,7 +97,7 @@ public class SceneStateManager : MonoBehaviour
     {
         PlayerName = name;
         PlayerPrefs.SetString(PLAYER_NAME_KEY, name);
-        Debug.Log("Save PlayerName: " + name);
+        //Debug.Log("Save PlayerName: " + name);
 
 
         PlayerPrefs.SetString(SERVER_IP_KEY,SERVER_IP);

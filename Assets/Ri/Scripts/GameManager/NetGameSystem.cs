@@ -185,6 +185,7 @@ public struct SerializablePlayerUnitData
     public int PositionX;
     public int PositionY;
     public bool bUnitIsUsed;
+    public syncPieceData SyncData;
 
     public static SerializablePlayerUnitData FromPlayerUnitData(PlayerUnitData data)
     {
@@ -194,18 +195,19 @@ public struct SerializablePlayerUnitData
             UnitType = (int)data.UnitType,
             PositionX = data.Position.x,
             PositionY = data.Position.y,
-            bUnitIsUsed = data.bUnitIsUsed
+            bUnitIsUsed = data.bUnitIsUsed,
+            SyncData = data.PlayerUnitDataSO
+
         };
     }
 
     public PlayerUnitData ToPlayerUnitData()
     {
-        syncPieceData newData=new syncPieceData();
         return new PlayerUnitData(
             UnitID,
             (CardType)UnitType,
             new Unity.Mathematics.int2(PositionX, PositionY),
-            newData,
+            SyncData, 
             bUnitIsUsed
         );
     }
@@ -678,7 +680,7 @@ public class NetGameSystem : MonoBehaviour
                     IsReady = clientReady
                 });
                 // 调试输出
-                Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
+                //Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
             }
         }
     }
@@ -713,7 +715,7 @@ public class NetGameSystem : MonoBehaviour
     // 检查所有玩家是否准备完毕
     private void CheckAllPlayersReady()
     {
-        Debug.Log("CheckAllPlayersReady");
+        //Debug.Log("CheckAllPlayersReady");
         if (roomPlayers.Count < 2) // 至少需要2个玩家
         {
             OnAllPlayersReady?.Invoke(false);
@@ -723,7 +725,7 @@ public class NetGameSystem : MonoBehaviour
         bool allReady = true;
         foreach (var player in roomPlayers)
         {
-            Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
+            //Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
             if (!player.IsReady)
             {
                 allReady = false;
