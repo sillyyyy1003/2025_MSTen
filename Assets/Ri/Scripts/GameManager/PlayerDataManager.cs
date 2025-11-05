@@ -277,6 +277,7 @@ public class PlayerDataManager : MonoBehaviour
     private int GenerateUnitID()
     {
         int baseId = GameManage.Instance.LocalPlayerID*10000;
+        Debug.Log("new generatr unit ID is "+ baseId);
         return baseId + (unitIdCounter++);
     }
 
