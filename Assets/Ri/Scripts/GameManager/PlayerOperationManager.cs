@@ -1429,6 +1429,16 @@ public class PlayerOperationManager : MonoBehaviour
         // 动画完成后的处理
         moveSequence.OnComplete(() =>
         {
+            // 1发送攻击消息（通知目标被击杀）
+            SyncLocalUnitAttack(fromPos, toPos, targetOwnerId, true);
+            Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送攻击消息：击杀目标 at ({toPos.x},{toPos.y})");
+
+            // 发送移动消息（通知攻击者移动到目标位置）
+            SyncLocalUnitMove(fromPos, toPos);
+            Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送移动消息：攻击者 ({fromPos.x},{fromPos.y}) → ({toPos.x},{toPos.y})");
+
+
+
             // 销毁目标GameObject
             if (targetUnit != null)
             {
@@ -1471,14 +1481,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 更新选中的格子ID
             LastSelectingCellID = targetCellId;
 
-            // 1发送攻击消息（通知目标被击杀）
-            SyncLocalUnitAttack(fromPos, toPos, targetOwnerId, true);
-            Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送攻击消息：击杀目标 at ({toPos.x},{toPos.y})");
-
-            // 发送移动消息（通知攻击者移动到目标位置）
-            SyncLocalUnitMove(fromPos, toPos);
-            Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送移动消息：攻击者 ({fromPos.x},{fromPos.y}) → ({toPos.x},{toPos.y})");
-
+         
 
             Debug.Log($"[ExecuteAttack] 击杀目标，移动到目标位置: ({toPos.x},{toPos.y})");
 
@@ -1538,8 +1541,8 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
                 // 播放死亡动画（如果有）
                 // TODO: targetObj.GetComponent<Animator>()?.SetTrigger("Death");
 
-                Destroy(targetObj);
                 localPlayerUnits.Remove(targetPos);
+                Destroy(targetObj);
             }
             else if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId) &&
                      otherPlayersUnits[msg.TargetPlayerId].ContainsKey(targetPos))
@@ -1549,8 +1552,8 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
                 // 播放死亡动画（如果有）
                 // TODO: targetObj.GetComponent<Animator>()?.SetTrigger("Death");
 
-                Destroy(targetObj);
                 otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
+                Destroy(targetObj);
             }
 
             GameManage.Instance.SetCellObject(targetPos, null);
