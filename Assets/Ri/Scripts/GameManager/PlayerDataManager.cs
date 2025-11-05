@@ -532,7 +532,7 @@ public class PlayerDataManager : MonoBehaviour
             int newUnitId = GenerateUnitID();
 
             PlayerData data = allPlayersData[playerId];
-            data.AddUnit(newUnitId, type, pos, unitObject, unitData);
+            data.AddUnit(unitData.pieceID, type, pos, unitObject, unitData);
             allPlayersData[playerId] = data;
 
             
