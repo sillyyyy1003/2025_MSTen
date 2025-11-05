@@ -623,7 +623,7 @@ public class GameManage : MonoBehaviour
     {
         if (GameBoardInforDict2D.ContainsKey(pos))
             return GameBoardInforDict2D[pos];
-        return null;
+        return GameBoardInforDict2D[0];
     }
 
 
