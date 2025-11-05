@@ -988,7 +988,7 @@ public class PieceManager : MonoBehaviour
             return null;
         }
 
-        if (!pieces.TryGetValue(targetID, out Piece target))
+        if (!enemyPieces.TryGetValue(targetID, out Piece target))
         {
             Debug.LogError($"ターゲットが見つかりません: ID={targetID}");
             return null;
