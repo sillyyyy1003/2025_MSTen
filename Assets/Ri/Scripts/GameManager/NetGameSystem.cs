@@ -1902,15 +1902,26 @@ public class NetGameSystem : MonoBehaviour
                 Debug.Log($"[网络] 攻击者数据已更新");
             }
 
-            // 处理目标
+            // 先通知 PlayerOperationManager 处理
+            // 这样 HandleNetworkAttack 可以找到 UnitID 并从 PieceManager 移除
+            if (gameManage != null && gameManage._PlayerOperation != null)
+            {
+                gameManage._PlayerOperation.HandleNetworkAttack(data);
+            }
+
+            // 然后再处理 PlayerDataManager 的数据移除/更新
             if (data.TargetDestroyed)
             {
-                // 目标被摧毁
+                // 目标被摧毁，从 PlayerDataManager 移除
                 bool targetRemoved = playerDataManager.RemoveUnit(data.TargetPlayerId, targetPos);
 
                 if (targetRemoved)
                 {
-                    Debug.Log($"[网络] 目标单位已被移除");
+                    Debug.Log($"[网络] 目标单位已从PlayerDataManager移除");
+                }
+                else
+                {
+                    Debug.LogWarning($"[网络] ✗ 从PlayerDataManager移除目标失败");
                 }
             }
             else if (data.TargetSyncData.HasValue)
@@ -1924,11 +1935,6 @@ public class NetGameSystem : MonoBehaviour
                     Debug.Log($"[网络] 目标数据已更新");
                 }
             }
-        }
-        // 通知 PlayerOperationManager 处理
-        if (gameManage != null && gameManage._PlayerOperation != null)
-        {
-            gameManage._PlayerOperation.HandleNetworkAttack(data);
         }
     }
 

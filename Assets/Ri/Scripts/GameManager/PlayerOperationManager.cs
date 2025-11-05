@@ -1435,15 +1435,22 @@ public class PlayerOperationManager : MonoBehaviour
                 Destroy(targetUnit);
             }
 
-            // 移除目标数据
-            PlayerDataManager.Instance.RemoveUnit(targetOwnerId, toPos);
+            // 先获取目标数据
+            PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, toPos);
 
             // 从PieceManager移除目标
-            PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, toPos);
             if (targetData.HasValue)
             {
                 PieceManager.Instance.RemovePiece(targetData.Value.UnitID);
+                Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已从PieceManager移除目标 ID:{targetData.Value.UnitID}");
             }
+            else
+            {
+                Debug.LogWarning($"[ExecuteMoveToDeadTargetPosition] 找不到目标单位数据 at ({toPos.x},{toPos.y})");
+            }
+            // 3. 从PlayerDataManager移除目标数据
+            PlayerDataManager.Instance.RemoveUnit(targetOwnerId, toPos);
+
 
             // 移动攻击者数据
             PlayerDataManager.Instance.MoveUnit(localPlayerId, fromPos, toPos);
