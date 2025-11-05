@@ -869,7 +869,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, fromPos);
         Debug.Log("now unit AP is " + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
-        if (unitData.Value.bCanDoAction)
+        if (PieceManager.Instance.GetPieceAP(unitData.Value.UnitID)>0)
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         }
@@ -1066,6 +1066,8 @@ public class PlayerOperationManager : MonoBehaviour
         int dx = pos2.x - pos1.x;
         int dy = pos2.y - pos1.y;
 
+        int d=dx + dy;
+        Debug.Log("distance is "+d);
         // 六边形网格的6个相邻方向
         // 具体方向取决于你的六边形网格实现
         bool isAdjacent =
