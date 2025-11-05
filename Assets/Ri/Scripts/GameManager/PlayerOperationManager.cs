@@ -531,11 +531,15 @@ public class PlayerOperationManager : MonoBehaviour
         isMyTurn = true;
         bCanContinue = true;
 
-        Debug.Log("你的回合开始!");
 
         // 显示结束回合按钮
         GameSceneUIManager.Instance.SetEndTurn(true);
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
+        foreach(var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
+        {
+            unit.SetCanDoAction(true);
+        }
+        Debug.Log("你的回合开始!恢复AP！");
 
     }
 

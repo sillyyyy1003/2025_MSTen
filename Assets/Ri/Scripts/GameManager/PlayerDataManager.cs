@@ -48,6 +48,10 @@ public struct PlayerUnitData
     {
         PlayerUnitDataSO = unitData;
     }
+    public void SetCanDoAction(bool canDo)
+    {
+        bCanDoAction = canDo;
+    }
 }
 
 // 玩家数据
