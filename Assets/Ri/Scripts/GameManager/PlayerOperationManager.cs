@@ -605,52 +605,10 @@ public class PlayerOperationManager : MonoBehaviour
         {
             PlayerUnitData unit = data.PlayerUnits[i];
 
-            Debug.LogWarning($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y})");
+            Debug.LogWarning($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y}" +
+                $" player ID:{unit.PlayerUnitDataSO.playerID}) unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
-            // 检查并重新加载 PlayerUnitDataSO
-            //if (unit.PlayerUnitDataSO.playerID==-1)
-            //{
-            //    Debug.LogWarning($"PlayerUnitDataSO 为空，尝试重新加载 {unit.UnitType}");
-
-            //    // 从 UnitListTable 加载
-            //    //if (UnitListTable.Instance != null)
-            //    //{
-            //    //    PieceDataSO loadedData = UnitListTable.Instance.GetPieceDataByCardType(unit.UnitType);
-            //    //    if (loadedData != null)
-            //    //    {
-            //    //        // 通过索引修改列表中的元素
-            //    //        data.PlayerUnits[i].ChangeUnitDataSO(loadedData);
-            //    //        unit.PlayerUnitDataSO = loadedData;
-            //    //        Debug.Log($" 从 UnitListTable 成功加载: {loadedData.name}");
-            //    //    }
-            //    //}
-
-            //    //// 后备方案 - 从 Resources 加载
-            //    //if (unit.PlayerUnitDataSO == null)
-            //    //{
-            //    //    string resourcePath = GetResourcePathForUnitType(unit.UnitType);
-            //    //    if (!string.IsNullOrEmpty(resourcePath))
-            //    //    {
-            //    //        PieceDataSO loadedData = Resources.Load<PieceDataSO>(resourcePath);
-            //    //        if (loadedData != null)
-            //    //        {
-            //    //            data.PlayerUnits[i].ChangeUnitDataSO(loadedData);
-            //    //            unit.PlayerUnitDataSO = loadedData;
-            //    //            Debug.Log($"✅ 从 Resources 成功加载: {resourcePath}");
-            //    //        }
-            //    //    }
-            //    //}
-
-            //    //if (unit.PlayerUnitDataSO == null)
-            //    //{
-            //    //    Debug.LogError($"❌ 无法加载 PlayerUnitDataSO for {unit.UnitType}，跳过创建");
-            //    //    continue;
-            //    //}
-            //}
-            //else
-            //{
-            //    Debug.Log("✅ unit data is " + unit.PlayerUnitDataSO.name);
-            //}
+          
 
             CreateEnemyUnit(playerId, unit);
         }
@@ -836,6 +794,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 选择预制体
         PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
+
         GameObject prefab = PieceManager.Instance.GetPieceGameObject();
         if (prefab == null)
             prefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);

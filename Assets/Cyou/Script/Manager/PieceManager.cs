@@ -343,6 +343,9 @@ public class PieceManager : MonoBehaviour
     public bool CreateEnemyPiece(syncPieceData spd)
     {
         // UnitListTableからSOデータを取得
+
+        // 25.11.5 RI add test
+        Debug.Log($"敵駒データ: {spd.piecetype}, {spd.religion}");
         var pieceDetail = new UnitListTable.PieceDetail(spd.piecetype, spd.religion);
         PieceDataSO data = unitListTable.GetPieceDataSO(pieceDetail);
 
