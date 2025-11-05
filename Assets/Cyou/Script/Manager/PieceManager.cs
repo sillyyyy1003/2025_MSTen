@@ -696,7 +696,7 @@ public class PieceManager : MonoBehaviour
     /// <summary>
     /// 駒の現在APを取得
     /// </summary>
-    public float GetPieceAP(int pieceID)
+    public int GetPieceAP(int pieceID)
     {
         if (!pieces.TryGetValue(pieceID, out Piece piece))
         {
@@ -1251,7 +1251,7 @@ public class PieceManager : MonoBehaviour
             if (pieces.TryGetValue(pieceID, out Piece piece))
             {
                 // AP回復などの処理があればここで実行
-                // piece.RecoverAP(); などを呼び出す
+                piece.RecoverAP(piece.Data.aPRecoveryRate); 
             }
         }
 

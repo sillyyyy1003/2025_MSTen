@@ -138,8 +138,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // 拿到尚未行动的棋子数量
     public int GetInactiveUnitCount()
     {
-        int count = 1;
-        return count;
+        return PlayerDataManager.Instance.GetUnitCanUse();
     }
 
     // 拿到摄像机追踪的棋子id

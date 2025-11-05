@@ -8,6 +8,7 @@ using UnityEngine.UIElements;
 using TMPro;
 
 
+
 // 玩家单位的数据
 [Serializable]
 public struct PlayerUnitData
@@ -30,15 +31,19 @@ public struct PlayerUnitData
     // 该单位是否已经上场
     public bool bUnitIsUsed;
 
+    // 是否能够行动
+    public bool bCanDoAction;
 
-    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isUsed = false)
+
+    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isUsed = false,bool canDo=true)
     {
         UnitID = unitId;
         UnitType = type;
         Position = pos;
         PlayerUnitDataSO = unitData;
         bUnitIsUsed = isUsed;
-    }
+        bCanDoAction=canDo;
+}
     public void ChangeUnitDataSO(syncPieceData unitData)
     {
         PlayerUnitDataSO = unitData;
@@ -90,6 +95,23 @@ public struct PlayerData
     {
         PlayerOwnedCells.Add(id);
     }
+
+    // 更新单位行动力
+    public bool UpdateUnitCanDoActionByPos(int2 position, bool canDoAction)
+    {
+        for (int i = 0; i < PlayerUnits.Count; i++)
+        {
+            if (PlayerUnits[i].Position.Equals(position))
+            {
+                PlayerUnitData updatedUnit = PlayerUnits[i];
+                updatedUnit.bCanDoAction = canDoAction;
+                PlayerUnits[i] = updatedUnit;
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     // 添加单位，此为单位加入手牌(单位与位置)
     public void AddUnit(int unitId, CardType type, int2 pos, GameObject unitObject, syncPieceData unitData)
@@ -339,6 +361,24 @@ public class PlayerDataManager : MonoBehaviour
     }
 
 
+    // 更新单位行动力
+    public bool UpdateUnitCanDoActionByPos(int playerId, int2 pos, bool canDoAction)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+            bool success = data.UpdateUnitCanDoActionByPos(pos, canDoAction);
+
+            if (success)
+            {
+                allPlayersData[playerId] = data;
+                OnPlayerDataChanged?.Invoke(playerId, data);
+                Debug.Log($"[PlayerDataManager] 单位 at ({pos.x},{pos.y}) 的 bCanDoAction 更新为: {canDoAction}");
+                return true;
+            }
+        }
+        return false;
+    }
 
     // 移除玩家
     public void RemovePlayer(int playerId)
@@ -444,6 +484,18 @@ public class PlayerDataManager : MonoBehaviour
         return count;
     }
 
+    // 拿到玩家尚未行动的单位数量
+    public int GetUnitCanUse()
+    {
+        int count = 0;
+        foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
+        {
+            if (a.bCanDoAction)
+                count++;
+        }
+
+        return count;
+    }
     // 通过位置获取一个单位的id
     public int GetUnitIDBy2DPos(int2 pos)
     {
