@@ -8,7 +8,7 @@ using UnityEngine;
 /// </summary>
 public static class BuildingFactory
 {
-    public static Building CreateBuilding(BuildingDataSO data, Vector3 position)
+    public static Building CreateBuilding(BuildingDataSO data, int playerID, Vector3 position)
     {
         if (data == null || data.buildingPrefab == null)
         {
@@ -24,7 +24,7 @@ public static class BuildingFactory
             building = buildingObj.AddComponent<Building>();
         }
 
-        building.Initialize(data);
+        building.Initialize(data, playerID);
         return building;
     }
 }

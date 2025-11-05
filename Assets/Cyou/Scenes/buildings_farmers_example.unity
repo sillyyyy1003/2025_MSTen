@@ -1741,9 +1741,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99279b1604eee814d97d44f3ecf37243, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  unitListTable: {fileID: 1789075467}
-  buildingRegistry: {fileID: 11400000, guid: ec9f0c5ad308bf345a0c9bb85676014f, type: 2}
-  defaultReligion: 1
+  unitListTable: {fileID: 0}
+  buildingRegistry: {fileID: 0}
+  defaultReligion: 5
   defaultPlayerID: 1
   uiCanvas: {fileID: 0}
   buttonContainer: {fileID: 0}
@@ -1952,7 +1952,7 @@ MonoBehaviour:
     pieceDataSO: {fileID: 11400000, guid: caf75aa74a14ce3488d40ef7c9af0943, type: 2}
   - pieceType: 1
     religion: 1
-    pieceDataSO: {fileID: 11400000, guid: 780b4d9fb0f3a834c84a5f67ca821622, type: 2}
+    pieceDataSO: {fileID: 0}
   - pieceType: 2
     religion: 2
     pieceDataSO: {fileID: 11400000, guid: b071b4efd1569404eaa31d7ab5742cde, type: 2}

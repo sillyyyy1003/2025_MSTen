@@ -12,6 +12,9 @@ public class Farmer : Piece
     private FarmerDataSO farmerData;
     private Building currentBuilding; //現在在籍中の建物
 
+    // ===== 農民専用の個別レベル =====
+    private int sacrificeLevel = 0; // 獻祭レベル (0-2)
+
 
     public override void Initialize(PieceDataSO data, int playerID)
     {
@@ -24,6 +27,12 @@ public class Farmer : Piece
 
         base.Initialize(data, playerID);
     }
+    //25.10.26 RI 添加SOData回调
+    public PieceDataSO GetUnitDataSO()
+    {
+        return farmerData;
+    }
+
 
     /// <summary>
     /// スキルレベルを設定
@@ -69,11 +78,11 @@ public class Farmer : Piece
         }
 
         // 回復量を取得（配列範囲外アクセス防止）
-        int healAmount = farmerData.maxSacrificeLevel[Mathf.Clamp(UpgradeLevel, 0, farmerData.maxSacrificeLevel.Length - 1)];
+        int healAmount = farmerData.maxSacrificeLevel[Mathf.Clamp(sacrificeLevel, 0, farmerData.maxSacrificeLevel.Length - 1)];
 
         if (healAmount <= 0)
         {
-            Debug.LogWarning($"回復量が0以下です (レベル: {UpgradeLevel}, 回復量: {healAmount})");
+            Debug.LogWarning($"回復量が0以下です (Sacrificeレベル: {sacrificeLevel}, 回復量: {healAmount})");
             return false;
         }
 
@@ -87,6 +96,14 @@ public class Farmer : Piece
         target.Heal(healAmount);
 
         Debug.Log($"農民が{target.Data.pieceName}を{healAmount}回復しました (HP: {targetOldHP:F1} → {target.CurrentHP:F1})");
+
+        // APを使い切ったら自分は死亡
+        if (currentAP <= 0)
+        {
+            Debug.Log($"農民がSacrificeスキルによりAPを使い切り死亡しました");
+            Die();
+        }
+
         return true;
     }
 
@@ -116,7 +133,7 @@ public class Farmer : Piece
         ConsumeAP(selectedBuilding.buildStartAPCost);
 
         // 建物生成
-        var building = BuildingFactory.CreateBuilding(selectedBuilding, position);
+        var building = BuildingFactory.CreateBuilding(selectedBuilding, this.CurrentPID, position);
         if (building != null)
         {
             ChangeState(PieceState.Building);
@@ -233,6 +250,9 @@ public class Farmer : Piece
 
     #region アップグレード管理
 
+    // ===== プロパティ =====
+    public int SacrificeLevel => sacrificeLevel;
+
     /// <summary>
     /// アップグレード効果を適用
     /// </summary>
@@ -241,12 +261,12 @@ public class Farmer : Piece
         if (farmerData == null) return;
 
         // レベルに応じてHP、AP、攻撃力を更新
-        float newMaxHP = farmerData.GetMaxHPByLevel(upgradeLevel);
-        float newMaxAP = farmerData.GetMaxAPByLevel(upgradeLevel);
+        int newMaxHP = farmerData.GetMaxHPByLevel(upgradeLevel);
+        int newMaxAP = farmerData.GetMaxAPByLevel(upgradeLevel);
 
         // 現在のHPとAPの割合を保持
-        float hpRatio = currentHP / currentMaxHP;
-        float apRatio = currentAP / currentMaxAP;
+        int hpRatio = currentHP / currentMaxHP;
+        int apRatio = currentAP / currentMaxAP;
 
         // 新しい最大値に基づいて現在値を更新
         currentHP = newMaxHP * hpRatio;
@@ -265,5 +285,87 @@ public class Farmer : Piece
         }
     }
 
+    /// <summary>
+    /// 獻祭回復量をアップグレードする（リソース消費は呼び出し側で行う）
+    /// </summary>
+    /// <returns>アップグレード成功したらtrue</returns>
+    public bool UpgradeSacrifice()
+    {
+        // 最大レベルチェック
+        if (sacrificeLevel >= 2)
+        {
+            Debug.LogWarning($"{farmerData.pieceName} の獲祭回復量は既に最大レベル(2)です");
+            return false;
+        }
+
+        // アップグレードコスト配列の境界チェック
+        if (farmerData.sacrificeUpgradeCost == null || sacrificeLevel >= farmerData.sacrificeUpgradeCost.Length)
+        {
+            Debug.LogError($"{farmerData.pieceName} のsacrificeUpgradeCostが正しく設定されていません");
+            return false;
+        }
+
+        int cost = farmerData.sacrificeUpgradeCost[sacrificeLevel];
+
+        // コストが0の場合はアップグレード不可
+        if (cost <= 0)
+        {
+            Debug.LogWarning($"{farmerData.pieceName} の獲祭回復量レベル{sacrificeLevel}→{sacrificeLevel + 1}へのアップグレードは設定されていません（コスト0）");
+            return false;
+        }
+
+        // レベルアップ実行
+        sacrificeLevel++;
+        int newSacrificeAmount = farmerData.maxSacrificeLevel[sacrificeLevel];
+
+        Debug.Log($"{farmerData.pieceName} の獲祭回復量がレベル{sacrificeLevel}にアップグレードしました（回復量: {newSacrificeAmount}）");
+        return true;
+    }
+
+    /// <summary>
+    /// 指定項目のアップグレードコストを取得
+    /// </summary>
+    public int GetFarmerUpgradeCost(FarmerUpgradeType type)
+    {
+        switch (type)
+        {
+            case FarmerUpgradeType.Sacrifice:
+                if (sacrificeLevel >= 2 || farmerData.sacrificeUpgradeCost == null || sacrificeLevel >= farmerData.sacrificeUpgradeCost.Length)
+                    return -1;
+                return farmerData.sacrificeUpgradeCost[sacrificeLevel];
+            default:
+                return -1;
+        }
+    }
+
+    /// <summary>
+    /// 指定項目がアップグレード可能かチェック
+    /// </summary>
+    public bool CanUpgradeFarmer(FarmerUpgradeType type)
+    {
+        int cost = GetFarmerUpgradeCost(type);
+        return cost > 0;
+    }
+
     #endregion
+
+    #region セッター（同期用）
+
+    /// <summary>
+    /// 獻祭レベルを直接設定（ネットワーク同期用）
+    /// </summary>
+    public void SetSacrificeLevel(int level)
+    {
+        sacrificeLevel = Mathf.Clamp(level, 0, 2);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// 農民のアップグレード項目タイプ
+/// </summary>
+public enum FarmerUpgradeType
+{
+    Sacrifice  // 獲祭回復量
 }

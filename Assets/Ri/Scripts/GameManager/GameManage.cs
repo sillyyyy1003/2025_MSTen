@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 using UnityEngine.UIElements;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 // 棋盘每个格子信息的结构体
 public struct BoardInfor
@@ -22,6 +23,11 @@ public struct BoardInfor
 
     // 每个格子的地块信息 是否可通过
     public TerrainType type;
+    
+    // 是否是起始位置
+    public bool bIsStartPos;
+
+
 
 };
 
@@ -76,15 +82,16 @@ public class GameManage : MonoBehaviour
     // 玩家起始位置ID列表
     private List<int> PlayerStartPositions = new List<int>();
 
-
     // 棋盘信息List与Dictionary
     private List<BoardInfor> GameBoardInfor = new List<BoardInfor>();
     private Dictionary<int, BoardInfor> GameBoardInforDict = new Dictionary<int, BoardInfor>();
+    private Dictionary<int2, BoardInfor> GameBoardInforDict2D = new Dictionary<int2, BoardInfor>();
 
 
     // 每个格子上的GameObject (所有玩家)
     private Dictionary<int2, GameObject> CellObjects = new Dictionary<int2, GameObject>();
 
+    private bool bIsStartSingleGame = false;
     // *************************
     //         公有属性
     // *************************
@@ -93,10 +100,18 @@ public class GameManage : MonoBehaviour
     // 网络系统引用 (在Inspector中赋值或通过代码获取)
     public NetGameSystem _NetGameSystem;
 
+    // 玩家相机引用
+    public GameCamera _GameCamera;
     // 玩家操作管理器
     public PlayerOperationManager _PlayerOperation;
+
+    // 单位创建引用
+    public Instantiater _Instantiater;
     // 玩家数据管理器引用
     private PlayerDataManager _PlayerDataManager;
+
+
+
 
     // 事件: 回合开始
     public event Action<int> OnTurnStarted;
@@ -132,7 +147,7 @@ public class GameManage : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
+            //Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
         }
         else if (Instance != this)
         {
@@ -148,19 +163,42 @@ public class GameManage : MonoBehaviour
             GameObject pdm = new GameObject("PlayerDataManager");
             _PlayerDataManager = pdm.AddComponent<PlayerDataManager>();
         }
+        
     }
 
 
 
     // Update is called once per frame
-    void Update()
-    {
-        
-    }
+   
 
     // *************************
     //        游戏流程函数
     // *************************
+
+    // 房间状态待机管理
+    public void CheckIsServer(bool server)
+    {
+        _GameCamera.SetCanUseCamera(false);
+        if(server)
+        {
+
+        }
+        else
+        {
+
+        }
+    }
+
+    // 从房间UI处获取游戏开始事件
+    // 在此处设置单机或联机启动
+    public void StartGameFromRoomUI()
+    {
+        _GameCamera.SetCanUseCamera(true);
+
+       
+        // 单机测试
+        GameInit();
+    }
 
     // 游戏初始化 (由网络系统调用,传入游戏开始数据)
     public bool InitGameWithNetworkData(GameStartData data)
@@ -168,6 +206,7 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 开始初始化游戏...");
         Debug.Log($"接收到玩家数: {data.PlayerIds.Length}");
         Debug.Log($"起始位置数: {data.StartPositions.Length}");
+        
         // 清空之前的数据
         AllPlayerIds.Clear();
         PlayerStartPositions.Clear();
@@ -185,7 +224,7 @@ public class GameManage : MonoBehaviour
             Debug.Log($"创建玩家数据: {playerId}");
         }
 
-        // 保存起始位置
+        // 保存起始位置，后续更改
         foreach (var pos in data.StartPositions)
         {
             PlayerStartPositions.Add(pos);
@@ -193,9 +232,10 @@ public class GameManage : MonoBehaviour
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
-        if (_NetGameSystem != null && !_NetGameSystem.IsServer)
+        if (_NetGameSystem != null && !_NetGameSystem.bIsServer)
         {
-            _LocalPlayerID = (int)_NetGameSystem.LocalClientId;
+            _LocalPlayerID = (int)_NetGameSystem.bLocalClientId;
+            SceneStateManager.Instance.PlayerID = _LocalPlayerID;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
             // 临时方案: 假设第一个玩家是本地玩家
@@ -204,10 +244,10 @@ public class GameManage : MonoBehaviour
         else
         {
             _LocalPlayerID = 0; // 服务器默认是玩家0
+            SceneStateManager.Instance.PlayerID = _LocalPlayerID;
         }
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
-        Debug.Log($"棋盘格子数: {GameBoardInforDict.Count}");
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
@@ -222,7 +262,7 @@ public class GameManage : MonoBehaviour
                 int startPos = PlayerStartPositions[localPlayerIndex];
                 Debug.Log($"本地玩家起始位置: {startPos}");
 
-                // 使用正确的起始位置初始化
+                // 使用起始位置初始化
                 _PlayerOperation.InitPlayer(_LocalPlayerID, startPos);
             }
             else
@@ -233,7 +273,7 @@ public class GameManage : MonoBehaviour
 
         _NetGameSystem.GetGameManage();
 
-
+        _GameCamera.SetCanUseCamera(true);
         // 触发游戏开始事件
         OnGameStarted?.Invoke();
 
@@ -249,30 +289,44 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 本地测试模式初始化...");
 
         SetIsGamingOrNot(true);
-
-        if (bIsInGaming && GameBoardInforDict.Count > 0)
+     
+        // 使用协程开始游戏，避免脚本Start执行顺序问题
+           if (!bIsStartSingleGame)
+                StartCoroutine(TrueStartGame());
+        
+      
+        return true;
+    }
+    private IEnumerator TrueStartGame()
+    {
+        yield return 0.1f;
+        if (GameBoardInforDict.Count > 0)
         {
             // 添加默认玩家
             _LocalPlayerID = 0;
             AllPlayerIds.Add(0);
-            AllPlayerIds.Add(1);
+
 
             _PlayerDataManager.CreatePlayer(0);
-            _PlayerDataManager.CreatePlayer(1);
 
             // 添加玩家初始格子位置的id
             PlayerStartPositions.Add(0);
             PlayerStartPositions.Add(GameBoardInforDict.Count - 1);
 
-            // 初始化本机玩家
             _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+            // 初始化本机玩家
+            // 起始位置方法，待地图起始位置功能实装后使用
+            //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+            //_GameCamera.GetPlayerPosition(GameBoardInforDict[PlayerStartPositions[0]].Cells3DPos);
 
+
+            Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合
             StartTurn(0);
+            bIsStartSingleGame = true;
         }
-        return true;
-    }
 
+    }
     // 游戏结束
     public bool GameOver(int winnerPlayerId = -1)
     {
@@ -371,7 +425,8 @@ public class GameManage : MonoBehaviour
         TurnEndMessage turnEndMsg = new TurnEndMessage
         {
             PlayerId = LocalPlayerID,
-            PlayerDataJson = JsonUtility.ToJson(localData)
+
+            PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
 
         // 发送到网络
@@ -403,7 +458,7 @@ public class GameManage : MonoBehaviour
         Debug.Log($"[服务器] 切换到玩家 {nextPlayerId}");
 
         // 如果是服务器，广播 TURN_START
-        if (_NetGameSystem != null && _NetGameSystem.IsServer)
+        if (_NetGameSystem != null && _NetGameSystem.bIsServer)
         {
             TurnStartMessage turnStartData = new TurnStartMessage
             {
@@ -510,6 +565,27 @@ public class GameManage : MonoBehaviour
         return default;
     }
 
+    // 根据格子id返回其周围所有可创建单位的格子id
+    public List<int> GetBoardNineSquareGrid(int id)
+    {
+        Debug.Log("pos is "+GetBoardInfor(id).Cells2DPos);
+        List<int> startPos = new List<int>();
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+              
+                    int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
+                    if(GameBoardInforDict2D.ContainsKey(pos))
+                    {
+                        startPos.Add(GameBoardInforDict2D[pos].id);
+                        //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                    }
+            }
+        }
+        return startPos;
+    }
+
     public int GetBoardCount()
     {
         return GameBoardInforDict.Count;
@@ -520,6 +596,7 @@ public class GameManage : MonoBehaviour
         return GetBoardInfor(id);
     }
 
+   
     // 查找某个格子上是否有单位
     public bool FindUnitOnCell(int2 pos)
     {
@@ -560,16 +637,37 @@ public class GameManage : MonoBehaviour
             CellObjects[toPos] = obj;
         }
     }
-
+    public int GetStartPosForNetGame(int i)
+    {
+        return PlayerStartPositions[i];
+    }
     // 设置棋盘结构体信息
     public void SetGameBoardInfor(BoardInfor infor)
     {
         // 如果已经储存数据 清除当前数据
-        //GameBoardInfor.Clear();
-        //GameBoardInforDict.Clear();
+        if(GameBoardInfor.Contains(infor))
+        {
+            GameBoardInfor.Clear();
+            GameBoardInforDict.Clear();
+            GameBoardInforDict2D.Clear();
+        }
 
         GameBoardInfor.Add(infor);
         GameBoardInforDict.Add(infor.id, infor);
+        GameBoardInforDict2D.Add(infor.Cells2DPos, infor);
+
+        // 正确的添加起始位置方式  
+        if (infor.bIsStartPos)
+        {
+            Debug.Log("Add start pos id :" + infor.id);
+            PlayerStartPositions.Add(infor.id);
+        }
+        // 测试用
+        //if (infor.id==24|| infor.id ==277)
+        //{
+        //    Debug.Log("Add start pos id :" + infor.id);
+        //    PlayerStartPositions.Add(infor.id);
+        //}
     }
 
   

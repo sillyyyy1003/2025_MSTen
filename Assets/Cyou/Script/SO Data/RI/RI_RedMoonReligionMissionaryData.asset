@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69739e068a956504e9ac53b5c1402ddc, type: 3}
+  m_Name: RI_RedMoonReligionMissionaryData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath: Cyou/Prefab/missionary
+  originalPID: 0
+  pieceName: "\u7D05\u6708\u6559_\u5BA3\u6559\u5E2B"
+  populationCost: 3
+  resourceCost: 2
+  initialLevel: 0
+  aPRecoveryRate: 10
+  moveAPCost: 1
+  moveSpeed: 1
+  canAttack: 1
+  attackPower: 0
+  attackRange: 0
+  attackCooldown: 1
+  attackAPCost: 20
+  maxHPByLevel:
+  - 5
+  - 7
+  - 10
+  - 10
+  maxAPByLevel:
+  - 5
+  - 7
+  - 8
+  - 8
+  attackPowerByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  hpUpgradeCost: 050000000600000000000000
+  apUpgradeCost: 050000000600000000000000
+  piecePrefab: {fileID: 7153972553235425938, guid: bc85a3009b2bf0347b0ab50c4ed35fac,
+    type: 3}
+  occupyAPCost: 2
+  convertAPCost: 3
+  conversionTurnDuration: 02000000030000000400000005000000
+  baseConversionDefenseChance: 0.2
+  occupyEmptySuccessRateByLevel:
+  - 0.8
+  - 0.9
+  - 1
+  - 1
+  occupyEnemySuccessRateByLevel:
+  - 0.5
+  - 0.6
+  - 0.7
+  - 0.7
+  convertMissionaryChanceByLevel:
+  - 0
+  - 0.55
+  - 0.6
+  - 0.7
+  convertFarmerChanceByLevel:
+  - 0
+  - 0.15
+  - 0.25
+  - 0.3
+  convertMilitaryChanceByLevel:
+  - 0
+  - 0.5
+  - 0.55
+  - 0.6
+  hasAntiConversionSkill: 00010101
+  occupyUpgradeCost: 040000000500000000000000
+  convertEnemyUpgradeCost: 050000000600000007000000
