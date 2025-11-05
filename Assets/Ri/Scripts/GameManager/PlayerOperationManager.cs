@@ -139,7 +139,8 @@ public class PlayerOperationManager : MonoBehaviour
         {
             // 传教士占领
             // 通过PieceManager判断
-            if (PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
+            if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
+                &&PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
             { 
                 _HexGrid.GetCell(LastSelectingCellID).Walled = true;
                 PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
@@ -352,7 +353,7 @@ public class PlayerOperationManager : MonoBehaviour
                 int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
                 if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType==CardType.Solider)
                 {
-                    // ✅ 新逻辑：检查是否在攻击范围（相邻格）
+                    //  新逻辑：检查是否在攻击范围（相邻格）
                     if (IsAdjacentPosition(currentPos, targetPos))
                     {
                         // 在攻击范围内，直接攻击
