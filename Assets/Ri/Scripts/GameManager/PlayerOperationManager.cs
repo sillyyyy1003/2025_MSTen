@@ -1449,7 +1449,7 @@ public class PlayerOperationManager : MonoBehaviour
             PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, toPos);
 
             // 从PieceManager移除目标
-            if (targetData.HasValue)
+            if (PieceManager.Instance.DoesPieceExist(targetData.Value.UnitID))
             {
                 PieceManager.Instance.RemovePiece(targetData.Value.UnitID);
                 Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已从PieceManager移除目标 ID:{targetData.Value.UnitID}");

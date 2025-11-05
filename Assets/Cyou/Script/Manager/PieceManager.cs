@@ -107,7 +107,7 @@ public class PieceManager : MonoBehaviour
 
     // ===== 駒の管理 =====
     private Dictionary<int, Piece> pieces = new Dictionary<int, Piece>();
-    private Dictionary<int ,Piece> enemyPieces = new Dictionary<int ,Piece>();
+    private Dictionary<int, Piece> enemyPieces = new Dictionary<int, Piece>();
     private int nextPieceID = 0;
     private int localPlayerID = -1; // このPieceManagerが管理するプレイヤーのID
 
@@ -359,7 +359,7 @@ public class PieceManager : MonoBehaviour
         pieceObject = Instantiate(data.piecePrefab, spd.piecePos, Quaternion.identity);
 
         //25.11.5 RI add test debug
-        Debug.Log("piece name is "+ pieceObject.name);
+        Debug.Log("piece name is " + pieceObject.name);
         Piece piece = pieceObject.GetComponent<Piece>();
 
         if (piece == null)
@@ -374,7 +374,7 @@ public class PieceManager : MonoBehaviour
 
         // 同步ID（使用来自网络的ID）
         piece.SetPieceID(spd.pieceID);
-        
+
         // 记录到敌人棋子集合
         enemyPieces[spd.pieceID] = piece;
 
@@ -626,11 +626,11 @@ public class PieceManager : MonoBehaviour
                     {
                         return ChangeMissionaryOccupyLevelData(pieceID, missionary.OccupyLevel);
                     }
-                else if (specialUpgradeType == SpecialUpgradeType.MissionaryConvertEnemy)
-                    if (missionary.UpgradeConvertEnemy())
-                    {
-                        return ChangeMissionaryConvertLevelData(pieceID, missionary.ConvertEnemyLevel);
-                    }
+                    else if (specialUpgradeType == SpecialUpgradeType.MissionaryConvertEnemy)
+                        if (missionary.UpgradeConvertEnemy())
+                        {
+                            return ChangeMissionaryConvertLevelData(pieceID, missionary.ConvertEnemyLevel);
+                        }
                 break;
 
             case Pope pope:
@@ -639,11 +639,11 @@ public class PieceManager : MonoBehaviour
                     {
                         return ChangePopeSwapCDLevelData(pieceID, pope.SwapCooldownLevel);
                     }
-                else if (specialUpgradeType == SpecialUpgradeType.PopeBuff)
-                    if (pope.UpgradeBuff())
-                    {
-                        return ChangePopeBuffLevelData(pieceID, pope.BuffLevel);
-                    }
+                    else if (specialUpgradeType == SpecialUpgradeType.PopeBuff)
+                        if (pope.UpgradeBuff())
+                        {
+                            return ChangePopeBuffLevelData(pieceID, pope.BuffLevel);
+                        }
                 break;
         }
 
@@ -771,7 +771,11 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public bool DoesPieceExist(int pieceID)
     {
-        return pieces.ContainsKey(pieceID);
+        //11.5 ri add enemy test
+        if (pieces.ContainsKey(pieceID) || enemyPieces.ContainsKey(pieceID))
+            return true;
+        else
+            return false;
     }
 
     /// <summary>
