@@ -1330,7 +1330,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
 
         // 消耗攻击者的AP（攻击消耗1 AP）
-        PieceManager.Instance.ConsumePieceAP(attackerPieceID, 1);
+        //PieceManager.Instance.ConsumePieceAP(attackerPieceID, 1);
 
         // 判断目标是否死亡
         bool targetDied = targetSyncData.Value.currentHP <= 0;
