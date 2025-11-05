@@ -1032,13 +1032,13 @@ public class PlayerOperationManager : MonoBehaviour
             return false;
         }
 
-        // 检查bCanDoAction标志
-        if (!unitData.Value.bCanDoAction)
-        {
-            Debug.Log($"[AP检查] 单位 at ({position.x},{position.y}) 的 bCanDoAction 为 false");
-            //ShowAPInsufficientMessage("该单位已无法行动！");
-            return false;
-        }
+        //// 检查bCanDoAction标志
+        //if (!unitData.Value.bCanDoAction)
+        //{
+        //    Debug.Log($"[AP检查] 单位 at ({position.x},{position.y}) 的 bCanDoAction 为 false");
+        //    //ShowAPInsufficientMessage("该单位已无法行动！");
+        //    return false;
+        //}
 
         // 获取pieceID并检查AP
         int pieceID = unitData.Value.PlayerUnitDataSO.pieceID;
