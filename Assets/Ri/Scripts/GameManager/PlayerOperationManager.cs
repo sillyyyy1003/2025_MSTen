@@ -1521,9 +1521,8 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
             Debug.Log($"[HandleNetworkAttack] 目标被击杀，攻击者将从 ({attackerPos.x},{attackerPos.y}) 移动到 ({targetPos.x},{targetPos.y})");
 
             // 获取目标世界坐标
-            Vector3 targetWorldPos = GameManage.Instance.FindCell(
-                GameManage.Instance.GetCellIDBy2DPos(targetPos)
-            ).Cells3DPos;
+            Vector3 targetWorldPos = GameManage.Instance.GetCell2D(targetPos).Cells3DPos;
+             
             targetWorldPos.y += 2.5f;
 
             // 更新字典：从原位置移除，添加到新位置

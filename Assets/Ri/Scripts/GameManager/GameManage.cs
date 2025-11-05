@@ -618,6 +618,15 @@ public class GameManage : MonoBehaviour
         return null;
     }
 
+    // 通过2D坐标获取格子
+    public BoardInfor GetCell2D(int2 pos)
+    {
+        if (GameBoardInforDict2D.ContainsKey(pos))
+            return GameBoardInforDict2D[pos];
+        return null;
+    }
+
+
     // 设置格子上的GameObject
     public void SetCellObject(int2 pos, GameObject obj)
     {
