@@ -357,6 +357,9 @@ public class PieceManager : MonoBehaviour
 
         // Prefabから駒を生成
         pieceObject = Instantiate(data.piecePrefab, spd.piecePos, Quaternion.identity);
+
+        //25.11.5 RI add test debug
+        Debug.Log("piece name is "+ pieceObject.name);
         Piece piece = pieceObject.GetComponent<Piece>();
 
         if (piece == null)

@@ -588,16 +588,16 @@ public class PlayerOperationManager : MonoBehaviour
 
 
         // 清除旧的单位显示
-        foreach (var unit in otherPlayersUnits[playerId].Values)
-        {
-            if (unit != null)
-            {
-                Destroy(unit);
-                Debug.Log("otherPlayers unit is " + unit.name);
-            }
+        //foreach (var unit in otherPlayersUnits[playerId].Values)
+        //{
+        //    if (unit != null)
+        //    {
+        //        Destroy(unit);
+        //        Debug.Log("otherPlayers unit is " + unit.name);
+        //    }
 
-        }
-        otherPlayersUnits[playerId].Clear();
+        //}
+        //otherPlayersUnits[playerId].Clear();
 
         // 创建新的单位显示
 
@@ -607,8 +607,13 @@ public class PlayerOperationManager : MonoBehaviour
 
             Debug.LogWarning($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y}" +
                 $" player ID:{unit.PlayerUnitDataSO.playerID}) unit ID:{unit.PlayerUnitDataSO.pieceID}");
-
           
+            if (otherPlayersUnits[playerId].ContainsKey(unit.Position))
+            {
+                Debug.Log($"单位已存在，跳过创建");
+                continue; 
+            }
+
 
             CreateEnemyUnit(playerId, unit);
         }
@@ -636,13 +641,16 @@ public class PlayerOperationManager : MonoBehaviour
     {
         BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(cellId);
         int2 position = cellInfo.Cells2DPos;
-        Vector3 worldPos = cellInfo.Cells3DPos;
+        Vector3 worldPos = new Vector3(
+            cellInfo.Cells3DPos.x,
+           cellInfo.Cells3DPos.y + 2.5f,
+           cellInfo.Cells3DPos.z
+        );
 
-       
 
         // 选择对应的预制体
         //Piece prefab = null;
-        PieceType pieceType=PieceType.None;
+        PieceType pieceType =PieceType.None;
         switch (unitType)
         {
             case CardType.Farmer:
