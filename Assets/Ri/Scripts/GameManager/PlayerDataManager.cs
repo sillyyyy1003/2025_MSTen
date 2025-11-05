@@ -276,7 +276,8 @@ public class PlayerDataManager : MonoBehaviour
     // 生成新的单位ID
     private int GenerateUnitID()
     {
-        return unitIdCounter++;
+        int baseId = GameManage.Instance.LocalPlayerID*10000;
+        return baseId + (unitIdCounter++);
     }
 
     // 重置ID计数器（用于新游戏开始时）

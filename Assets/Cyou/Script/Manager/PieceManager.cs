@@ -309,7 +309,9 @@ public class PieceManager : MonoBehaviour
         piece.Initialize(data, playerID);
 
         // IDを割り当てて登録
-        int pieceID = nextPieceID;
+        int baseId = playerID * 10000;
+
+        int pieceID = baseId + nextPieceID;
         piece.SetPieceID(pieceID);
         pieces[pieceID] = piece;
         nextPieceID++;
