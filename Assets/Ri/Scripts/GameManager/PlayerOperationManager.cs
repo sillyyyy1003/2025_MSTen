@@ -538,8 +538,8 @@ public class PlayerOperationManager : MonoBehaviour
         foreach(var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
+            Debug.Log("你的回合开始!重置行动！" +"unit name is "+unit.UnitID+" canDo is "+ unit.bCanDoAction);
         }
-        Debug.Log("你的回合开始!恢复AP！");
 
     }
 
@@ -1433,9 +1433,9 @@ public class PlayerOperationManager : MonoBehaviour
             SyncLocalUnitAttack(fromPos, toPos, targetOwnerId, true);
             Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送攻击消息：击杀目标 at ({toPos.x},{toPos.y})");
 
-            // 发送移动消息（通知攻击者移动到目标位置）
-            SyncLocalUnitMove(fromPos, toPos);
-            Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送移动消息：攻击者 ({fromPos.x},{fromPos.y}) → ({toPos.x},{toPos.y})");
+            //// 发送移动消息（通知攻击者移动到目标位置）
+            //SyncLocalUnitMove(fromPos, toPos);
+            //Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送移动消息：攻击者 ({fromPos.x},{fromPos.y}) → ({toPos.x},{toPos.y})");
 
 
 
@@ -1518,9 +1518,35 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
         // 播放攻击动画（如果有）
         if (attackerObj != null)
         {
-            // TODO: 播放攻击动画
-            // attackerObj.GetComponent<Animator>()?.SetTrigger("Attack");
-            Debug.Log($"[HandleNetworkAttack] 播放攻击者动画");
+            Debug.Log($"[HandleNetworkAttack] 目标被击杀，攻击者将从 ({attackerPos.x},{attackerPos.y}) 移动到 ({targetPos.x},{targetPos.y})");
+
+            // 获取目标世界坐标
+            Vector3 targetWorldPos = GameManage.Instance.FindCell(
+                GameManage.Instance.GetCellIDBy2DPos(targetPos)
+            ).Cells3DPos;
+            targetWorldPos.y += 2.5f;
+
+            // 更新字典：从原位置移除，添加到新位置
+            if (msg.AttackerPlayerId == localPlayerId)
+            {
+                localPlayerUnits.Remove(attackerPos);
+                localPlayerUnits[targetPos] = attackerObj;
+            }
+            else if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId))
+            {
+                otherPlayersUnits[msg.AttackerPlayerId].Remove(attackerPos);
+                otherPlayersUnits[msg.AttackerPlayerId][targetPos] = attackerObj;
+            }
+
+            // 更新GameManage的格子对象
+            GameManage.Instance.SetCellObject(attackerPos, null);
+            GameManage.Instance.SetCellObject(targetPos, attackerObj);
+
+            // 播放移动动画
+            attackerObj.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
+            {
+                Debug.Log($"[HandleNetworkAttack] 攻击者移动动画完成");
+            });
         }
 
       
@@ -1662,73 +1688,7 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
             Debug.LogWarning($"[HandleNetworkMove] 找不到要移动的单位: 玩家{msg.PlayerId} at ({fromPos.x},{fromPos.y})");
         }
 
-        //// 先更新数据（不触发事件，因为我们自己处理视觉）
-        //if (PlayerDataManager.Instance != null)
-        //{
-        //    PlayerDataManager.Instance.MoveUnit(msg.PlayerId, fromPos, toPos);
-        //    Debug.Log($"[网络移动] 已更新数据管理器");
-        //}
-
-        //// 获取移动的单位GameObject
-        //GameObject movingUnit = null;
-
-        //if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
-        //    otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
-        //{
-        //    movingUnit = otherPlayersUnits[msg.PlayerId][fromPos];
-        //    Debug.Log($"[网络移动] 找到移动单位");
-        //}
-        //else
-        //{
-        //    Debug.LogWarning($"[网络移动] 找不到移动的单位 at ({fromPos.x},{fromPos.y})");
-
-        //    // 打印当前玩家的所有单位位置
-        //    if (otherPlayersUnits.ContainsKey(msg.PlayerId))
-        //    {
-        //        Debug.Log($"[网络移动] 玩家 {msg.PlayerId} 当前单位位置：");
-        //        foreach (var kvp in otherPlayersUnits[msg.PlayerId])
-        //        {
-        //            Debug.Log($"  - ({kvp.Key.x},{kvp.Key.y})");
-        //        }
-        //    }
-        //    return;
-        //}
-
-        //if (movingUnit != null)
-        //{
-        //    // 找到目标位置的世界坐标
-        //    Vector3 targetWorldPos = Vector3.zero;
-        //    foreach (var board in PlayerBoardInforDict.Values)
-        //    {
-        //        if (board.Cells2DPos.Equals(toPos))
-        //        {
-        //            targetWorldPos = new Vector3(
-        //                board.Cells3DPos.x,
-        //                board.Cells3DPos.y + 2.5f,
-        //                board.Cells3DPos.z
-        //            );
-        //            break;
-        //        }
-        //    }
-
-        //    Debug.Log($"[网络移动] 开始更新引用和执行动画");
-
-        //    // 立即更新字典引用（在动画之前）
-        //    otherPlayersUnits[msg.PlayerId].Remove(fromPos);
-        //    otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
-
-        //    // 更新GameManage的格子对象
-        //    GameManage.Instance.SetCellObject(fromPos, null);
-        //    GameManage.Instance.SetCellObject(toPos, movingUnit);
-
-        //    Debug.Log($"[网络移动] 字典已更新，开始动画");
-
-        //    // 执行移动动画
-        //    movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
-        //    {
-        //        Debug.Log($"[网络移动] 动画完成");
-        //    });
-        //}
+      
     }
 
     // 处理来自网络的创建单位消息
