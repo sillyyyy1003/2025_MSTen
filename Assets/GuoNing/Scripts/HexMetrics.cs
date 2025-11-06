@@ -98,7 +98,7 @@ public static class HexMetrics
 	/// <summary>
 	/// Height of walls.
 	/// </summary>
-	public const float wallHeight = 3f;
+	public const float wallHeight = 1.5f;
 
 	/// <summary>
 	/// Vertical wall offset, negative to prevent them from floating above the surface.
