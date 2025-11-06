@@ -396,7 +396,37 @@ public class PlayerOperationManager : MonoBehaviour
             else
             {
                 // 移动到空地
-                MoveToSelectCell(ClickCellid);
+                if (bIsChooseMissionary)
+                {
+                    List<HexCell> list = new List<HexCell>();
+                    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Count; i++)
+                    {
+                        list.Add(_HexGrid.GetCell(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells[i]));
+                    }
+                    if (_HexGrid.SearchCellRange(list, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
+                    {
+                        MoveToSelectCell(ClickCellid);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Missionary  Cant Move To That Cell!");
+                    }
+
+                }
+                else  if (bIsChooseFarmer)
+                    {
+                        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
+                        {
+                            MoveToSelectCell(ClickCellid);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Farmer  Cant Move To That Cell!");
+                        }
+
+                    }
+                    else
+                    MoveToSelectCell(ClickCellid);
             }
         }
     }
