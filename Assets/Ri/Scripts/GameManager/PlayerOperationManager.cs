@@ -1252,7 +1252,7 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("[ExecuteCharm] 魅惑成功！创建新的我方单位");
+        Debug.Log("[ExecuteCharm] 魅惑成功！创建新的我方单位: "+ convertResult.Value.piecetype);
 
         // 获取目标GameObject
         GameObject targetUnit = null;

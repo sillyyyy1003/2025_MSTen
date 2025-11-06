@@ -231,6 +231,8 @@ public class Missionary : Piece
         else
         {
             Debug.Log($"変換失敗（成功率: {conversionChance * 100:F0}%）");
+
+            return false;
         }
 
         ChangeState(PieceState.Idle);
