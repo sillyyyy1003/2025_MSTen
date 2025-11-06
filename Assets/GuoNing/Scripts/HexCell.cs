@@ -28,7 +28,8 @@ public enum TerrainTextureType
 public enum SpecialIndexType
 {
 	Pope = 1, // 教皇的初始位置	
-	Gold = 2 // 金矿
+	Gold = 2, // 金矿
+	Temple=3, // 特殊建筑
 };
 
 

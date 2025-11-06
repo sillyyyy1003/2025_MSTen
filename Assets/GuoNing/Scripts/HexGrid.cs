@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using System.IO;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Component that represents an entire hexagon map.
@@ -335,9 +336,6 @@ public class HexGrid : MonoBehaviour
 		
 		cell.Elevation = 0;
 
-		//2025.10.31
-		cell.IsVisible = true;
-
 		AddCellToChunk(x, z, cell);
 	}
 
@@ -536,6 +534,12 @@ public class HexGrid : MonoBehaviour
 
 				// 水域不考虑 且不考虑有单位的格子
 				if (neighbor.IsUnderwater || neighbor.Unit)
+				{
+					continue;
+				}
+
+				//2025.11.06 追加特殊建筑不可通过 从寻路中剔除
+				if (neighbor.SpecialIndex == (int)SpecialIndexType.Temple)
 				{
 					continue;
 				}
@@ -952,4 +956,22 @@ public class HexGrid : MonoBehaviour
 
 		GameManage.Instance.SetGameBoardInfor(infor);
 	}
+
+	/// <summary>
+	/// 更新模型透明度
+	/// </summary>
+	/// <param name="index"></param>
+
+	public void UpdateCellFeature(int index)
+	{
+		int x = index % CellCountX;
+		int z = index / CellCountX;
+
+		int chunkX = x / HexMetrics.chunkSizeX;
+		int chunkZ = z / HexMetrics.chunkSizeZ;
+
+		chunks[chunkX + chunkZ * chunkCountX].features.UpdateFeature(index,cells[index].Unit);
+	}
+
+
 }
