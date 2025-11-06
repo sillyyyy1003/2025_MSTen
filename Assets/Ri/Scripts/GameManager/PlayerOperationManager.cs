@@ -1063,7 +1063,7 @@ public class PlayerOperationManager : MonoBehaviour
     private bool IsAdjacentPosition(int2 a, int2 b)
     {
         // 计算差值
-
+        Debug.Log("攻击者位置 "+a+" 被攻击者位置"+b);
         int dX = a.x - b.x;
         int dY = a.y - b.y;
         if (dX <= 1 && dY <= 1)
