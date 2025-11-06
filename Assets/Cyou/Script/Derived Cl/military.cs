@@ -62,8 +62,9 @@ public class MilitaryUnit : Piece
     protected virtual void PerformAttack(Piece target)
     {
         int finalDamage = CalculateDamage();
+        Debug.Log("目标为 " + target.GetType() + " 目标HP " + target.CurrentHP+ " 攻击力 "+ finalDamage);
         target.TakeDamage(finalDamage, this);
-
+        Debug.Log("目标为 "+target.GetType()+" 目标HP "+target.CurrentHP);
         // クリティカル判定
         if (UnityEngine.Random.value < militaryData.criticalChance)
         {

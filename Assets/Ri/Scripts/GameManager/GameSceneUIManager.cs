@@ -61,7 +61,7 @@ public class GameSceneUIManager : MonoBehaviour
     public string sEnemyTurn = "Enemy's Turn";
 
     // 资源数
-    private int ResourcesCount=100;
+    private int ResourcesCount=32;
 
     private float CountdownTimeCount=100;
     private float CountdownTimePoolCount = 100;
@@ -438,7 +438,7 @@ public class GameSceneUIManager : MonoBehaviour
 
     private void OnCreateFramerButtonPressed()
     {
-        if (ResourcesCount < 10)
+        if (ResourcesCount < 2)
         {
             ShowNotEnough();
             return;
@@ -447,7 +447,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 尝试创建单位
         if (_PlayerOpManager.TryCreateUnit(CardType.Farmer))
         {
-            ResourcesCount -= 10;
+            ResourcesCount -= 2;
             SetResourcesCount(ResourcesCount);
             Debug.Log("成功创建农民");
         }
@@ -459,7 +459,7 @@ public class GameSceneUIManager : MonoBehaviour
     }
     private void OnCreateSoldierButtonPressed()
     {
-        if (ResourcesCount - 20 <= 0)
+        if (ResourcesCount - 5 <= 0)
         {
             ShowNotEnough();
             return;
@@ -467,7 +467,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 尝试创建单位
         if (_PlayerOpManager.TryCreateUnit(CardType.Solider))
         {
-            ResourcesCount -= 20;
+            ResourcesCount -= 5;
             SetResourcesCount(ResourcesCount);
             Debug.Log("成功创建士兵");
         }
@@ -479,7 +479,7 @@ public class GameSceneUIManager : MonoBehaviour
     }
     private void OnCreateMissionaryButtonPressed()
     {
-        if (ResourcesCount <30)
+        if (ResourcesCount <3)
         {
             ShowNotEnough();
             return;
@@ -488,7 +488,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 尝试创建传教士
         if (_PlayerOpManager.TryCreateUnit(CardType.Missionary))
         {
-            ResourcesCount -= 30;
+            ResourcesCount -= 3;
             SetResourcesCount(ResourcesCount);
             Debug.Log("成功创建传教士");
         }

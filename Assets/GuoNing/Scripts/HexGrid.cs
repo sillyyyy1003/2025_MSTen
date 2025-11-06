@@ -612,8 +612,9 @@ public class HexGrid : MonoBehaviour
 	/// <param name="fromCell">选定的HexCell</param>
 	/// <param name="range">范围</param>
 	/// <returns></returns>
-	bool SearchCellRange(List<HexCell> cellList, HexCell fromCell, int range)
+	public bool SearchCellRange(List<HexCell> cellList, HexCell fromCell, int range)
 	{
+		// ↑11.6 RI 修改为public
 		for (int i = 0; i <cellList.Count; i++)
 		{
 
