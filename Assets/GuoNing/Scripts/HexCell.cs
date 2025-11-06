@@ -30,20 +30,21 @@ public enum SpecialIndexType
 	Pope = 1, // 教皇的初始位置	
 	Gold = 2 // 金矿
 };
+
+
 public enum PlantType
 {
-	BigStone = 1,       // 冰原 (大石头)
-	Wasteland = 2,    // 荒地 (中石头+草)
-	SmallStone = 3,   // 岩石地 (小石头+草)
-	DessertGrass = 4,// 沙漠 (小石头+仙人掌)
-	Grass = 5,        // 草地 (草)
-	Bush = 6,           // 灌木
-	Forest = 7,       // 森林 (小树)
-	FallingForest = 8,// 落叶林 (落叶树)
-	RainForest = 9,   // 雨林 (大树)
-	Swamp = 10,        // 沼泽
-	DessertTree = 11// 沙漠树
-
+	BigStone = 0,       // 冰原 (大石头)
+	Wasteland = 1,    // 荒地 (中石头+草)
+	SmallStone = 2,   // 岩石地 (小石头+草)
+	DessertGrass = 3,// 沙漠 (小石头+仙人掌)
+	Grass = 4,        // 草地 (草)
+	Bush = 5,           // 灌木
+	Forest = 6,       // 森林 (小树)
+	FallingForest = 7,// 落叶林 (落叶树)
+	RainForest = 8,   // 雨林 (大树)
+	Swamp = 9,        // 沼泽
+	DessertTree = 10	// 沙漠树
 }
 
 
@@ -111,7 +112,7 @@ public class HexCell : MonoBehaviour
 				return;
 			}
 			elevation = value;
-			Grid.ShaderData.ViewElevationChanged(this);
+			//Grid.ShaderData.ViewElevationChanged(this);
 			RefreshPosition();
 			ValidateRivers();
 
@@ -140,7 +141,7 @@ public class HexCell : MonoBehaviour
 				return;
 			}
 			waterLevel = value;
-			Grid.ShaderData.ViewElevationChanged(this);
+			//Grid.ShaderData.ViewElevationChanged(this);
 			ValidateRivers();
 			Refresh();
 		}
@@ -363,7 +364,8 @@ public class HexCell : MonoBehaviour
 	/// <summary>
 	/// Whether the cell counts as visible.
 	/// </summary>
-	public bool IsVisible => visibility > 0 && Explorable;
+	//public bool IsVisible => visibility > 0 && Explorable;
+	public bool IsVisible = true; 
 
 	/// <summary>
 	/// Whether the cell is explorable. If not it never counts as explored or visible.
@@ -433,7 +435,7 @@ public class HexCell : MonoBehaviour
 
 	int distance;
 
-	int visibility;
+	private int visibility = 1;
 
 
 	/// <summary>

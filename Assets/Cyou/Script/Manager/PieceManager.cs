@@ -6,14 +6,56 @@ using GameData;
 using GamePieces;
 using DG.Tweening.Core.Easing;
 
+//25.11.4 RI 添加序列化Vector3 变量
 
+/// <summary>
+/// 可序列化的Vector3包装类，用于网络传输
+/// 避免Unity Vector3的循环引用问题
+/// </summary>
+[Serializable]
+public struct SerializableVector3
+{
+    public float x;
+    public float y;
+    public float z;
 
+    public SerializableVector3(float x, float y, float z)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public SerializableVector3(Vector3 vector)
+    {
+        this.x = vector.x;
+        this.y = vector.y;
+        this.z = vector.z;
+    }
+
+    // 隐式转换：SerializableVector3 -> Vector3
+    public static implicit operator Vector3(SerializableVector3 sv)
+    {
+        return new Vector3(sv.x, sv.y, sv.z);
+    }
+
+    // 隐式转换：Vector3 -> SerializableVector3
+    public static implicit operator SerializableVector3(Vector3 v)
+    {
+        return new SerializableVector3(v.x, v.y, v.z);
+    }
+
+    public override string ToString()
+    {
+        return $"({x}, {y}, {z})";
+    }
+}
 
 public struct syncPieceData
 {
     public PieceType piecetype;
     public Religion religion;
-    public Vector3 piecePos;
+    public SerializableVector3 piecePos;
     public int playerID;
     public int pieceID;
     public int currentHP;
@@ -66,10 +108,12 @@ public class PieceManager : MonoBehaviour
 
     // ===== 駒の管理 =====
     private Dictionary<int, Piece> pieces = new Dictionary<int, Piece>();
-    private Dictionary<int ,Piece> enemyPieces = new Dictionary<int ,Piece>();
+    private Dictionary<int, Piece> enemyPieces = new Dictionary<int, Piece>();
     private int nextPieceID = 0;
     private int localPlayerID = -1; // このPieceManagerが管理するプレイヤーのID
 
+    //25.11.1 RI add GameObject
+    private GameObject pieceObject;
     // ===== 依存関係 =====
     [SerializeField] private UnitListTable unitListTable;
 
@@ -226,6 +270,13 @@ public class PieceManager : MonoBehaviour
 
     #region 駒の生成
 
+    // 25.11.1 RI add return piece gameObject
+    public GameObject GetPieceGameObject()
+    {
+        if (pieceObject != null)
+            return pieceObject;
+        return null;
+    }
     /// <summary>
     /// 駒を生成（GameManagerから呼び出し）
     /// </summary>
@@ -247,13 +298,13 @@ public class PieceManager : MonoBehaviour
         }
 
         // Prefabから駒を生成
-        GameObject pieceObj = Instantiate(data.piecePrefab, position, Quaternion.identity);
-        Piece piece = pieceObj.GetComponent<Piece>();
+        pieceObject = Instantiate(data.piecePrefab, position, Quaternion.identity);
+        Piece piece = pieceObject.GetComponent<Piece>();
 
         if (piece == null)
         {
             Debug.LogError($"Pieceコンポーネントがありません: {pieceType}");
-            Destroy(pieceObj);
+            Destroy(pieceObject);
             return null;
         }
 
@@ -261,7 +312,9 @@ public class PieceManager : MonoBehaviour
         piece.Initialize(data, playerID);
 
         // IDを割り当てて登録
-        int pieceID = nextPieceID;
+        int baseId = playerID * 10000;
+
+        int pieceID = baseId + nextPieceID;
         piece.SetPieceID(pieceID);
         pieces[pieceID] = piece;
         nextPieceID++;
@@ -293,6 +346,9 @@ public class PieceManager : MonoBehaviour
     public bool CreateEnemyPiece(syncPieceData spd)
     {
         // UnitListTableからSOデータを取得
+
+        // 25.11.5 RI add test
+        Debug.Log($"敵駒データ: {spd.piecetype}, {spd.religion}");
         var pieceDetail = new UnitListTable.PieceDetail(spd.piecetype, spd.religion);
         PieceDataSO data = unitListTable.GetPieceDataSO(pieceDetail);
 
@@ -303,13 +359,16 @@ public class PieceManager : MonoBehaviour
         }
 
         // Prefabから駒を生成
-        GameObject pieceObj = Instantiate(data.piecePrefab, spd.piecePos, Quaternion.identity);
-        Piece piece = pieceObj.GetComponent<Piece>();
+        pieceObject = Instantiate(data.piecePrefab, spd.piecePos, Quaternion.identity);
+
+        //25.11.5 RI add test debug
+        Debug.Log("piece name is " + pieceObject.name);
+        Piece piece = pieceObject.GetComponent<Piece>();
 
         if (piece == null)
         {
             Debug.LogError($"Pieceコンポーネントがありません: {spd.piecetype}");
-            Destroy(pieceObj);
+            Destroy(pieceObject);
             return false;
         }
 
@@ -318,7 +377,7 @@ public class PieceManager : MonoBehaviour
 
         // 同步ID（使用来自网络的ID）
         piece.SetPieceID(spd.pieceID);
-        
+
         // 记录到敌人棋子集合
         enemyPieces[spd.pieceID] = piece;
 
@@ -583,11 +642,11 @@ public class PieceManager : MonoBehaviour
                     {
                         return ChangeMissionaryOccupyLevelData(pieceID, missionary.OccupyLevel);
                     }
-                else if (specialUpgradeType == SpecialUpgradeType.MissionaryConvertEnemy)
-                    if (missionary.UpgradeConvertEnemy())
-                    {
-                        return ChangeMissionaryConvertLevelData(pieceID, missionary.ConvertEnemyLevel);
-                    }
+                    else if (specialUpgradeType == SpecialUpgradeType.MissionaryConvertEnemy)
+                        if (missionary.UpgradeConvertEnemy())
+                        {
+                            return ChangeMissionaryConvertLevelData(pieceID, missionary.ConvertEnemyLevel);
+                        }
                 break;
 
             case Pope pope:
@@ -596,11 +655,11 @@ public class PieceManager : MonoBehaviour
                     {
                         return ChangePopeSwapCDLevelData(pieceID, pope.SwapCooldownLevel);
                     }
-                else if (specialUpgradeType == SpecialUpgradeType.PopeBuff)
-                    if (pope.UpgradeBuff())
-                    {
-                        return ChangePopeBuffLevelData(pieceID, pope.BuffLevel);
-                    }
+                    else if (specialUpgradeType == SpecialUpgradeType.PopeBuff)
+                        if (pope.UpgradeBuff())
+                        {
+                            return ChangePopeBuffLevelData(pieceID, pope.BuffLevel);
+                        }
                 break;
         }
 
@@ -661,7 +720,7 @@ public class PieceManager : MonoBehaviour
     /// <summary>
     /// 駒の現在APを取得
     /// </summary>
-    public float GetPieceAP(int pieceID)
+    public int GetPieceAP(int pieceID)
     {
         if (!pieces.TryGetValue(pieceID, out Piece piece))
         {
@@ -728,7 +787,11 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public bool DoesPieceExist(int pieceID)
     {
-        return pieces.ContainsKey(pieceID);
+        //11.5 ri add enemy test
+        if (pieces.ContainsKey(pieceID) || enemyPieces.ContainsKey(pieceID))
+            return true;
+        else
+            return false;
     }
 
     /// <summary>
@@ -945,7 +1008,7 @@ public class PieceManager : MonoBehaviour
             return null;
         }
 
-        if (!pieces.TryGetValue(targetID, out Piece target))
+        if (!enemyPieces.TryGetValue(targetID, out Piece target))
         {
             Debug.LogError($"ターゲットが見つかりません: ID={targetID}");
             return null;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,18 +42,6 @@ public class UnitCardManager : MonoBehaviour
     public float deckstartSpacing = 1f;//仓库里的卡牌与卡牌的间距
     public bool isDeckSelected = false;
 
-
-    [Header("Fake Player Data")]
-	public int currentCardCount = 5;
-    public int targetCardCount = 5;
-    public int currentDeckCount = 5;
-    public int targetDeckCount = 5;
-
-    //内部保存用
-    private List<UnitCard> cards = new List<UnitCard>();//目前场上显示的卡牌的列表
-    private List<StoredCard> deck = new List<StoredCard>();//目前场上显示的卡组的列表
-
-
     //内部计算用
 	private float cardWidth = 1f;//卡牌宽度
     private float detailCardWidth = 1f;//展开卡牌宽度
@@ -61,18 +50,29 @@ public class UnitCardManager : MonoBehaviour
     private float viewWidth = 1f;//卡牌滚动窗口的固定大小
     private Vector2 startPosition_Container = new Vector2(0, 0);
 
+    private bool enableSingleMode = true;
+
+
+    //UI
+    public int openIndex = -1;//-->choosedUnitId
+
+    private List<UnitCard> cards = new List<UnitCard>();//目前场上显示的卡牌的列表
+    private List<StoredCard> deck = new List<StoredCard>();//目前场上显示的卡组的列表
+
+    //GameData
+    private int choosedUnitId = -1;//-->openIndex
+    private int targetUnitId = -1;
+
     private CardType currentCardType = CardType.None;
     private CardType targetCardType = CardType.None;
 
-    private bool enableSingleMode = true;
+    private int currentCardCount = 5;
+    private int targetCardCount = 5;
+    private int currentDeckCount = 5;
+    private int targetDeckCount = 5;
 
-    public int openIndex = -1;
-
-    //fake data
-
-
-
-
+    //====event====
+    public event System.Action<int> OnCardSelected;
 
 
     public static UnitCardManager Instance { get; private set; }
@@ -105,6 +105,8 @@ public class UnitCardManager : MonoBehaviour
         startPosition_Container = new Vector2(startSpacing, 0);
 
 
+        Button containerBtn = deckContainer.GetComponent<Button>();
+        containerBtn.onClick.AddListener(() => OnDeckClicked());
     }
 
     void Start()
@@ -122,15 +124,8 @@ public class UnitCardManager : MonoBehaviour
     #region ==== 卡牌生成与销毁 ====
 
     /// <summary>根据玩家数据生成卡牌（暂留）PlayerData==>UIData</summary>
-    void GenerateCardList(PlayerData playerData)
+    void GenerateCardList(CardType type)
     {
-
-
-
-
-
-
-
 
     }
 
@@ -176,7 +171,22 @@ public class UnitCardManager : MonoBehaviour
         UnitCard card = cardObj.GetComponent<UnitCard>();
 		card.SetSprite(type);
 
-        if (type == CardType.Pope) card.alwaysOpen = true;
+        if(type == CardType.Pope)
+        {
+            card.SetData(UIGameDataManager.Instance.PopeUnitData);
+            card.alwaysOpen = true;
+        }
+        else {
+            List<UIUnitData> units = UIGameDataManager.Instance.GetActivateUnitDataList(type);
+
+            if (units != null && i < units.Count)
+            {
+                card.SetData(units[i]);
+            }
+
+
+        }
+        
 
 
         RectTransform rect = cardObj.GetComponent<RectTransform>();
@@ -226,7 +236,6 @@ public class UnitCardManager : MonoBehaviour
         }
 
 
-
         deck.Add(storedCard);
 
     }
@@ -234,56 +243,139 @@ public class UnitCardManager : MonoBehaviour
     /// <summary>清空所有卡牌的数据和显示</summary>
     public void ClearAllCards()
     {
-        GameObject[] allObjects = FindObjectsOfType<GameObject>();
+        ClearActivateCards();
+        ClearDeckCards();
+     }
 
-        foreach (var obj in allObjects)
+    public void ClearDeckCards()
+    {
+
+        // === 清除仓库卡 ===
+        if (deckContainer != null && deckContainer.gameObject.activeInHierarchy)
         {
-            if (obj.name.EndsWith("(Clone)"))
+            foreach (Transform child in deckContainer)
             {
-                Destroy(obj);
+                if (child == null || !child.gameObject.activeInHierarchy)
+                    continue;
+
+                if (child.name.EndsWith("(Clone)"))
+                    Destroy(child.gameObject);
             }
         }
-        cards.Clear();
+
         deck.Clear();
         deckCount.SetActive(false);
+
+    }
+
+    public void ClearActivateCards()
+    {
+        // === 清除场上卡 ===
+        if (cardContainer != null && cardContainer.gameObject.activeInHierarchy)
+        {
+            foreach (Transform child in cardContainer)
+            {
+                if (child == null || !child.gameObject.activeInHierarchy)
+                    continue;
+
+                // 只清除名字带 (Clone) 的对象
+                if (child.name.EndsWith("(Clone)"))
+                    Destroy(child.gameObject);
+            }
+        }
+
+        // === 清除教皇单卡===
+        if (singleContainer != null && singleContainer.gameObject.activeInHierarchy)
+        {
+            foreach (Transform child in singleContainer)
+            {
+                if (child == null || !child.gameObject.activeInHierarchy)
+                    continue;
+
+                if (child.name.EndsWith("(Clone)"))
+                    Destroy(child.gameObject);
+            }
+        }
+
+        cards.Clear();
         openIndex = -1;
     }
+
 
 
     /// <summary>更新卡牌显示</summary>
     public void UpdateCards()
 	{
-        if (!enableSingleMode)
+
+
+
+        if (targetCardType != currentCardType)
         {
-            if (targetCardType != currentCardType || targetCardCount != currentCardCount || targetDeckCount != currentDeckCount)
+            if (targetCardType == CardType.Pope || targetCardType == CardType.None)
             {
-                ClearAllCards();
+
+                EnableSingleMode(true);
+
+            }
+            else
+            {
+
+                EnableSingleMode(false);
+            }
+
+            ClearAllCards();
+
+            targetCardCount = UIGameDataManager.Instance.GetActivateUnitCount(targetCardType);
+            GenerateActiveCards(targetCardCount, targetCardType);
+            currentCardType = targetCardType;
+            currentCardCount = targetCardCount;
+
+            if (!enableSingleMode)
+            {
+                targetCardCount = UIGameDataManager.Instance.GetActivateUnitCount(targetCardType);
+                GenerateStoredCards(targetDeckCount, targetCardType);
+                currentDeckCount = targetDeckCount;
+            }
+
+            choosedUnitId = -1;
+        }
+        else
+        {
+            targetDeckCount = UIGameDataManager.Instance.GetUIDeckNum(targetCardType);
+            targetCardCount = UIGameDataManager.Instance.GetActivateUnitCount(targetCardType);
+
+            if (targetCardCount != currentCardCount)
+            {
+                ClearActivateCards();
 
                 GenerateActiveCards(targetCardCount, targetCardType);
+
+                currentCardCount = targetCardCount;
+
+            }
+
+            if (targetDeckCount != currentDeckCount && !enableSingleMode)
+            {
+                ClearDeckCards();
+
                 GenerateStoredCards(targetDeckCount, targetCardType);
 
-                currentCardType = targetCardType;
-                currentCardCount = targetCardCount;
                 currentDeckCount = targetDeckCount;
             }
 
 
+
         }
-        else
+
+
+
+        if (targetUnitId != -1 && targetUnitId != choosedUnitId)
         {
-            if (targetCardType != currentCardType)
-            {
-                ClearAllCards();
-                GenerateActiveCards(targetCardCount, targetCardType);
-                currentCardType = targetCardType;
-                currentCardCount = targetCardCount;
-            }
-
-
+            
+            StartCoroutine(SelectTargetCardNextFrame(targetUnitId));
         }
 
         AdjustContainerWidth();
-
 
     }
 
@@ -300,15 +392,17 @@ public class UnitCardManager : MonoBehaviour
 			Debug.Log(cards[clickedIndex].GetPanelOpen());
 			RearrangeCards(clickedIndex, false);
             openIndex = clickedIndex;
-
+            choosedUnitId = cards[openIndex].GetCardUnitID();
         }
 		else
 		{
 			RearrangeCards(clickedIndex, true);
             openIndex = -1;
-
+            choosedUnitId = -1;
         }
 
+        OnCardSelected?.Invoke(choosedUnitId);
+        Debug.Log($"[UnitCardManager] Card Clicked: ID = {choosedUnitId}(Close When ID=-1)");
     }
 
     void OnDeckClicked()
@@ -386,7 +480,9 @@ public class UnitCardManager : MonoBehaviour
     /// <summary>自动聚焦到展开的卡牌  根据CardId去取 CardType</summary>
     private void SetContainerLookAt()
     {
-        
+
+
+
 
     }
 
@@ -530,8 +626,6 @@ public class UnitCardManager : MonoBehaviour
 
         enableSingleMode = tf;
 
-        UpdateCards();
-
     }
 
     /// <summary>设置目前被选中表示的卡牌种类</summary>
@@ -539,9 +633,6 @@ public class UnitCardManager : MonoBehaviour
     {
 
         targetCardType = type;
-        if (type == CardType.Pope) targetCardCount = 1;
-
-        //targetCardCount=PlayerDataManager.Instance.GetPl
 
     }
 
@@ -561,11 +652,36 @@ public class UnitCardManager : MonoBehaviour
     }
 
 
+    public int GetChoosedUnitId()
+    {
 
+        return choosedUnitId;
 
+    }
 
+    public void SetTargetUnitId(int targetid)
+    {
 
+        targetUnitId = targetid;
+    }
 
+    private IEnumerator SelectTargetCardNextFrame(int targetId)
+    {
+        // 等待一帧，保证卡片生成完毕
+        yield return null;
+        int index = cards.FindIndex(c => c.GetCardUnitID() == targetId);
+        if (index < 0 || index >= cards.Count)
+        {
+            Debug.Log($"[UnitCardManager] 没找到对应UnitID={targetId}的卡片，当前cards.Count={cards.Count}");
+            yield break;
+        }
+
+        cards[index].ShowPanel();
+        OnCardClicked(index);
+
+        targetUnitId = -1;
+
+    }
     #endregion
 
 

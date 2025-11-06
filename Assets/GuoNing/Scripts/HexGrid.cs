@@ -50,9 +50,6 @@ public class HexGrid : MonoBehaviour
 	public bool Wrapping
 	{ get; private set; }
 
-
-	public HexMapLoader mapLoader;
-
 	Transform[] columns;
 	HexGridChunk[] chunks;
 	HexCell[] cells;
@@ -88,22 +85,6 @@ public class HexGrid : MonoBehaviour
 		cellShaderData.Grid = this;
 		CreateMap(CellCountX, CellCountZ, false);
 	}
-
-	void Start()
-	{
-		mapLoader.LoadMap();
-	}
-
-	/// <summary>
-	/// 延迟一帧生成地图，确保 Start 执行完
-	/// </summary>
-	/// <returns></returns>
-	IEnumerator LoadMapOnce()
-	{
-		yield return null; // 等一帧，确保 Start 执行完
-		if (mapLoader) mapLoader.LoadMap();
-	}
-
 
 	/// <summary>
 	/// Add a unit to the map.
@@ -230,7 +211,7 @@ public class HexGrid : MonoBehaviour
 			HexMetrics.InitializeHashGrid(seed);
 			HexUnit.unitPrefab = unitPrefab;
 			HexMetrics.wrapSize = Wrapping ? CellCountX : 0;
-			//ResetVisibility();
+			ResetVisibility();
 		}
 	}
 
@@ -351,8 +332,11 @@ public class HexGrid : MonoBehaviour
 		label.rectTransform.anchoredPosition =
 			new Vector2(position.x, position.z);
 		cell.UIRect = label.rectTransform;
-
+		
 		cell.Elevation = 0;
+
+		//2025.10.31
+		cell.IsVisible = true;
 
 		AddCellToChunk(x, z, cell);
 	}
@@ -414,7 +398,6 @@ public class HexGrid : MonoBehaviour
 
 		for (int i = 0; i < cells.Length; i++)
 		{
-
 			cells[i].Load(reader, header);
 
 			// 2025.10.20 将更新后的Cell信息拷贝到GameManager里
@@ -428,6 +411,7 @@ public class HexGrid : MonoBehaviour
 		}
 
 		cellShaderData.ImmediateMode = originalImmediateMode;
+		
 	}
 
 	/// <summary>
@@ -570,12 +554,13 @@ public class HexGrid : MonoBehaviour
 				}
 				else
 				{
-					// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
-					moveCost = edgeType == HexEdgeType.Flat ? 2 : 4;
+					//// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
+					//moveCost = edgeType == HexEdgeType.Flat ? 2 : 4;
 
-					int ForestEffecetor = 1, FarmEffecetor = 1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
-					moveCost += neighbor.UrbanLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
-								neighbor.PlantLevel * PlantEffecetor;
+					//int ForestEffecetor = 1, FarmEffecetor = 1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
+					//moveCost += neighbor.UrbanLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
+					//			neighbor.PlantLevel * PlantEffecetor;
+					moveCost = 1;
 
 				}
 
@@ -616,6 +601,47 @@ public class HexGrid : MonoBehaviour
 	}
 
 
+	/// <summary>
+	/// 判断某个Hex Cell到玩家领地是否在距离范围内
+	/// </summary>
+	/// <param name="cellList">玩家的HexCell数组</param>
+	/// <param name="fromCell">选定的HexCell</param>
+	/// <param name="range">范围</param>
+	/// <returns></returns>
+	bool SearchCellRange(List<HexCell> cellList, HexCell fromCell, int range)
+	{
+		for (int i = 0; i <cellList.Count; i++)
+		{
+
+			if (fromCell.Coordinates.DistanceTo(cellList[i].Coordinates) <= range)
+				return true;
+		}
+
+		return false;
+	}
+
+
+	/// <summary>
+	/// 返回某个格子到领地的最短直线距离
+	/// </summary>
+	/// <param name="cellList">领地HexCell数组</param>
+	/// <param name="fromCell">目标HexCell</param>
+	/// <returns>最短距离</returns>
+	int SearchCellDistance(List<HexCell> cellList, HexCell fromCell)
+	{
+		int distance = int.MaxValue;
+		foreach (var cell in  cellList)
+		{
+			if (cell.Coordinates.DistanceTo(fromCell.Coordinates) <= distance)
+				distance = cell.Coordinates.DistanceTo(fromCell.Coordinates);
+		}
+		return distance;
+	}
+
+
+
+
+
 	/*
 	/// <summary>
 	   /// Try to find a path.
@@ -625,11 +651,11 @@ public class HexGrid : MonoBehaviour
 	   /// <param name="unit">Unit for which the path is.</param>
 	   public void FindPath(HexCell fromCell, HexCell toCell, HexUnit unit)
 	   {
-	   	ClearPath();
-	   	currentPathFromIndex = fromCell.Index;
-	   	currentPathToIndex = toCell.Index;
-	   	currentPathExists = Search(fromCell, toCell, unit);
-	   	ShowPath(unit.Speed);
+	    ClearPath();
+	    currentPathFromIndex = fromCell.Index;
+	    currentPathToIndex = toCell.Index;
+	    currentPathExists = Search(fromCell, toCell, unit);
+	    ShowPath(unit.Speed);
 	   }
 
 	bool Search(HexCell fromCell, HexCell toCell, HexUnit unit)
@@ -762,6 +788,7 @@ public class HexGrid : MonoBehaviour
 	/// </summary>
 	public void ResetVisibility()
 	{
+		
 		for (int i = 0; i < cells.Length; i++)
 		{
 			cells[i].ResetVisibility();
@@ -771,6 +798,7 @@ public class HexGrid : MonoBehaviour
 			HexUnit unit = units[i];
 			IncreaseVisibility(unit.Location, unit.VisionRange);
 		}
+	
 	}
 
 	List<HexCell> GetVisibleCells(HexCell fromCell, int range)
