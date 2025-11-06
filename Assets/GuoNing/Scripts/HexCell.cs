@@ -30,6 +30,8 @@ public enum SpecialIndexType
 	Pope = 1, // 教皇的初始位置	
 	Gold = 2 // 金矿
 };
+
+
 public enum PlantType
 {
 	BigStone = 0,       // 冰原 (大石头)
@@ -43,7 +45,6 @@ public enum PlantType
 	RainForest = 8,   // 雨林 (大树)
 	Swamp = 9,        // 沼泽
 	DessertTree = 10	// 沙漠树
-
 }
 
 
