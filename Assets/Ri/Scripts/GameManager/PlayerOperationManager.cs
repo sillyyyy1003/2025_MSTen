@@ -713,45 +713,10 @@ public class PlayerOperationManager : MonoBehaviour
 
         GameObject pieceObj = PieceManager.Instance.GetPieceGameObject();
 
-
-
-
-        //switch (pieceType)
-        //{
-        //    case PieceType.Farmer:
-        //        unitData = PieceManager.Instance.;
-
-        //        break;
-        //    case PieceType.Military:
-        //        unitData = unit.GetComponent<MilitaryUnit>().GetUnitDataSO();
-        //        break;
-        //    case  PieceType.Missionary:
-        //        unitData = unit.GetComponent<Missionary>().GetUnitDataSO();
-        //        break;
-        //    case PieceType.Pope:
-        //        unitData = unit.GetComponent<Pope>().GetUnitDataSO();
-        //        Debug.Log("unit pope data is "+unitData.name);
-        //        //_HexGrid.GetCell(cellId).Walled = true ;
-        //        GetStartWall(cellId);
-        //        break;
-        //}
-
         // 添加描边效果
         pieceObj.AddComponent<ChangeMaterial>();
 
-        //if (unit == null)
-        //{
-        //    Debug.LogError($"预制体为空: {unitType}");
-        //    return;
-        //}
-
-        //// 更新棋子位置在棋盘上
-        //unit.transform.position = new Vector3(
-        //    unit.transform.position.x,
-        //    unit.transform.position.y + 2.5f,
-        //    unit.transform.position.z
-        //);
-
+      
         // 添加到数据管理器
         PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
 
@@ -1028,14 +993,6 @@ public class PlayerOperationManager : MonoBehaviour
             return false;
         }
 
-        //// 检查bCanDoAction标志
-        //if (!unitData.Value.bCanDoAction)
-        //{
-        //    Debug.Log($"[AP检查] 单位 at ({position.x},{position.y}) 的 bCanDoAction 为 false");
-        //    //ShowAPInsufficientMessage("该单位已无法行动！");
-        //    return false;
-        //}
-
         // 获取pieceID并检查AP
         int pieceID = unitData.Value.PlayerUnitDataSO.pieceID;
         int currentAP = PieceManager.Instance.GetPieceAP(pieceID);
@@ -1050,10 +1007,6 @@ public class PlayerOperationManager : MonoBehaviour
         return true;
     }
 
-    // ============================================
-    // 新增方法1：IsAdjacentPosition
-    // ============================================
-
     /// <summary>
     /// 检查两个位置是否相邻（六边形格子的六个方向）
     /// </summary>
@@ -1063,10 +1016,10 @@ public class PlayerOperationManager : MonoBehaviour
     private bool IsAdjacentPosition(int2 a, int2 b)
     {
         // 计算差值
-        Debug.Log("攻击者位置 "+a+" 被攻击者位置"+b);
-        int dX = a.x - b.x;
-        int dY = a.y - b.y;
-        if (dX <= 1 && dY <= 1)
+        int d=_HexGrid.GetCell(a.x,a.y).Coordinates.DistanceTo(_HexGrid.GetCell(b.x, b.y).Coordinates);
+
+        //Debug.Log("攻击者位置 " + a + " 被攻击者位置" + b+" 距离: "+d);
+        if (d <= 1 )
             return true;
         else
             return false;
