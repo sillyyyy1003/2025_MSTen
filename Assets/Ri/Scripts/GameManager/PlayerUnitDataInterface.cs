@@ -16,7 +16,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     // 单例
     public static PlayerUnitDataInterface Instance { get; private set; }
-
+    private int EnemyID;
 
     private void Awake()
     {
@@ -65,16 +65,21 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     }
 
-    // *****************************
-    // **********接口部分***********
-    // *****************************
+    // 拿到点击的敌方单位id
+    private void GetEmemyUnitID(int unitid)
+    {
+        EnemyID=unitid;
+    }
+        // *****************************
+        // **********接口部分***********
+        // *****************************
 
-    /// <summary>
-    /// 拿到某种棋子的已上场的key列表
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public List<int> GetUnitIDListByType(CardType type)
+        /// <summary>
+        /// 拿到某种棋子的已上场的key列表
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public List<int> GetUnitIDListByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type);
     }
@@ -97,12 +102,31 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
 
+    // 拿到摄像机追踪的棋子id --> 追加
+    public void SetFocusedUnitID(int id)
+    {
+
+    }
+    // 拿到玩家的可用棋子上限数量 --> 追加
+    public int GetUnitCountLimit()
+    {
+        return SceneStateManager.Instance.PlayerUnitLimit;
+    }
+
     // 拿到特定类型单位的所有已经上场的单位数量
     public int GetUnitCountByType(CardType type)
     {
 
         return PlayerDataManager.Instance.GetActivateUnitKey(type).Count ;
     }
+
+    // 拿到敌方棋子的位置 --> 追加
+    public int2 GetEnemyUnitPosition(int2 pos)
+    {
+        return pos;
+
+    }
+
 
     // 拿到特定类型单位的所有未上场的单位数量
     public int GetDeckNumByType(CardType type)
@@ -114,8 +138,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // 拿到尚未行动的棋子数量
     public int GetInactiveUnitCount()
     {
-        int count = 1;
-        return count;
+        return PlayerDataManager.Instance.GetUnitCanUse();
     }
 
     // 拿到摄像机追踪的棋子id
