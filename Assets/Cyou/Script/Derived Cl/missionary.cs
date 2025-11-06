@@ -230,7 +230,10 @@ public class Missionary : Piece
 
         // 変換判定（ターゲットの種類に応じた成功率）
         float conversionChance = GetConversionChanceByPieceType(target);
-        if (UnityEngine.Random.value < conversionChance)
+
+        //25.11.6 RI 添加测试判断
+        conversionChance = 100;
+        if (UnityEngine.Random.value<= conversionChance)
         {
             // 升級1以上の宣教師・十字軍に対しては即死
             bool shouldInstantKill = target.UpgradeLevel >= 1 && (target is Missionary || target is MilitaryUnit);
@@ -252,6 +255,8 @@ public class Missionary : Piece
         else
         {
             Debug.Log($"変換失敗（成功率: {conversionChance * 100:F0}%）");
+
+            return false;
         }
 
         ChangeState(PieceState.Idle);
