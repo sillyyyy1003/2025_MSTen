@@ -114,6 +114,19 @@ public class Missionary : Piece
     }
 
     /// <summary>
+    /// 魅惑レベルに応じた魅惑ターン数を取得
+    /// </summary>
+    public int GetConversionDuration()
+    {
+        if (missionaryData.conversionTurnDuration == null || convertEnemyLevel >= missionaryData.conversionTurnDuration.Length)
+        {
+            Debug.LogWarning($"魅惑ターン数が設定されていません。デフォルト値2を使用します");
+            return 2;
+        }
+        return missionaryData.conversionTurnDuration[convertEnemyLevel];
+    }
+
+    /// <summary>
     /// 魅惑敵性スキルを持っているか（升級1以降）
     /// </summary>
     public bool HasAntiConversionSkill()
@@ -188,8 +201,13 @@ public class Missionary : Piece
     /// <summary>
     /// 特殊攻撃: 敵駒を自軍駒に変換
     /// </summary>
-    public bool ConversionAttack(Piece target)
+    /// <param name="target">魅惑対象の駒</param>
+    /// <param name="charmDuration">魅惑成功時のターン数（失敗時は0）</param>
+    /// <returns>魅惑試行成功（AP消費）したらtrue</returns>
+    public bool ConversionAttack(Piece target, out int charmDuration)
     {
+        charmDuration = 0;
+
         if (target == null || !target.IsAlive)
         {
             Debug.LogWarning("攻撃対象が無効です");
@@ -221,11 +239,14 @@ public class Missionary : Piece
             {
                 Debug.Log($"魅惑成功！{target.Data.pieceName}（升級{target.UpgradeLevel}）は即死しました！（成功率: {conversionChance * 100:F0}%）");
                 target.TakeDamage(target.CurrentHP, this); // 即死ダメージ
+                charmDuration = 0; // 即死なので魅惑ターンは0
             }
             else
             {
+                // 魅惑ターン数を取得
+                charmDuration = GetConversionDuration();
                 ConvertEnemy(target);
-                Debug.Log($"{target.Data.pieceName}を自軍に変換しました！（成功率: {conversionChance * 100:F0}%）");
+                Debug.Log($"{target.Data.pieceName}を{charmDuration}ターン自軍に変換しました！（成功率: {conversionChance * 100:F0}%）");
             }
         }
         else

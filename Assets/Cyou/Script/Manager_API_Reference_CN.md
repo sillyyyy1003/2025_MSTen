@@ -78,11 +78,20 @@ PieceManager pieceManager = // 获取 PieceManager 引用
 pieceManager.SetLocalPlayerID(1);
 ```
 
+**重要功能:**
+- **棋子 ID 范围的自动分配**: 根据玩家 ID 自动设置棋子 ID 的范围
+  - Player 0: 0～9999
+  - Player 1: 10000～19999
+  - Player 2: 20000～29999
+  - Player 3: 30000～39999
+- 这样可以防止魅惑时棋子 ID 重复
+- 通过棋子 ID 可以一目了然地判断属于哪个玩家
+
 **注意:**
 - 必须在创建棋子前调用此方法
 - 用于网络同步中区分己方棋子（pieces）和敌方棋子（enemyPieces）
 
-**实现位置:** `PieceManager.cs:20-24`
+**实现位置:** `PieceManager.cs:108-114`
 
 ---
 
@@ -660,30 +669,47 @@ if (pieceManager.AttackEnemy(militaryID, enemyID))
 ---
 
 #### `ConvertEnemy()`
-宣教师魅惑敌人。
+宣教师魅惑敌人，暂时控制对方棋子。魅惑会在一定回合数后自动解除。
 
 **函数签名:**
 ```csharp
-public bool ConvertEnemy(int missionaryID, int targetID)
+public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
 ```
 
 **参数:**
 - `missionaryID`: 宣教师棋子 ID
-- `targetID`: 目标棋子 ID
+- `targetID`: 目标敌方棋子 ID（从 enemyPieces 字典中获取）
 
 **返回值:**
-- `true`: 魅惑尝试成功（成功率判定在内部进行）
-- `false`: 失败
+- 魅惑成功: `syncPieceData`（包含目标的当前 PID 和魅惑回合数）
+- 即死的情况: null（由 OnPieceDeath 事件处理）
+- 失败: null
 
 **使用示例:**
 ```csharp
-if (pieceManager.ConvertEnemy(missionaryID, enemyID))
+syncPieceData? charmData = PieceManager.Instance.ConvertEnemy(missionaryID, enemyPieceID);
+
+if (charmData.HasValue)
 {
-    Debug.Log("尝试魅惑");
+    Debug.Log($"魅惑成功！控制{charmData.Value.charmedTurnsRemaining}回合");
+    SendToNetwork(charmData.Value);
 }
 ```
 
-**实现位置:** `PieceManager.cs:360-381`
+**重要行为:**
+1. 执行魅惑尝试（成功率取决于宣教师的 `convertEnemyLevel`）
+2. 魅惑成功时：
+   - 设置目标的魅惑状态（`Piece.SetCharmed()`）
+   - 魅惑回合数从 `MissionaryDataSO.conversionTurnDuration[convertEnemyLevel]` 获取
+   - 将目标从 `enemyPieces` 移动到 `pieces`（可作为己方棋子使用）
+   - 触发 `OnPieceCharmed` 事件
+3. 即死的情况（等级1以上的宣教师・军队）：
+   - 目标立即死亡，由 `OnPieceDeath` 事件处理
+4. 魅惑解除：
+   - 每回合通过 `ProcessTurnStart()` 自动减少计数器
+   - 计数器归零时自动返回原所有者（`pieces` → `enemyPieces`）
+
+**实现位置:** `PieceManager.cs:959-1006`
 
 ---
 
@@ -838,7 +864,7 @@ pieceManager.RecoverPieceAP(farmerID, 10.0f);
 ### 回合处理
 
 #### `ProcessTurnStart()`
-执行指定玩家的回合开始处理。
+执行指定玩家的回合开始处理（AP 恢复、魅惑计数器处理）。
 
 **函数签名:**
 ```csharp
@@ -854,7 +880,24 @@ public void ProcessTurnStart(int playerID)
 pieceManager.ProcessTurnStart(currentPlayerID);
 ```
 
-**实现位置:** `PieceManager.cs:577-590`
+**处理内容:**
+1. **AP 恢复**: 恢复指定玩家所有棋子的 AP
+2. **魅惑计数器处理**:
+   - 调用每个棋子的 `ProcessCharmedTurn()`
+   - 魅惑计数器 -1
+   - 计数器归零的棋子自动返回原所有者
+   - 字典间移动：`pieces` → `enemyPieces`
+
+**魅惑解除的自动处理:**
+```csharp
+// 魅惑解除时会自动执行以下操作：
+// 1. 棋子的 currentPID 恢复为 OriginalPID
+// 2. 从 pieces 字典中删除
+// 3. 添加到 enemyPieces 字典
+// 4. 触发 OnUncharmed 事件
+```
+
+**实现位置:** `PieceManager.cs:1218-1254`
 
 ---
 
@@ -2411,22 +2454,27 @@ public struct syncPieceData
     public Vector3 position;
 
     // 状态信息
-    public int currentPID;          // 当前所属玩家 ID（魅惑后可能改变）
+    public int currentPID;             // 当前所属玩家 ID（魅惑后可能改变）
     public int currentHP;
+    public int charmedTurnsRemaining;  // 魅惑剩余回合数（网络同步用）
 
     // 等级信息
-    public int currentHPLevel;      // HP 等级 (0-3)
-    public int currentAPLevel;      // AP 等级 (0-3)
+    public int currentHPLevel;         // HP 等级 (0-3)
+    public int currentAPLevel;         // AP 等级 (0-3)
 
     // 职业特定等级
-    public int attackPowerLevel;    // 军队: 攻击力等级 (0-3)
-    public int sacrificeLevel;      // 农民: 献祭等级 (0-2)
-    public int occupyLevel;         // 宣教师: 占领等级 (0-3)
-    public int convertEnemyLevel;   // 宣教师: 魅惑等级 (0-3)
-    public int swapCooldownLevel;   // 教皇: 位置交换CD等级 (0-2)
-    public int buffLevel;           // 教皇: 增益等级 (0-3)
+    public int attackPowerLevel;       // 军队: 攻击力等级 (0-3)
+    public int sacrificeLevel;         // 农民: 献祭等级 (0-2)
+    public int occupyLevel;            // 宣教师: 占领等级 (0-3)
+    public int convertEnemyLevel;      // 宣教师: 魅惑等级 (0-3)
+    public int swapCooldownLevel;      // 教皇: 位置交换CD等级 (0-2)
+    public int buffLevel;              // 教皇: 增益等级 (0-3)
 }
 ```
+
+**魅惑相关字段说明:**
+- `currentPID`: 被魅惑的棋子会设置为魅惑者的玩家 ID
+- `charmedTurnsRemaining`: 魅惑解除前的剩余回合数（0 表示未被魅惑）
 
 ### `swapPieceData`
 棋子位置交换数据结构。

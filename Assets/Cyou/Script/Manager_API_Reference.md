@@ -67,7 +67,16 @@ public void SetLocalPlayerID(int playerID)
 PieceManager.Instance.SetLocalPlayerID(1); // プレイヤー1として設定
 ```
 
-**実装箇所:** `PieceManager.cs:108-112`
+**重要な機能:**
+- **駒ID範囲の自動割り当て**: プレイヤーIDに基づいて駒IDの範囲が自動的に設定されます
+  - Player 0: 0～9999
+  - Player 1: 10000～19999
+  - Player 2: 20000～29999
+  - Player 3: 30000～39999
+- これにより、魅惑時などに駒IDの重複が発生しません
+- 駒IDを見ればどのプレイヤーの駒か一目瞭然
+
+**実装箇所:** `PieceManager.cs:108-114`
 
 ---
 
@@ -509,7 +518,7 @@ if (attackData.HasValue)
 ---
 
 #### `ConvertEnemy()`
-宣教師が敵を魅惑し、同期データを返します。
+宣教師が敵を魅惑し、一時的に支配します。魅惑は一定ターン数で自動的に解除されます。
 
 **シグネチャ:**
 ```csharp
@@ -518,13 +527,38 @@ public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
 
 **パラメータ:**
 - `missionaryID`: 宣教師の駒ID
-- `targetID`: ターゲットの駒ID
+- `targetID`: ターゲットの敵駒ID（enemyPieces辞書から取得）
 
 **戻り値:**
-- 成功: `syncPieceData`（ターゲットの現在PIDを含む）
+- 魅惑成功: `syncPieceData`（ターゲットの現在PIDと魅惑ターン数を含む）
+- 即死の場合: null（OnPieceDeathイベントで処理）
 - 失敗: null
 
-**実装箇所:** `PieceManager.cs:828-849`
+**使用例:**
+```csharp
+syncPieceData? charmData = PieceManager.Instance.ConvertEnemy(missionaryID, enemyPieceID);
+
+if (charmData.HasValue)
+{
+    Debug.Log($"魅惑成功！{charmData.Value.charmedTurnsRemaining}ターン支配");
+    SendToNetwork(charmData.Value);
+}
+```
+
+**重要な動作:**
+1. 魅惑試行を実行（成功率は宣教師の`convertEnemyLevel`に依存）
+2. 魅惑成功時：
+   - ターゲットに魅惑状態を設定（`Piece.SetCharmed()`）
+   - 魅惑ターン数は`MissionaryDataSO.conversionTurnDuration[convertEnemyLevel]`から取得
+   - ターゲットを`enemyPieces`から`pieces`に移動（自分の駒として扱える）
+   - `OnPieceCharmed`イベントを発火
+3. 即死の場合（レベル1以上の宣教師・軍隊）：
+   - ターゲットが即死し、`OnPieceDeath`イベントで処理される
+4. 魅惑解除：
+   - 毎ターン`ProcessTurnStart()`で自動的にカウンター減算
+   - カウンターが0になると元の所有者に復帰（`pieces` → `enemyPieces`）
+
+**実装箇所:** `PieceManager.cs:959-1006`
 
 ---
 
@@ -758,7 +792,7 @@ public syncPieceData? RemovePiece(int pieceID)
 ### ターン処理
 
 #### `ProcessTurnStart()`
-指定プレイヤーのターン開始処理を実行します。
+指定プレイヤーのターン開始処理を実行します（AP回復、魅惑カウンター処理）。
 
 **シグネチャ:**
 ```csharp
@@ -774,7 +808,24 @@ public void ProcessTurnStart(int playerID)
 PieceManager.Instance.ProcessTurnStart(currentPlayerID);
 ```
 
-**実装箇所:** `PieceManager.cs:1052-1065`
+**処理内容:**
+1. **AP回復**: 指定プレイヤーのすべての駒のAPを回復
+2. **魅惑カウンター処理**:
+   - 各駒の`ProcessCharmedTurn()`を呼び出し
+   - 魅惑カウンターを-1
+   - カウンターが0になった駒は自動的に元の所有者に復帰
+   - 辞書間移動：`pieces` → `enemyPieces`
+
+**魅惑解除の自動処理:**
+```csharp
+// 魅惑が解除されると自動的に以下が実行される：
+// 1. 駒のcurrentPIDがOriginalPIDに戻る
+// 2. pieces辞書から削除
+// 3. enemyPieces辞書に追加
+// 4. OnUncharmedイベントが発火
+```
+
+**実装箇所:** `PieceManager.cs:1218-1254`
 
 ---
 
@@ -1637,19 +1688,24 @@ public struct syncPieceData
     public PieceType piecetype;
     public Religion religion;
     public Vector3 piecePos;
-    public int playerID;           // 元々のプレイヤーID
+    public int playerID;              // 元々のプレイヤーID
     public int pieceID;
     public int currentHP;
     public int currentHPLevel;
-    public int currentPID;         // 現在のプレイヤーID（魅惑された場合など）
-    public int swapCooldownLevel;  // 教皇専用
-    public int buffLevel;          // 教皇専用
-    public int occupyLevel;        // 宣教師専用
-    public int convertEnemyLevel;  // 宣教師専用
-    public int sacrificeLevel;     // 農民専用
-    public int attackPowerLevel;   // 軍隊専用
+    public int currentPID;            // 現在のプレイヤーID（魅惑された場合など）
+    public int swapCooldownLevel;     // 教皇専用
+    public int buffLevel;             // 教皇専用
+    public int occupyLevel;           // 宣教師専用
+    public int convertEnemyLevel;     // 宣教師専用
+    public int sacrificeLevel;        // 農民専用
+    public int attackPowerLevel;      // 軍隊専用
+    public int charmedTurnsRemaining; // 魅惑残りターン数（ネットワーク同期用）
 }
 ```
+
+**魅惑関連フィールドの説明:**
+- `currentPID`: 魅惑された駒の場合、魅惑したプレイヤーのIDが設定される
+- `charmedTurnsRemaining`: 魅惑が解除されるまでの残りターン数（0の場合は魅惑されていない）
 
 ### swapPieceData構造体
 ```csharp
