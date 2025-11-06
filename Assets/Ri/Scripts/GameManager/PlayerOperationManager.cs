@@ -86,14 +86,6 @@ public class PlayerOperationManager : MonoBehaviour
     //         公有属性
     // *************************
 
-    // 玩家的预制体,后续更改
-    public GameObject FarmerPrefab;
-    public GameObject SoldierPrefab;
-
-    // 其他玩家预制体(后续得到)
-    public GameObject EnemyFarmerPrefab;
-    public GameObject EnemySoldierPrefab;
-
     // 移动速度
     public float MoveSpeed = 1.0f;
 
@@ -135,8 +127,10 @@ public class PlayerOperationManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F) && bIsChooseFarmer)
         {
             // 农民生成建筑
-
-
+        }
+        if (Input.GetKeyDown(KeyCode.H) && bIsChooseFarmer)
+        {
+            // 传教士魅惑
         }
         if (Input.GetKeyDown(KeyCode.G) && bIsChooseMissionary)
         {
@@ -294,7 +288,8 @@ public class PlayerOperationManager : MonoBehaviour
             }
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
             {
-                PlayerUnitDataInterface.Instance.GetEnemyUnitPosition(clickPos);
+                Debug.Log("Get Enemy Unit "+clickPos);
+                PlayerUnitDataInterface.Instance.SetEnemyUnitPosition(clickPos);
             }
             else
             {
@@ -756,6 +751,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
 
+
         // 发送网络消息
         if (GameManage.Instance._NetGameSystem != null)
         {
@@ -767,6 +763,7 @@ public class PlayerOperationManager : MonoBehaviour
                 false
             );
         }
+        //PlayerDataManager.Instance.GetUnitPos(unitData.pieceID);
     }
 
     // *************************
@@ -842,6 +839,8 @@ public class PlayerOperationManager : MonoBehaviour
             unit.transform.position.z
         );
 
+      
+
         // 保存引用
         if (!otherPlayersUnits.ContainsKey(playerId))
         {
@@ -849,6 +848,10 @@ public class PlayerOperationManager : MonoBehaviour
         }
         otherPlayersUnits[playerId][unitData.Position] = unit;
         GameManage.Instance.SetCellObject(unitData.Position, unit);
+
+        //Debug.Log("开始查询敌方单位位置");
+        //PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+
     }
 
     // 移动到选择的棋盘
@@ -1643,6 +1646,8 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
 
+     
+
         // 使用 PieceManager 创建敌方棋子
         if (PieceManager.Instance != null)
         {
@@ -1668,6 +1673,10 @@ public class PlayerOperationManager : MonoBehaviour
                     GameManage.Instance.SetCellObject(pos, unitObj);
 
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
+
+                    //Debug.Log("开始查询敌方单位位置");
+                    //PlayerDataManager.Instance.GetUnitPos(msg.NewUnitSyncData.pieceID);
+
                 }
                 else
                 {

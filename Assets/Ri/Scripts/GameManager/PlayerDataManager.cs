@@ -6,6 +6,7 @@ using UnityEngine;
 using GameData;
 using UnityEngine.UIElements;
 using TMPro;
+using System.Linq;
 
 
 
@@ -528,6 +529,27 @@ public class PlayerDataManager : MonoBehaviour
 
     }
 
+    // 获取一个单位的位置
+    public Vector3 GetUnitPos(int unitID)
+    {
+        int2 pos = default;
+       foreach (var a in allPlayersData)
+        {
+            if(a.Value.FindUnitById(unitID) !=null)
+            {
+                pos = a.Value.FindUnitById(unitID).Value.Position;
+            }
+        }
+
+
+        Debug.Log("unit ID is "+unitID+ 
+            " unit 2Dpos is " + pos
+            + " unit 3D pos is " + GameManage.Instance.GetCellObject(pos).transform.position);
+     
+        return GameManage.Instance.GetCellObject(pos).transform.position;
+    }
+
+
     // 添加单位(种类与位置) - 返回生成的UnitID
     public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject=null, bool isUsed = false)
     {
@@ -717,10 +739,7 @@ public class PlayerDataManager : MonoBehaviour
 
         PlayerUnitData? unitData = data.FindUnitById(unitId);
 
-        //if (unitData.HasValue)
-        //{
-        //    return unitData.Value.PlayerUnitObject;
-        //}
+     
 
         return null;
     }
@@ -735,6 +754,7 @@ public class PlayerDataManager : MonoBehaviour
         }
 
         int playerId = unitIdToPlayerIdMap[unitId];
+        Debug.Log($"Player:ID为 {playerId}");
         PlayerData data = GetPlayerData(playerId);
 
         return data.FindUnitById(unitId);

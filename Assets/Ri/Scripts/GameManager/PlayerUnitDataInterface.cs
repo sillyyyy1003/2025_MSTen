@@ -17,7 +17,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // 单例
     public static PlayerUnitDataInterface Instance { get; private set; }
     private int EnemyID;
-
+    private int2 EnemyUnitPos;
     private void Awake()
     {
         if (Instance == null)
@@ -102,7 +102,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
 
-    // 拿到摄像机追踪的棋子id --> 追加
+    // 设置摄像机追踪的棋子id --> 追加
     public void SetFocusedUnitID(int id)
     {
 
@@ -120,11 +120,17 @@ public class PlayerUnitDataInterface : MonoBehaviour
         return PlayerDataManager.Instance.GetActivateUnitKey(type).Count ;
     }
 
-    // 拿到敌方棋子的位置 --> 追加
-    public int2 GetEnemyUnitPosition(int2 pos)
-    {
-        return pos;
 
+    // 设置地方棋子的位置 --> 追加
+    public void SetEnemyUnitPosition(int2 pos)
+    {
+        EnemyUnitPos=pos;
+    }
+
+    // 拿到敌方棋子的位置 --> 追加
+    public Vector3 GetEnemyUnitPosition(int id)
+    {
+        return PlayerDataManager.Instance.GetUnitPos(id);
     }
 
 
