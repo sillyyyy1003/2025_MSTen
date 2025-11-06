@@ -64,10 +64,10 @@ public class PlayerOperationManager : MonoBehaviour
 
     private int selectCellID;
 
-    // 是否选中了农民
-    private bool bIsChooseFarmer;
-    // 是否选中了传教士
-    private bool bIsChooseMissionary;
+    //// 是否选中了农民
+    //private bool bIsChooseFarmer;
+    //// 是否选中了传教士
+    //private bool bIsChooseMissionary;
 
     // 保存攻击前的原始位置（用于"移动+攻击"场景）
     private int2? attackerOriginalPosition = null;
@@ -124,15 +124,15 @@ public class PlayerOperationManager : MonoBehaviour
             HandleMouseInput();
 
         }
-        if (Input.GetKeyDown(KeyCode.F) && bIsChooseFarmer)
+        if (Input.GetKeyDown(KeyCode.F) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
         {
             // 农民生成建筑
         }
-        if (Input.GetKeyDown(KeyCode.H) && bIsChooseFarmer)
+        if (Input.GetKeyDown(KeyCode.H) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
         {
             // 传教士魅惑
         }
-        if (Input.GetKeyDown(KeyCode.G) && bIsChooseMissionary)
+        if (Input.GetKeyDown(KeyCode.G) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
         {
             // 传教士占领
             // 通过PieceManager判断
@@ -276,10 +276,17 @@ public class PlayerOperationManager : MonoBehaviour
                 PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
 
 
-                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
-                    bIsChooseFarmer = true;
-                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
-                    bIsChooseMissionary = true;
+                //if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+                //{
+
+                //    bIsChooseFarmer = true;
+                //    bIsChooseMissionary = false;
+                //}
+                //if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+                //{
+                //    bIsChooseMissionary = true;
+                //    bIsChooseFarmer = false;
+                //}
 
 
                 OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
@@ -298,7 +305,7 @@ public class PlayerOperationManager : MonoBehaviour
                 ReturnToDefault();
                 SelectingUnit = null;
 
-                if (!bIsChooseFarmer)
+                if (PlayerDataManager.Instance.nowChooseUnitType != CardType.Farmer)
                 {
                     PlayerDataManager.Instance.nowChooseUnitID = -1;
                     PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
@@ -351,7 +358,7 @@ public class PlayerOperationManager : MonoBehaviour
                 int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
 
                 // 传教士魅惑敌方单位
-                if (ownerId != localPlayerId && bIsChooseMissionary && IsAdjacentPosition(currentPos, targetPos))
+                if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary && IsAdjacentPosition(currentPos, targetPos))
                 {
                     Debug.Log("[魅惑] 传教士尝试魅惑敌方单位");
 
@@ -408,8 +415,8 @@ public class PlayerOperationManager : MonoBehaviour
             }
             else
             {
-                // 移动到空地
-                if (bIsChooseMissionary)
+                // 传教士移动
+                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
                 {
                     List<HexCell> list = new List<HexCell>();
                     for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Count; i++)
@@ -425,8 +432,9 @@ public class PlayerOperationManager : MonoBehaviour
                         Debug.LogWarning("Missionary  Cant Move To That Cell!");
                     }
 
-                }
-                else if (bIsChooseFarmer)
+                } 
+                // 农民移动
+                else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
                 {
                     if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
                     {

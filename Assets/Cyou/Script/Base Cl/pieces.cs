@@ -124,8 +124,8 @@ namespace GamePieces
                 Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}に復帰しました。");
             }
 
-            if(charmTurns>0)
-                StartCoroutine(RevertCharmAfterTurns(charmTurns,OriginalPID));
+            //if(charmTurns>0)
+            //    StartCoroutine(RevertCharmAfterTurns(charmTurns,OriginalPID));
 
 
         }
