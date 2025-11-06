@@ -664,7 +664,7 @@ public class GameManage : MonoBehaviour
         {
             CellObjects.Remove(pos);
             _PlayerOperation._HexGrid.GetCell(pos.x, pos.y).Unit = false;
-            Debug.Log("格子 " + pos + " 移除单位: " + obj.name);
+            Debug.Log("格子 " + pos + " 移除单位: " );
         }
         else
         {
@@ -683,7 +683,7 @@ public class GameManage : MonoBehaviour
 
             CellObjects.Remove(fromPos);
             _PlayerOperation._HexGrid.GetCell(fromPos.x, fromPos.y).Unit = false;
-            Debug.Log("格子 " + fromPos + " 移除单位: " + obj.name);
+            Debug.Log("格子 " + fromPos + " 移除单位: " );
 
             CellObjects[toPos] = obj;
             _PlayerOperation._HexGrid.GetCell(fromPos.x, fromPos.y).Unit = true;
