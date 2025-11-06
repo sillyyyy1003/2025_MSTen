@@ -156,6 +156,12 @@ public class UnitAttackMessage
     public int AttackerPlayerId;
     public int AttackerPosX;
     public int AttackerPosY;
+
+    // 原始位置字段
+    public int AttackerOriginalPosX;    // 攻击者原始位置（移动前的位置）
+    public int AttackerOriginalPosY;
+    public bool HasMoved;               // 标记攻击者是否进行了移动
+
     public int TargetPlayerId;
     public int TargetPosX;
     public int TargetPosY;
@@ -1144,14 +1150,31 @@ public class NetGameSystem : MonoBehaviour
     /// <summary>
     /// 发送单位攻击消息
     /// </summary>
-    public void SendUnitAttackMessage(int attackerPlayerId, int2 attackerPos, int targetPlayerId, int2 targetPos,
-        syncPieceData attackerData, syncPieceData? targetData, bool targetDestroyed)
+    public void SendUnitAttackMessage(
+        int attackerPlayerId,
+        int2 attackerPos, 
+        int targetPlayerId, 
+        int2 targetPos,
+        syncPieceData attackerData, 
+        syncPieceData? targetData, 
+        bool targetDestroyed,
+        int2? attackerOriginalPos = null,    // 【新增】原始位置（可选）
+        bool hasMoved = false)               // 【新增】是否移动标记
     {
+        // 如果没有提供原始位置，使用当前位置作为原始位置
+        int2 originalPos = attackerOriginalPos ?? attackerPos;
+
         UnitAttackMessage attackData = new UnitAttackMessage
         {
             AttackerPlayerId = attackerPlayerId,
             AttackerPosX = attackerPos.x,
             AttackerPosY = attackerPos.y,
+
+            // 【新增】设置原始位置
+            AttackerOriginalPosX = originalPos.x,
+            AttackerOriginalPosY = originalPos.y,
+            HasMoved = hasMoved,
+
             TargetPlayerId = targetPlayerId,
             TargetPosX = targetPos.x,
             TargetPosY = targetPos.y,

@@ -68,6 +68,9 @@ public class PlayerOperationManager : MonoBehaviour
     private bool bIsChooseFarmer;
     // 是否选中了传教士
     private bool bIsChooseMissionary;
+    
+    // 保存攻击前的原始位置（用于"移动+攻击"场景）
+    private int2? attackerOriginalPosition = null;
 
     // 双击检测
     // 定义双击的最大时间间隔
@@ -1176,7 +1179,8 @@ public class PlayerOperationManager : MonoBehaviour
                 // 移动完成后的回调：执行攻击
                 Debug.Log("[MoveToAttackRange] 移动完成，开始攻击");
                 ExecuteAttack(targetPos, targetCellId);
-            }
+            },
+            false  // 【关键修复】不同步移动，由攻击消息统一同步
         );
     }
 
@@ -1193,7 +1197,8 @@ public class PlayerOperationManager : MonoBehaviour
         int destinationCellId,
         int2 fromPos,
         int2 toPos,
-        System.Action onComplete)
+        System.Action onComplete ,
+        bool syncMove = true)
     {
         Sequence moveSequence = DOTween.Sequence();
         Vector3 currentPos = SelectingUnit.transform.position;
@@ -1249,10 +1254,17 @@ public class PlayerOperationManager : MonoBehaviour
             // 清理路径显示
             _HexGrid.ClearPath();
 
-            // 发送网络同步
-            SyncLocalUnitMove(fromPos, toPos);
-
-            Debug.Log($"[Move] 移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+            // 【修复】只有在非攻击场景下才发送移动同步消息
+            // 如果是移动+攻击，由攻击消息统一同步
+            if (syncMove)
+            {
+                SyncLocalUnitMove(fromPos, toPos);
+                Debug.Log($"[Move] 移动完成并已同步: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+            }
+            else
+            {
+                Debug.Log($"[Move] 移动完成(不同步，等待攻击消息): ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+            }
 
             // 执行回调（可能是攻击）
             onComplete?.Invoke();
@@ -1321,7 +1333,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[ExecuteAttack] 战斗开始 - 攻击者ID:{attackerPieceID} 攻击 目标ID:{targetPieceID}");
 
-        //  关键：在移动完成后才计算战斗结果
+        //  在移动完成后才计算战斗结果
         syncPieceData? targetSyncData = PieceManager.Instance.AttackEnemy(attackerPieceID, targetPieceID);
 
         if (!targetSyncData.HasValue)
@@ -1501,133 +1513,280 @@ public void HandleNetworkAttack(UnitAttackMessage msg)
         int2 attackerPos = new int2(msg.AttackerPosX, msg.AttackerPosY);
         int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
 
-        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 玩家 {msg.TargetPlayerId} at ({targetPos.x},{targetPos.y})");
+        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 玩家 {msg.TargetPlayerId}");
+        Debug.Log($"[网络攻击] 攻击者位置: ({attackerPos.x},{attackerPos.y}), 目标位置: ({targetPos.x},{targetPos.y})");
 
-        // 获取攻击者GameObject（用于播放攻击动画）
+        // 获取攻击者GameObject
         GameObject attackerObj = null;
-        if (msg.AttackerPlayerId == localPlayerId && localPlayerUnits.ContainsKey(attackerPos))
+        int2 attackerOriginalPos = attackerPos; // 默认原始位置就是当前位置
+
+        // 【修复】首先尝试从原始位置查找攻击者（可能还没移动）
+        // 检查消息中是否包含原始位置信息
+        if (msg.AttackerOriginalPosX != msg.AttackerPosX || msg.AttackerOriginalPosY != msg.AttackerPosY)
         {
-            attackerObj = localPlayerUnits[attackerPos];
-        }
-        else if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId) &&
-                 otherPlayersUnits[msg.AttackerPlayerId].ContainsKey(attackerPos))
-        {
-            attackerObj = otherPlayersUnits[msg.AttackerPlayerId][attackerPos];
-        }
+            // 这是一个"移动+攻击"场景
+            attackerOriginalPos = new int2(msg.AttackerOriginalPosX, msg.AttackerOriginalPosY);
+            Debug.Log($"[网络攻击] 检测到移动+攻击，原始位置: ({attackerOriginalPos.x},{attackerOriginalPos.y})");
 
-        // 播放攻击动画（如果有）
-        if (attackerObj != null)
-        {
-            Debug.Log($"[HandleNetworkAttack] 目标被击杀，攻击者将从 ({attackerPos.x},{attackerPos.y}) 移动到 ({targetPos.x},{targetPos.y})");
-
-            // 获取目标世界坐标
-            Vector3 targetWorldPos = GameManage.Instance.GetCell2D(targetPos).Cells3DPos;
-             
-            targetWorldPos.y += 2.5f;
-
-            // 更新字典：从原位置移除，添加到新位置
-            if (msg.AttackerPlayerId == localPlayerId)
+            // 从原始位置获取攻击者对象
+            if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId) &&
+                otherPlayersUnits[msg.AttackerPlayerId].ContainsKey(attackerOriginalPos))
             {
-                localPlayerUnits.Remove(attackerPos);
-                localPlayerUnits[targetPos] = attackerObj;
-            }
-            else if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId))
-            {
-                otherPlayersUnits[msg.AttackerPlayerId].Remove(attackerPos);
-                otherPlayersUnits[msg.AttackerPlayerId][targetPos] = attackerObj;
-            }
-
-            // 更新GameManage的格子对象
-            GameManage.Instance.SetCellObject(attackerPos, null);
-            GameManage.Instance.SetCellObject(targetPos, attackerObj);
-
-            // 播放移动动画
-            attackerObj.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
-            {
-                Debug.Log($"[HandleNetworkAttack] 攻击者移动动画完成");
-            });
-        }
-
-      
-
-
-
-        // 处理目标 - 根据 TargetDestroyed 标志判断
-        if (msg.TargetDestroyed)
-        {
-            // 目标被摧毁，HP <= 0
-            Debug.Log($"[HandleNetworkAttack] 目标被击杀，HP已归零");
-
-            // 移除目标GameObject
-            if (msg.TargetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
-            {
-                GameObject targetObj = localPlayerUnits[targetPos];
-
-                // 播放死亡动画（如果有）
-                // TODO: targetObj.GetComponent<Animator>()?.SetTrigger("Death");
-
-                localPlayerUnits.Remove(targetPos);
-                Destroy(targetObj);
-            }
-            else if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId) &&
-                     otherPlayersUnits[msg.TargetPlayerId].ContainsKey(targetPos))
-            {
-                GameObject targetObj = otherPlayersUnits[msg.TargetPlayerId][targetPos];
-
-                // 播放死亡动画（如果有）
-                // TODO: targetObj.GetComponent<Animator>()?.SetTrigger("Death");
-
-                otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
-                Destroy(targetObj);
-            }
-
-            GameManage.Instance.SetCellObject(targetPos, null);
-
-            // ===== 从PieceManager中移除被击杀的目标 =====
-            PlayerUnitData? deadTargetData = PlayerDataManager.Instance.FindUnit(msg.TargetPlayerId, targetPos);
-            if (deadTargetData.HasValue && PieceManager.Instance != null)
-            {
-                PieceManager.Instance.RemovePiece(deadTargetData.Value.UnitID);
-                Debug.Log($"[HandleNetworkAttack] 已从PieceManager移除被击杀单位 ID:{deadTargetData.Value.UnitID}");
-            }
-
-        }
-        else if (msg.TargetSyncData.HasValue)
-        {
-            // 目标存活，HP > 0，更新HP数据
-            Debug.Log($"[HandleNetworkAttack] 目标存活，当前HP: {msg.TargetSyncData.Value.currentHP}");
-
-
-
-            // 获取目标GameObject
-            GameObject targetObj = null;
-            if (msg.TargetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
-            {
-                targetObj = localPlayerUnits[targetPos];
-            }
-            else if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId) &&
-                     otherPlayersUnits[msg.TargetPlayerId].ContainsKey(targetPos))
-            {
-                targetObj = otherPlayersUnits[msg.TargetPlayerId][targetPos];
-            }
-
-            // 播放受击动画（如果有）
-            if (targetObj != null)
-            {
-                // TODO: 播放受击动画
-                // targetObj.GetComponent<Animator>()?.SetTrigger("Hit");
-
-                // 如果有血条UI，更新血条显示
-                // UpdateUnitHPDisplay(targetPos, msg.TargetSyncData.Value.currentHP);
+                attackerObj = otherPlayersUnits[msg.AttackerPlayerId][attackerOriginalPos];
             }
         }
         else
         {
-            Debug.LogWarning($"[HandleNetworkAttack] 未收到目标同步数据且未标记为摧毁");
+            // 这是一个"直接攻击"场景（攻击者已经在攻击范围内）
+            Debug.Log($"[网络攻击] 直接攻击，无需移动");
+
+            if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId) &&
+                otherPlayersUnits[msg.AttackerPlayerId].ContainsKey(attackerPos))
+            {
+                attackerObj = otherPlayersUnits[msg.AttackerPlayerId][attackerPos];
+            }
         }
 
-        Debug.Log($"[HandleNetworkAttack] 攻击处理完成");
+        if (attackerObj == null)
+        {
+            Debug.LogWarning($"[网络攻击] 找不到攻击者GameObject");
+            return;
+        }
+
+        // 获取目标GameObject
+        GameObject targetObj = null;
+        if (msg.TargetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+        {
+            targetObj = localPlayerUnits[targetPos];
+        }
+        else if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId) &&
+                 otherPlayersUnits[msg.TargetPlayerId].ContainsKey(targetPos))
+        {
+            targetObj = otherPlayersUnits[msg.TargetPlayerId][targetPos];
+        }
+
+        // ========================================
+        // 【修复】根据场景执行不同的动画流程
+        // ========================================
+
+        if (attackerOriginalPos.x != attackerPos.x || attackerOriginalPos.y != attackerPos.y)
+        {
+            // ===== 场景1：移动+攻击 =====
+            Debug.Log($"[网络攻击] 执行移动+攻击动画");
+
+            // 先播放移动动画
+            PlayMoveAnimationForAttack(
+                attackerObj,
+                msg.AttackerPlayerId,
+                attackerOriginalPos,
+                attackerPos,
+                () => {
+                    // 移动完成后播放攻击效果
+                    Debug.Log($"[网络攻击] 移动完成，播放攻击效果");
+
+                    if (msg.TargetDestroyed)
+                    {
+                        // 目标死亡，攻击者继续前进到目标位置
+                        HandleTargetDestroyedAfterAttack(
+                            attackerObj,
+                            msg.AttackerPlayerId,
+                            attackerPos,
+                            targetPos,
+                            targetObj,
+                            msg.TargetPlayerId
+                        );
+                    }
+                    else
+                    {
+                        // 目标存活，只播放受击动画
+                        HandleTargetSurvivedAfterAttack(targetObj, msg);
+                    }
+                }
+            );
+        }
+        else
+        {
+            // ===== 场景2：直接攻击（不需要移动） =====
+            Debug.Log($"[网络攻击] 执行直接攻击");
+
+            // 播放攻击动画（可选）
+            // PlayAttackAnimation(attackerObj);
+
+            if (msg.TargetDestroyed)
+            {
+                // 目标死亡，攻击者前进到目标位置
+                HandleTargetDestroyedAfterAttack(
+                    attackerObj,
+                    msg.AttackerPlayerId,
+                    attackerPos,
+                    targetPos,
+                    targetObj,
+                    msg.TargetPlayerId
+                );
+            }
+            else
+            {
+                // 目标存活，只播放受击动画
+                HandleTargetSurvivedAfterAttack(targetObj, msg);
+            }
+        }
+
+        Debug.Log($"[网络攻击] 攻击处理完成");
     }
+
+    // ========================================
+    // 辅助方法1：播放移动到攻击位置的动画
+    // ========================================
+    private void PlayMoveAnimationForAttack(
+        GameObject attackerObj,
+        int attackerPlayerId,
+        int2 fromPos,
+        int2 toPos,
+        System.Action onComplete)
+    {
+        // 获取目标世界坐标
+        Vector3 targetWorldPos = GameManage.Instance.GetCell2D(toPos).Cells3DPos;
+        targetWorldPos.y += 2.5f;
+
+        // 更新字典：从原位置移除，添加到新位置
+        if (attackerPlayerId == localPlayerId)
+        {
+            localPlayerUnits.Remove(fromPos);
+            localPlayerUnits[toPos] = attackerObj;
+        }
+        else if (otherPlayersUnits.ContainsKey(attackerPlayerId))
+        {
+            otherPlayersUnits[attackerPlayerId].Remove(fromPos);
+            otherPlayersUnits[attackerPlayerId][toPos] = attackerObj;
+        }
+
+        // 更新GameManage的格子对象
+        GameManage.Instance.SetCellObject(fromPos, null);
+        GameManage.Instance.SetCellObject(toPos, attackerObj);
+
+        // 播放移动动画（可以使用弧形路径）
+        Vector3 startPos = attackerObj.transform.position;
+        Vector3 midPoint = (startPos + targetWorldPos) / 2f;
+        midPoint.y += 5.0f;
+
+        Sequence moveSeq = DOTween.Sequence();
+        moveSeq.Append(attackerObj.transform.DOPath(
+            new Vector3[] { startPos, midPoint, targetWorldPos },
+            MoveSpeed,
+            PathType.CatmullRom
+        ).SetEase(Ease.Linear));
+
+        moveSeq.OnComplete(() =>
+        {
+            Debug.Log($"[PlayMoveAnimationForAttack] 移动动画完成");
+            onComplete?.Invoke();
+        });
+    }
+
+    // ========================================
+    // 辅助方法2：处理目标死亡的情况
+    // ========================================
+    private void HandleTargetDestroyedAfterAttack(
+        GameObject attackerObj,
+        int attackerPlayerId,
+        int2 attackerCurrentPos,
+        int2 targetPos,
+        GameObject targetObj,
+        int targetPlayerId)
+    {
+        Debug.Log($"[HandleTargetDestroyedAfterAttack] 目标被击杀，攻击者前进到目标位置");
+
+        // 移除目标GameObject
+        if (targetObj != null)
+        {
+            // 播放死亡动画（可选）
+            targetObj.transform.DOScale(0f, 0.3f).OnComplete(() =>
+            {
+                if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+                {
+                    localPlayerUnits.Remove(targetPos);
+                }
+                else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
+                         otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
+                {
+                    otherPlayersUnits[targetPlayerId].Remove(targetPos);
+                }
+
+                Destroy(targetObj);
+            });
+        }
+
+        // 攻击者前进到目标位置
+        Vector3 targetWorldPos = GameManage.Instance.GetCell2D(targetPos).Cells3DPos;
+        targetWorldPos.y += 2.5f;
+
+        // 更新字典
+        if (attackerPlayerId == localPlayerId)
+        {
+            localPlayerUnits.Remove(attackerCurrentPos);
+            localPlayerUnits[targetPos] = attackerObj;
+        }
+        else if (otherPlayersUnits.ContainsKey(attackerPlayerId))
+        {
+            otherPlayersUnits[attackerPlayerId].Remove(attackerCurrentPos);
+            otherPlayersUnits[attackerPlayerId][targetPos] = attackerObj;
+        }
+
+        // 更新GameManage
+        GameManage.Instance.SetCellObject(attackerCurrentPos, null);
+        GameManage.Instance.SetCellObject(targetPos, attackerObj);
+
+        // 播放前进动画
+        attackerObj.transform.DOMove(targetWorldPos, MoveSpeed * 0.5f).OnComplete(() =>
+        {
+            Debug.Log($"[HandleTargetDestroyedAfterAttack] 攻击者前进动画完成");
+        });
+
+        // 从PieceManager中移除被击杀的目标
+        PlayerUnitData? deadTargetData = PlayerDataManager.Instance.FindUnit(targetPlayerId, targetPos);
+        if (deadTargetData.HasValue && PieceManager.Instance != null)
+        {
+            PieceManager.Instance.RemovePiece(deadTargetData.Value.UnitID);
+            Debug.Log($"[HandleTargetDestroyedAfterAttack] 已从PieceManager移除被击杀单位 ID:{deadTargetData.Value.UnitID}");
+        }
+    }
+
+    // ========================================
+    // 辅助方法3：处理目标存活的情况
+    // ========================================
+    private void HandleTargetSurvivedAfterAttack(GameObject targetObj, UnitAttackMessage msg)
+    {
+        Debug.Log($"[HandleTargetSurvivedAfterAttack] 目标存活，当前HP: {msg.TargetSyncData?.currentHP ?? 0}");
+
+        // 更新目标HP数据
+        if (msg.TargetSyncData.HasValue)
+        {
+            int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
+            bool updateSuccess = PlayerDataManager.Instance.UpdateUnitSyncDataByPos(
+                msg.TargetPlayerId,
+                targetPos,
+                msg.TargetSyncData.Value
+            );
+
+            if (updateSuccess)
+            {
+                Debug.Log($"[HandleTargetSurvivedAfterAttack] ✓ 已更新目标HP: {msg.TargetSyncData.Value.currentHP}");
+            }
+        }
+
+        // 播放受击动画
+        if (targetObj != null)
+        {
+            // 震动效果
+            targetObj.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
+
+            // 如果有血条UI，更新血条显示
+            // UpdateUnitHPDisplay(targetPos, msg.TargetSyncData.Value.currentHP);
+        }
+    }
+
+
+
 
     // 处理来自网络的移动消息
     public void HandleNetworkMove(UnitMoveMessage msg)
