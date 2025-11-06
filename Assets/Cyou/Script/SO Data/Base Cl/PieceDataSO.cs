@@ -22,7 +22,7 @@ namespace GameData
         public int initialLevel = 0;//初期レベル
 
         [Header("行動力パラメータ")]
-        public float aPRecoveryRate = 10f; // 毎turnの行動力回復量
+        public int aPRecoveryRate = 10; // 毎turnの行動力回復量
         public float moveAPCost = 10f;
         public float moveSpeed = 1.0f;//移動速度?
 
