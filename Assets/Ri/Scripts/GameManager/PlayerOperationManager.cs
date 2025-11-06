@@ -1071,9 +1071,12 @@ public class PlayerOperationManager : MonoBehaviour
     {
         // 计算差值
 
-        int2 diff = a - b;
-
-        return math.abs(diff.x) <= 1 && math.abs(diff.y) <= 1 && !(a.x == b.x && a.y == b.y);
+        int dX = a.x - b.x;
+        int dY = a.y - b.y;
+        if (dX <= 1 && dY <= 1)
+            return true;
+        else
+            return false;
 
 
     }
