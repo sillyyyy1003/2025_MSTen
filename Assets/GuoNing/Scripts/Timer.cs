@@ -81,4 +81,19 @@ public class Timer : MonoBehaviour
     public float GetTurnTime() => currentTurnTime;
     public float GetTimePool() => currentTimePool;
     public bool IsUsingTimePool() => isUsingTimePool;
+
+    public void SetTurnTimeLimit(int limit)
+    {
+
+        turnTimeLimit = limit;
+
+    }
+
+    public void SetTimePoolInitial(int limit)
+    {
+
+        timePoolInitial = limit;
+
+    }
+
 }

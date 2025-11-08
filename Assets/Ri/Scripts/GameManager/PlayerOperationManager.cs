@@ -81,18 +81,12 @@ public class PlayerOperationManager : MonoBehaviour
     // === Event 定义区域 ===
     public event System.Action<int, CardType> OnUnitChoosed;
 
-
     // *************************
     //         公有属性
     // *************************
 
     // 移动速度
     public float MoveSpeed = 1.0f;
-
-
-
-    // UI相关(需要在Inspector中赋值)
-    //public GameObject EndTurnButton;
 
     // 玩家的id,由GameManage统一分配
     public int PlayerID
@@ -107,11 +101,10 @@ public class PlayerOperationManager : MonoBehaviour
     {
         GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();
 
-        // 获取PlayerDataManager引用
-        //playerDataManager = PlayerDataManager.Instance;
 
-        // 隐藏结束回合按钮
-        //GameSceneUIManager.Instance.SetEndTurn(false);
+
+
+
     }
 
 
@@ -563,6 +556,7 @@ public class PlayerOperationManager : MonoBehaviour
             PlayerDataManager.Instance.OnUnitRemoved += OnUnitRemovedHandler;
             PlayerDataManager.Instance.OnUnitMoved += OnUnitMovedHandler;
         }
+
     }
 
     // *************************
@@ -572,15 +566,10 @@ public class PlayerOperationManager : MonoBehaviour
     // 回合开始
     public void TurnStart()
     {
-        // 开始倒计时
-        GameSceneUIManager.Instance.StartTurn();
 
         isMyTurn = true;
         bCanContinue = true;
 
-
-        // 显示结束回合按钮
-        GameSceneUIManager.Instance.SetEndTurn(true);
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
@@ -609,10 +598,6 @@ public class PlayerOperationManager : MonoBehaviour
         SelectedEmptyCellID = -1;
 
 
-
-        // 隐藏结束回合按钮
-        GameSceneUIManager.Instance.SetEndTurn(false);
-
         Debug.Log("你的回合结束!");
 
         // 更新本地玩家数据到PlayerDataManager
@@ -632,9 +617,6 @@ public class PlayerOperationManager : MonoBehaviour
         ReturnToDefault();
         SelectingUnit = null;
         SelectedEmptyCellID = -1;
-
-        // 隐藏结束回合按钮
-        GameSceneUIManager.Instance.SetEndTurn(false);
 
         Debug.Log("等待其他玩家...");
     }
@@ -1817,7 +1799,7 @@ public class PlayerOperationManager : MonoBehaviour
                     targetPos,
                     msg.NewUnitSyncData,
                     null,
-                    false
+                    true
                 );
 
                 // 设置魅惑状态
@@ -1911,7 +1893,7 @@ public class PlayerOperationManager : MonoBehaviour
                     pos,
                     returnedData,
                     null,
-                    false
+                    true
                 );
                 // 魅惑状态已经在ReturnCharmedUnit中重置，这里不需要再设置
 

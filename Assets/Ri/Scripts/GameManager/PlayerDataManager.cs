@@ -30,7 +30,7 @@ public struct PlayerUnitData
     public syncPieceData PlayerUnitDataSO;
 
     // 该单位是否已经上场
-    public bool bUnitIsUsed;
+    public bool bUnitIsActivated;
 
     // 是否能够行动
     public bool bCanDoAction;
@@ -41,13 +41,13 @@ public struct PlayerUnitData
     public int originalOwnerID;          // 原始所有者ID（用于归还控制权）
 
 
-    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isUsed = false, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1)
+    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1)
     {
         UnitID = unitId;
         UnitType = type;
         Position = pos;
         PlayerUnitDataSO = unitData;
-        bUnitIsUsed = isUsed;
+        bUnitIsActivated = isActivated;
         bCanDoAction = canDo;
         bIsCharmed = isCharmed;
         charmedRemainingTurns = charmedTurns;
@@ -87,7 +87,7 @@ public struct PlayerData
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
         Resources = 0;
-        PlayerReligion = Religion.None;
+        PlayerReligion = Religion.SilkReligion;
         PlayerOwnedCells = new List<int>();
     }
     public bool UpdateUnitSyncDataByPos(int2 position, syncPieceData newData)
@@ -460,7 +460,7 @@ public class PlayerDataManager : MonoBehaviour
 
         foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
         {
-            if (a.bUnitIsUsed)
+            if (a.bUnitIsActivated)
                 count++;
         }
         if (activated)
@@ -479,7 +479,7 @@ public class PlayerDataManager : MonoBehaviour
         List<int> list_unitID = new List<int>();
         foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
         {
-            if (a.UnitType == type && a.bUnitIsUsed)
+            if (a.UnitType == type && a.bUnitIsActivated)
                 list_unitID.Add(a.UnitID);
         }
 
@@ -492,7 +492,7 @@ public class PlayerDataManager : MonoBehaviour
         int count = 0;
         foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
         {
-            if (a.UnitType == type && !a.bUnitIsUsed)
+            if (a.UnitType == type && !a.bUnitIsActivated)
                 count++;
         }
 
@@ -559,7 +559,7 @@ public class PlayerDataManager : MonoBehaviour
 
 
     // 添加单位(种类与位置) - 返回生成的UnitID
-    public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject = null, bool isUsed = false)
+    public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject = null, bool bUnitIsActivated = true)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
@@ -908,6 +908,42 @@ public class PlayerDataManager : MonoBehaviour
                 return kvp.Key;
         }
         return -1; // 没有单位
+    }
+
+    public void SetPlayerResourses(int newResources)
+    {
+        int playerId = GameManage.Instance.LocalPlayerID;
+
+        if (!allPlayersData.TryGetValue(playerId, out PlayerData data))
+        {
+            Debug.LogWarning($"UpdatePlayerResources: Player {playerId} not found!");
+            return;
+        }
+
+        data.Resources = newResources;
+        allPlayersData[playerId] = data;
+
+        Debug.Log($"Player {playerId} Resources updated to {newResources}");
+
+    }
+
+    public int GetCreateUnitResoursesCost(CardType type)
+    {
+        switch (type)
+        {
+            case CardType.Missionary:
+                return 3;
+            case CardType.Farmer:
+                return 2;
+            case CardType.Solider:
+                return 5;
+            case CardType.Building:
+                return 3;
+            default:
+                return 99;
+
+        }
+
     }
 
     // *************************

@@ -60,6 +60,8 @@ public struct syncPieceData
     public int pieceID;
     public int currentHP;
     public int currentHPLevel;
+    public int currentAP;
+    public int currentAPLevel;
     public int currentPID;
     public int swapCooldownLevel;
     public int buffLevel;
@@ -334,6 +336,7 @@ public class PieceManager : MonoBehaviour
             playerID = playerID,
             piecePos = position,
             currentHP = (int)piece.CurrentHP,
+            currentAP=(int)piece.CurrentAP,
             currentPID = playerID
         };
     }
@@ -546,6 +549,8 @@ public class PieceManager : MonoBehaviour
             pieceID = piece.PieceID,
             currentHP = piece.CurrentHP,
             currentHPLevel = piece.HPLevel,
+            currentAP = piece.CurrentAP,
+            currentAPLevel = piece.APLevel,
             currentPID = piece.CurrentPID,
             swapCooldownLevel = (piece is Pope pope) ? pope.SwapCooldownLevel : 0,
             buffLevel = (piece is Pope pope2) ? pope2.BuffLevel : 0,

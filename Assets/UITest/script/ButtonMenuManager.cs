@@ -67,6 +67,7 @@ public class ButtonMenuManager : MonoBehaviour
     public event System.Action<CardType, TechTree> OnTechUpdated;
 
 
+
     //单例
     public static ButtonMenuManager Instance { get; private set; }
 
@@ -89,12 +90,14 @@ public class ButtonMenuManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Religion playerReligion = GameUIManager.Instance.GetPlayerReligion();
+
         menuDict.Clear();
 
         foreach (var entry in ButtonMenuFactory.GetAllMenuKeys())
         {
             string id = entry;
-            ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(id, Religion.None);
+            ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(id, playerReligion);
 
             if (data != null)
             {
@@ -236,22 +239,22 @@ public class ButtonMenuManager : MonoBehaviour
                 int cardID = UnitCardManager.Instance.GetChoosedUnitId();
                 if (cardID == -1) break;
 
-                if(PlayerUnitDataInterface.Instance.UseCardSkill(cardID, skill.cardSkill))
+                if (PlayerUnitDataInterface.Instance.UseCardSkill(cardID, skill.cardSkill))
                 {
                     Debug.Log($"[Broadcast] CardSkillUsed: {skill.cardType} - {skill.cardSkill}");
                     OnCardSkillUsed?.Invoke(skill.cardType, skill.cardSkill);
-
                 }
 
                 break;
 
             case ParamUpdateButtonData param:
+                UnitCardManager.Instance.SetDeckSelected(false);
 
-                if(PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter))
+                if (PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter))
                 {
                     Debug.Log($"[Broadcast] TechUpdated: {param.cardType} - {param.targetParameter}");
                     OnTechUpdated?.Invoke(param.cardType, param.targetParameter);
-
+                    LoadSingleMenu(MenuLevel.Third, param.cardType);
                 }
 
                 break;
@@ -260,7 +263,7 @@ public class ButtonMenuManager : MonoBehaviour
 
                 if (UnitCardManager.Instance.IsDeckSelected())
                 {
-                    if (UIGameDataManager.Instance.AddDeckNumByType(purchase.cardType))
+                    if (PlayerUnitDataInterface.Instance.AddDeckNumByType(purchase.cardType))
                     {
                         Debug.Log($"[Broadcast] CardPurchasedIntoDeck: {purchase.cardType}");
                         OnCardPurchasedIntoDeck?.Invoke(purchase.cardType);
@@ -300,6 +303,35 @@ public class ButtonMenuManager : MonoBehaviour
     {
 
         cardTypeChoosed = card;
+    }
+
+    public void LoadSingleMenu(MenuLevel level, CardType type)
+    {
+        Religion playerReligion = GameUIManager.Instance.GetPlayerReligion();
+
+        //获取对应 menuId
+        string menuId = ButtonMenuFactory.GetMenuId(level, type);
+
+        if (string.IsNullOrEmpty(menuId))
+        {
+            Debug.LogError($"[ButtonMenuManager] 找不到菜单: Level={level}, Type={type}");
+            return;
+        }
+
+        //创建对应的数据
+        ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(menuId, playerReligion);
+
+        if (data == null)
+        {
+            Debug.LogError($"[ButtonMenuManager] 菜单创建失败: {menuId}");
+            return;
+        }
+
+        // 覆盖或新增
+        menuDict[menuId] = data;
+
+        // 加载它
+        LoadMenu(menuId);
     }
 }
 
