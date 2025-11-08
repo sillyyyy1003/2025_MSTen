@@ -13,7 +13,8 @@ namespace GameData
         [Header("Prefab Path")]
         public string piecePrefabResourcePath;
         [Header("基本パラメータ")]
-        public int originalPID;//最初にどのプレイヤーに属すか
+        [Obsolete("originalPIDは使用されていません。実行時のoriginalPIDはPiece.Initialize()の引数から設定されます。", false)]
+        public int originalPID;//【非推奨】最初にどのプレイヤーに属すか（現在は使用されていない）
         public string pieceName;
 
 

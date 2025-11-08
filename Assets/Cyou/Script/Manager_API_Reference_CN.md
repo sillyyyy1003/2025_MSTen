@@ -89,7 +89,7 @@ pieceManager.SetLocalPlayerID(1);
 
 **注意:**
 - 必须在创建棋子前调用此方法
-- 用于网络同步中区分己方棋子（pieces）和敌方棋子（enemyPieces）
+- 用于网络同步中管理所有棋子（统一的 allPieces 字典）
 
 **实现位置:** `PieceManager.cs:108-114`
 
@@ -176,14 +176,13 @@ public bool CreateEnemyPiece(syncPieceData spd)
 // 接收到敌方棋子数据时
 syncPieceData enemyData = new syncPieceData
 {
-    pieceID = 101,
+    pieceID = 20101,  // 20000-29999 为玩家2的ID范围
     pieceType = PieceType.Military,
     religion = Religion.RedMoon,
-    playerID = 2,
-    position = new Vector3(20, 0, 20),
+    piecePos = new SerializableVector3(20, 0, 20),
     currentHP = 80,
     currentHPLevel = 1,
-    currentAPLevel = 1,
+    currentPID = 2,
     attackPowerLevel = 2
 };
 
@@ -195,7 +194,7 @@ if (pieceManager.CreateEnemyPiece(enemyData))
 
 **注意:**
 - 此方法会自动设置棋子的所有状态（HP、AP、等级等）
-- 生成的棋子会被添加到 `enemyPieces` 字典
+- 生成的棋子会被添加到 `allPieces` 字典
 - 用于网络游戏中接收并创建对方的棋子
 
 **实现位置:** `PieceManager.cs:76-183`
@@ -678,7 +677,7 @@ public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
 
 **参数:**
 - `missionaryID`: 宣教师棋子 ID
-- `targetID`: 目标敌方棋子 ID（从 enemyPieces 字典中获取）
+- `targetID`: 目标敌方棋子 ID
 
 **返回值:**
 - 魅惑成功: `syncPieceData`（包含目标的当前 PID 和魅惑回合数）
@@ -701,13 +700,13 @@ if (charmData.HasValue)
 2. 魅惑成功时：
    - 设置目标的魅惑状态（`Piece.SetCharmed()`）
    - 魅惑回合数从 `MissionaryDataSO.conversionTurnDuration[convertEnemyLevel]` 获取
-   - 将目标从 `enemyPieces` 移动到 `pieces`（可作为己方棋子使用）
+   - 将目标的 `currentPID` 改为宣教师的 `CurrentPID`（无字典移动）
    - 触发 `OnPieceCharmed` 事件
 3. 即死的情况（等级1以上的宣教师・军队）：
    - 目标立即死亡，由 `OnPieceDeath` 事件处理
 4. 魅惑解除：
    - 每回合通过 `ProcessTurnStart()` 自动减少计数器
-   - 计数器归零时自动返回原所有者（`pieces` → `enemyPieces`）
+   - 计数器归零时 `currentPID` 恢复为原来的 `OriginalPID`（无字典移动）
 
 **实现位置:** `PieceManager.cs:959-1006`
 
@@ -886,15 +885,13 @@ pieceManager.ProcessTurnStart(currentPlayerID);
    - 调用每个棋子的 `ProcessCharmedTurn()`
    - 魅惑计数器 -1
    - 计数器归零的棋子自动返回原所有者
-   - 字典间移动：`pieces` → `enemyPieces`
+   - `currentPID` 恢复为 `OriginalPID`（无字典移动）
 
 **魅惑解除的自动处理:**
 ```csharp
 // 魅惑解除时会自动执行以下操作：
 // 1. 棋子的 currentPID 恢复为 OriginalPID
-// 2. 从 pieces 字典中删除
-// 3. 添加到 enemyPieces 字典
-// 4. 触发 OnUncharmed 事件
+// 2. 触发 OnUncharmed 事件
 ```
 
 **实现位置:** `PieceManager.cs:1218-1254`
@@ -2450,8 +2447,7 @@ public struct syncPieceData
     public int pieceID;
     public PieceType pieceType;
     public Religion religion;
-    public int playerID;
-    public Vector3 position;
+    public SerializableVector3 piecePos;
 
     // 状态信息
     public int currentPID;             // 当前所属玩家 ID（魅惑后可能改变）
@@ -2460,21 +2456,22 @@ public struct syncPieceData
 
     // 等级信息
     public int currentHPLevel;         // HP 等级 (0-3)
-    public int currentAPLevel;         // AP 等级 (0-3)
-
-    // 职业特定等级
-    public int attackPowerLevel;       // 军队: 攻击力等级 (0-3)
-    public int sacrificeLevel;         // 农民: 献祭等级 (0-2)
-    public int occupyLevel;            // 宣教师: 占领等级 (0-3)
-    public int convertEnemyLevel;      // 宣教师: 魅惑等级 (0-3)
     public int swapCooldownLevel;      // 教皇: 位置交换CD等级 (0-2)
     public int buffLevel;              // 教皇: 增益等级 (0-3)
+    public int occupyLevel;            // 宣教师: 占领等级 (0-3)
+    public int convertEnemyLevel;      // 宣教师: 魅惑等级 (0-3)
+    public int sacrificeLevel;         // 农民: 献祭等级 (0-2)
+    public int attackPowerLevel;       // 军队: 攻击力等级 (0-3)
+
+    // 辅助属性: 从 pieceID 计算原始所属玩家
+    public int OriginalPlayerID => pieceID / 10000;
 }
 ```
 
 **魅惑相关字段说明:**
 - `currentPID`: 被魅惑的棋子会设置为魅惑者的玩家 ID
 - `charmedTurnsRemaining`: 魅惑解除前的剩余回合数（0 表示未被魅惑）
+- `OriginalPlayerID`: 从 pieceID 计算得出的原始所属玩家（pieceID / 10000）。不会因魅惑而改变
 
 ### `swapPieceData`
 棋子位置交换数据结构。
@@ -2496,7 +2493,7 @@ public struct swapPieceData
 ### PieceManager的功能
 
 - ✅ **ID 基础管理**: 无需关注具体类型即可操作
-- ✅ **网络同步对应**: 己方和敌方棋子分离管理
+- ✅ **网络同步对应**: 统一管理所有棋子（allPieces 字典）
 - ✅ **同步数据自动生成**: 各种操作后返回 `syncPieceData`
 - ✅ **发送/接收分离**: 防止无限循环的清晰设计
 - ✅ **事件驱动**: 棋子死亡等自动通知
