@@ -269,6 +269,9 @@ public class HexCell : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Plant type
+	/// </summary>
 	public int PlantIndex
 	{
 		get=> plantIndex;
