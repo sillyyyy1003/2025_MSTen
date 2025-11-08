@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// Component that manages the map feature visualizations for a hex grid chunk.
@@ -25,7 +26,9 @@ public class HexFeatureManager : MonoBehaviour
 	[SerializeField]
 	Transform[] special;
 
-	Transform container;
+	public Transform container { get; private set; }
+
+	List<HexFeature> CellFeatures = new List<HexFeature>();
 
 	/// <summary>
 	/// Clear all features.
@@ -181,7 +184,7 @@ public class HexFeatureManager : MonoBehaviour
 		Transform instance = Instantiate(prefab);
 
 		// 根据模型高度调整放置位置，使其位于地面之上
-		position.y += instance.localScale.y * 0.5f;
+		//position.y += instance.localScale.y * 0.5f;	// 所有的Feature的原点都在脚底，所以y轴位置不需要变动了
 
 		// 对位置进行扰动（防止网格边界过于整齐），并随机旋转角度
 		instance.SetLocalPositionAndRotation(
@@ -189,6 +192,11 @@ public class HexFeatureManager : MonoBehaviour
 
 		// 将生成的特征挂在到 container 下，便于场景层级管理
 		instance.SetParent(container, false);
+
+		var feature = instance.gameObject.AddComponent<HexFeature>();
+		feature.Init(cell.Index);
+
+		CellFeatures.Add(feature);
 	}
 
 
@@ -550,5 +558,17 @@ public class HexFeatureManager : MonoBehaviour
 		v2 = v4 = center + thickness;
 		v3.y = v4.y = center.y + HexMetrics.wallHeight;
 		walls.AddQuadUnperturbed(v1, v2, v3, v4);
+	}
+
+	public void UpdateFeature(int index,bool transparent)
+	{
+		for (int i = 0; i < CellFeatures.Count; i++)
+		{
+			// 可能有多个Feature用同一个CellIndex
+			if (CellFeatures[i].HexCellIndex == index)
+			{
+				CellFeatures[i].SetTransparency(transparent);
+			}
+		}
 	}
 }

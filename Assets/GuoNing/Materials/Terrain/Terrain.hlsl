@@ -75,7 +75,7 @@ float3 ApplyGrid(float3 baseColor, HexGridData h)
 //------------------------------------------------------------
 float3 ApplyHighlight(float3 baseColor, HexGridData h)
 {
-	return saturate(h.SmoothstepRange(0.68, 0.8) + baseColor.rgb);
+	return saturate(h.SmoothstepRange(0.78, 0.9) + baseColor.rgb);
 }
 
 
