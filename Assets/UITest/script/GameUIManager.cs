@@ -44,34 +44,34 @@ public struct UIPlayerData
 
 public class GameUIManager : MonoBehaviour
 {
-    [Header("Data")]
-    public bool isInitialize = false;
+    //Data
+    private bool isInitialize = false;
 
-    public int localPlayerId;              // 本地玩家ID
+    private int localPlayerId;              // 本地玩家ID
 
-    public Religion playerReligion;        // 宗教
-    public int Resources;                  // 资源
-    public int AllUnitCount;               // 当前总人口
-    public int AllUnitCountLimit;          // 总人口上限
-    public int ActivateMissionaryCount;    // 传教士激活数
-    public int ActivateSoliderCount;       // 士兵激活数
-    public int ActivateFarmerCount;        // 农民激活数
-    public int ActivateBuildingCount;      // 建筑激活数
-    public int InactiveUnitCount;            // 行动的激活单位数
+    private Religion playerReligion;        // 宗教
+    private int Resources;                  // 资源
+    private int AllUnitCount;               // 当前总人口
+    private int AllUnitCountLimit;          // 总人口上限
+    private int ActivateMissionaryCount;    // 传教士激活数
+    private int ActivateSoliderCount;       // 士兵激活数
+    private int ActivateFarmerCount;        // 农民激活数
+    private int ActivateBuildingCount;      // 建筑激活数
+    private int InactiveUnitCount;            // 行动的激活单位数
 
 
-    public int DeckMissionaryCount;        // 传教士卡组数量
-    public int DeckSoliderCount;           // 士兵卡组数量
-    public int DeckFarmerCount;            // 农民卡组数量
-    public int DeckBuildingCount;          // 建筑卡组数量
+    private int DeckMissionaryCount;        // 传教士卡组数量
+    private int DeckSoliderCount;           // 士兵卡组数量
+    private int DeckFarmerCount;            // 农民卡组数量
+    private int DeckBuildingCount;          // 建筑卡组数量
 
 
     // 当前使用中的单位轻量数据集
-    public List<UIUnitData> MissionaryUnits;
-    public List<UIUnitData> SoliderUnits;
-    public List<UIUnitData> FarmerUnits;
-    public List<UIUnitData> BuildingUnits;
-    public UIUnitData PopeUnitData;
+    private List<UIUnitData> MissionaryUnits;
+    private List<UIUnitData> SoliderUnits;
+    private List<UIUnitData> FarmerUnits;
+    private List<UIUnitData> BuildingUnits;
+    private UIUnitData PopeUnitData;
 
     // 全部玩家轻量数据
     private Dictionary<int, UIPlayerData> allPlayersData;
@@ -91,6 +91,7 @@ public class GameUIManager : MonoBehaviour
     public Image miniMap;
 
     public Button EndTurn;
+    public Button InactiveUnit;
     public TextMeshProUGUI CountdownTime;
 
     [Header("Script")]
@@ -102,7 +103,6 @@ public class GameUIManager : MonoBehaviour
     public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
     public event System.Action TimeIsOut;//时间结束
     public event System.Action OnEndTurnButtonPressed;//回合结束按钮按下
-
 
 
 
@@ -151,7 +151,7 @@ public class GameUIManager : MonoBehaviour
 
         EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
 
-
+        InactiveUnit.onClick.AddListener(() => HandleInactiveUnitButtonPressed());
     }
 
 
@@ -202,6 +202,13 @@ public class GameUIManager : MonoBehaviour
             default:
                 return null;
         }
+    }
+
+    public UIUnitData GetPopeUnitData()
+    {
+
+        return PopeUnitData;
+
     }
 
     public int GetActivateUnitCount(CardType type)
@@ -432,6 +439,13 @@ public class GameUIManager : MonoBehaviour
     private void Initialize()
     {
         if (isInitialize) return;
+
+        MissionaryUnits = new List<UIUnitData>();
+        SoliderUnits = new List<UIUnitData>();
+        FarmerUnits = new List<UIUnitData>();
+        BuildingUnits = new List<UIUnitData>();
+        allPlayersData = new Dictionary<int, UIPlayerData>();
+
 
         PlayerDataManager.Instance.SetPlayerResourses(100);
 
@@ -681,6 +695,16 @@ public class GameUIManager : MonoBehaviour
     {
 
         UpdateUIUnitDataListFromInterface(card);
+
+    }
+
+    private void HandleInactiveUnitButtonPressed()
+    {
+        if (InactiveUnitCount == 0) return;
+
+        //PlayerUnitDataInterface.Instance.Get
+        
+
 
     }
 }

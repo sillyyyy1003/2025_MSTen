@@ -123,6 +123,18 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &8718343 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7819550314296720989, guid: 0240edcb80155b849809eff09fae7267,
+    type: 3}
+  m_PrefabInstance: {fileID: 909387979}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &24593050
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3750,6 +3762,7 @@ MonoBehaviour:
   playerIconParent: {fileID: 527660466}
   miniMap: {fileID: 1874568612}
   EndTurn: {fileID: 1218458964}
+  UnusedUnit: {fileID: 8718343}
   CountdownTime: {fileID: 320742768}
   timer: {fileID: 2117784777}
 --- !u!1001 &2125054216
