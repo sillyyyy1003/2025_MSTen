@@ -223,7 +223,7 @@ public struct SerializablePlayerUnitData
     public int UnitType;
     public int PositionX;
     public int PositionY;
-    public bool bUnitIsUsed;
+    public bool bUnitIsActivated;
     public syncPieceData SyncData;
 
     public static SerializablePlayerUnitData FromPlayerUnitData(PlayerUnitData data)
@@ -234,7 +234,7 @@ public struct SerializablePlayerUnitData
             UnitType = (int)data.UnitType,
             PositionX = data.Position.x,
             PositionY = data.Position.y,
-            bUnitIsUsed = data.bUnitIsUsed,
+            bUnitIsActivated = data.bUnitIsActivated,
             SyncData = data.PlayerUnitDataSO
 
         };
@@ -247,7 +247,7 @@ public struct SerializablePlayerUnitData
             (CardType)UnitType,
             new Unity.Mathematics.int2(PositionX, PositionY),
             SyncData,
-            bUnitIsUsed
+            bUnitIsActivated
         );
     }
 }

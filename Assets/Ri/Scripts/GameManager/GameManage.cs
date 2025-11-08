@@ -388,9 +388,7 @@ public class GameManage : MonoBehaviour
             // 更新UI
             if (GameSceneUIManager.Instance != null)
             {
-                GameSceneUIManager.Instance.SetTurnText(true);
-                GameSceneUIManager.Instance.SetEndTurn(true);
-                GameSceneUIManager.Instance.StartTurn();
+                GameSceneUIManager.Instance.StartMyTurn(true);
             }
         }
         else
@@ -401,8 +399,8 @@ public class GameManage : MonoBehaviour
             // 更新UI
             if (GameSceneUIManager.Instance != null)
             {
-                GameSceneUIManager.Instance.SetTurnText(false);
-                GameSceneUIManager.Instance.SetEndTurn(false);
+                GameSceneUIManager.Instance.StartMyTurn(false);
+
             }
         }
     }

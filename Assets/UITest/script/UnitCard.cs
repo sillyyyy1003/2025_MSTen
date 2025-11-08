@@ -87,7 +87,6 @@ public class UnitCard : MonoBehaviour
 
             if (alwaysOpen)
             {
-                showDataPanel = true;
                 dataPanel.SetActive(true);
 
                 StartCoroutine(SlidePanelIn());
@@ -100,6 +99,8 @@ public class UnitCard : MonoBehaviour
 
 	void Update()
 	{
+
+
         // 常显数据更新
         if (unitData.UnitType!=CardType.None)
         {
@@ -110,10 +111,9 @@ public class UnitCard : MonoBehaviour
         }
 
         // 面板数据更新
-        if (showDataPanel)
+        if (showDataPanel|| alwaysOpen)
 		{
 			SetDetailData();
-
 
 
         }

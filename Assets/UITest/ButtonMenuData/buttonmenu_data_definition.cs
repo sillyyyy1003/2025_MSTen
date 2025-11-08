@@ -323,7 +323,9 @@ namespace GameData.UI
                 triggerEvent = MenuEventType.UpdateCardParameter;
 
                 contentType = ButtonContentType.Text;
-                labelText = GetTechTreeString(parameter);
+                labelText = GetTechTreeString(parameter)+"\n"+"Lv."+ PlayerUnitDataInterface.Instance.GetTechTreeLevel(parameter, type).ToString();
+            
+            
             }
             else
             {
@@ -350,23 +352,26 @@ namespace GameData.UI
                 case TechTree.ATK:
                     return "攻撃力";
                 case TechTree.Sacrifice:
-                    return "生命供儀";
+                    return "生命\n供儀";
                 case TechTree.AttackPosition:
                     return "攻撃口";
                 case TechTree.AltarCount:
                     return "祭壇数";
                 case TechTree.ConstructionCost:
-                    return "建設費用";
+                    return "建設\n費用";
                 case TechTree.MovementCD:
-                    return "移動クール";
+                    return "移動CD";
                 case TechTree.Buff:
                     return "BUFF";
                 case TechTree.Heresy:
-                    return "異端邪説";
+                    return "異端\n邪説";
                 default:
                     return tech.ToString();
             }
         }
+
+        
+
 
     }
 

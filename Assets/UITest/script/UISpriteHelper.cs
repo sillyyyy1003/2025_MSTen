@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using GameData;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 
@@ -31,39 +33,56 @@ public class UISpriteSlot
     [Tooltip("SpriteID")]
     public UISpriteID id;
 
-    [Tooltip("SpriteResourse")]
+    [Tooltip("単一Sprite")]
     public Sprite singleSprite;
-    public Sprite spriteSheet;
+
+    [Tooltip("SpriteSheetの切り出し")]
+    public Sprite[] spriteSheet;
 
     [Tooltip("Note")]
     [TextArea]
     public string note;
 
-    [Tooltip("SpriteSheetのSprite名リスト（自動取得）")]
-    [HideInInspector]
-    public string[] subSpriteNames;
 
     /// <summary>
     /// SpriteSheet内のサブスプライトを取得
     /// </summary>
     public Sprite GetSubSprite(string name)
     {
-        if (spriteSheet == null)
+        if (spriteSheet == null || spriteSheet.Length == 0)
         {
-            Debug.LogWarning($"❌ SpriteSheet未設定（ID: {id}）");
+            Debug.LogWarning($"SpriteSheet 未設定 (ID: {id})");
             return null;
         }
 
-        // Resources.LoadAll は SpriteAtlas ではなくスライス済み PNG から読み取る
-        var sprites = Resources.LoadAll<Sprite>(spriteSheet.name);
-        foreach (var s in sprites)
+        foreach (var s in spriteSheet)
         {
-            if (s.name == name)
+            if (s != null && s.name == name)
                 return s;
         }
 
-        Debug.LogWarning($"❌ Sprite '{name}' not found in '{spriteSheet.name}'");
+        Debug.LogWarning($"SubSprite '{name}' not found in SpriteSheet (ID: {id})");
         return null;
+    }
+
+    /// <summary>
+    /// SpriteSheet 内のサブスプライトを index で取得
+    /// </summary>
+    public Sprite GetSubSprite(int index)
+    {
+        if (spriteSheet == null || spriteSheet.Length == 0)
+        {
+            Debug.LogWarning($"SpriteSheet 未設定 (ID: {id})");
+            return null;
+        }
+
+        if (index < 0 || index >= spriteSheet.Length)
+        {
+            Debug.LogWarning($"SpriteSheet index '{index}' out of range (ID: {id}, Count: {spriteSheet.Length})");
+            return null;
+        }
+
+        return spriteSheet[index];
     }
 
 }
@@ -112,9 +131,14 @@ public class UISpriteHelper : MonoBehaviour
             if (slot == null) continue;
 
             if (!spriteMap.ContainsKey(slot.id))
+            {
                 spriteMap.Add(slot.id, slot);
+
+            }
             else
-                Debug.LogWarning($"Duplicate Sprite ID detected: {slot.id}");
+            {
+                Debug.LogWarning($"Duplicate Sprite ID: {slot.id}");
+            }
         }
 
         initialized = true;
@@ -130,13 +154,16 @@ public class UISpriteHelper : MonoBehaviour
 
         if (spriteMap.TryGetValue(id, out var slot))
         {
+            //  単一Spriteがある場合
             if (slot.singleSprite != null)
                 return slot.singleSprite;
-            if (slot.spriteSheet != null)
-                return slot.spriteSheet; // 図全体を返す場合
+
+            //  SpriteSheetがある場合 → 最初のスプライトを返す
+            if (slot.spriteSheet != null && slot.spriteSheet.Length > 0)
+                return slot.spriteSheet[0];
         }
 
-        Debug.LogWarning($"Sprite ID '{id}' not found or empty.");
+        Debug.LogWarning($"Sprite ID '{id}' not found.");
         return null;
     }
 
@@ -148,9 +175,25 @@ public class UISpriteHelper : MonoBehaviour
         if (!initialized) Initialize();
 
         if (spriteMap.TryGetValue(id, out var slot))
+        {
             return slot.GetSubSprite(subName);
+        }
 
-        Debug.LogWarning($"SpriteSheet '{id}' not found.");
+        Debug.LogWarning($"SpriteSheet '{id}' not registered.");
+        return null;
+    }
+
+    /// <summary>
+    /// SpriteSheet → index 指定で SubSprite を取得
+    /// </summary>
+    public Sprite GetSubSprite(UISpriteID id, int index)
+    {
+        if (!initialized) Initialize();
+
+        if (spriteMap.TryGetValue(id, out var slot))
+            return slot.GetSubSprite(index);
+
+        Debug.LogWarning($"SpriteSheet '{id}' not registered.");
         return null;
     }
 
@@ -181,6 +224,36 @@ public class UISpriteHelper : MonoBehaviour
         }
 
     }
+
+    public Sprite GetIconByReligion(Religion religion)
+    {
+        switch (religion)
+        {
+            case Religion.SilkReligion:
+                return GetSubSprite(UISpriteID.IconList_Religion, "01_Religiousicon");
+            case Religion.RedMoonReligion:
+                return GetSubSprite(UISpriteID.IconList_Religion, "02_Religiousicon");
+            //case Religion.MayaReligion:
+            //    return GetSubSprite(UISpriteID.IconList_Religion, "01_Religiousicon");
+            //case Religion.MadScientistReligion:
+            //    return GetSubSprite(UISpriteID.IconList_Religion, "01_Religiousicon");
+            default:
+                return GetSubSprite(UISpriteID.IconList_Religion, "Sampler_Pic08"); ;
+        }
+
+
+    }
+
+    public Sprite GetPlayerIconByID(int id)
+    {
+
+        return GetSubSprite(UISpriteID.IconList_Player, id);
+
+    }
+
+
+
+
 }
 
 

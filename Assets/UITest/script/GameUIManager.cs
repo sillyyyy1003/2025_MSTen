@@ -8,6 +8,9 @@ using Unity.Mathematics;
 using GamePieces;
 using Buildings;
 using DG.Tweening.Core.Easing;
+using System.Threading;
+using Unity.VisualScripting;
+using GameData.UI;
 
 [System.Serializable]
 public struct UIUnitData
@@ -39,7 +42,7 @@ public struct UIPlayerData
 
 }
 
-public class UIGameDataManager : MonoBehaviour
+public class GameUIManager : MonoBehaviour
 {
     [Header("Data")]
     public bool isInitialize = false;
@@ -83,20 +86,27 @@ public class UIGameDataManager : MonoBehaviour
     public TextMeshProUGUI allUnitValue;       // 当前人口 / 人口上限
     public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
 
-    public Image player01_Icon;
-    public Image player02_Icon;
-    public TextMeshProUGUI player01_State;
-    public TextMeshProUGUI player02_State;
+    public GameObject playerIconPrefab;
+    public RectTransform playerIconParent;
     public Image miniMap;
 
     public Button EndTurn;
     public TextMeshProUGUI CountdownTime;
 
+    [Header("Script")]
+    //时间
+    public Timer timer;
+
 
     // === Event 定义区域 ===
     public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
+    public event System.Action TimeIsOut;//时间结束
+    public event System.Action OnEndTurnButtonPressed;//回合结束按钮按下
 
-    public static UIGameDataManager Instance { get; private set; }
+
+
+
+    public static GameUIManager Instance { get; private set; }
 
     private void Awake()
     {
@@ -117,20 +127,29 @@ public class UIGameDataManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
-        // 订阅网络事件
-        if (NetGameSystem.Instance != null)
-        {
-
-            NetGameSystem.Instance.OnGameStarted += OnGameStarted;
-        }
+        timer = GetComponent<Timer>();
 
         if (ButtonMenuManager.Instance != null)
         {
             ButtonMenuManager.Instance.OnCardTypeSelected += HandleCardTypeSelected;
             ButtonMenuManager.Instance.OnCardPurchasedIntoDeck += HandleCardPurchasedIntoDeck;
             ButtonMenuManager.Instance.OnCardPurchasedIntoMap += HandleCardPurchasedIntoMap;
+            ButtonMenuManager.Instance.OnCardSkillUsed += HandleCardSkillUsed;
+            ButtonMenuManager.Instance.OnTechUpdated += HandleTechUpdated;
         }
+
+        if (UnitCardManager.Instance != null)
+        {
+            UnitCardManager.Instance.OnCardDragCreated += HandleCardDragCreated;
+        }
+
+        if (timer != null)
+        {
+            timer.OnTimeOut += HandleTimeIsOut;
+            timer.OnTimePoolStarted += () => Debug.Log("开始使用倒计时池");
+        }
+
+        EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
 
 
     }
@@ -142,7 +161,9 @@ public class UIGameDataManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Initialize();
+
+
+
 
 
     }
@@ -150,29 +171,19 @@ public class UIGameDataManager : MonoBehaviour
     private void OnDestroy()
     {
         // 取消订阅事件
-        if (NetGameSystem.Instance != null)
-        {
-            NetGameSystem.Instance.OnGameStarted -= OnGameStarted;
-        }
-
         if (ButtonMenuManager.Instance != null)
         {
             ButtonMenuManager.Instance.OnCardTypeSelected -= HandleCardTypeSelected;
             ButtonMenuManager.Instance.OnCardPurchasedIntoDeck -= HandleCardPurchasedIntoDeck;
             ButtonMenuManager.Instance.OnCardPurchasedIntoMap -= HandleCardPurchasedIntoMap;
+            ButtonMenuManager.Instance.OnCardSkillUsed -= HandleCardSkillUsed;
+            ButtonMenuManager.Instance.OnTechUpdated -= HandleTechUpdated;
         }
-
-        if (GameManage.Instance != null)
+        if (UnitCardManager.Instance != null)
         {
-            // 订阅事件
-            GameManage.Instance.OnTurnStarted += HandleTurnStart;
-            GameManage.Instance.OnTurnEnded += HandleTurnEnd;
+            UnitCardManager.Instance.OnCardDragCreated -= HandleCardDragCreated;
         }
-
     }
-
-
-
 
 
 
@@ -236,8 +247,6 @@ public class UIGameDataManager : MonoBehaviour
 
     public bool AddDeckNumByType(CardType type)
     {
-        //if (Resources <= 0) return false;
-
 
         switch (type)
         {
@@ -260,7 +269,9 @@ public class UIGameDataManager : MonoBehaviour
                 return true;
             default:
                 return false;
+
         }
+
 
     }
 
@@ -296,13 +307,42 @@ public class UIGameDataManager : MonoBehaviour
 
     }
 
-
-    // === 内部更新 ===
-    private void Initialize()
+    public void TurnStart()
     {
-        if (isInitialize) return;
+        Initialize();
 
-        localPlayerId = GameManage.Instance.LocalPlayerID;
+        Debug.Log($" 回合开始：玩家 {localPlayerId}");
+
+        StartTimer();
+
+        DisableInput(false);
+
+        UpdatePlayerIconsData();
+        UpdateResourcesData();
+        UpdateAllUnitCountData();
+        UpdateUIUnitDataListFromInterface(CardType.Missionary);
+        UpdateUIUnitDataListFromInterface(CardType.Solider);
+        UpdateUIUnitDataListFromInterface(CardType.Farmer);
+        UpdateUIUnitDataListFromInterface(CardType.Building);
+        UpdateUIUnitDataListFromInterface(CardType.Pope);
+
+    }
+
+    public void TurnEnd()
+    {
+        Debug.Log($" 回合结束：玩家 {localPlayerId}");
+
+        StopTimer();
+
+        DisableInput(true);
+
+        UpdatePlayerIconsData();
+
+    }
+
+    public void UpdatePlayerIconsData()
+    {
+        int currentplayerid = GameManage.Instance.CurrentTurnPlayerID;
 
         Dictionary<int, PlayerData> datalist = PlayerDataManager.Instance.GetAllPlayersData();
         allPlayersData = new Dictionary<int, UIPlayerData>();
@@ -315,26 +355,94 @@ public class UIGameDataManager : MonoBehaviour
             {
                 PlayerID = src.PlayerID,
                 avatarSpriteId = 0,
-                isAlive = true,
-                isOperating = false,
+                isAlive = src.PlayerUnits.Count != 0,
+                isOperating = src.PlayerID == currentplayerid,
                 religion = src.PlayerReligion,
 
             };
 
+            allPlayersData.Add(src.PlayerID, uiData);
 
-            if (src.PlayerID == localPlayerId)
-            {
-                playerReligion = src.PlayerReligion;
-            }
+        }
+
+        RefreshPlayerIcons();
+
+    }
+
+
+    public void UpdateTimer()
+    {
+        float turnTime = timer.GetTurnTime();
+        float poolTime = timer.GetTimePool();
+        bool usingPool = timer.IsUsingTimePool();
+
+        // 更新显示
+        string turnTimeStr = FormatTime(turnTime);
+        string poolTimeStr = FormatTime(poolTime);
+
+        if (usingPool)
+        {
+            CountdownTime.text = $"<color=orange>0:00</color>+{poolTimeStr}";
+        }
+        else
+        {
+            CountdownTime.text = $"{turnTimeStr}+{poolTimeStr}";
+        }
+
+
+    }
+    public void SetCountdownTime(int time)
+    {
+        timer.SetTurnTimeLimit(time);
+    }
+    public void SetCountdownTimePool(int time)
+    {
+        timer.SetTimePoolInitial(time);
+    }
+
+    public void DisableInput(bool tf)
+    {
+        if (tf)
+        {
+            EndTurn.interactable = false;
+
+
+        }
+        else
+        {
+            EndTurn.interactable = true;
+
 
         }
 
 
-        Resources = PlayerUnitDataInterface.Instance.GetResourceNum();
-        AllUnitCount = PlayerUnitDataInterface.Instance.GetAllActivatedUnitCount();
-        AllUnitCountLimit = 100;
-        InactiveUnitCount = PlayerUnitDataInterface.Instance.GetInactiveUnitCount();
 
+    }
+
+    public Religion GetPlayerReligion()
+    {
+
+        return playerReligion;
+
+    }
+
+
+
+    // === 内部更新 ===
+    private void Initialize()
+    {
+        if (isInitialize) return;
+
+        PlayerDataManager.Instance.SetPlayerResourses(100);
+
+        localPlayerId = GameManage.Instance.LocalPlayerID;
+        playerReligion = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerReligion;
+
+        SetPlayerReligionIcon(playerReligion);
+        UpdateAllUnitCountData();
+        UpdateResourcesData();
+
+        UpdatePlayerIconsData();
 
         DeckMissionaryCount = 0;
         DeckSoliderCount = 0;
@@ -351,8 +459,6 @@ public class UIGameDataManager : MonoBehaviour
     }
 
 
-
-
     private void UpdateUIUnitDataListFromInterface(CardType type)
     {
         ClearUIUnitDataList(type);
@@ -362,21 +468,19 @@ public class UIGameDataManager : MonoBehaviour
 
         foreach (int id in UnitIDs)
         {
-            //Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
+            Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
 
             uiList.Add(new UIUnitData
             {
                 UnitId = id,
                 UnitType = type,
-                //HP = (int)unitData.CurrentHP,
-                //AP = (int)unitData.CurrentAP,
-                HP = 0,
-                AP = 0,
+                HP = (int)unitData.CurrentHP,
+                AP = (int)unitData.CurrentAP,
             });
         }
 
-        SetActivateUnitCount(type, uiList.Count);
-        Debug.Log($"[UIGameDataManager] UnitType = {type} UnitIDs.Count = {UnitIDs.Count}");
+        UpdateActivateUnitCount(type, uiList.Count);
+        //Debug.Log($"[GameUIManager] UnitType = {type} UnitIDs.Count = {UnitIDs.Count}");
 
         switch (type)
         {
@@ -406,23 +510,25 @@ public class UIGameDataManager : MonoBehaviour
 
     }
 
-    private void SetActivateUnitCount(CardType type, int count)
+    private void UpdateActivateUnitCount(CardType type, int count)
     {
+
         switch (type)
         {
             case CardType.Missionary:
 
                 ActivateMissionaryCount = count;
+                activateMissionaryValue.text = ActivateMissionaryCount.ToString();
                 return;
             case CardType.Solider:
                 ActivateSoliderCount = count;
-
+                activateSoliderValue.text = ActivateSoliderCount.ToString();
                 return;
             case CardType.Farmer:
                 ActivateFarmerCount = count;
+                activateFarmerValue.text = ActivateFarmerCount.ToString();
                 return;
             case CardType.Building:
-
                 ActivateBuildingCount = count;
                 return;
             default:
@@ -431,7 +537,6 @@ public class UIGameDataManager : MonoBehaviour
         }
 
     }
-
 
     private void ClearUIUnitDataList(CardType type)
     {
@@ -456,41 +561,70 @@ public class UIGameDataManager : MonoBehaviour
 
     }
 
-
-    private void UpdateUIPlayerData()
+    private void SetPlayerReligionIcon(Religion religion)
     {
-        int currentplayerid = GameManage.Instance.CurrentTurnPlayerID;
+        religionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
+    }
 
-        Dictionary<int, PlayerData> datalist = PlayerDataManager.Instance.GetAllPlayersData();
-        allPlayersData = new Dictionary<int, UIPlayerData>();
-
-        foreach (var kv in datalist)
+    private void RefreshPlayerIcons()
+    {
+        foreach (Transform child in playerIconParent)
         {
-            PlayerData src = kv.Value;
+            Destroy(child.gameObject);
+        }
 
-            UIPlayerData uiData = new UIPlayerData
-            {
-                PlayerID = src.PlayerID,
-                avatarSpriteId = 0,
-                isAlive = src.PlayerUnits.Count!=0,
-                isOperating = src.PlayerID == currentplayerid,
-                religion = src.PlayerReligion,
-
-            };
-
+        foreach (var kv in allPlayersData)
+        {
+            GameObject iconObj = Instantiate(playerIconPrefab, playerIconParent);
+            iconObj.GetComponent<PlayerIcon>().Setup(kv.Value);
         }
 
 
     }
 
 
-
-    // === 回调函数 ===
-    private void OnGameStarted()
+    private void UpdateResourcesData()
     {
-        
+        Resources = PlayerUnitDataInterface.Instance.GetResourceNum();
+       
+        resourcesValue.text = Resources.ToString();
+
+}
+
+    private void UpdateAllUnitCountData()
+    {
+        AllUnitCount = PlayerUnitDataInterface.Instance.GetAllActivatedUnitCount();
+        AllUnitCountLimit = PlayerUnitDataInterface.Instance.GetUnitCountLimit();
+        InactiveUnitCount = PlayerUnitDataInterface.Instance.GetInactiveUnitCount();
+
+        allUnitValue.text = $"{AllUnitCount}/{AllUnitCountLimit}";
+        unusedUnitValue.text = InactiveUnitCount.ToString();
+
     }
 
+
+
+
+
+
+    private string FormatTime(float timeInSeconds)
+    {
+        int minutes = Mathf.FloorToInt(timeInSeconds / 60);  // 计算分钟数
+        int seconds = Mathf.FloorToInt(timeInSeconds % 60);  // 计算秒数
+        return $"{minutes}:{seconds:D2}";  // 返回格式化字符串
+    }
+    private void StartTimer()
+    {
+        timer.StartTurn();
+        CountdownTime.gameObject.SetActive(true);
+    }
+    private void StopTimer()
+    {
+        timer.StopTimer();
+        CountdownTime.gameObject.SetActive(false);
+    }
+
+    // === 回调函数 ===
 
     private void HandleCardTypeSelected(CardType type)
     {
@@ -502,42 +636,53 @@ public class UIGameDataManager : MonoBehaviour
     private void HandleCardPurchasedIntoDeck(CardType type)
     {
         Debug.Log($"购买卡进仓库: {type}");
-        Resources = PlayerUnitDataInterface.Instance.GetResourceNum();
+        UpdateResourcesData();
+
     }
 
     private void HandleCardPurchasedIntoMap(CardType type)
     {
         Debug.Log($"购买卡进场上: {type}");
         UpdateUIUnitDataListFromInterface(type);
-        Resources = PlayerUnitDataInterface.Instance.GetResourceNum();
-        AllUnitCount = PlayerUnitDataInterface.Instance.GetAllActivatedUnitCount();
-        AllUnitCountLimit = 100;
-        InactiveUnitCount = PlayerUnitDataInterface.Instance.GetInactiveUnitCount();
+        UpdateResourcesData();
+        UpdateAllUnitCountData();
 
     }
 
-    private void HandleTurnStart(int playerID)
+    private void HandleCardDragCreated(CardType type)
     {
-        Debug.Log($"▶️ 回合开始：玩家 {playerID}");
-        UpdateUIPlayerData();
-        Resources = PlayerUnitDataInterface.Instance.GetResourceNum();
-        AllUnitCount = PlayerUnitDataInterface.Instance.GetAllActivatedUnitCount();
-        AllUnitCountLimit = 100;
-        InactiveUnitCount = PlayerUnitDataInterface.Instance.GetInactiveUnitCount();
-        UpdateUIUnitDataListFromInterface(CardType.Missionary);
-        UpdateUIUnitDataListFromInterface(CardType.Solider);
-        UpdateUIUnitDataListFromInterface(CardType.Farmer);
-        UpdateUIUnitDataListFromInterface(CardType.Building);
-        UpdateUIUnitDataListFromInterface(CardType.Pope);
+        UpdateUIUnitDataListFromInterface(type);
+        UpdateResourcesData();
+        UpdateAllUnitCountData();
 
     }
 
-    private void HandleTurnEnd(int playerID)
+
+    private void HandleTimeIsOut()
     {
-        Debug.Log($"⏹ 回合结束：玩家 {playerID}");
-        UpdateUIPlayerData();
+        TimeIsOut?.Invoke();
     }
 
+    private void HandleEndTurnButtonPressed()
+    {
+
+        OnEndTurnButtonPressed?.Invoke();
+
+    }
+
+    private void HandleCardSkillUsed(CardType card,CardSkill cardSkill)
+    {
+
+        UpdateUIUnitDataListFromInterface(card);
+
+    }
+
+    private void HandleTechUpdated(CardType card,TechTree tech)
+    {
+
+        UpdateUIUnitDataListFromInterface(card);
+
+    }
 }
 
 

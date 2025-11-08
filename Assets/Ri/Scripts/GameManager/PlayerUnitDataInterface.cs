@@ -7,6 +7,8 @@ using GameData;
 using GameData.UI;
 using Unity.Mathematics;
 using TMPro;
+using Mono.Cecil.Cil;
+using System.Runtime.Versioning;
 
 
 // 玩家单位数据接口，负责被外部调用以获取需要数据
@@ -42,6 +44,8 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
         }
 
+
+
     }
 
     // *****************************
@@ -52,8 +56,6 @@ public class PlayerUnitDataInterface : MonoBehaviour
     {
 
 
-        UnitCardManager.Instance.SetTargetCardType(unittype);
-        UnitCardManager.Instance.SetTargetUnitId(unitid);
 
         if (ButtonMenuManager.Instance.GetCardTypeChoosed() != unittype)
         {
@@ -61,6 +63,9 @@ public class PlayerUnitDataInterface : MonoBehaviour
             string nextMenuId = ButtonMenuFactory.GetMenuId(GameData.UI.MenuLevel.Second, unittype);
             ButtonMenuManager.Instance.LoadMenu(nextMenuId);
         }
+
+        UnitCardManager.Instance.SetTargetCardType(unittype);
+        UnitCardManager.Instance.SetTargetUnitId(unitid);
 
 
     }
@@ -87,8 +92,8 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // 拿到一个棋子的数据
     public Piece GetUnitData(int id)
     {
-        //PlayerDataManager.Instance.GetUnitDataById(id).Value.PlayerUnitDataSO;
 
+        //PlayerDataManager.Instance.GetUnitDataById(id).Value.PlayerUnitDataSO
 
         return PieceManager.Instance.GetPiece(id);
 
@@ -106,6 +111,8 @@ public class PlayerUnitDataInterface : MonoBehaviour
     public void SetFocusedUnitID(int id)
     {
 
+
+
     }
     // 拿到玩家的可用棋子上限数量 --> 追加
     public int GetUnitCountLimit()
@@ -121,7 +128,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
 
-    // 设置地方棋子的位置 --> 追加
+    // 设置敌方棋子的位置 --> 追加
     public void SetEnemyUnitPosition(int2 pos)
     {
         EnemyUnitPos=pos;
@@ -164,52 +171,44 @@ public class PlayerUnitDataInterface : MonoBehaviour
     {
 
 
-        return true;
+        int ResourcesCost = PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
+
+        int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
+        if (ResourcesCount < ResourcesCost)
+        {
+            Debug.LogWarning("资源不足!");
+            return false;
+        }
+
+        // 尝试创建单位
+        if (GameUIManager.Instance.AddDeckNumByType(type))
+        {
+
+            ResourcesCount -= ResourcesCost;
+            PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+            return true;
+
+        }
+
+
+        return false;
     }
 
     // 将一个单位上场
     public bool ActivateUnitFromDeck(CardType type)
     {
 
-
-
-
-        return true;
-    }
-
-    // 某棋子使用技能
-    public bool UseCardSkill(int id,CardSkill skill)
-    {
-
-
-
-
-        return true;
-    }
-
-    // 升级某种棋子的某一项属性
-    public bool UpgradeCard(CardType type,TechTree tech)
-    {
-
-
-
-
-        return true;
-    }
-
-    // 购买某种棋子直接生成到地图
-    public bool BuyUnitToMapByType(CardType type)
-    {
-        //int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
-        //if (ResourcesCount < 10)
-        //{
-        //    Debug.LogWarning("资源不足!");
-        //    return false;
-        //}
+        if (GameUIManager.Instance.GetUIDeckNum(type) <= 0)
+        {
+            Debug.LogWarning("仓库内无卡牌！");
+            return false;
+        }
 
         // 尝试创建单位
         if (_PlayerOpManager.TryCreateUnit(type))
         {
+
+            GameUIManager.Instance.ActivateDeckCardByType(type);
             return true;
 
         }
@@ -219,6 +218,140 @@ public class PlayerUnitDataInterface : MonoBehaviour
             return false;
         }
 
+    }
+
+    // 某棋子使用技能
+    public bool UseCardSkill(int id,CardSkill skill)
+    {
+
+        switch (skill)
+        {
+            case CardSkill.Occupy://占領 Missionary
+                return true;
+            case CardSkill.Conversion://魅惑 Missionary
+                return true;
+            case CardSkill.NormalAttack://一般攻撃 Military
+                return true;
+            case CardSkill.SpecialAttack://特殊攻撃 Military
+                return true;
+            case CardSkill.EnterBuilding://建物に入る Farmer Building
+                return true;
+            case CardSkill.Construction://建物を建築 Building
+                return true;
+            case CardSkill.Sacrifice://献祭 AP消費し他駒を回復するスキル Farmer
+                return true;
+            case CardSkill.SwapPosition://味方駒と位置を交換する Pope
+                return true;
+            default:
+                return false;
+
+        }
+
+
+    }
+
+    // 升级某种棋子的某一项属性
+    public bool UpgradeCard(CardType type,TechTree tech)
+    {
+
+        Religion playerReligion = GameUIManager.Instance.GetPlayerReligion();
+
+        switch (tech)
+        {
+            case TechTree.HP:
+                return true;
+            case TechTree.AP:
+                return true;
+            case TechTree.Occupy:
+                return true;
+            case TechTree.Conversion:
+                return true;
+            case TechTree.ATK:
+                return true;
+            case TechTree.Sacrifice:
+                return true;
+            case TechTree.AttackPosition:
+                return true;
+            case TechTree.AltarCount:
+                return true;
+            case TechTree.ConstructionCost:
+                return true;
+            case TechTree.MovementCD:
+                return true;
+            case TechTree.Buff:
+                return true;
+            case TechTree.Heresy:
+                return true;
+            default:
+                return false;
+        }
+
+
+    }
+
+    // 购买某种棋子直接生成到地图
+    public bool BuyUnitToMapByType(CardType type)
+    {
+
+        int ResourcesCost= PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
+
+        int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
+        if (ResourcesCount < ResourcesCost)
+        {
+            Debug.LogWarning("资源不足!");
+            return false;
+        }
+
+        // 尝试创建单位
+        if (_PlayerOpManager.TryCreateUnit(type))
+        {
+
+            ResourcesCount -= ResourcesCost;
+            PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+            return true;
+
+        }
+        else
+        {
+            Debug.LogWarning("创建失败 - 请先选择一个空格子");
+            return false;
+        }
+
+    }
+
+    // 获得某种棋子的某一项属性
+    public int GetTechTreeLevel(TechTree tech, CardType type)
+    {
+
+        switch (tech)
+        {
+            case TechTree.HP:
+                return 1;
+            case TechTree.AP:
+                return 1;
+            case TechTree.Occupy:
+                return 1;
+            case TechTree.Conversion:
+                return 1;
+            case TechTree.ATK:
+                return 1;
+            case TechTree.Sacrifice:
+                return 1;
+            case TechTree.AttackPosition:
+                return 1;
+            case TechTree.AltarCount:
+                return 1;
+            case TechTree.ConstructionCost:
+                return 1;
+            case TechTree.MovementCD:
+                return 1;
+            case TechTree.Buff:
+                return 1;
+            case TechTree.Heresy:
+                return 1;
+            default:
+                return 1;
+        }
     }
 
 }
