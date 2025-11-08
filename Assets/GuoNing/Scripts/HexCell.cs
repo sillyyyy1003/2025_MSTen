@@ -35,17 +35,17 @@ public enum SpecialIndexType
 
 public enum PlantType
 {
-	BigStone = 0,       // 冰原 (大石头)
-	Wasteland = 1,    // 荒地 (中石头+草)
-	SmallStone = 2,   // 岩石地 (小石头+草)
-	DessertGrass = 3,// 沙漠 (小石头+仙人掌)
-	Grass = 4,        // 草地 (草)
-	Bush = 5,           // 灌木
-	Forest = 6,       // 森林 (小树)
-	FallingForest = 7,// 落叶林 (落叶树)
-	RainForest = 8,   // 雨林 (大树)
-	Swamp = 9,        // 沼泽
-	DessertTree = 10	// 沙漠树
+	t0m0 = 0,      
+	t0m1 = 1,  
+	t0m2 = 2,
+	DessertGrass = 3,
+	Grass = 4,     
+	Bush = 5,      
+	Forest = 6,    
+	FallingForest = 7,
+	RainForest = 8,  
+	Swamp = 9,      
+	DessertTree = 10	
 }
 
 
