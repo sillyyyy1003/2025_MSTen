@@ -1754,11 +1754,15 @@ public class PlayerOperationManager : MonoBehaviour
             targetUnit = otherPlayersUnits[msg.TargetPlayerId][targetPos];
             otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
         }
+        else
+        {
+            targetUnit = localPlayerUnits[targetPos];
+        }
 
         // 添加到新所有者字典
         if (targetUnit != null)
         {
-            if (msg.MissionaryPlayerId == localPlayerId)
+            if (msg.MissionaryPlayerId == localPlayerId&&!localPlayerUnits.ContainsKey(targetPos))
             {
                 localPlayerUnits[targetPos] = targetUnit;
             }
