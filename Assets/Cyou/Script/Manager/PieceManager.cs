@@ -817,6 +817,14 @@ public class PieceManager : MonoBehaviour
             .ToList();
     }
 
+    //25.11.9 RI 添加设置玩家id下的魅惑单位归还
+    //public void SetPlayerPieces(int playerID,int unitID)
+    //{
+    //   for()
+       
+    //}
+
+
     /// <summary>
     /// 指定プレイヤーの指定種類の駒IDを取得
     /// </summary>
@@ -1118,6 +1126,21 @@ public class PieceManager : MonoBehaviour
         return false;
     }
 
+
+    // 25.11.9 RI 添加被魅惑单位归还后的特殊数据处理
+    public void AddConvertedUnit(int playerID,int pieceID)
+    {
+            for(int i=0;i<allPieces.Count;i++)
+            {
+                if (allPieces[i].PieceID==pieceID)
+                {
+                    allPieces[i].SetPlayerID(playerID);
+                    return;
+                }
+            }
+    }
+
+
     /// <summary>
     /// 宣教師が領地を占領
     /// </summary>
@@ -1337,6 +1360,9 @@ public class PieceManager : MonoBehaviour
         {
             if (allPieces.TryGetValue(pieceID, out Piece piece))
             {
+                //25.11.9  RI 添加测试debug
+                Debug.Log($"駒ID={pieceID} ");
+
                 // AP回復
                 piece.RecoverAP(piece.Data.aPRecoveryRate);
 

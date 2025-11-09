@@ -582,7 +582,6 @@ public class PlayerOperationManager : MonoBehaviour
             unit.SetCanDoAction(true);
             Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + " canDo is " + unit.bCanDoAction);
         }
-
     }
 
     // 回合结束
@@ -1919,6 +1918,7 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 otherPlayersUnits[msg.OriginalOwnerId][pos] = unitObj;
             }
+            PieceManager.Instance.AddConvertedUnit(msg.OriginalOwnerId, msg.UnitID);
 
             Debug.Log($"[网络魅惑过期] 单位GameObject已归还 - 从玩家{msg.CurrentOwnerId}到玩家{msg.OriginalOwnerId}");
         }
