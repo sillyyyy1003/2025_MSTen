@@ -111,6 +111,8 @@ public class HexMapEditor : MonoBehaviour
 				// Potential optimization: only do this if camera or cursor has changed.
 				UpdateCellHighlightData(GetCellUnderCursor());
 			}
+
+
 			//if (Input.GetKeyDown(KeyCode.U))
 			//{
 			//	if (Input.GetKey(KeyCode.LeftShift))
@@ -246,10 +248,6 @@ public class HexMapEditor : MonoBehaviour
 			{
 				cell.TerrainTypeIndex = activeTerrainTypeIndex;
 			}
-			if (activePlantIndex >= 0)
-			{
-				cell.PlantIndex = activePlantIndex;
-			}
 			if (applyElevation)
 			{
 				cell.Elevation = activeElevation;
@@ -272,7 +270,8 @@ public class HexMapEditor : MonoBehaviour
 			}
 			if (applyPlantLevel)
 			{
-				cell.PlantLevel = activePlantLevel;
+				cell.PlantIndex = activePlantIndex;		// 应用选中植被的种类
+				cell.PlantLevel = activePlantLevel;		// 应用设定好的植被密度
 			}
 			if (riverMode == OptionalToggle.No)
 			{

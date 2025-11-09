@@ -56,13 +56,11 @@ public struct syncPieceData
     public PieceType piecetype;
     public Religion religion;
     public SerializableVector3 piecePos;
-<<<<<<< HEAD
-=======
-    public int playerID;
->>>>>>> 27a59cdd0ff36c1429bdc9de329921996b5cf01e
     public int pieceID;
     public int currentHP;
     public int currentHPLevel;
+    public int currentAP;
+    public int currentAPLevel;
     public int currentPID;
     public int swapCooldownLevel;
     public int buffLevel;
@@ -113,12 +111,7 @@ public class PieceManager : MonoBehaviour
 
 
     // ===== 駒の管理 =====
-<<<<<<< HEAD
     private Dictionary<int, Piece> allPieces = new Dictionary<int, Piece>(); // 全ての駒（自駒と敵駒を統合）
-=======
-    private Dictionary<int, Piece> pieces = new Dictionary<int, Piece>();
-    private Dictionary<int, Piece> enemyPieces = new Dictionary<int, Piece>();
->>>>>>> 27a59cdd0ff36c1429bdc9de329921996b5cf01e
     private int nextPieceID = 0;
     private int localPlayerID = -1; // このPieceManagerが管理するプレイヤーのID
 
@@ -343,6 +336,7 @@ public class PieceManager : MonoBehaviour
             religion = religion,
             piecePos = position,
             currentHP = (int)piece.CurrentHP,
+            currentAP=(int)piece.CurrentAP,
             currentPID = playerID
         };
     }
@@ -388,13 +382,8 @@ public class PieceManager : MonoBehaviour
         // 同步ID（使用来自网络的ID）
         piece.SetPieceID(spd.pieceID);
 
-<<<<<<< HEAD
         // 记录到全駒集合
         allPieces[spd.pieceID] = piece;
-=======
-        // 记录到敌人棋子集合
-        enemyPieces[spd.pieceID] = piece;
->>>>>>> 27a59cdd0ff36c1429bdc9de329921996b5cf01e
 
         // 死亡イベントを購読
         piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
@@ -797,15 +786,7 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public bool DoesPieceExist(int pieceID)
     {
-<<<<<<< HEAD
         return allPieces.ContainsKey(pieceID);
-=======
-        //11.5 ri add enemy test
-        if (pieces.ContainsKey(pieceID) || enemyPieces.ContainsKey(pieceID))
-            return true;
-        else
-            return false;
->>>>>>> 27a59cdd0ff36c1429bdc9de329921996b5cf01e
     }
 
     /// <summary>
@@ -996,11 +977,7 @@ public class PieceManager : MonoBehaviour
             return null;
         }
 
-<<<<<<< HEAD
         if (!allPieces.TryGetValue(targetID, out Piece target))
-=======
-        if (!enemyPieces.TryGetValue(targetID, out Piece target))
->>>>>>> 27a59cdd0ff36c1429bdc9de329921996b5cf01e
         {
             Debug.LogError($"ターゲットが見つかりません: ID={targetID}");
             return null;

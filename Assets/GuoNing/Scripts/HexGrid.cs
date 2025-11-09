@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using System.IO;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Component that represents an entire hexagon map.
@@ -335,9 +336,6 @@ public class HexGrid : MonoBehaviour
 		
 		cell.Elevation = 0;
 
-		//2025.10.31
-		cell.IsVisible = true;
-
 		AddCellToChunk(x, z, cell);
 	}
 
@@ -540,6 +538,12 @@ public class HexGrid : MonoBehaviour
 					continue;
 				}
 
+				//2025.11.06 追加特殊建筑不可通过 从寻路中剔除
+				if (neighbor.SpecialIndex == (int)SpecialIndexType.Temple)
+				{
+					continue;
+				}
+
 				// 山地不考虑
 				HexEdgeType edgeType = current.GetEdgeType(neighbor);
 				if (edgeType == HexEdgeType.Cliff)
@@ -608,8 +612,9 @@ public class HexGrid : MonoBehaviour
 	/// <param name="fromCell">选定的HexCell</param>
 	/// <param name="range">范围</param>
 	/// <returns></returns>
-	bool SearchCellRange(List<HexCell> cellList, HexCell fromCell, int range)
+	public bool SearchCellRange(List<HexCell> cellList, HexCell fromCell, int range)
 	{
+		// ↑11.6 RI 修改为public
 		for (int i = 0; i <cellList.Count; i++)
 		{
 
@@ -952,4 +957,22 @@ public class HexGrid : MonoBehaviour
 
 		GameManage.Instance.SetGameBoardInfor(infor);
 	}
+
+	/// <summary>
+	/// 更新模型透明度
+	/// </summary>
+	/// <param name="index"></param>
+
+	public void UpdateCellFeature(int index)
+	{
+		int x = index % CellCountX;
+		int z = index / CellCountX;
+
+		int chunkX = x / HexMetrics.chunkSizeX;
+		int chunkZ = z / HexMetrics.chunkSizeZ;
+
+		chunks[chunkX + chunkZ * chunkCountX].features.UpdateFeature(index,cells[index].Unit);
+	}
+
+
 }

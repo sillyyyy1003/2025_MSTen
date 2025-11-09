@@ -23,7 +23,7 @@ public struct BoardInfor
 
     // 每个格子的地块信息 是否可通过
     public TerrainType type;
-    
+
     // 是否是起始位置
     public bool bIsStartPos;
 
@@ -163,13 +163,13 @@ public class GameManage : MonoBehaviour
             GameObject pdm = new GameObject("PlayerDataManager");
             _PlayerDataManager = pdm.AddComponent<PlayerDataManager>();
         }
-        
+
     }
 
 
 
     // Update is called once per frame
-   
+
 
     // *************************
     //        游戏流程函数
@@ -179,7 +179,7 @@ public class GameManage : MonoBehaviour
     public void CheckIsServer(bool server)
     {
         _GameCamera.SetCanUseCamera(false);
-        if(server)
+        if (server)
         {
 
         }
@@ -195,7 +195,7 @@ public class GameManage : MonoBehaviour
     {
         _GameCamera.SetCanUseCamera(true);
 
-       
+
         // 单机测试
         GameInit();
     }
@@ -206,7 +206,7 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 开始初始化游戏...");
         Debug.Log($"接收到玩家数: {data.PlayerIds.Length}");
         Debug.Log($"起始位置数: {data.StartPositions.Length}");
-        
+
         // 清空之前的数据
         AllPlayerIds.Clear();
         PlayerStartPositions.Clear();
@@ -289,12 +289,12 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 本地测试模式初始化...");
 
         SetIsGamingOrNot(true);
-     
+
         // 使用协程开始游戏，避免脚本Start执行顺序问题
-           if (!bIsStartSingleGame)
-                StartCoroutine(TrueStartGame());
-        
-      
+        if (!bIsStartSingleGame)
+            StartCoroutine(TrueStartGame());
+
+
         return true;
     }
     private IEnumerator TrueStartGame()
@@ -388,9 +388,7 @@ public class GameManage : MonoBehaviour
             // 更新UI
             if (GameSceneUIManager.Instance != null)
             {
-                GameSceneUIManager.Instance.SetTurnText(true);
-                GameSceneUIManager.Instance.SetEndTurn(true);
-                GameSceneUIManager.Instance.StartTurn();
+                GameSceneUIManager.Instance.StartMyTurn(true);
             }
         }
         else
@@ -401,8 +399,8 @@ public class GameManage : MonoBehaviour
             // 更新UI
             if (GameSceneUIManager.Instance != null)
             {
-                GameSceneUIManager.Instance.SetTurnText(false);
-                GameSceneUIManager.Instance.SetEndTurn(false);
+                GameSceneUIManager.Instance.StartMyTurn(false);
+
             }
         }
     }
@@ -417,6 +415,36 @@ public class GameManage : MonoBehaviour
         }
 
         Debug.Log($"玩家 {LocalPlayerID} 结束回合");
+
+        // 处理被魅惑单位的倒计时和归还
+        List<CharmExpireInfo> expiredUnits = _PlayerDataManager.UpdateCharmedUnits(LocalPlayerID);
+
+        foreach (var expireInfo in expiredUnits)
+        {
+            Debug.Log($"[魅惑过期] 单位 {expireInfo.UnitID} at ({expireInfo.Position.x},{expireInfo.Position.y}) 魅惑效果结束，归还给玩家 {expireInfo.OriginalOwnerID}");
+
+            // 从当前玩家移除单位（已在UpdateCharmedUnits中完成）
+            // 归还给原所有者
+            bool returnSuccess = _PlayerDataManager.ReturnCharmedUnit(expireInfo.OriginalOwnerID, expireInfo.UnitData);
+
+            if (returnSuccess)
+            {
+                // 处理GameObject的转移
+                _PlayerOperation.HandleCharmExpireLocal(expireInfo);
+
+                // 网络同步魅惑过期
+                if (_NetGameSystem != null && _NetGameSystem.bIsConnected)
+                {
+                    _NetGameSystem.SendCharmExpireMessage(
+                        LocalPlayerID,
+                        expireInfo.OriginalOwnerID,
+                        expireInfo.UnitID,
+                        expireInfo.Position,
+                        expireInfo.UnitData.PlayerUnitDataSO
+                    );
+                }
+            }
+        }
 
         // 获取本地玩家数据
         PlayerData localData = _PlayerDataManager.GetPlayerData(LocalPlayerID);
@@ -548,7 +576,7 @@ public class GameManage : MonoBehaviour
     }
     public void UpdateOtherPlayerShow(int playerId, PlayerData data)
     {
-        _PlayerOperation.UpdateOtherPlayerDisplay(playerId,data);
+        _PlayerOperation.UpdateOtherPlayerDisplay(playerId, data);
     }
 
 
@@ -568,19 +596,19 @@ public class GameManage : MonoBehaviour
     // 根据格子id返回其周围所有可创建单位的格子id
     public List<int> GetBoardNineSquareGrid(int id)
     {
-        Debug.Log("pos is "+GetBoardInfor(id).Cells2DPos);
+        Debug.Log("pos is " + GetBoardInfor(id).Cells2DPos);
         List<int> startPos = new List<int>();
         for (int dx = -1; dx <= 1; dx++)
         {
             for (int dy = -1; dy <= 1; dy++)
             {
-              
-                    int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
-                    if(GameBoardInforDict2D.ContainsKey(pos))
-                    {
-                        startPos.Add(GameBoardInforDict2D[pos].id);
-                        //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
-                    }
+
+                int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
+                if (GameBoardInforDict2D.ContainsKey(pos))
+                {
+                    startPos.Add(GameBoardInforDict2D[pos].id);
+                    //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                }
             }
         }
         return startPos;
@@ -596,7 +624,7 @@ public class GameManage : MonoBehaviour
         return GetBoardInfor(id);
     }
 
-   
+
     // 查找某个格子上是否有单位
     public bool FindUnitOnCell(int2 pos)
     {
@@ -631,9 +659,17 @@ public class GameManage : MonoBehaviour
     public void SetCellObject(int2 pos, GameObject obj)
     {
         if (obj == null)
+        {
             CellObjects.Remove(pos);
+            _PlayerOperation._HexGrid.GetCell(pos.x, pos.y).Unit = false;
+            Debug.Log("格子 " + pos + " 移除单位: " );
+        }
         else
+        {
             CellObjects[pos] = obj;
+            _PlayerOperation._HexGrid.GetCell(pos.x, pos.y).Unit = true;
+            Debug.Log("格子 " + pos + " 拥有单位: " + obj.name);
+        }
     }
 
     // 移动格子上的对象
@@ -642,8 +678,14 @@ public class GameManage : MonoBehaviour
         if (CellObjects.ContainsKey(fromPos))
         {
             GameObject obj = CellObjects[fromPos];
+
             CellObjects.Remove(fromPos);
+            _PlayerOperation._HexGrid.GetCell(fromPos.x, fromPos.y).Unit = false;
+            Debug.Log("格子 " + fromPos + " 移除单位: " );
+
             CellObjects[toPos] = obj;
+            _PlayerOperation._HexGrid.GetCell(fromPos.x, fromPos.y).Unit = true;
+            Debug.Log("格子 " + toPos + " 拥有单位: " + obj.name);
         }
     }
     public int GetStartPosForNetGame(int i)
@@ -654,7 +696,7 @@ public class GameManage : MonoBehaviour
     public void SetGameBoardInfor(BoardInfor infor)
     {
         // 如果已经储存数据 清除当前数据
-        if(GameBoardInfor.Contains(infor))
+        if (GameBoardInfor.Contains(infor))
         {
             GameBoardInfor.Clear();
             GameBoardInforDict.Clear();
@@ -679,12 +721,12 @@ public class GameManage : MonoBehaviour
         //}
     }
 
-  
+
     // *************************
     //        网络消息处理
     // *************************
 
-  
+
     // 获取所有玩家ID
     public List<int> GetAllPlayerIds()
     {
