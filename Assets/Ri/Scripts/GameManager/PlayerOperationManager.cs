@@ -1254,12 +1254,6 @@ public class PlayerOperationManager : MonoBehaviour
         PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID);
         syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
 
-        //if (convertResult.piecetype!=default)
-        //{
-        //    Debug.Log("[ExecuteCharm] 魅惑失败！");
-        //    bCanContinue = true;
-        //    return;
-        //}
 
         Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
 
@@ -1271,7 +1265,6 @@ public class PlayerOperationManager : MonoBehaviour
             targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
         }
 
-        // ===== 关键修改：不删除重建，直接转移所有权 =====
 
         // 1. 在PlayerDataManager中转移单位所有权
         syncPieceData newUnitData = convertResult;

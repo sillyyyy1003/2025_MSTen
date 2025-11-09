@@ -398,7 +398,9 @@ public class PieceManager : MonoBehaviour
 
         // 记录到全駒集合
         allPieces[spd.pieceID] = piece;
-        allPiecesSyncData.Add(spd.pieceID, spd);
+        //25.11.5 RI add syncPieceData 
+        if(!allPiecesSyncData.ContainsKey(spd.pieceID))
+            allPiecesSyncData.Add(spd.pieceID, spd);
 
         // 死亡イベントを購読
         piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
