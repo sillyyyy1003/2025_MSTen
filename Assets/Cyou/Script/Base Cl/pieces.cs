@@ -34,18 +34,6 @@ namespace GamePieces
         public bool IsCharmed => charmedTurnsRemaining > 0;
 
 
-        /// <summary>
-        /// 変換した駒の情報を保持する構造体
-        /// </summary>
-        public struct ConvertedPieceInfo
-        {
-            public Piece convertedPiece;
-            public int originalPlayerID;
-            public float convertedTurn;
-
-        }
-
-
 
         // ===== イベント =====
 
@@ -93,7 +81,7 @@ namespace GamePieces
         public virtual void Initialize(PieceDataSO data, int playerID)
         {
             pieceData = data;
-            originalPID = data.originalPID;
+            originalPID = playerID;  // 引数から設定（SOデータではなく実行時の所有者）
             currentPID = playerID;
 
             currentMaxHP = data.maxHPByLevel[0];
@@ -121,12 +109,12 @@ namespace GamePieces
             if (newPlayerID != OriginalPID)
             {
                 OnCharmed?.Invoke(this, charmer);
-                Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
+                Debug.Log($"Player{OriginalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
             }
             else if(newPlayerID==OriginalPID)
             {
                 OnUncharmed?.Invoke(this);
-                Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}に復帰しました。");
+                Debug.Log($"Player{OriginalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}に復帰しました。");
             }
 
             //if(charmTurns>0)

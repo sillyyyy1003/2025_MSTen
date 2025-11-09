@@ -56,7 +56,6 @@ public struct syncPieceData
     public PieceType piecetype;
     public Religion religion;
     public SerializableVector3 piecePos;
-    public int playerID;
     public int pieceID;
     public int currentHP;
     public int currentHPLevel;
@@ -70,6 +69,9 @@ public struct syncPieceData
     public int sacrificeLevel;
     public int attackPowerLevel;
     public int charmedTurnsRemaining; // 魅惑残りターン数（ネットワーク同期用）
+
+    // ヘルパープロパティ：pieceIDから元の所有者を計算
+    public int OriginalPlayerID => pieceID / 10000;
 }
 
 /// <summary>
@@ -109,8 +111,7 @@ public class PieceManager : MonoBehaviour
 
 
     // ===== 駒の管理 =====
-    private Dictionary<int, Piece> pieces = new Dictionary<int, Piece>();
-    private Dictionary<int, Piece> enemyPieces = new Dictionary<int, Piece>();
+    private Dictionary<int, Piece> allPieces = new Dictionary<int, Piece>(); // 全ての駒（自駒と敵駒を統合）
     private int nextPieceID = 0;
     private int localPlayerID = -1; // このPieceManagerが管理するプレイヤーのID
 
@@ -318,7 +319,7 @@ public class PieceManager : MonoBehaviour
 
         int pieceID = baseId + nextPieceID;
         piece.SetPieceID(pieceID);
-        pieces[pieceID] = piece;
+        allPieces[pieceID] = piece;
         nextPieceID++;
 
         // 死亡イベントを購読
@@ -333,7 +334,6 @@ public class PieceManager : MonoBehaviour
             pieceID = pieceID,
             piecetype = pieceType,
             religion = religion,
-            playerID = playerID,
             piecePos = position,
             currentHP = (int)piece.CurrentHP,
             currentAP=(int)piece.CurrentAP,
@@ -375,14 +375,15 @@ public class PieceManager : MonoBehaviour
             return false;
         }
 
-        // 駒を初期化
-        piece.Initialize(data, spd.playerID);
+        //pieceIDから元の所有者を計算
+        int originalPlayerID = spd.pieceID / 10000;
+        piece.Initialize(data, originalPlayerID);
 
         // 同步ID（使用来自网络的ID）
         piece.SetPieceID(spd.pieceID);
 
-        // 记录到敌人棋子集合
-        enemyPieces[spd.pieceID] = piece;
+        // 记录到全駒集合
+        allPieces[spd.pieceID] = piece;
 
         // 死亡イベントを購読
         piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
@@ -402,7 +403,7 @@ public class PieceManager : MonoBehaviour
             }
 
             // プレイヤーIDを同期（魅惑された場合など）
-            if (spd.currentPID != spd.playerID)
+            if (spd.currentPID != originalPlayerID)
             {
                 piece.SetPlayerID(spd.currentPID);
             }
@@ -441,7 +442,7 @@ public class PieceManager : MonoBehaviour
                     break;
             }
 
-            Debug.Log($"敵駒を生成しました: ID={spd.pieceID}, Type={spd.piecetype}, Religion={spd.religion}, PlayerID={spd.playerID}");
+            Debug.Log($"敵駒を生成しました: ID={spd.pieceID}, Type={spd.piecetype}, Religion={spd.religion}, OriginalPlayerID={originalPlayerID}");
             OnEnemyPieceCreated?.Invoke(spd.pieceID);
 
             return true;
@@ -461,8 +462,8 @@ public class PieceManager : MonoBehaviour
     /// <returns>同期成功したらtrue</returns>
     public bool SyncEnemyPieceState(syncPieceData spd)
     {
-        // 敵駒を取得（敵駒辞書から検索）
-        if (!enemyPieces.TryGetValue(spd.pieceID, out Piece piece))
+        // 敵駒を取得（全駒辞書から検索）
+        if (!allPieces.TryGetValue(spd.pieceID, out Piece piece))
         {
             Debug.LogError($"敵駒が見つかりません: ID={spd.pieceID}");
             return false;
@@ -545,13 +546,10 @@ public class PieceManager : MonoBehaviour
             piecetype = pieceType,
             religion = religion,
             piecePos = piece.transform.position,
-            playerID = piece.CurrentPID,
-            pieceID = piece.PieceID,
+            pieceID = piece.PieceID,  // pieceIDから元の所有者を計算可能
             currentHP = piece.CurrentHP,
             currentHPLevel = piece.HPLevel,
-            currentAP = piece.CurrentAP,
-            currentAPLevel = piece.APLevel,
-            currentPID = piece.CurrentPID,
+            currentPID = piece.CurrentPID,  // 現在の所有者
             swapCooldownLevel = (piece is Pope pope) ? pope.SwapCooldownLevel : 0,
             buffLevel = (piece is Pope pope2) ? pope2.BuffLevel : 0,
             occupyLevel = (piece is Missionary missionary) ? missionary.OccupyLevel : 0,
@@ -586,7 +584,7 @@ public class PieceManager : MonoBehaviour
     /// <returns>成功したらsyncPieceDataを返す</returns>
     public syncPieceData? UpgradePiece(int pieceID, PieceUpgradeType upgradeType)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return null;
@@ -614,7 +612,7 @@ public class PieceManager : MonoBehaviour
     /// <returns>成功したらsyncPieceDataを返す</returns>
     public syncPieceData? UpgradePieceSpecial(int pieceID, SpecialUpgradeType specialUpgradeType)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return null;
@@ -680,7 +678,7 @@ public class PieceManager : MonoBehaviour
     /// <returns>コスト（取得失敗時は-1）</returns>
     public int GetUpgradeCost(int pieceID, PieceUpgradeType upgradeType)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return -1;
@@ -697,7 +695,7 @@ public class PieceManager : MonoBehaviour
     /// <returns>アップグレード可能ならtrue</returns>
     public bool CanUpgrade(int pieceID, PieceUpgradeType upgradeType)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             return false;
         }
@@ -714,7 +712,7 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public float GetPieceHP(int pieceID)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return -1;
@@ -727,7 +725,7 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public int GetPieceAP(int pieceID)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return -1;
@@ -740,7 +738,7 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public int GetPiecePlayerID(int pieceID)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return -1;
@@ -758,20 +756,16 @@ public class PieceManager : MonoBehaviour
     /// <returns>找到的棋子，如果未找到返回null</returns>
     public Piece GetPiece(int pieceID)
     {
-        if (pieces.TryGetValue(pieceID, out Piece piece))
+        if (allPieces.TryGetValue(pieceID, out Piece piece))
         {
             return piece;
-        }
-        if (enemyPieces.TryGetValue(pieceID, out Piece enemyPiece))
-        {
-            return enemyPiece;
         }
         return null;
     }
 
     public PieceType GetPieceType(int pieceID)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return PieceType.None;
@@ -792,11 +786,7 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public bool DoesPieceExist(int pieceID)
     {
-        //11.5 ri add enemy test
-        if (pieces.ContainsKey(pieceID) || enemyPieces.ContainsKey(pieceID))
-            return true;
-        else
-            return false;
+        return allPieces.ContainsKey(pieceID);
     }
 
     /// <summary>
@@ -804,7 +794,7 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public List<int> GetPlayerPieces(int playerID)
     {
-        return pieces
+        return allPieces
             .Where(kvp => kvp.Value.CurrentPID == playerID && kvp.Value.IsAlive)
             .Select(kvp => kvp.Key)
             .ToList();
@@ -833,16 +823,15 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     private void HandlePieceDeath(int pieceID)
     {
-        // 両方の辞書を確認
-        Piece piece = null;
-        bool isLocalPiece = pieces.TryGetValue(pieceID, out piece);
-        bool isEnemyPiece = !isLocalPiece && enemyPieces.TryGetValue(pieceID, out piece);
-
-        if (!isLocalPiece && !isEnemyPiece)
+        // 駒を取得
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogWarning($"死亡した駒が見つかりません: ID={pieceID}");
             return;
         }
+
+        // 駒が自分の駒かどうかを判定（OriginalPIDで判定）
+        bool isLocalPiece = (piece.OriginalPID == localPlayerID);
 
         // 死亡した駒のsyncPieceDataを作成してキャッシュ（己方の駒の場合のみ）
         if (isLocalPiece)
@@ -889,12 +878,8 @@ public class PieceManager : MonoBehaviour
     /// <returns>削除成功したらtrue</returns>
     public bool HandleEnemyPieceDeath(syncPieceData spd)
     {
-        // 両方の辞書を確認
-        Piece piece = null;
-        bool found = pieces.TryGetValue(spd.pieceID, out piece) ||
-                     enemyPieces.TryGetValue(spd.pieceID, out piece);
-
-        if (!found)
+        // 駒を取得
+        if (!allPieces.TryGetValue(spd.pieceID, out Piece piece))
         {
             Debug.LogWarning($"死亡通知を受け取ったが、駒が見つかりません: ID={spd.pieceID}");
             return false;
@@ -920,22 +905,18 @@ public class PieceManager : MonoBehaviour
             return;
         }
 
-        // OriginalPIDで自分の駒か敵駒かを判定
-        if (localPlayerID != -1 && piece.OriginalPID == localPlayerID)
+        // 辞書から削除
+        if (allPieces.ContainsKey(pieceID))
         {
-            // 自分の駒
-            if (pieces.ContainsKey(pieceID))
+            allPieces.Remove(pieceID);
+
+            // OriginalPIDで自分の駒か敵駒かを判定してログ出力
+            if (localPlayerID != -1 && piece.OriginalPID == localPlayerID)
             {
-                pieces.Remove(pieceID);
                 Debug.Log($"自分の駒を削除しました: ID={pieceID}, Type={piece.Data?.pieceName}");
             }
-        }
-        else
-        {
-            // 敵の駒
-            if (enemyPieces.ContainsKey(pieceID))
+            else
             {
-                enemyPieces.Remove(pieceID);
                 Debug.Log($"敵駒を削除しました: ID={pieceID}, Type={piece.Data?.pieceName}");
             }
         }
@@ -952,20 +933,8 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public syncPieceData? RemovePiece(int pieceID)
     {
-        Piece piece;
-        bool isEnemyPiece = false;
-
-        // 先尝试从己方棋子中移除
-        if (pieces.TryGetValue(pieceID, out piece))
-        {
-            isEnemyPiece = false;
-        }
-        // 如果在己方棋子中没找到，再尝试从敌人棋子中移除
-        else if (enemyPieces.TryGetValue(pieceID, out piece))
-        {
-            isEnemyPiece = true;
-        }
-        else
+        // 駒を取得
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return null;
@@ -976,16 +945,11 @@ public class PieceManager : MonoBehaviour
         {
             pieceID = pieceID
         };
-        
-        if (isEnemyPiece)
-        {
-            enemyPieces.Remove(pieceID);
-        }
-        else
-        {
-            pieces.Remove(pieceID);
-        }
-        
+
+        // 辞書から削除
+        allPieces.Remove(pieceID);
+
+        // GameObjectを破棄
         if (piece != null && piece.gameObject != null)
         {
             Destroy(piece.gameObject);
@@ -1007,13 +971,13 @@ public class PieceManager : MonoBehaviour
     /// <returns>攻撃成功したら攻撃された側の現HPをGameManagerに渡す</returns>
     public syncPieceData? AttackEnemy(int attackerID, int targetID)
     {
-        if (!pieces.TryGetValue(attackerID, out Piece attacker))
+        if (!allPieces.TryGetValue(attackerID, out Piece attacker))
         {
             Debug.LogError($"攻撃者が見つかりません: ID={attackerID}");
             return null;
         }
 
-        if (!enemyPieces.TryGetValue(targetID, out Piece target))
+        if (!allPieces.TryGetValue(targetID, out Piece target))
         {
             Debug.LogError($"ターゲットが見つかりません: ID={targetID}");
             return null;
@@ -1040,13 +1004,13 @@ public class PieceManager : MonoBehaviour
     /// <returns>魅惑試行成功したらsyncPieceData、失敗時はnull</returns>
     public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
     {
-        if (!pieces.TryGetValue(missionaryID, out Piece missionaryPiece))
+        if (!allPieces.TryGetValue(missionaryID, out Piece missionaryPiece))
         {
             Debug.LogError($"宣教師が見つかりません: ID={missionaryID}");
             return null;
         }
 
-        if (!enemyPieces.TryGetValue(targetID, out Piece target))
+        if (!allPieces.TryGetValue(targetID, out Piece target))
         {
             Debug.LogError($"敵駒が見つかりません: ID={targetID}");
             return null;
@@ -1064,13 +1028,10 @@ public class PieceManager : MonoBehaviour
             // 魅惑成功時のみ処理（即死の場合は charmDuration = 0）
             if (charmDuration > 0)
             {
-                // 魅惑状態を設定
+                // 魅惑状態を設定（currentPIDを変更）
                 target.SetCharmed(charmDuration, missionary.CurrentPID);
 
-                // 魅惑成功：敵駒を自分の駒に移動
-                enemyPieces.Remove(targetID);
-                pieces[targetID] = target;
-                Debug.Log($"駒ID={targetID}を{charmDuration}ターン魅惑しました（enemyPieces → pieces）");
+                Debug.Log($"駒ID={targetID}を{charmDuration}ターン魅惑しました（currentPIDを{missionary.CurrentPID}に変更）");
 
                 // イベント発火
                 OnPieceCharmed?.Invoke(targetID, missionary.CurrentPID);
@@ -1088,6 +1049,59 @@ public class PieceManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 宣教師が敵を魅惑（bool版）
+    /// </summary>
+    /// <param name="missionaryID">宣教師の駒ID</param>
+    /// <param name="targetID">ターゲットの駒ID</param>
+    /// <param name="charmDuration">魅惑ターン数（0の場合は即死、失敗時は-1）</param>
+    /// <returns>魅惑試行が成功したか（即死含む）</returns>
+    public bool ConvertEnemy(int missionaryID, int targetID, out int charmDuration)
+    {
+        charmDuration = -1;
+
+        if (!allPieces.TryGetValue(missionaryID, out Piece missionaryPiece))
+        {
+            Debug.LogError($"宣教師が見つかりません: ID={missionaryID}");
+            return false;
+        }
+
+        if (!allPieces.TryGetValue(targetID, out Piece target))
+        {
+            Debug.LogError($"敵駒が見つかりません: ID={targetID}");
+            return false;
+        }
+
+        if (missionaryPiece is not Missionary missionary)
+        {
+            Debug.LogError($"駒ID={missionaryID}は宣教師ではありません");
+            return false;
+        }
+
+        // 魅惑試行（out パラメータで魅惑ターン数を取得）
+        if (missionary.ConversionAttack(target, out charmDuration))
+        {
+            // 魅惑成功時のみ処理（即死の場合は charmDuration = 0）
+            if (charmDuration > 0)
+            {
+                // 魅惑状態を設定（currentPIDを変更）
+                target.SetCharmed(charmDuration, missionary.CurrentPID);
+
+                Debug.Log($"駒ID={targetID}を{charmDuration}ターン魅惑しました（currentPIDを{missionary.CurrentPID}に変更）");
+
+                // イベント発火
+                OnPieceCharmed?.Invoke(targetID, missionary.CurrentPID);
+            }
+            else
+            {
+                // 即死の場合
+                Debug.Log($"駒ID={targetID}は魅惑により即死しました");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// 宣教師が領地を占領
     /// </summary>
     /// <param name="missionaryID">宣教師の駒ID</param>
@@ -1095,7 +1109,7 @@ public class PieceManager : MonoBehaviour
     /// <returns>占領試行成功したらtrueを返す</returns>
     public bool OccupyTerritory(int missionaryID, Vector3 targetPosition)
     {
-        if (!pieces.TryGetValue(missionaryID, out Piece missionaryPiece))
+        if (!allPieces.TryGetValue(missionaryID, out Piece missionaryPiece))
         {
             Debug.LogError($"宣教師が見つかりません: ID={missionaryID}");
             return false;
@@ -1118,13 +1132,13 @@ public class PieceManager : MonoBehaviour
     /// <returns>回復成功したらtargetの同期データを返す</returns>
     public syncPieceData? SacrificeToPiece(int farmerID, int targetID)
     {
-        if (!pieces.TryGetValue(farmerID, out Piece farmerPiece))
+        if (!allPieces.TryGetValue(farmerID, out Piece farmerPiece))
         {
             Debug.LogError($"農民が見つかりません: ID={farmerID}");
             return null;
         }
 
-        if (!pieces.TryGetValue(targetID, out Piece target))
+        if (!allPieces.TryGetValue(targetID, out Piece target))
         {
             Debug.LogError($"ターゲットが見つかりません: ID={targetID}");
             return null;
@@ -1151,13 +1165,13 @@ public class PieceManager : MonoBehaviour
     /// <returns>交換成功したら両方の棋子の同期データを返す</returns>
     public swapPieceData? SwapPositions(int popeID, int targetID)
     {
-        if (!pieces.TryGetValue(popeID, out Piece popePiece))
+        if (!allPieces.TryGetValue(popeID, out Piece popePiece))
         {
             Debug.LogError($"教皇が見つかりません: ID={popeID}");
             return null;
         }
 
-        if (!pieces.TryGetValue(targetID, out Piece target))
+        if (!allPieces.TryGetValue(targetID, out Piece target))
         {
             Debug.LogError($"ターゲットが見つかりません: ID={targetID}");
             return null;
@@ -1190,14 +1204,14 @@ public class PieceManager : MonoBehaviour
     /// <returns>ダメージ後の同棋ProcessHPDelta</returns>
     public syncPieceData? DamagePiece(int pieceID, int damage, int attackerID = -1)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return null;
         }
 
         Piece attacker = null;
-        if (attackerID >= 0 && pieces.TryGetValue(attackerID, out attacker))
+        if (attackerID >= 0 && allPieces.TryGetValue(attackerID, out attacker))
         {
             piece.TakeDamage(damage, attacker);
         }
@@ -1217,7 +1231,7 @@ public class PieceManager : MonoBehaviour
     /// <returns>回復後の棋ProcessHPDelta</returns>
     public syncPieceData? HealPiece(int pieceID, int amount)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return null;
@@ -1239,7 +1253,7 @@ public class PieceManager : MonoBehaviour
     /// <returns>消費成功したらtrue</returns>
     public bool ConsumePieceAP(int pieceID, int amount)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return false;
@@ -1255,7 +1269,7 @@ public class PieceManager : MonoBehaviour
     /// <param name="amount">回復量</param>
     public void RecoverPieceAP(int pieceID, int amount)
     {
-        if (!pieces.TryGetValue(pieceID, out Piece piece))
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return;
@@ -1275,7 +1289,7 @@ public class PieceManager : MonoBehaviour
     /// <returns>Farmerインスタンス（失敗時はnull）</returns>
     public Farmer GetFarmer(int farmerID)
     {
-        if (!pieces.TryGetValue(farmerID, out Piece piece))
+        if (!allPieces.TryGetValue(farmerID, out Piece piece))
         {
             Debug.LogError($"農民が見つかりません: ID={farmerID}");
             return null;
@@ -1300,39 +1314,29 @@ public class PieceManager : MonoBehaviour
     public void ProcessTurnStart(int playerID)
     {
         var playerPieces = GetPlayerPieces(playerID);
-        List<int> charmedPiecesToReturn = new List<int>(); // 魅惑解除された駒のリスト
+        int charmedPiecesCount = 0; // 魅惑解除された駒の数
 
         foreach (int pieceID in playerPieces)
         {
-            if (pieces.TryGetValue(pieceID, out Piece piece))
+            if (allPieces.TryGetValue(pieceID, out Piece piece))
             {
                 // AP回復
                 piece.RecoverAP(piece.Data.aPRecoveryRate);
 
-                // 魅惑カウンター処理
+                // 魅惑カウンター処理（ProcessCharmedTurn内でcurrentPIDが元に戻される）
                 if (piece.ProcessCharmedTurn())
                 {
-                    // 魅惑解除：元の所有者に戻す必要がある
-                    charmedPiecesToReturn.Add(pieceID);
+                    // 魅惑解除された（currentPIDが元のOriginalPIDに戻された）
+                    charmedPiecesCount++;
+                    Debug.Log($"駒ID={pieceID}が魅惑解除により元の所有者（PID={piece.CurrentPID}）に戻りました");
+
+                    // GameManagerに通知（必要なら）
+                    // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
                 }
             }
         }
 
-        // 魅惑解除された駒を辞書間で移動（pieces → enemyPieces）
-        foreach (int pieceID in charmedPiecesToReturn)
-        {
-            if (pieces.TryGetValue(pieceID, out Piece piece))
-            {
-                pieces.Remove(pieceID);
-                enemyPieces[pieceID] = piece;
-                Debug.Log($"駒ID={pieceID}が魅惑解除により元の所有者（PID={piece.CurrentPID}）に戻りました（pieces → enemyPieces）");
-
-                // GameManagerに通知（必要なら）
-                // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
-            }
-        }
-
-        Debug.Log($"プレイヤー{playerID}のターン開始処理を実行しました（駒数: {playerPieces.Count}、魅惑解除: {charmedPiecesToReturn.Count}）");
+        Debug.Log($"プレイヤー{playerID}のターン開始処理を実行しました（駒数: {playerPieces.Count}、魅惑解除: {charmedPiecesCount}）");
     }
 
     #endregion

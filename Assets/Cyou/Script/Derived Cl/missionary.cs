@@ -332,14 +332,6 @@ public class Missionary : Piece
         // プレイヤーIDを変更（陣営変更）
         enemy.ChangePID(currentPID, missionaryData.conversionTurnDuration[UpgradeLevel],this);
 
-        // 変換情報を記録
-        var convertInfo = new ConvertedPieceInfo
-        {
-            convertedPiece = enemy,
-            originalPlayerID = originalPlayerID,
-            convertedTurn = Time.time //これからGMから現在のターンを取得。
-        };
-
         OnPieceConverted?.Invoke(enemy, missionaryData.conversionTurnDuration[UpgradeLevel]);
     }
 
