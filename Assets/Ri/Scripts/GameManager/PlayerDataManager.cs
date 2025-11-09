@@ -7,6 +7,7 @@ using GameData;
 using UnityEngine.UIElements;
 using TMPro;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 
 
@@ -264,7 +265,7 @@ public class PlayerDataManager : MonoBehaviour
     public event Action<int, PlayerUnitData> OnUnitAdded;
 
     // 事件: 单位移除
-    public event Action<int, int2> OnUnitRemoved;
+    public event Action<int, int2,bool> OnUnitRemoved;
 
     // 事件: 单位移动
     public event Action<int, int2, int2> OnUnitMoved;
@@ -680,7 +681,7 @@ public class PlayerDataManager : MonoBehaviour
                 allPlayersData[playerId] = data;
 
                 // 触发事件
-                OnUnitRemoved?.Invoke(playerId, pos);
+                OnUnitRemoved?.Invoke(playerId, pos,false);
                 OnPlayerDataChanged?.Invoke(playerId, data);
             }
 
@@ -719,7 +720,7 @@ public class PlayerDataManager : MonoBehaviour
                 // 触发事件
                 if (unitData.HasValue)
                 {
-                    OnUnitRemoved?.Invoke(playerId, unitData.Value.Position);
+                    OnUnitRemoved?.Invoke(playerId, unitData.Value.Position,false);
                 }
                 OnPlayerDataChanged?.Invoke(playerId, data);
             }
@@ -1032,7 +1033,7 @@ public class PlayerDataManager : MonoBehaviour
         }
 
         // 触发移除事件
-        OnUnitRemoved?.Invoke(fromPlayerId, pos);
+        OnUnitRemoved?.Invoke(fromPlayerId, pos,true);
         OnPlayerDataChanged?.Invoke(fromPlayerId, fromPlayerData);
 
         Debug.Log($"[TransferUnitOwnership] 已从玩家{fromPlayerId}移除单位");

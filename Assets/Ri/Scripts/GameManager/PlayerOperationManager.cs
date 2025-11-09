@@ -263,7 +263,10 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
-                SelectingUnit.GetComponent<ChangeMaterial>().Outline();
+                if (!SelectingUnit.GetComponent<ChangeMaterial>())
+                    SelectingUnit.AddComponent<ChangeMaterial>();
+
+               SelectingUnit.GetComponent<ChangeMaterial>().Outline();
                 LastSelectingCellID = ClickCellid;
 
 
@@ -2248,7 +2251,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
-    private void OnUnitRemovedHandler(int playerId, int2 position)
+    private void OnUnitRemovedHandler(int playerId, int2 position,bool isCharm)
     {
         Debug.Log($"[事件] OnUnitRemovedHandler: 玩家 {playerId} at ({position.x},{position.y})");
 
@@ -2256,9 +2259,13 @@ public class PlayerOperationManager : MonoBehaviour
         {
             Debug.Log("[事件] 本地玩家移除单位");
             // 本地玩家移除单位（发生在被攻击时）
-            if (localPlayerUnits.ContainsKey(position))
+            if (localPlayerUnits.ContainsKey(position)&& !isCharm)
             {
                 Destroy(localPlayerUnits[position]);
+                localPlayerUnits.Remove(position);
+            }
+            else
+            {
                 localPlayerUnits.Remove(position);
             }
             GameManage.Instance.SetCellObject(position, null);
