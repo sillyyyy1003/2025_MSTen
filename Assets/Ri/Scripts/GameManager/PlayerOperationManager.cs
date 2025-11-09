@@ -11,6 +11,7 @@ using GamePieces;
 using UnityEngine.UI;
 using static UnityEditor.PlayerSettings;
 using Mono.Cecil;
+using UnityEngine.Rendering.Universal;
 
 
 /// <summary>
@@ -676,15 +677,15 @@ public class PlayerOperationManager : MonoBehaviour
         {
             PlayerUnitData unit = data.PlayerUnits[i];
 
-            Debug.LogWarning($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y}" +
-                $" player ID:{unit.PlayerUnitDataSO.currentPID}) unit ID:{unit.PlayerUnitDataSO.pieceID}");
-
+         
             if (otherPlayersUnits[playerId].ContainsKey(unit.Position))
             {
                 Debug.Log($"单位已存在，跳过创建");
                 continue;
             }
 
+            Debug.LogWarning($"创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}" +
+               $" player ID:{unit.PlayerUnitDataSO.currentPID}) unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
             CreateEnemyUnit(playerId, unit);
         }
@@ -838,6 +839,11 @@ public class PlayerOperationManager : MonoBehaviour
             }
         }
 
+        if(unitData.PlayerUnitDataSO.pieceID==0)
+        {
+            Debug.Log("创建失败！ syncPieceData为空！");
+        }
+        Debug.Log("创建敌方单位 :玩家 " +playerId+" 单位: "+unitData.PlayerUnitDataSO.piecetype);
         // 选择预制体
         PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
 
@@ -1233,7 +1239,11 @@ public class PlayerOperationManager : MonoBehaviour
             bCanContinue = true;
             return;
         }
+        else
+        {
 
+            Debug.Log("已找到对方数据: "+targetData.Value.PlayerUnitDataSO.piecetype);
+        }
         // 获取双方的 PieceID
         int missionaryPieceID = missionaryData.Value.PlayerUnitDataSO.pieceID;
         int targetPieceID = targetData.Value.PlayerUnitDataSO.pieceID;
@@ -1241,16 +1251,16 @@ public class PlayerOperationManager : MonoBehaviour
         Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
 
         // 调用PieceManager的ConvertEnemy方法
-        syncPieceData? convertResult = PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID);
+        syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
 
-        if (!convertResult.HasValue)
+        if (convertResult.piecetype!=default)
         {
             Debug.Log("[ExecuteCharm] 魅惑失败！");
             bCanContinue = true;
             return;
         }
 
-        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.Value.piecetype);
+        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
 
         // 获取目标GameObject（需要转移到本地玩家）
         GameObject targetUnit = null;
@@ -1263,7 +1273,7 @@ public class PlayerOperationManager : MonoBehaviour
         // ===== 关键修改：不删除重建，直接转移所有权 =====
 
         // 1. 在PlayerDataManager中转移单位所有权
-        syncPieceData newUnitData = convertResult.Value;
+        syncPieceData newUnitData = convertResult;
         newUnitData.currentPID = localPlayerId; // 设置为本地玩家
 
         bool transferSuccess = PlayerDataManager.Instance.TransferUnitOwnership(
@@ -1293,6 +1303,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 添加到本地玩家字典
             localPlayerUnits[targetPos] = targetUnit;
 
+        
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 

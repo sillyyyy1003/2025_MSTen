@@ -5,6 +5,7 @@ using System.Linq;
 using GameData;
 using GamePieces;
 using DG.Tweening.Core.Easing;
+using UnityEngine.UIElements;
 
 //25.11.4 RI 添加序列化Vector3 变量
 
@@ -117,6 +118,9 @@ public class PieceManager : MonoBehaviour
 
     //25.11.1 RI add GameObject
     private GameObject pieceObject;
+
+    //25.11.9 RI add syncPieceData List
+    private Dictionary<int, syncPieceData> allPiecesSyncData = new Dictionary<int, syncPieceData>();
     // ===== 依存関係 =====
     [SerializeField] private UnitListTable unitListTable;
 
@@ -280,6 +284,13 @@ public class PieceManager : MonoBehaviour
             return pieceObject;
         return null;
     }
+
+    // 25.11.1 RI add return piece syncPieceData
+    public syncPieceData GetPieceSyncPieceData(int unitID)
+    {
+        return allPiecesSyncData[unitID];
+    }
+
     /// <summary>
     /// 駒を生成（GameManagerから呼び出し）
     /// </summary>
@@ -328,17 +339,20 @@ public class PieceManager : MonoBehaviour
         Debug.Log($"駒を生成しました: ID={pieceID}, Type={pieceType}, Religion={religion}, PlayerID={playerID}");
         OnPieceCreated?.Invoke(pieceID);
 
-        // 只需要返回基本信息的同步数据
-        return new syncPieceData
+        // 11.9 RI add syncPieceData 
+        syncPieceData pieceData=new  syncPieceData
         {
             pieceID = pieceID,
             piecetype = pieceType,
             religion = religion,
             piecePos = position,
             currentHP = (int)piece.CurrentHP,
-            currentAP=(int)piece.CurrentAP,
+            currentAP = (int)piece.CurrentAP,
             currentPID = playerID
         };
+        allPiecesSyncData.Add(pieceID, pieceData);
+        // 只需要返回基本信息的同步数据
+        return pieceData;
     }
 
     /// <summary>
@@ -384,6 +398,7 @@ public class PieceManager : MonoBehaviour
 
         // 记录到全駒集合
         allPieces[spd.pieceID] = piece;
+        allPiecesSyncData.Add(spd.pieceID, spd);
 
         // 死亡イベントを購読
         piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
