@@ -981,6 +981,138 @@ public class PlayerDataManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 转移单位所有权（用于魅惑功能）
+    /// 直接在数据层面转移单位，不删除重建GameObject
+    /// </summary>
+    /// <param name="fromPlayerId">原所有者ID</param>
+    /// <param name="toPlayerId">新所有者ID</param>
+    /// <param name="pos">单位位置</param>
+    /// <param name="updatedSyncData">更新后的同步数据（playerID已更新）</param>
+    /// <param name="charmedTurns">魅惑持续回合数（0表示解除魅惑）</param>
+    /// <returns>转移是否成功</returns>
+    public bool TransferUnitOwnership(int fromPlayerId, int toPlayerId, int2 pos, syncPieceData updatedSyncData, int charmedTurns = 0)
+    {
+        Debug.Log($"[TransferUnitOwnership] 开始转移单位 - 从玩家{fromPlayerId}到玩家{toPlayerId} at ({pos.x},{pos.y})");
+
+        // 1. 从原所有者获取单位数据
+        if (!allPlayersData.ContainsKey(fromPlayerId))
+        {
+            Debug.LogError($"[TransferUnitOwnership] 找不到原所有者: {fromPlayerId}");
+            return false;
+        }
+
+        PlayerData fromPlayerData = allPlayersData[fromPlayerId];
+        PlayerUnitData? unitToTransfer = null;
+        int unitIndex = -1;
+
+        for (int i = 0; i < fromPlayerData.PlayerUnits.Count; i++)
+        {
+            if (fromPlayerData.PlayerUnits[i].Position.Equals(pos))
+            {
+                unitToTransfer = fromPlayerData.PlayerUnits[i];
+                unitIndex = i;
+                break;
+            }
+        }
+
+        if (!unitToTransfer.HasValue)
+        {
+            Debug.LogError($"[TransferUnitOwnership] 在原所有者处未找到单位 at ({pos.x},{pos.y})");
+            return false;
+        }
+
+        // 2. 从原所有者移除单位
+        fromPlayerData.PlayerUnits.RemoveAt(unitIndex);
+        allPlayersData[fromPlayerId] = fromPlayerData;
+
+        // 移除unitId映射
+        if (unitIdToPlayerIdMap.ContainsKey(unitToTransfer.Value.UnitID))
+        {
+            unitIdToPlayerIdMap.Remove(unitToTransfer.Value.UnitID);
+        }
+
+        // 触发移除事件
+        OnUnitRemoved?.Invoke(fromPlayerId, pos);
+        OnPlayerDataChanged?.Invoke(fromPlayerId, fromPlayerData);
+
+        Debug.Log($"[TransferUnitOwnership] 已从玩家{fromPlayerId}移除单位");
+
+        // 3. 准备转移后的单位数据
+        PlayerUnitData transferredUnit = unitToTransfer.Value;
+
+        // 更新同步数据
+        transferredUnit.PlayerUnitDataSO = updatedSyncData;
+
+        // 设置魅惑状态
+        if (charmedTurns > 0)
+        {
+            // 被魅惑状态
+            transferredUnit.bIsCharmed = true;
+            transferredUnit.charmedRemainingTurns = charmedTurns;
+            transferredUnit.originalOwnerID = fromPlayerId;
+            Debug.Log($"[TransferUnitOwnership] 设置魅惑状态 - 剩余回合:{charmedTurns}, 原所有者:{fromPlayerId}");
+        }
+        else
+        {
+            // 解除魅惑（归还控制权）
+            transferredUnit.bIsCharmed = false;
+            transferredUnit.charmedRemainingTurns = 0;
+            transferredUnit.originalOwnerID = -1;
+            Debug.Log($"[TransferUnitOwnership] 解除魅惑状态");
+        }
+
+        // 4. 添加到新所有者
+        if (!allPlayersData.ContainsKey(toPlayerId))
+        {
+            Debug.LogError($"[TransferUnitOwnership] 找不到新所有者: {toPlayerId}");
+            return false;
+        }
+
+        PlayerData toPlayerData = allPlayersData[toPlayerId];
+        toPlayerData.PlayerUnits.Add(transferredUnit);
+        allPlayersData[toPlayerId] = toPlayerData;
+
+        // 更新unitId映射
+        unitIdToPlayerIdMap[transferredUnit.UnitID] = toPlayerId;
+
+        // 触发添加事件
+        OnUnitAdded?.Invoke(toPlayerId, transferredUnit);
+        OnPlayerDataChanged?.Invoke(toPlayerId, toPlayerData);
+
+        Debug.Log($"[TransferUnitOwnership] 单位已添加到玩家{toPlayerId}");
+        Debug.Log($"[TransferUnitOwnership] 转移完成 - 单位ID:{transferredUnit.UnitID}, 类型:{transferredUnit.UnitType}");
+
+        return true;
+    }
+
+    /// <summary>
+    /// 批量转移单位所有权（用于一次性转移多个单位）
+    /// </summary>
+    public bool TransferMultipleUnits(int fromPlayerId, int toPlayerId, List<int2> positions, List<syncPieceData> updatedSyncDataList, int charmedTurns = 0)
+    {
+        if (positions.Count != updatedSyncDataList.Count)
+        {
+            Debug.LogError("[TransferMultipleUnits] 位置列表和同步数据列表长度不匹配");
+            return false;
+        }
+
+        bool allSuccess = true;
+        for (int i = 0; i < positions.Count; i++)
+        {
+            bool success = TransferUnitOwnership(fromPlayerId, toPlayerId, positions[i], updatedSyncDataList[i], charmedTurns);
+            if (!success)
+            {
+                Debug.LogWarning($"[TransferMultipleUnits] 转移单位失败 at ({positions[i].x},{positions[i].y})");
+                allSuccess = false;
+            }
+        }
+
+        return allSuccess;
+    }
+
+
+
+    /// <summary>
     /// 减少被魅惑单位的剩余回合数，并检查是否需要归还控制权
     /// 在回合结束时调用
     /// </summary>
@@ -1049,7 +1181,7 @@ public class PlayerDataManager : MonoBehaviour
 
         // 更新同步数据中的playerID
         syncPieceData updatedSyncData = returnedUnit.PlayerUnitDataSO;
-        updatedSyncData.playerID = originalOwnerId;
+        updatedSyncData.currentPID = originalOwnerId;
         returnedUnit.PlayerUnitDataSO = updatedSyncData;
 
         // 添加回原始所有者
@@ -1099,3 +1231,4 @@ public struct CharmExpireInfo
     public int OriginalOwnerID;
     public PlayerUnitData UnitData;
 }
+
