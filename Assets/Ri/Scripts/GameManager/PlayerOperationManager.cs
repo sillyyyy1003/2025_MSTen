@@ -1251,14 +1251,15 @@ public class PlayerOperationManager : MonoBehaviour
         Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
 
         // 调用PieceManager的ConvertEnemy方法
+        PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID);
         syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
 
-        if (convertResult.piecetype!=default)
-        {
-            Debug.Log("[ExecuteCharm] 魅惑失败！");
-            bCanContinue = true;
-            return;
-        }
+        //if (convertResult.piecetype!=default)
+        //{
+        //    Debug.Log("[ExecuteCharm] 魅惑失败！");
+        //    bCanContinue = true;
+        //    return;
+        //}
 
         Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
 
