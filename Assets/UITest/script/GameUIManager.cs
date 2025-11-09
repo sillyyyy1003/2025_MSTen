@@ -152,6 +152,13 @@ public class GameUIManager : MonoBehaviour
         EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
 
         InactiveUnit.onClick.AddListener(() => HandleInactiveUnitButtonPressed());
+
+
+        if (PlayerDataManager.Instance != null)
+        {
+            PlayerDataManager.Instance.OnPlayerDataChanged += HandlePlayerDataChanged;
+        }
+
     }
 
 
@@ -707,6 +714,21 @@ public class GameUIManager : MonoBehaviour
 
 
     }
+
+    private void HandlePlayerDataChanged(int id,PlayerData player)
+    {
+
+        UpdatePlayerIconsData();
+        UpdateResourcesData();
+        UpdateAllUnitCountData();
+        UpdateUIUnitDataListFromInterface(CardType.Missionary);
+        UpdateUIUnitDataListFromInterface(CardType.Solider);
+        UpdateUIUnitDataListFromInterface(CardType.Farmer);
+        UpdateUIUnitDataListFromInterface(CardType.Building);
+        UpdateUIUnitDataListFromInterface(CardType.Pope);
+
+    }
+
 }
 
 
