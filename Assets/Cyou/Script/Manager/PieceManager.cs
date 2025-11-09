@@ -1130,14 +1130,11 @@ public class PieceManager : MonoBehaviour
     // 25.11.9 RI 添加被魅惑单位归还后的特殊数据处理
     public void AddConvertedUnit(int playerID,int pieceID)
     {
-            for(int i=0;i<allPieces.Count;i++)
-            {
-                if (allPieces[i].PieceID==pieceID)
-                {
-                    allPieces[i].SetPlayerID(playerID);
-                    return;
-                }
-            }
+        if (allPieces.ContainsKey(pieceID))
+        {
+            allPieces[pieceID].SetPlayerID(playerID);
+        }
+       
     }
 
 
