@@ -657,20 +657,6 @@ public class PlayerOperationManager : MonoBehaviour
 
         }
 
-
-
-        // 清除旧的单位显示
-        //foreach (var unit in otherPlayersUnits[playerId].Values)
-        //{
-        //    if (unit != null)
-        //    {
-        //        Destroy(unit);
-        //        Debug.Log("otherPlayers unit is " + unit.name);
-        //    }
-
-        //}
-        //otherPlayersUnits[playerId].Clear();
-
         // 创建新的单位显示
 
         for (int i = 0; i < data.PlayerUnits.Count; i++)
@@ -1263,6 +1249,7 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[targetOwnerId].ContainsKey(targetPos))
         {
             targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
+            Debug.Log("获取目标unit!");
         }
 
 
@@ -1747,17 +1734,16 @@ public class PlayerOperationManager : MonoBehaviour
         {
             targetUnit = localPlayerUnits[targetPos];
             localPlayerUnits.Remove(targetPos);
+            Debug.Log("Get Units Local:"+ targetUnit.name);
         }
         else if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId) &&
                  otherPlayersUnits[msg.TargetPlayerId].ContainsKey(targetPos))
         {
             targetUnit = otherPlayersUnits[msg.TargetPlayerId][targetPos];
             otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
+            Debug.Log("Get Units Other:" + targetUnit.name);
         }
-        else
-        {
-            targetUnit = localPlayerUnits[targetPos];
-        }
+      
 
         // 添加到新所有者字典
         if (targetUnit != null)
@@ -2275,7 +2261,11 @@ public class PlayerOperationManager : MonoBehaviour
             }
             else
             {
+                Destroy(localPlayerUnits[position]);
                 localPlayerUnits.Remove(position);
+
+                // 更新魅惑后的新显示
+                UpdateOtherPlayerDisplay(localPlayerId==1?0:1,PlayerDataManager.Instance.GetPlayerData(localPlayerId == 1 ? 0 : 1));
             }
             GameManage.Instance.SetCellObject(position, null);
         }
