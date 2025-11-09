@@ -33,7 +33,7 @@ public static class HexMetrics
 	/// <summary>
 	/// Factor of the solid uniform region inside a hex cell.
 	/// </summary>
-	public const float solidFactor = 0.8f;
+	public const float solidFactor = 0.8f;	//Connection厚度
 
 	/// <summary>
 	/// Factor of the blending region inside a hex cell.
@@ -76,9 +76,9 @@ public static class HexMetrics
 	public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);
 
 	/// <summary>
-	/// Strength of cell position terturbation.
+	/// Strength of cell position terturbation.扰动的强度
 	/// </summary>
-	public const float cellPerturbStrength = 4f;
+	public const float cellPerturbStrength = 0f;
 
 	/// <summary>
 	/// Strength of vertical elevation perturbation.
