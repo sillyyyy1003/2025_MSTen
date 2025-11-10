@@ -258,7 +258,7 @@ public class GameManage : MonoBehaviour
 
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-        _BuildingManager.InitializeBuildingData(Religion.SilkReligion, Religion.MadScientistReligion);
+        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
@@ -333,7 +333,7 @@ public class GameManage : MonoBehaviour
 
             // 初始化buildingManager
             _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-            _BuildingManager.InitializeBuildingData(Religion.SilkReligion, Religion.MadScientistReligion);
+            _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
 
             Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合
