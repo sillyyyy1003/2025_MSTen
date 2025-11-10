@@ -269,25 +269,32 @@ private int localPlayerId = -1;
             // 检查是否点击了自己的单位
             if (localPlayerUnits.ContainsKey(clickPos))
             {
-                // 取消之前的选择
-                ReturnToDefault();
-                SelectedEmptyCellID = -1;
+                if(bIsInBuilding)
+                {
+
+                }
+                else
+                {
+                    // 取消之前的选择
+                    ReturnToDefault();
+                    SelectedEmptyCellID = -1;
 
 
-                // 选择新单位
-                SelectingUnit = localPlayerUnits[clickPos];
-                if (!SelectingUnit.GetComponent<ChangeMaterial>())
-                    SelectingUnit.AddComponent<ChangeMaterial>();
+                    // 选择新单位
+                    SelectingUnit = localPlayerUnits[clickPos];
+                    if (!SelectingUnit.GetComponent<ChangeMaterial>())
+                        SelectingUnit.AddComponent<ChangeMaterial>();
 
-               SelectingUnit.GetComponent<ChangeMaterial>().Outline();
-                LastSelectingCellID = ClickCellid;
+                    SelectingUnit.GetComponent<ChangeMaterial>().Outline();
+                    LastSelectingCellID = ClickCellid;
 
 
-                PlayerDataManager.Instance.nowChooseUnitID = PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos);
-                PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
+                    PlayerDataManager.Instance.nowChooseUnitID = PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos);
+                    PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
 
-                OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
-                Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
+                    OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
+                    Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
+                }
 
             }
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))

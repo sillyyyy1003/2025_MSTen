@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44f0f6bcefa0c3f40874ad6d1b4bfc47, type: 3}
   m_Name: RI_SilkReligionBuildingData
   m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  religion: 1
   buildingName: "\u7D72\u7E54\u6559_\u7279\u6B8A\u5EFA\u7BC9"
   maxHp: 100
   buildStartAPCost: 1
