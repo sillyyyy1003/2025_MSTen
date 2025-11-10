@@ -71,10 +71,8 @@ private int localPlayerId = -1;
 
     private int selectCellID;
 
-    //// 是否选中了农民
-    //private bool bIsChooseFarmer;
-    //// 是否选中了传教士
-    //private bool bIsChooseMissionary;
+    // 是否选择建造
+    private bool bIsInBuilding;
 
     // 保存攻击前的原始位置（用于"移动+攻击"场景）
     private int2? attackerOriginalPosition = null;
@@ -124,11 +122,12 @@ private int localPlayerId = -1;
             HandleMouseInput();
 
         }
-        if (Input.GetKeyDown(KeyCode.F) 
+        if (Input.GetKeyDown(KeyCode.B) 
             && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer
             && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
         {
-          
+            bIsInBuilding = true;
+            ShowBuildingPos();
             // 农民生成建筑
             Debug.Log("Building!");
             GameManage.Instance._BuildingManager.CreateBuildingByName(
@@ -206,6 +205,9 @@ private int localPlayerId = -1;
         // 右键点击 - 移动/攻击
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
+            // 重置建筑操作
+            bIsInBuilding = false;
+
             _HexGrid.GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
         }
@@ -445,6 +447,14 @@ private int localPlayerId = -1;
     // *************************
 
     #region =====创建相关=====
+
+
+    // 显示当前农民所在位置，等待点选后消耗行动力创建建筑
+    private void ShowBuildingPos()
+    {
+
+    }
+
 
     /// <summary>
     /// 尝试在当前选中的空格子创建单位
