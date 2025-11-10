@@ -870,14 +870,82 @@ public int GetLocalPlayerID()
 
 ---
 
-### 建物の生成
-
-#### `CreateBuilding()`
-己方の建物を生成してIDを返します。
+#### `InitializeBuildingData()`
+宗教に基づいて建物データを初期化します（BuildingRegistryから自動取得）。
 
 **シグネチャ:**
 ```csharp
-public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
+public void InitializeBuildingData(Religion playerReligion, Religion enemyReligion)
+```
+
+**パラメータ:**
+- `playerReligion`: 自陣営の宗教
+- `enemyReligion`: 対戦相手の宗教
+
+**使用例:**
+```csharp
+using GameData; // Religion enumを使用するため
+
+// 宗教を指定するだけで自動的に該当建物を取得
+buildingManager.InitializeBuildingData(Religion.SilkReligion, Religion.MadScientistReligion);
+```
+
+**動作:**
+1. BuildingRegistryから指定された宗教の建物を自動的に取得
+2. 自陣営の建物を `buildableBuildingTypes`（建設可能リスト）に設定
+3. 自陣営と対戦相手の建物を `allBuildingTypes`（全建物リスト）に設定
+4. 建設可能な建物は自陣営のもののみ
+5. 敵の建物データは同期用に保持（`CreateEnemyBuilding()`で使用）
+
+**必要な設定:**
+- BuildingManagerのInspectorで`BuildingRegistry`を設定する必要があります
+- 各BuildingDataSOアセットで`religion`フィールドを適切に設定する必要があります
+
+**注意:**
+- この関数を呼び出す前に、BuildingRegistryに全建物のBuildingDataSOを登録しておく必要があります
+- 建物を生成する前に必ず呼び出してください
+
+**実装箇所:** `BuildingManager.cs:62-93`
+
+**BuildingDataSOの設定:**
+
+各建物のScriptableObjectに宗教フィールドが追加されています：
+
+```csharp
+[Header("宗教")]
+public Religion religion = Religion.None; // 所属する宗教
+```
+
+対戦ゲームの設計上：
+- **自陣営の建物**: 建設可能（`buildableBuildingTypes`から取得）
+- **敵陣営の建物**: 建設不可だが、データを知る必要がある（`allBuildingTypes`に含まれる）
+
+**BuildingRegistryの準備:**
+
+BuildingRegistryには宗教フィルタリング機能が追加されています：
+
+```csharp
+/// <summary>
+/// 指定された宗教の建物のみを取得
+/// </summary>
+public List<BuildingDataSO> GetBuildingsByReligion(Religion religion)
+
+/// <summary>
+/// 複数の宗教の建物を取得
+/// </summary>
+public List<BuildingDataSO> GetBuildingsByReligions(params Religion[] religions)
+```
+
+---
+
+### 建物の生成
+
+#### `CreateBuilding()`
+己方の建物を生成し、同期データを返します。
+
+**シグネチャ:**
+```csharp
+public syncBuildingData? CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
 ```
 
 **パラメータ:**
@@ -886,26 +954,68 @@ public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 pos
 - `position`: 生成位置
 
 **戻り値:**
-- 成功: 生成された建物のID（正の整数）
-- 失敗: -1
+- 成功: 生成された建物の同期データ（`syncBuildingData`）
+- 失敗: null
+
+**使用例:**
+```csharp
+// 建物を生成
+syncBuildingData? buildingData = buildingManager.CreateBuilding(
+    buildingDataSO,
+    playerID: 1,
+    new Vector3(10, 0, 10)
+);
+
+if (buildingData.HasValue)
+{
+    Debug.Log($"建物を生成しました: ID={buildingData.Value.buildingID}");
+    // ネットワーク経由で相手に送信
+    SendToNetwork(buildingData.Value);
+}
+```
 
 **注意:**
 - このメソッドで生成された建物は `buildings` 辞書（己方の建物）に追加されます
 - 敵方の建物を生成する場合は `CreateEnemyBuilding()` を使用してください
+- 戻り値の同期データはネットワーク送信に即座に使用できます
 
-**実装箇所:** `BuildingManager.cs:62-102`
+**実装箇所:** `BuildingManager.cs:99-144`
 
 ---
 
 #### `CreateBuildingByName()`
-建物名から建物を生成します（便利メソッド）。
+建物名から建物を生成し、同期データを返します（便利メソッド）。
 
 **シグネチャ:**
 ```csharp
-public int CreateBuildingByName(string buildingName, int playerID, Vector3 position)
+public syncBuildingData? CreateBuildingByName(string buildingName, int playerID, Vector3 position)
 ```
 
-**実装箇所:** `BuildingManager.cs:113-124`
+**パラメータ:**
+- `buildingName`: 建物名
+- `playerID`: プレイヤーID
+- `position`: 生成位置
+
+**戻り値:**
+- 成功: 生成された建物の同期データ（`syncBuildingData`）
+- 失敗: null
+
+**使用例:**
+```csharp
+syncBuildingData? buildingData = buildingManager.CreateBuildingByName(
+    "祭壇",
+    playerID: 1,
+    new Vector3(10, 0, 10)
+);
+
+if (buildingData.HasValue)
+{
+    Debug.Log($"建物を生成しました: {buildingData.Value.buildingName}");
+    SendToNetwork(buildingData.Value);
+}
+```
+
+**実装箇所:** `BuildingManager.cs:146-164`
 
 ---
 
