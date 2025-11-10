@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -10,14 +10,14 @@ public class StoredCard : MonoBehaviour,
     IDragHandler
 {
     [Header("UI References")]
-    public Image backgroundImage;    // ¿¨ÅÆ±³¾°
-    public Image unitCardImage;     // ½ÇÉ«±³¾°Í¼
-    public Image charaImage;     // ½ÇÉ«Í¼
-    public TextMeshProUGUI DataText;    // ÎÄ±¾
+    public Image backgroundImage;    // å¡ç‰ŒèƒŒæ™¯
+    public Image unitCardImage;     // è§’è‰²èƒŒæ™¯å›¾
+    public Image charaImage;     // è§’è‰²å›¾
+    public TextMeshProUGUI DataText;    // æ–‡æœ¬
 
     [Header("Drag Settings")]
-    public float longPressTime = 0.2f;    // ³¤°´¶à¾Ã½øÈëÍÏ×§
-    public System.Action<CardType> OnCardDraggedUp;  // ±»ÍÏ³ö´¥·¢µÄÊÂ¼ş
+    public float longPressTime = 0.2f;    // é•¿æŒ‰å¤šä¹…è¿›å…¥æ‹–æ‹½
+    public System.Action<CardType> OnCardDraggedUp;  // è¢«æ‹–å‡ºè§¦å‘çš„äº‹ä»¶
 
     private bool showSprite = false;
     private bool isDragging = false;
@@ -61,7 +61,7 @@ public class StoredCard : MonoBehaviour,
             if (!isDragging && pressTimer >= longPressTime)
             {
                 isDragging = true;
-                Debug.Log("¿ªÊ¼ÍÏ×§¡­");
+                Debug.Log("å¼€å§‹æ‹–æ‹½â€¦");
             }
         }
 
@@ -106,7 +106,7 @@ public class StoredCard : MonoBehaviour,
         if (!isDragging)
             return;
 
-        // ËÉ¿ªºó»Ö¸´Î»ÖÃ
+        // æ¾å¼€åæ¢å¤ä½ç½®
         rect.anchoredPosition = originalPos;
         isDragging = false;
     }
@@ -116,14 +116,14 @@ public class StoredCard : MonoBehaviour,
         if (!isDragging)
             return;
 
-        // ¸úËæÊó±ê
+        // è·Ÿéšé¼ æ ‡
         rect.position = eventData.position;
 
-        // ´¥·¢ 1/4 ÆÁÄ»¸ß¶ÈÊÂ¼ş
+        // è§¦å‘ 1/4 å±å¹•é«˜åº¦äº‹ä»¶
         float threshold = Screen.height * 0.25f;
         if (eventData.position.y > threshold)
         {
-            Debug.Log("¿¨ÅÆ±»ÍÏµ½¼¤»îÇøÓò£¡");
+            Debug.Log("å¡ç‰Œè¢«æ‹–åˆ°æ¿€æ´»åŒºåŸŸï¼");
             OnCardDraggedUp?.Invoke(cardType);
         }
     }

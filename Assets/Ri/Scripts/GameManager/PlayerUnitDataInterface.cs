@@ -250,6 +250,42 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     }
 
+    // 获得某种棋子的某一项属性
+    public int GetTechTreeLevel(TechTree tech, CardType type)
+    {
+
+        switch (tech)
+        {
+            case TechTree.HP:
+                return 1;
+            case TechTree.AP:
+                return 1;
+            case TechTree.Occupy:
+                return 1;
+            case TechTree.Conversion:
+                return 1;
+            case TechTree.ATK:
+                return 1;
+            case TechTree.Sacrifice:
+                return 1;
+            case TechTree.AttackPosition:
+                return 1;
+            case TechTree.AltarCount:
+                return 1;
+            case TechTree.ConstructionCost:
+                return 1;
+            case TechTree.MovementCD:
+                return 1;
+            case TechTree.Buff:
+                return 1;
+            case TechTree.Heresy:
+                return 1;
+            default:
+                return 1;
+        }
+    }
+
+
     // 升级某种棋子的某一项属性
     public bool UpgradeCard(CardType type,TechTree tech)
     {
@@ -319,39 +355,5 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     }
 
-    // 获得某种棋子的某一项属性
-    public int GetTechTreeLevel(TechTree tech, CardType type)
-    {
-
-        switch (tech)
-        {
-            case TechTree.HP:
-                return 1;
-            case TechTree.AP:
-                return 1;
-            case TechTree.Occupy:
-                return 1;
-            case TechTree.Conversion:
-                return 1;
-            case TechTree.ATK:
-                return 1;
-            case TechTree.Sacrifice:
-                return 1;
-            case TechTree.AttackPosition:
-                return 1;
-            case TechTree.AltarCount:
-                return 1;
-            case TechTree.ConstructionCost:
-                return 1;
-            case TechTree.MovementCD:
-                return 1;
-            case TechTree.Buff:
-                return 1;
-            case TechTree.Heresy:
-                return 1;
-            default:
-                return 1;
-        }
-    }
 
 }
