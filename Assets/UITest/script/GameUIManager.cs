@@ -159,6 +159,20 @@ public class GameUIManager : MonoBehaviour
             PlayerDataManager.Instance.OnPlayerDataChanged += HandlePlayerDataChanged;
         }
 
+        MissionaryUnits = new List<UIUnitData>();
+        SoliderUnits = new List<UIUnitData>();
+        FarmerUnits = new List<UIUnitData>();
+        BuildingUnits = new List<UIUnitData>();
+
+        // Pope 单位默认值
+        PopeUnitData = new UIUnitData
+        {
+            UnitId = -1,
+            UnitType = CardType.None,
+            HP = 0,
+            AP = 0
+        };
+
     }
 
 
