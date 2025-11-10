@@ -10,6 +10,25 @@ public class TitleUIManager : MonoBehaviour
 	public RectTransform LeftMenu;
 	public RectTransform RightMenu;
 
+	// World UI
+	[Header("Left Menu")]
+	public HexButton Button_EndGame;
+	public HexButton Button_GameTutorial;
+	public HexButton Button_SinglePlayer;
+	public HexButton Button_OnlineGame;
+	public HexButton Button_Setting;
+
+	[Header("Right Menu")]
+	public HexButton Button_Matching;
+
+	// Screen UI
+	[Header("OnlineButton")]
+	public GameObject Image_OnlineGame;
+	public Button Button_ExitOnlineGame;
+	public Button Button_CreateGame;
+	public Button Button_AddGame;
+
+	public Transform Building;
 	void Update()
 	{
 		// Right mouse button click
@@ -20,6 +39,11 @@ public class TitleUIManager : MonoBehaviour
 			// 如果有任意菜单是打开的，则将所有切换设定为关闭状态
 
 		}
+
+		if (Building)
+		{
+			Building.Rotate(Vector3.up, 20f * Time.deltaTime);
+		}
 	}
 
 	public void SetRightMenu(bool active)
@@ -27,18 +51,6 @@ public class TitleUIManager : MonoBehaviour
 		RightMenu.gameObject.SetActive(active);
 	}
 
-	// World UI
-	public HexButton Button_EndGame;
-	public HexButton Button_GameTutorial;
-	public HexButton Button_SinglePlayer;
-	public HexButton Button_OnlineGame;
-	public HexButton Button_Setting;
-
-	// Screen UI
-	public GameObject Image_OnlineGame;
-	public Button Button_ExitOnlineGame;
-	public Button Button_CreateGame;
-	public Button Button_AddGame;
 
 	// Start is called before the first frame update
 	void Start()
@@ -73,7 +85,8 @@ public class TitleUIManager : MonoBehaviour
 	}
 	private void OnClickSetting()
 	{
-		Debug.Log("EndGame");
+		SetRightMenu(true);
+		Debug.Log("Setting");
 	}
 	private void OnClickExitOnlineGame()
 	{

@@ -78,7 +78,7 @@ public class HexButton : MonoBehaviour
 		if (inside && mouseDown && !isPressed)
 		{
 			isPressed = true;
-			shadow.enabled = false;
+			shadow.gameObject.SetActive(false);
 			UpdateVisual(pressedColor);
 		}
 
@@ -106,7 +106,6 @@ public class HexButton : MonoBehaviour
 			{
 				UpdateVisual(isOn ? selectedColor : normalColor);
 				
-
 			}
 		
 			isPressed = false;
