@@ -62,8 +62,12 @@ public class PlayerOperationManager : MonoBehaviour
     // 玩家数据管理器引用
     //private PlayerDataManager playerDataManager;
 
-    // 本地玩家ID
-    private int localPlayerId = -1;
+    // 格子list，检测移动范围用
+    List<HexCell> HexCellList = new List<HexCell>();
+                   
+
+// 本地玩家ID
+private int localPlayerId = -1;
 
     private int selectCellID;
 
@@ -136,10 +140,14 @@ public class PlayerOperationManager : MonoBehaviour
             // 传教士占领
             // 通过PieceManager判断
             if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
-                && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
+                && _HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1)
+                && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos) )
             {
-                _HexGrid.GetCell(LastSelectingCellID).Walled = true;
-                PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
+                
+                    _HexGrid.GetCell(LastSelectingCellID).Walled = true;
+                    PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
+                    HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
+              
             }
             else
             {
@@ -396,12 +404,8 @@ public class PlayerOperationManager : MonoBehaviour
                 // 传教士移动
                 if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
                 {
-                    List<HexCell> list = new List<HexCell>();
-                    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Count; i++)
-                    {
-                        list.Add(_HexGrid.GetCell(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells[i]));
-                    }
-                    if (_HexGrid.SearchCellRange(list, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
+                  
+                    if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
                     {
                         MoveToSelectCell(ClickCellid);
                     }
@@ -704,6 +708,13 @@ public class PlayerOperationManager : MonoBehaviour
             case CardType.Pope:
                 pieceType = PieceType.Pope;
                 GetStartWall(cellId);
+
+                // init Hex Cell List
+                for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Count; i++)
+                {
+                    HexCellList.Add(_HexGrid.GetCell(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells[i]));
+                }
+
                 break;
             default:
                 Debug.LogError($"未知的单位类型: {unitType}");
