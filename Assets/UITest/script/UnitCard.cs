@@ -237,16 +237,16 @@ public class UnitCard : MonoBehaviour
 
     public void SetDetailData()
     {
-		//int id = unitData.UnitId;
-
-		//Piece detaildata = PlayerUnitDataInterface.Instance.GetUnitData(id);
-		//dataText.text = "MaxHP=" + detaildata.CurrentMaxAP.ToString() + "\n";
-		dataText.text = "MaxHP=???\n";
+		int id = unitData.UnitId;
+		Piece detaildata = PlayerUnitDataInterface.Instance.GetUnitData(id);
+		dataText.text = "MaxHP=" + detaildata.CurrentMaxAP.ToString() + "\n";
 
 
-    }
 
-    public int GetCardUnitID()
+
+	}
+
+	public int GetCardUnitID()
 	{
 
 		return unitData.UnitId;
