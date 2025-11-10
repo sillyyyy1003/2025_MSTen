@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -6,9 +6,9 @@ using UnityEngine.UI;
 
 public class PlayerIcon : MonoBehaviour
 {
-    public Image avatarImage;     // ½ÇÉ«Í¼
-    public Image backgroundImage;    // ¿¨ÅÆ±³¾°
-    public TextMeshProUGUI statusText;    // ÎÄ±¾
+    public Image avatarImage;     // è§’è‰²å›¾
+    public Image backgroundImage;    // å¡ç‰ŒèƒŒæ™¯
+    public TextMeshProUGUI statusText;    // æ–‡æœ¬
 
     public void Setup(UIPlayerData data)
     {
@@ -19,17 +19,17 @@ public class PlayerIcon : MonoBehaviour
         {
             if (data.isOperating)
             {
-                statusText.text = "ĞĞ„ÓÖĞ...";
+                statusText.text = "è¡Œå‹•ä¸­...";
             }
             else
             {
-                statusText.text = "´ı¤Á";
+                statusText.text = "å¾…ã¡";
             }
             backgroundImage.color = Color.white;
         }
         else
         {
-            statusText.text = "”¡±±";
+            statusText.text = "æ•—åŒ—";
             backgroundImage.color = Color.red;
         }
 

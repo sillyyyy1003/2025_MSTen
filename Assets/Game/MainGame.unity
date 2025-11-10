@@ -123,6 +123,18 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &8718343 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7819550314296720989, guid: 0240edcb80155b849809eff09fae7267,
+    type: 3}
+  m_PrefabInstance: {fileID: 909387979}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &24593050
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3714,30 +3726,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0038989cd663c1409624aa31119c36e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isInitialize: 0
-  localPlayerId: 0
-  playerReligion: 0
-  Resources: 0
-  AllUnitCount: 0
-  AllUnitCountLimit: 0
-  ActivateMissionaryCount: 0
-  ActivateSoliderCount: 0
-  ActivateFarmerCount: 0
-  ActivateBuildingCount: 0
-  InactiveUnitCount: 0
-  DeckMissionaryCount: 0
-  DeckSoliderCount: 0
-  DeckFarmerCount: 0
-  DeckBuildingCount: 0
-  MissionaryUnits: []
-  SoliderUnits: []
-  FarmerUnits: []
-  BuildingUnits: []
-  PopeUnitData:
-    UnitId: 0
-    UnitType: 0
-    HP: 0
-    AP: 0
   religionIcon: {fileID: 909387987}
   resourcesValue: {fileID: 909387986}
   activateMissionaryValue: {fileID: 909387984}
@@ -3750,6 +3738,7 @@ MonoBehaviour:
   playerIconParent: {fileID: 527660466}
   miniMap: {fileID: 1874568612}
   EndTurn: {fileID: 1218458964}
+  InactiveUnit: {fileID: 8718343}
   CountdownTime: {fileID: 320742768}
   timer: {fileID: 2117784777}
 --- !u!1001 &2125054216
