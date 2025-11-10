@@ -787,7 +787,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nowChooseUnitID: 0
   nowChooseUnitType: 0
-  buildingRegistry: {fileID: 11400000, guid: 7173f6d9ba6e94243abc74c054f4d749, type: 2}
+  buildingRegistry: {fileID: 0}
 --- !u!114 &131122553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2465,9 +2465,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1c98f6d83ca1824cb6612f496a5ffc4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  availableBuildingTypes:
-  - {fileID: 11400000, guid: cc0b949881cbc2d408b64453f5a34154, type: 2}
-  - {fileID: 11400000, guid: 41d7afcb31cc21745b72e78ac52b18b2, type: 2}
+  buildingRegistry: {fileID: 11400000, guid: 7173f6d9ba6e94243abc74c054f4d749, type: 2}
 --- !u!1 &1218458962
 GameObject:
   m_ObjectHideFlags: 0
