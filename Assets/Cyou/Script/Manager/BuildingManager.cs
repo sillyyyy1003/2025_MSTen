@@ -72,7 +72,10 @@ public class BuildingManager : MonoBehaviour
 
         // Prefabから建物を生成
         GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position, Quaternion.identity);
-        Building building = buildingObj.GetComponent<Building>();
+
+        //25.11.10 RI Fix GetComponent Bug
+        //Building building = buildingObj.GetComponent<Building>();
+        Building building = buildingObj.AddComponent<Building>();
 
         if (building == null)
         {
@@ -110,8 +113,9 @@ public class BuildingManager : MonoBehaviour
     /// <returns>生成された建物のID（失敗時は-1）</returns>
     public int CreateBuildingByName(string buildingName, int playerID, Vector3 position)
     {
+        //25.11.10 RI 修改创建逻辑避免nameBug
         BuildingDataSO buildingData = availableBuildingTypes?.Find(b => b.buildingName == buildingName);
-
+        //BuildingDataSO buildingData = availableBuildingTypes[0];
         if (buildingData == null)
         {
             Debug.LogError($"建物データが見つかりません: {buildingName}");

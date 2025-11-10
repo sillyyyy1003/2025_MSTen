@@ -83,6 +83,8 @@ public struct PlayerData
     // 玩家占领的格子id
     public List<int> PlayerOwnedCells;
 
+    
+
     public PlayerData(int playerId)
     {
         PlayerID = playerId;
