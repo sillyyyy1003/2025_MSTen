@@ -10,6 +10,7 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 using GameData;
 using Unity.Mathematics;
+using UnityEngine.Rendering.Universal;
 
 
 
@@ -2095,6 +2096,50 @@ public class NetGameSystem : MonoBehaviour
         {
             gameManage = GameManage.Instance;
         }
+
+        // ===== 新增：确保目标单位数据存在 =====
+        if (playerDataManager != null)
+        {
+            // 检查目标单位是否存在于PlayerDataManager中
+            PlayerUnitData? targetUnit = playerDataManager.FindUnit(data.TargetPlayerId, targetPos);
+
+            if (!targetUnit.HasValue)
+            {
+                Debug.LogWarning($"[网络魅惑] 目标单位不存在于PlayerDataManager，可能需要先创建");
+
+                // 如果目标单位不存在，可能需要先从NewUnitSyncData创建
+                // 注意：这种情况通常不应该发生，说明同步顺序有问题
+                // 但为了健壮性，我们可以尝试添加单位
+                CardType unitType=CardType.None;
+                // 根据syncPieceData推断单位类型
+                switch (data.NewUnitSyncData.piecetype)
+                {
+                    case PieceType.Pope:
+                        unitType = CardType.Pope;
+                        break;
+                    case PieceType.Missionary:
+                        unitType = CardType.Missionary;
+                        break;
+                    case PieceType.Military:
+                        unitType = CardType.Solider;
+                        break;
+                    case PieceType.Farmer:
+                        unitType = CardType.Farmer;
+                        break;
+
+                }
+                playerDataManager.AddUnit(
+                    data.TargetPlayerId,
+                    unitType,
+                    targetPos,
+                    data.NewUnitSyncData,
+                    null
+                );
+
+                Debug.Log($"[网络魅惑] 已添加缺失的目标单位数据");
+            }
+        }
+
 
         if (playerDataManager != null && gameManage != null && gameManage._PlayerOperation != null)
         {

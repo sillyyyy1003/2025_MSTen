@@ -168,7 +168,7 @@ if (PieceManager.Instance.CreateEnemyPiece(enemyData))
 1. UnitListTableから駒データSOを取得
 2. Prefabから駒を生成
 3. 駒を初期化
-4. enemyPieces辞書に登録
+4. allPieces辞書に登録
 5. syncPieceDataから状態を設定（HP、レベル、職業別スキルレベル等）
 
 **実装箇所:** `PieceManager.cs:273-366`
@@ -527,7 +527,7 @@ public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
 
 **パラメータ:**
 - `missionaryID`: 宣教師の駒ID
-- `targetID`: ターゲットの敵駒ID（enemyPieces辞書から取得）
+- `targetID`: ターゲットの敵駒ID
 
 **戻り値:**
 - 魅惑成功: `syncPieceData`（ターゲットの現在PIDと魅惑ターン数を含む）
@@ -550,13 +550,13 @@ if (charmData.HasValue)
 2. 魅惑成功時：
    - ターゲットに魅惑状態を設定（`Piece.SetCharmed()`）
    - 魅惑ターン数は`MissionaryDataSO.conversionTurnDuration[convertEnemyLevel]`から取得
-   - ターゲットを`enemyPieces`から`pieces`に移動（自分の駒として扱える）
+   - ターゲットの`currentPID`を宣教師の`CurrentPID`に変更（辞書移動なし）
    - `OnPieceCharmed`イベントを発火
 3. 即死の場合（レベル1以上の宣教師・軍隊）：
    - ターゲットが即死し、`OnPieceDeath`イベントで処理される
 4. 魅惑解除：
    - 毎ターン`ProcessTurnStart()`で自動的にカウンター減算
-   - カウンターが0になると元の所有者に復帰（`pieces` → `enemyPieces`）
+   - カウンターが0になると`currentPID`が元の`OriginalPID`に戻る（辞書移動なし）
 
 **実装箇所:** `PieceManager.cs:959-1006`
 
@@ -814,15 +814,13 @@ PieceManager.Instance.ProcessTurnStart(currentPlayerID);
    - 各駒の`ProcessCharmedTurn()`を呼び出し
    - 魅惑カウンターを-1
    - カウンターが0になった駒は自動的に元の所有者に復帰
-   - 辞書間移動：`pieces` → `enemyPieces`
+   - `currentPID`が`OriginalPID`に戻る（辞書移動なし）
 
 **魅惑解除の自動処理:**
 ```csharp
 // 魅惑が解除されると自動的に以下が実行される：
 // 1. 駒のcurrentPIDがOriginalPIDに戻る
-// 2. pieces辞書から削除
-// 3. enemyPieces辞書に追加
-// 4. OnUncharmedイベントが発火
+// 2. OnUncharmedイベントが発火
 ```
 
 **実装箇所:** `PieceManager.cs:1218-1254`
@@ -1687,8 +1685,7 @@ public struct syncPieceData
 {
     public PieceType piecetype;
     public Religion religion;
-    public Vector3 piecePos;
-    public int playerID;              // 元々のプレイヤーID
+    public SerializableVector3 piecePos;
     public int pieceID;
     public int currentHP;
     public int currentHPLevel;
@@ -1700,12 +1697,16 @@ public struct syncPieceData
     public int sacrificeLevel;        // 農民専用
     public int attackPowerLevel;      // 軍隊専用
     public int charmedTurnsRemaining; // 魅惑残りターン数（ネットワーク同期用）
+
+    // ヘルパープロパティ：pieceIDから元の所有者を計算
+    public int OriginalPlayerID => pieceID / 10000;
 }
 ```
 
 **魅惑関連フィールドの説明:**
 - `currentPID`: 魅惑された駒の場合、魅惑したプレイヤーのIDが設定される
 - `charmedTurnsRemaining`: 魅惑が解除されるまでの残りターン数（0の場合は魅惑されていない）
+- `OriginalPlayerID`: pieceIDから計算される元の所有者（pieceID / 10000）。魅惑されても変わらない
 
 ### swapPieceData構造体
 ```csharp
