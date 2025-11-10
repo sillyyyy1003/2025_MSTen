@@ -113,7 +113,10 @@ public class BuildingManager : MonoBehaviour
 
         // Prefabから建物を生成
         GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position, Quaternion.identity);
-        Building building = buildingObj.GetComponent<Building>();
+
+        //25.11.10 RI Fix GetComponent Bug
+        //Building building = buildingObj.GetComponent<Building>();
+        Building building = buildingObj.AddComponent<Building>();
 
         if (building == null)
         {
