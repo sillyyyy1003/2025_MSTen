@@ -941,14 +941,82 @@ public int GetLocalPlayerID()
 
 ---
 
-### 建筑生成
-
-#### `CreateBuilding()`
-生成己方建筑并返回 ID。
+#### `InitializeBuildingData()`
+根据宗教初始化建筑数据（从 BuildingRegistry 自动获取）。
 
 **函数签名:**
 ```csharp
-public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
+public void InitializeBuildingData(Religion playerReligion, Religion enemyReligion)
+```
+
+**参数:**
+- `playerReligion`: 己方阵营的宗教
+- `enemyReligion`: 对战对手的宗教
+
+**使用示例:**
+```csharp
+using GameData; // 使用 Religion 枚举
+
+// 只需指定宗教，即可自动获取对应建筑
+buildingManager.InitializeBuildingData(Religion.SilkReligion, Religion.MadScientistReligion);
+```
+
+**工作流程:**
+1. 从 BuildingRegistry 自动获取指定宗教的建筑
+2. 将己方阵营的建筑设置到 `buildableBuildingTypes`（可建造列表）
+3. 将己方阵营和对手的建筑设置到 `allBuildingTypes`（全建筑列表）
+4. 只有己方阵营的建筑可以建造
+5. 敌方建筑数据保留用于同步（在 `CreateEnemyBuilding()` 中使用）
+
+**必要设置:**
+- 需要在 BuildingManager 的 Inspector 中设置 `BuildingRegistry`
+- 需要为每个 BuildingDataSO 资源适当设置 `religion` 字段
+
+**注意:**
+- 调用此函数前，需要在 BuildingRegistry 中注册所有建筑的 BuildingDataSO
+- 必须在生成建筑前调用此函数
+
+**实现位置:** `BuildingManager.cs:62-93`
+
+**BuildingDataSO 的设置:**
+
+每个建筑的 ScriptableObject 中添加了宗教字段：
+
+```csharp
+[Header("宗教")]
+public Religion religion = Religion.None; // 所属宗教
+```
+
+根据对战游戏设计：
+- **己方阵营建筑**: 可建造（从 `buildableBuildingTypes` 获取）
+- **敌方阵营建筑**: 不可建造，但需要知道数据（包含在 `allBuildingTypes` 中）
+
+**BuildingRegistry 的准备:**
+
+BuildingRegistry 添加了宗教筛选功能：
+
+```csharp
+/// <summary>
+/// 获取指定宗教的建筑
+/// </summary>
+public List<BuildingDataSO> GetBuildingsByReligion(Religion religion)
+
+/// <summary>
+/// 获取多个宗教的建筑
+/// </summary>
+public List<BuildingDataSO> GetBuildingsByReligions(params Religion[] religions)
+```
+
+---
+
+### 建筑生成
+
+#### `CreateBuilding()`
+生成己方建筑并返回同步数据。
+
+**函数签名:**
+```csharp
+public syncBuildingData? CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
 ```
 
 **参数:**
@@ -957,36 +1025,41 @@ public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 pos
 - `position`: 生成位置
 
 **返回值:**
-- 成功: 生成的建筑 ID（正整数）
-- 失败: -1
+- 成功: 生成的建筑同步数据（`syncBuildingData`）
+- 失败: null
 
 **使用示例:**
 ```csharp
-BuildingManager buildingManager = // 获取 BuildingManager 引用
-BuildingDataSO buildingData = // 获取建筑数据
+// 生成建筑
+syncBuildingData? buildingData = buildingManager.CreateBuilding(
+    buildingDataSO,
+    playerID: 1,
+    new Vector3(10, 0, 10)
+);
 
-int buildingID = buildingManager.CreateBuilding(buildingData, playerID: 1, new Vector3(10, 0, 10));
-
-if (buildingID >= 0)
+if (buildingData.HasValue)
 {
-    Debug.Log($"建筑生成成功: ID={buildingID}");
+    Debug.Log($"建筑生成成功: ID={buildingData.Value.buildingID}");
+    // 通过网络发送给对方
+    SendToNetwork(buildingData.Value);
 }
 ```
 
 **注意:**
 - 此方法生成的建筑会被添加到 `buildings` 字典（己方建筑）
 - 如需生成敌方建筑，请使用 `CreateEnemyBuilding()`
+- 返回的同步数据可直接用于网络发送
 
-**实现位置:** `BuildingManager.cs:62-102`
+**实现位置:** `BuildingManager.cs:99-144`
 
 ---
 
 #### `CreateBuildingByName()`
-通过建筑名称生成建筑（便捷方法）。
+通过建筑名称生成建筑并返回同步数据（便捷方法）。
 
 **函数签名:**
 ```csharp
-public int CreateBuildingByName(string buildingName, int playerID, Vector3 position)
+public syncBuildingData? CreateBuildingByName(string buildingName, int playerID, Vector3 position)
 ```
 
 **参数:**
@@ -995,15 +1068,25 @@ public int CreateBuildingByName(string buildingName, int playerID, Vector3 posit
 - `position`: 生成位置
 
 **返回值:**
-- 成功: 生成的建筑 ID
-- 失败: -1
+- 成功: 生成的建筑同步数据（`syncBuildingData`）
+- 失败: null
 
 **使用示例:**
 ```csharp
-int buildingID = buildingManager.CreateBuildingByName("祭坛", 1, new Vector3(10, 0, 10));
+syncBuildingData? buildingData = buildingManager.CreateBuildingByName(
+    "祭坛",
+    playerID: 1,
+    new Vector3(10, 0, 10)
+);
+
+if (buildingData.HasValue)
+{
+    Debug.Log($"建筑生成成功: {buildingData.Value.buildingName}");
+    SendToNetwork(buildingData.Value);
+}
 ```
 
-**实现位置:** `BuildingManager.cs:113-124`
+**实现位置:** `BuildingManager.cs:146-164`
 
 ---
 
