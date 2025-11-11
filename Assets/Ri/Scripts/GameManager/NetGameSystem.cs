@@ -1986,7 +1986,7 @@ public class NetGameSystem : MonoBehaviour
                         playerData.PlayerUnits[i] = updatedUnit;
                         found = true;
 
-                        Debug.Log($"[网络] 成功通过直接更新方式移动单位到({toPos.x},{toPos.y})");
+                        Debug.Log($"[网络] 成功通过直接更新方式移动单位到({toPos.x},{toPos.y}) {updatedUnit.UnitID}");
                         break;
                     }
                 }

@@ -380,7 +380,7 @@ public class PlayerDataManager : MonoBehaviour
                 // 触发数据变更事件
                 OnPlayerDataChanged?.Invoke(playerId, data);
 
-                Debug.Log($"[PlayerDataManager] 玩家 {playerId} 位置 ({pos.x},{pos.y}) 的单位同步数据已更新");
+                Debug.Log($"[PlayerDataManager] 玩家 {playerId} 位置 ({pos.x},{pos.y}) 的{newData.pieceID}同步数据已更新");
                 return true;
             }
             else
