@@ -349,6 +349,28 @@ private int localPlayerId = -1;
             {
                 int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
 
+                // Pope交换位置
+                if (  ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+                {
+                    if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
+                    {
+                        PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
+                        if (targetUnit.HasValue && !targetUnit.Value.IsBuilding())
+                        {
+                            if (!CheckUnitHasEnoughAP(currentPos, 1))
+                            {
+                                Debug.Log("[Pope交换] AP不足");
+                                return;
+                            }
+                            ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
+                            return;
+                        }
+
+                    }
+
+                  
+                }
+
                 // 农民进入己方建筑
                 if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
                 {
@@ -1202,7 +1224,143 @@ private int localPlayerId = -1;
 
     }
 
+    // ========== 新增方法：执行Pope交换位置 ==========
+    /// <summary>
+    /// 执行Pope与己方单位交换位置
+    /// </summary>
+    /// <param name="popePos">Pope的位置</param>
+    /// <param name="targetPos">目标单位的位置</param>
+    /// <param name="targetCellId">目标格子的ID</param>
+    private void ExecutePopeSwapPosition(int2 popePos, int2 targetPos, int targetCellId)
+    {
+        Debug.Log($"[Pope交换] 开始执行位置交换: Pope({popePos.x},{popePos.y}) <-> Target({targetPos.x},{targetPos.y})");
 
+        // 获取Pope单位数据
+        PlayerUnitData? popeUnitData = PlayerDataManager.Instance.FindUnit(localPlayerId, popePos);
+        if (!popeUnitData.HasValue)
+        {
+            Debug.LogError("[Pope交换] 找不到Pope单位数据");
+            return;
+        }
+
+        // 获取目标单位数据
+        PlayerUnitData? targetUnitData = PlayerDataManager.Instance.FindUnit(localPlayerId, targetPos);
+        if (!targetUnitData.HasValue)
+        {
+            Debug.LogError("[Pope交换] 找不到目标单位数据");
+            return;
+        }
+
+        // 检查目标是否为建筑
+        if (targetUnitData.Value.IsBuilding())
+        {
+            Debug.LogWarning("[Pope交换] 不能与建筑交换位置");
+            return;
+        }
+
+        // 禁用输入
+        bCanContinue = false;
+
+        // 获取两个单位的GameObject
+        GameObject popeObject = SelectingUnit; // 当前选中的就是Pope
+        GameObject targetObject = null;
+
+        if (localPlayerUnits.ContainsKey(targetPos))
+        {
+            targetObject = localPlayerUnits[targetPos];
+        }
+        else
+        {
+            Debug.LogError("[Pope交换] 找不到目标单位GameObject");
+            bCanContinue = true;
+            return;
+        }
+
+        // 获取两个位置的3D坐标
+        Vector3 popeWorldPos = PlayerBoardInforDict[LastSelectingCellID].Cells3DPos;
+        Vector3 targetWorldPos = PlayerBoardInforDict[targetCellId].Cells3DPos;
+
+        // 调整高度
+        popeWorldPos.y += 2.5f;
+        targetWorldPos.y += 2.5f;
+
+        // 创建交换动画序列
+        Sequence swapSequence = DOTween.Sequence();
+
+        // Pope移动到目标位置
+        Vector3 popeMidPoint = (popeObject.transform.position + targetWorldPos) / 2f;
+        popeMidPoint.y += 5.0f;
+        Vector3[] popePath = new Vector3[] { popeObject.transform.position, popeMidPoint, targetWorldPos };
+        swapSequence.Join(popeObject.transform.DOPath(popePath, MoveSpeed, PathType.CatmullRom).SetEase(Ease.Linear));
+
+        // 目标单位移动到Pope位置
+        Vector3 targetMidPoint = (targetObject.transform.position + popeWorldPos) / 2f;
+        targetMidPoint.y += 5.0f;
+        Vector3[] targetPath = new Vector3[] { targetObject.transform.position, targetMidPoint, popeWorldPos };
+        swapSequence.Join(targetObject.transform.DOPath(targetPath, MoveSpeed, PathType.CatmullRom).SetEase(Ease.Linear));
+
+        // 动画完成后的回调
+        swapSequence.OnComplete(() =>
+        {
+            Debug.Log("[Pope交换] 动画完成，开始更新数据");
+
+            // 1. 更新PlayerDataManager中的位置数据
+            bool popeMovedData = PlayerDataManager.Instance.MoveUnit(localPlayerId, popePos, targetPos);
+            bool targetMovedData = PlayerDataManager.Instance.MoveUnit(localPlayerId, targetPos, popePos);
+
+            if (!popeMovedData || !targetMovedData)
+            {
+                Debug.LogError("[Pope交换] PlayerDataManager位置更新失败");
+            }
+
+            // 2. 更新本地GameObject引用
+            localPlayerUnits.Remove(popePos);
+            localPlayerUnits.Remove(targetPos);
+            localPlayerUnits[targetPos] = popeObject;
+            localPlayerUnits[popePos] = targetObject;
+
+            // 3. 更新GameManage的格子对象引用
+            GameManage.Instance.SetCellObject(popePos, targetObject);
+            GameManage.Instance.SetCellObject(targetPos, popeObject);
+
+            // 4. 更新LastSelectingCellID为Pope的新位置
+            LastSelectingCellID = targetCellId;
+
+            // 5. 消耗Pope的AP
+            int popeID = popeUnitData.Value.PlayerUnitDataSO.pieceID;
+            bool apConsumed = PieceManager.Instance.ConsumePieceAP(popeID, 1);
+
+            if (apConsumed)
+            {
+                Debug.Log($"[Pope交换] Pope消耗1 AP，剩余AP: {PieceManager.Instance.GetPieceAP(popeID)}");
+
+                // 检查AP是否为0
+                Piece popePiece = PieceManager.Instance.GetPiece(popeID);
+                if (popePiece != null && popePiece.CurrentAP <= 0)
+                {
+                    PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, targetPos, false);
+                    Debug.Log($"[Pope交换] Pope AP为0，bCanDoAction设置为false");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[Pope交换] Pope AP消耗失败");
+            }
+
+            // 6. 网络同步 - 发送交换位置消息
+            SyncPopeSwapPosition(popePos, targetPos, popeUnitData.Value.PlayerUnitDataSO, targetUnitData.Value.PlayerUnitDataSO);
+
+            // 重新启用输入
+            bCanContinue = true;
+
+            Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
+        });
+    }
+
+
+
+    #region ===农民进入建筑===
+    // 农民进入建筑
     private void ExecuteFarmerEnterBuilding(int2 farmerPos, int2 buildingPos, int buildingCellId)
     {
         if (SelectingUnit == null) return;
@@ -1370,6 +1528,8 @@ private int localPlayerId = -1;
         });
     }
 
+
+    #endregion
     #region ====攻击====
 
     /// <summary>
@@ -2635,6 +2795,36 @@ private int localPlayerId = -1;
 
         Debug.Log($"[SyncLocalUnitCharm] 已发送魅惑同步消息");
     }
+
+    // 同步Pope交换位置到网络
+    private void SyncPopeSwapPosition(int2 popePos, int2 targetPos, syncPieceData popeSyncData, syncPieceData targetSyncData)
+    {
+        // 检查网络连接
+        if (NetGameSystem.Instance == null || !NetGameSystem.Instance.bIsConnected)
+        {
+            return; // 单机模式或未连接，不发送
+        }
+
+        // 发送两条移动消息来表示交换
+        // 消息1: Pope移动到目标位置
+        NetGameSystem.Instance.SendUnitMoveMessage(
+            localPlayerId,
+            popePos,
+            targetPos,
+            popeSyncData
+        );
+
+        // 消息2: 目标单位移动到Pope原来的位置
+        NetGameSystem.Instance.SendUnitMoveMessage(
+            localPlayerId,
+            targetPos,
+            popePos,
+            targetSyncData
+        );
+
+        Debug.Log($"[SyncPopeSwapPosition] 已发送Pope交换位置同步消息");
+    }
+
 
     /// <summary>
     /// 本地玩家魅惑过期后调用此方法进行网络同步
