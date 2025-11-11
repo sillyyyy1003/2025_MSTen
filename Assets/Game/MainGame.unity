@@ -2196,12 +2196,12 @@ PrefabInstance:
     - target: {fileID: 4941370090156680076, guid: 0240edcb80155b849809eff09fae7267,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 50
+      value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 4941370090156680076, guid: 0240edcb80155b849809eff09fae7267,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -50
+      value: -70
       objectReference: {fileID: 0}
     - target: {fileID: 4941370090156680076, guid: 0240edcb80155b849809eff09fae7267,
         type: 3}
@@ -3294,12 +3294,12 @@ PrefabInstance:
     - target: {fileID: 2111541058362085115, guid: ec0e7c6284a7f5f47b49ce8786188d61,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -170
+      value: -190
       objectReference: {fileID: 0}
     - target: {fileID: 2111541058362085115, guid: ec0e7c6284a7f5f47b49ce8786188d61,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -92.5
+      value: -112.5
       objectReference: {fileID: 0}
     - target: {fileID: 2111541058362085115, guid: ec0e7c6284a7f5f47b49ce8786188d61,
         type: 3}
@@ -3469,45 +3469,45 @@ MonoBehaviour:
     singleSprite: {fileID: 1153311290, guid: f4f2993d6134ed544a7d2f6e79a331ed, type: 3}
     spriteSheet: []
     note: 
+  - id: 11
+    singleSprite: {fileID: 21300000, guid: ce851b811537b84449c464348cc51cab, type: 3}
+    spriteSheet: []
+    note: 
   - id: 7
-    singleSprite: {fileID: 0}
+    singleSprite: {fileID: 21300000, guid: 0d5a20f496f1a2b4688c545d183a16a4, type: 3}
     spriteSheet:
     - {fileID: 21300000, guid: 5389d7def11e2b0468439310dc820bda, type: 3}
     - {fileID: 21300000, guid: fb58ae5edc1c59f4586ebeea467e776b, type: 3}
     - {fileID: 21300000, guid: 87e935b7c81f93a4f9a192dd29100b6e, type: 3}
     note: 
   - id: 8
-    singleSprite: {fileID: 0}
+    singleSprite: {fileID: 21300000, guid: 2566f3973fe74e145ae720a37ad540b7, type: 3}
     spriteSheet:
     - {fileID: 21300000, guid: c6056c84d13d3fc49a0bacd7e4866d0c, type: 3}
     - {fileID: 21300000, guid: 2566f3973fe74e145ae720a37ad540b7, type: 3}
     note: 
   - id: 9
-    singleSprite: {fileID: 21300000, guid: 24c60fc47ce350e4cb4515e67ca05469, type: 3}
+    singleSprite: {fileID: 21300000, guid: ed6f1ba0bcee47c4bb347d8120ea8008, type: 3}
     spriteSheet: []
     note: 
   - id: 10
-    singleSprite: {fileID: 21300000, guid: e6e119aeeb9712447a75ec1f38ec8206, type: 3}
-    spriteSheet: []
-    note: 
-  - id: 11
-    singleSprite: {fileID: 21300000, guid: 0fc8a8e2541b60043a677813520ba542, type: 3}
+    singleSprite: {fileID: 21300000, guid: 0acde239fb6e6b3468a3c5a1420bd39b, type: 3}
     spriteSheet: []
     note: 
   - id: 12
-    singleSprite: {fileID: 21300000, guid: 20268a43a9178f44a9ee8f341a26aec3, type: 3}
+    singleSprite: {fileID: 21300000, guid: cb4e59159c84c544d9a33105fcc1c89f, type: 3}
     spriteSheet: []
     note: 
   - id: 13
-    singleSprite: {fileID: 21300000, guid: 2b3858f5feb06d4498b0c40f987690f4, type: 3}
+    singleSprite: {fileID: 21300000, guid: 0d5a20f496f1a2b4688c545d183a16a4, type: 3}
     spriteSheet: []
     note: 
   - id: 14
-    singleSprite: {fileID: 21300000, guid: acaa1045531edf744a2e4d76ce4d510a, type: 3}
+    singleSprite: {fileID: 21300000, guid: cb4e59159c84c544d9a33105fcc1c89f, type: 3}
     spriteSheet: []
     note: 
   - id: 15
-    singleSprite: {fileID: 21300000, guid: c668606b901ee4945a673aaed6b5d6ff, type: 3}
+    singleSprite: {fileID: 21300000, guid: ed6f1ba0bcee47c4bb347d8120ea8008, type: 3}
     spriteSheet: []
     note: 
 --- !u!1 &2099899056
