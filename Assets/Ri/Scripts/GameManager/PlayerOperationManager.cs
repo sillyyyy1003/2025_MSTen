@@ -655,10 +655,23 @@ private int localPlayerId = -1;
         {
             PlayerUnitData unit = data.PlayerUnits[i];
 
-         
-            if (otherPlayersUnits[playerId].ContainsKey(unit.Position))
+
+            // 同时检查otherPlayersUnits和GameManage的CellObject
+            bool unitExistsInDict = otherPlayersUnits[playerId].ContainsKey(unit.Position);
+            GameObject cellObject = GameManage.Instance.GetCellObject(unit.Position);
+            bool unitExistsInGameManage = cellObject != null;
+
+            if (unitExistsInDict || unitExistsInGameManage)
             {
-                Debug.Log($"单位已存在，跳过创建");
+                Debug.Log($"[UpdateOtherPlayerDisplay] 单位已存在，跳过创建 - 位置:({unit.Position.x},{unit.Position.y}), " +
+                    $"在字典:{unitExistsInDict}, 在GameManage:{unitExistsInGameManage}");
+
+                // 如果只在GameManage中存在但不在字典中，同步到字典
+                if (!unitExistsInDict && unitExistsInGameManage)
+                {
+                    otherPlayersUnits[playerId][unit.Position] = cellObject;
+                    Debug.Log($"[UpdateOtherPlayerDisplay] 同步GameObject到字典");
+                }
                 continue;
             }
 
@@ -2189,17 +2202,34 @@ private int localPlayerId = -1;
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
 
+        // 【关键修复】：添加重复检查 - 如果单位已存在则跳过
+        if (msg.PlayerId == localPlayerId)
+        {
+            Debug.Log("[HandleNetworkAddUnit] 这是本地玩家的单位，已在本地处理，跳过");
+            return;
+        }
+
+        // 检查是否已经存在GameObject
+        GameObject existingUnit = GameManage.Instance.GetCellObject(pos);
+        if (existingUnit != null)
+        {
+            Debug.LogWarning($"[HandleNetworkAddUnit] 该位置已有GameObject，跳过创建 - ({pos.x},{pos.y})");
+            return;
+        }
+
+        // 再检查字典
+        if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
+            otherPlayersUnits[msg.PlayerId].ContainsKey(pos))
+        {
+            Debug.LogWarning($"[HandleNetworkAddUnit] 单位已在字典中，跳过创建 - ({pos.x},{pos.y})");
+            return;
+        }
+
         // 从PlayerDataManager获取刚添加的单位数据（包含可能的BuildingData）
         PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(msg.PlayerId, pos);
 
         if (unitData.HasValue)
         {
-            if (otherPlayersUnits[msg.PlayerId].ContainsKey(pos))
-            {
-                Debug.Log($"单位已存在，跳过创建");
-                return;
-            }
-
             // 使用统一的CreateEnemyUnit方法（已支持建筑）
             CreateEnemyUnit(msg.PlayerId, unitData.Value);
             Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位/建筑");
@@ -2263,11 +2293,11 @@ private int localPlayerId = -1;
     //    {
     //        Debug.LogError($"[HandleNetworkAddUnit] PieceManager.Instance 为 null");
     //    }
-     
+
     //}
 
     // 操作同步管理
- 
+
     private void SyncLocalUnitMove(int2 fromPos, int2 toPos)
     {
         // 检查网络连接
