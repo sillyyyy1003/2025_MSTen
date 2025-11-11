@@ -1304,29 +1304,85 @@ private int localPlayerId = -1;
         {
             Debug.Log("[Pope交换] 动画完成，开始更新数据");
 
-            // 1. 更新PlayerDataManager中的位置数据
-            bool popeMovedData = PlayerDataManager.Instance.MoveUnit(localPlayerId, popePos, targetPos);
-            bool targetMovedData = PlayerDataManager.Instance.MoveUnit(localPlayerId, targetPos, popePos);
+            // ===== 修复：使用正确的交换逻辑 =====
 
-            if (!popeMovedData || !targetMovedData)
+            // 1. 先从PlayerDataManager移除两个单位（保存引用）
+            PlayerData playerData = PlayerDataManager.Instance.GetPlayerData(localPlayerId);
+
+            // 找到两个单位在列表中的索引
+            int popeIndex = -1;
+            int targetIndex = -1;
+
+            for (int i = 0; i < playerData.PlayerUnits.Count; i++)
             {
-                Debug.LogError("[Pope交换] PlayerDataManager位置更新失败");
+                if (playerData.PlayerUnits[i].Position.Equals(popePos))
+                {
+                    popeIndex = i;
+                }
+                else if (playerData.PlayerUnits[i].Position.Equals(targetPos))
+                {
+                    targetIndex = i;
+                }
             }
 
-            // 2. 更新本地GameObject引用
+            if (popeIndex == -1 || targetIndex == -1)
+            {
+                Debug.LogError($"[Pope交换] 找不到单位索引: Pope={popeIndex}, Target={targetIndex}");
+                bCanContinue = true;
+                return;
+            }
+
+            // 2. 交换位置数据
+            PlayerUnitData popeUnit = playerData.PlayerUnits[popeIndex];
+            PlayerUnitData targetUnit = playerData.PlayerUnits[targetIndex];
+
+            // 创建新的单位数据，位置已交换
+            PlayerUnitData swappedPopeUnit = new PlayerUnitData(
+                popeUnit.UnitID,
+                popeUnit.UnitType,
+                targetPos,  // Pope的新位置
+                popeUnit.PlayerUnitDataSO,
+                popeUnit.bUnitIsActivated,
+                popeUnit.bCanDoAction,
+                popeUnit.bIsCharmed,
+                popeUnit.charmedRemainingTurns,
+                popeUnit.originalOwnerID,
+                popeUnit.BuildingData
+            );
+
+            PlayerUnitData swappedTargetUnit = new PlayerUnitData(
+                targetUnit.UnitID,
+                targetUnit.UnitType,
+                popePos,  // 目标单位的新位置
+                targetUnit.PlayerUnitDataSO,
+                targetUnit.bUnitIsActivated,
+                targetUnit.bCanDoAction,
+                targetUnit.bIsCharmed,
+                targetUnit.charmedRemainingTurns,
+                targetUnit.originalOwnerID,
+                targetUnit.BuildingData
+            );
+
+            // 更新PlayerDataManager
+            playerData.PlayerUnits[popeIndex] = swappedPopeUnit;
+            playerData.PlayerUnits[targetIndex] = swappedTargetUnit;
+
+            Debug.Log($"[Pope交换] PlayerDataManager数据更新成功");
+
+            // 3. 更新本地GameObject引用
             localPlayerUnits.Remove(popePos);
             localPlayerUnits.Remove(targetPos);
             localPlayerUnits[targetPos] = popeObject;
             localPlayerUnits[popePos] = targetObject;
 
-            // 3. 更新GameManage的格子对象引用
+            // 4. 更新GameManage的格子对象引用
             GameManage.Instance.SetCellObject(popePos, targetObject);
             GameManage.Instance.SetCellObject(targetPos, popeObject);
 
-            // 4. 更新LastSelectingCellID为Pope的新位置
+            // 5. 更新LastSelectingCellID为Pope的新位置
             LastSelectingCellID = targetCellId;
 
-            // 5. 消耗Pope的AP
+            // 6. 消耗Pope的AP
             int popeID = popeUnitData.Value.PlayerUnitDataSO.pieceID;
             bool apConsumed = PieceManager.Instance.ConsumePieceAP(popeID, 1);
 
@@ -1347,7 +1403,7 @@ private int localPlayerId = -1;
                 Debug.LogWarning($"[Pope交换] Pope AP消耗失败");
             }
 
-            // 6. 网络同步 - 发送交换位置消息
+            // 7. 网络同步 - 发送交换位置消息
             SyncPopeSwapPosition(popePos, targetPos, popeUnitData.Value.PlayerUnitDataSO, targetUnitData.Value.PlayerUnitDataSO);
 
             // 重新启用输入
