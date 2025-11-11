@@ -2189,54 +2189,76 @@ private int localPlayerId = -1;
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
 
+        // 从PlayerDataManager获取刚添加的单位数据（包含可能的BuildingData）
+        PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(msg.PlayerId, pos);
 
-
-        // 使用 PieceManager 创建敌方棋子
-        if (PieceManager.Instance != null)
+        if (unitData.HasValue)
         {
-            bool success = PieceManager.Instance.CreateEnemyPiece(msg.NewUnitSyncData);
-
-            if (success)
-            {
-                // 获取创建的GameObject
-                GameObject unitObj = PieceManager.Instance.GetPieceGameObject();
-
-                if (unitObj != null)
-                {
-                    // 确保字典存在
-                    if (!otherPlayersUnits.ContainsKey(msg.PlayerId))
-                    {
-                        otherPlayersUnits[msg.PlayerId] = new Dictionary<int2, GameObject>();
-                    }
-
-                    // 保存到其他玩家单位字典
-                    otherPlayersUnits[msg.PlayerId][pos] = unitObj;
-
-                    // 更新 GameManage 的格子对象
-                    GameManage.Instance.SetCellObject(pos, unitObj);
-
-                    Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
-
-                    //Debug.Log("开始查询敌方单位位置");
-                    //PlayerDataManager.Instance.GetUnitPos(msg.NewUnitSyncData.pieceID);
-
-                }
-                else
-                {
-                    Debug.LogError($"[HandleNetworkAddUnit] 无法获取创建的GameObject");
-                }
-            }
-            else
-            {
-                Debug.LogError($"[HandleNetworkAddUnit] PieceManager.CreateEnemyPiece 失败");
-            }
+            // 使用统一的CreateEnemyUnit方法（已支持建筑）
+            CreateEnemyUnit(msg.PlayerId, unitData.Value);
+            Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位/建筑");
         }
         else
         {
-            Debug.LogError($"[HandleNetworkAddUnit] PieceManager.Instance 为 null");
+            Debug.LogError($"[HandleNetworkAddUnit] 无法从PlayerDataManager获取单位数据");
         }
-     
+
+
     }
+
+    //    int2 pos = new int2(msg.PosX, msg.PosY);
+    //    CardType unitType = (CardType)msg.UnitType;
+
+    //    Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
+
+
+
+    //    // 使用 PieceManager 创建敌方棋子
+    //    if (PieceManager.Instance != null)
+    //    {
+    //        bool success = PieceManager.Instance.CreateEnemyPiece(msg.NewUnitSyncData);
+
+    //        if (success)
+    //        {
+    //            // 获取创建的GameObject
+    //            GameObject unitObj = PieceManager.Instance.GetPieceGameObject();
+
+    //            if (unitObj != null)
+    //            {
+    //                // 确保字典存在
+    //                if (!otherPlayersUnits.ContainsKey(msg.PlayerId))
+    //                {
+    //                    otherPlayersUnits[msg.PlayerId] = new Dictionary<int2, GameObject>();
+    //                }
+
+    //                // 保存到其他玩家单位字典
+    //                otherPlayersUnits[msg.PlayerId][pos] = unitObj;
+
+    //                // 更新 GameManage 的格子对象
+    //                GameManage.Instance.SetCellObject(pos, unitObj);
+
+    //                Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
+
+    //                //Debug.Log("开始查询敌方单位位置");
+    //                //PlayerDataManager.Instance.GetUnitPos(msg.NewUnitSyncData.pieceID);
+
+    //            }
+    //            else
+    //            {
+    //                Debug.LogError($"[HandleNetworkAddUnit] 无法获取创建的GameObject");
+    //            }
+    //        }
+    //        else
+    //        {
+    //            Debug.LogError($"[HandleNetworkAddUnit] PieceManager.CreateEnemyPiece 失败");
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Debug.LogError($"[HandleNetworkAddUnit] PieceManager.Instance 为 null");
+    //    }
+     
+    //}
 
     // 操作同步管理
  
