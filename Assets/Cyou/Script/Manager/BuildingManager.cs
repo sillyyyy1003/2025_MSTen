@@ -200,7 +200,7 @@ public class BuildingManager : MonoBehaviour
     public bool CreateEnemyBuilding(syncBuildingData sbd)
     {
         // 建物データを検索（全建物から：自分 + 相手）
-        BuildingDataSO buildingData = allBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
+        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
 
         if (buildingData == null)
         {
