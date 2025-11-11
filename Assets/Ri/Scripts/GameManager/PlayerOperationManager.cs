@@ -661,7 +661,7 @@ private int localPlayerId = -1;
         {
             Debug.Log($"playerId 为自己");
             return;
-        };
+        }
 
         Debug.LogWarning($"更新玩家 {playerId} 的显示");
 
@@ -671,6 +671,7 @@ private int localPlayerId = -1;
             otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
         }
 
+        // ===== 修复1：更新领地显示 =====
         if (data.PlayerOwnedCells != null && data.PlayerOwnedCells.Count > 0)
         {
             Debug.Log($"[显示更新] 玩家 {playerId} 拥有 {data.PlayerOwnedCells.Count} 个格子");
@@ -678,31 +679,71 @@ private int localPlayerId = -1;
             {
                 if (_HexGrid.GetCell(cellId) != null)
                 {
-                    _HexGrid.GetCell(cellId).Walled = true; // 设置墙壁/领土效果
+                    _HexGrid.GetCell(cellId).Walled = true;
                 }
             }
-
         }
 
-        // 创建新的单位显示
+        // ===== 修复2：清理不存在的单位 =====
+        // 创建一个包含所有当前应该存在的位置的集合
+        HashSet<int2> currentPositions = new HashSet<int2>();
+        foreach (var unit in data.PlayerUnits)
+        {
+            currentPositions.Add(unit.Position);
+        }
 
+        // 找出并删除不应该存在的GameObject
+        List<int2> positionsToRemove = new List<int2>();
+        foreach (var kvp in otherPlayersUnits[playerId])
+        {
+            int2 pos = kvp.Key;
+            if (!currentPositions.Contains(pos))
+            {
+                // 这个位置的单位不应该存在，标记删除
+                positionsToRemove.Add(pos);
+                Debug.Log($"[显示更新] 标记删除过时的单位: ({pos.x},{pos.y})");
+            }
+        }
+
+        // 执行删除
+        foreach (int2 pos in positionsToRemove)
+        {
+            GameObject oldUnit = otherPlayersUnits[playerId][pos];
+            if (oldUnit != null)
+            {
+                Destroy(oldUnit);
+                Debug.Log($"[显示更新] 销毁过时的GameObject at ({pos.x},{pos.y})");
+            }
+            otherPlayersUnits[playerId].Remove(pos);
+            GameManage.Instance.SetCellObject(pos, null);
+        }
+
+        // ===== 修复3：更新或创建单位 =====
         for (int i = 0; i < data.PlayerUnits.Count; i++)
         {
             PlayerUnitData unit = data.PlayerUnits[i];
 
-         
+            // 检查该位置是否已有GameObject
             if (otherPlayersUnits[playerId].ContainsKey(unit.Position))
             {
-                Debug.Log($"单位已存在，跳过创建");
+                // 已存在，但需要验证是否是正确的单位
+                GameObject existingUnit = otherPlayersUnits[playerId][unit.Position];
+
+                // 可以通过名称或其他方式验证是否是同一个单位
+                // 这里简单处理：如果位置已有单位，就跳过
+                Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
                 continue;
             }
 
-            Debug.LogWarning($"创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}" +
-               $" player ID:{unit.PlayerUnitDataSO.currentPID}) unit ID:{unit.PlayerUnitDataSO.pieceID}");
+            // 位置上没有GameObject，创建新的
+            Debug.LogWarning($"[显示更新] 创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}) player ID:{unit.PlayerUnitDataSO.currentPID} unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
             CreateEnemyUnit(playerId, unit);
         }
+
+        Debug.Log($"[显示更新] 玩家 {playerId} 显示更新完成，当前单位数: {otherPlayersUnits[playerId].Count}");
     }
+
 
     #endregion
     // *************************
@@ -2532,15 +2573,87 @@ private int localPlayerId = -1;
 
         Debug.Log($"[网络移动] 玩家 {msg.PlayerId} 移动: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
 
-        if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
-      otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
+        // 确保该玩家的字典存在
+        if (!otherPlayersUnits.ContainsKey(msg.PlayerId))
         {
-            GameObject movingUnit = otherPlayersUnits[msg.PlayerId][fromPos];
+            otherPlayersUnits[msg.PlayerId] = new Dictionary<int2, GameObject>();
+        }
 
-            // 更新字典
-            otherPlayersUnits[msg.PlayerId].Remove(fromPos);
+        GameObject movingUnit = null;
+
+        // 尝试从fromPos获取单位
+        if (otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
+        {
+            movingUnit = otherPlayersUnits[msg.PlayerId][fromPos];
+            Debug.Log($"[网络移动] 找到单位在fromPos: {fromPos}");
+        }
+        else
+        {
+            // ===== 关键修复：如果fromPos找不到，尝试从toPos获取 =====
+            // 这种情况发生在Pope交换的第二条消息：
+            // 第一条消息已经把Pope移到了toPos，现在要移走原本在toPos的单位
+            if (otherPlayersUnits[msg.PlayerId].ContainsKey(toPos))
+            {
+                movingUnit = otherPlayersUnits[msg.PlayerId][toPos];
+                Debug.Log($"[网络移动] 在fromPos找不到，但在toPos找到了单位（交换情况）");
+
+                // 这是交换的情况，需要先移除toPos的引用
+                otherPlayersUnits[msg.PlayerId].Remove(toPos);
+            }
+            else
+            {
+                // ===== 如果两个位置都找不到，尝试创建单位 =====
+                Debug.LogWarning($"[网络移动] fromPos和toPos都找不到单位，尝试创建");
+
+                // 从PlayerDataManager获取单位数据
+                PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(msg.PlayerId, toPos);
+
+                if (unitData.HasValue)
+                {
+                    Debug.Log($"[网络移动] 从PlayerDataManager找到单位数据，创建GameObject");
+                    movingUnit = CreateUnitGameObject(msg.PlayerId, unitData.Value);
+
+                    if (movingUnit != null)
+                    {
+                        // 直接放置在目标位置，不需要动画
+                        Vector3 targetWorldPos = Vector3.zero;
+                        foreach (var board in PlayerBoardInforDict.Values)
+                        {
+                            if (board.Cells2DPos.Equals(toPos))
+                            {
+                                targetWorldPos = new Vector3(
+                                    board.Cells3DPos.x,
+                                    board.Cells3DPos.y + 2.5f,
+                                    board.Cells3DPos.z
+                                );
+                                break;
+                            }
+                        }
+
+                        movingUnit.transform.position = targetWorldPos;
+                        otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
+                        GameManage.Instance.SetCellObject(toPos, movingUnit);
+
+                        Debug.Log($"[网络移动] 单位创建并放置完成");
+                        return;
+                    }
+                }
+
+                Debug.LogError($"[网络移动] 无法创建单位：玩家{msg.PlayerId} at ({toPos.x},{toPos.y})");
+                return;
+            }
+        }
+
+        // 如果找到了movingUnit，执行移动
+        if (movingUnit != null)
+        {
+            // 更新字典（如果还没移除fromPos）
+            if (otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
+            {
+                otherPlayersUnits[msg.PlayerId].Remove(fromPos);
+            }
+
             otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
-
 
             // 获取目标世界坐标
             Vector3 targetWorldPos = Vector3.zero;
@@ -2557,7 +2670,6 @@ private int localPlayerId = -1;
                 }
             }
 
-
             // 执行移动动画
             movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
             {
@@ -2570,11 +2682,6 @@ private int localPlayerId = -1;
 
             Debug.Log($"[HandleNetworkMove] 视觉移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
         }
-        else
-        {
-            Debug.LogWarning($"[HandleNetworkMove] 找不到要移动的单位: 玩家{msg.PlayerId} at ({fromPos.x},{fromPos.y})");
-        }
-
 
     }
 
