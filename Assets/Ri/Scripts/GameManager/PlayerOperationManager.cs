@@ -924,7 +924,7 @@ private int localPlayerId = -1;
         else
         {
 
-            if (unitData.PlayerUnitDataSO.pieceID == 0)
+            if (unitData.PlayerUnitDataSO.piecetype == PieceType.None)
             {
                 Debug.Log("创建失败！ syncPieceData为空！");
             }
@@ -2613,6 +2613,48 @@ private int localPlayerId = -1;
                 // 这是交换的情况，需要先移除toPos的引用
                 otherPlayersUnits[msg.PlayerId].Remove(toPos);
             }
+            else
+            {
+                // ===== 如果两个位置都找不到，尝试创建单位 =====
+                Debug.LogWarning($"[网络移动] fromPos和toPos都找不到单位，尝试创建");
+
+                // 从PlayerDataManager获取单位数据
+                PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(msg.PlayerId, toPos);
+
+                if (unitData.HasValue)
+                {
+                    Debug.Log($"[网络移动] 从PlayerDataManager找到单位数据，创建GameObject");
+                    movingUnit = CreateUnitGameObject(msg.PlayerId, unitData.Value);
+
+                    if (movingUnit != null)
+                    {
+                        // 直接放置在目标位置，不需要动画
+                        Vector3 targetWorldPos = Vector3.zero;
+                        foreach (var board in PlayerBoardInforDict.Values)
+                        {
+                            if (board.Cells2DPos.Equals(toPos))
+                            {
+                                targetWorldPos = new Vector3(
+                                    board.Cells3DPos.x,
+                                    board.Cells3DPos.y + 2.5f,
+                                    board.Cells3DPos.z
+                                );
+                                break;
+                            }
+                        }
+
+                        movingUnit.transform.position = targetWorldPos;
+                        otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
+                        GameManage.Instance.SetCellObject(toPos, movingUnit);
+
+                        Debug.Log($"[网络移动] 单位创建并放置完成");
+                        return;
+                    }
+                }
+
+                Debug.LogError($"[网络移动] 无法创建单位：玩家{msg.PlayerId} at ({toPos.x},{toPos.y})");
+                return;
+            }
         }
 
         // 如果找到了movingUnit，执行移动
@@ -2622,18 +2664,6 @@ private int localPlayerId = -1;
             if (otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
             {
                 otherPlayersUnits[msg.PlayerId].Remove(fromPos);
-            }
-
-            // ===== 关键修复：在覆盖toPos之前，删除那里的旧GameObject =====
-            if (otherPlayersUnits[msg.PlayerId].ContainsKey(toPos))
-            {
-                GameObject oldUnit = otherPlayersUnits[msg.PlayerId][toPos];
-                if (oldUnit != null && oldUnit != movingUnit)  // 确保不是同一个对象
-                {
-                    Debug.Log($"[网络移动] 删除toPos({toPos.x},{toPos.y})的旧GameObject: {oldUnit.name}");
-                    Destroy(oldUnit);
-                    GameManage.Instance.SetCellObject(toPos, null);  // 同时清理GameManage引用
-                }
             }
 
             otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
@@ -2667,6 +2697,8 @@ private int localPlayerId = -1;
         }
 
     }
+
+
 
     // 处理来自网络的创建单位消息
     public void HandleNetworkAddUnit(UnitAddMessage msg)
