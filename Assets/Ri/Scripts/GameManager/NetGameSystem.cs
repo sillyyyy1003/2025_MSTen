@@ -1998,6 +1998,13 @@ public class NetGameSystem : MonoBehaviour
                 }
             }
         }
+
+        // ===== 关键！！！必须调用这个方法来更新视觉效果 =====
+        // 通知 PlayerOperationManager 处理视觉效果
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkMove(data);
+        }
     }
 
 
