@@ -82,10 +82,14 @@ public class BuildingManager : MonoBehaviour
         if (playerBuildings != null)
         {
             allBuildingTypes.AddRange(playerBuildings);
+            //25.11.11 RI add test
+            Debug.Log(" allBuildingTypes add "+allBuildingTypes.Count);
+
         }
         if (enemyBuildings != null)
         {
             allBuildingTypes.AddRange(enemyBuildings);
+            Debug.Log(" allBuildingTypes add " + allBuildingTypes.Count);
         }
 
         // 建設可能な建物リストを初期化（自分のみ）
@@ -200,7 +204,7 @@ public class BuildingManager : MonoBehaviour
     public bool CreateEnemyBuilding(syncBuildingData sbd)
     {
         // 建物データを検索（全建物から：自分 + 相手）
-        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
+        BuildingDataSO buildingData = allBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
 
         if (buildingData == null)
         {

@@ -258,7 +258,7 @@ public class GameManage : MonoBehaviour
 
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
+        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.RedMoonReligion);
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
