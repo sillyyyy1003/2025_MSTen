@@ -1445,8 +1445,64 @@ private int localPlayerId = -1;
             }
 
             // 7. 网络同步 - 发送交换位置消息
-            SyncPopeSwapPosition(popePos, targetPos, popeUnitData.Value.PlayerUnitDataSO, targetUnitData.Value.PlayerUnitDataSO);
+            // ===== 关键修复：必须使用交换后的数据 =====
+            // Pope现在在targetPos，Soldier现在在popePos
+            PlayerUnitData? popeAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, targetPos);
+            PlayerUnitData? targetAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, popePos);
 
+            if (popeAfterSwap.HasValue && targetAfterSwap.HasValue)
+            {
+                // 发送交换后的数据
+                SyncPopeSwapPosition(
+                    popePos,                                    // Pope的原始位置
+                    targetPos,                                  // Target的原始位置
+                    popeAfterSwap.Value.PlayerUnitDataSO,      // Pope交换后的数据（现在在targetPos）
+                    targetAfterSwap.Value.PlayerUnitDataSO     // Target交换后的数据（现在在popePos）
+                );
+                Debug.Log($"[Pope交换] 已发送网络同步消息（使用交换后的数据）");
+            }
+            else
+            {
+                Debug.LogError($"[Pope交换] 无法获取交换后的单位数据，网络同步失败！");
+            }
+
+
+            // ===== 完整上下文参考 =====
+
+            // 在动画完成回调中的完整代码应该是：
+
+            swapSequence.OnComplete(() =>
+            {
+                Debug.Log("[Pope交换] 动画完成，开始更新数据");
+
+                // 1-6. 数据更新、GameObject更新、AP消耗等（保持不变）
+                // ... 你的现有代码 ...
+
+                // 7. 网络同步 - 发送交换位置消息
+                // ===== 关键修复：必须使用交换后的数据 =====
+                PlayerUnitData? popeAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, targetPos);
+                PlayerUnitData? targetAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, popePos);
+
+                if (popeAfterSwap.HasValue && targetAfterSwap.HasValue)
+                {
+                    SyncPopeSwapPosition(
+                        popePos,
+                        targetPos,
+                        popeAfterSwap.Value.PlayerUnitDataSO,
+                        targetAfterSwap.Value.PlayerUnitDataSO
+                    );
+                    Debug.Log($"[Pope交换] 已发送网络同步消息（使用交换后的数据）");
+                }
+                else
+                {
+                    Debug.LogError($"[Pope交换] 无法获取交换后的单位数据，网络同步失败！");
+                }
+
+                // 重新启用输入
+                bCanContinue = true;
+
+                Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
+            });
             // 重新启用输入
             bCanContinue = true;
 
