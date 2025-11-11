@@ -1937,25 +1937,66 @@ public class NetGameSystem : MonoBehaviour
             playerDataManager = PlayerDataManager.Instance;
         }
 
-        // 更新 PlayerDataManager
+        // ===== 修复：不再使用MoveUnit，直接更新数据 =====
         if (playerDataManager != null)
         {
-            // 移动单位
+            // 方法1：尝试使用MoveUnit
             bool moveSuccess = playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
 
             if (moveSuccess)
             {
-                // 更新同步数据
+                // 移动成功，更新同步数据
                 playerDataManager.UpdateUnitSyncDataByPos(data.PlayerId, toPos, data.MovedUnitSyncData);
-
                 Debug.Log($"[网络] PlayerDataManager 已更新单位移动数据");
             }
-        }
+            else
+            {
+                // ===== 关键修复：MoveUnit失败时，直接修改单位数据 =====
+                Debug.LogWarning($"[网络] MoveUnit失败，尝试直接更新数据（可能是交换操作）");
 
-        // 通知 PlayerOperationManager 处理视觉效果
-        if (gameManage != null && gameManage._PlayerOperation != null)
-        {
-            gameManage._PlayerOperation.HandleNetworkMove(data);
+                // 获取PlayerData
+                PlayerData playerData = playerDataManager.GetPlayerData(data.PlayerId);
+
+                // 查找目标位置是否已经有单位（从消息中的syncData判断）
+                bool found = false;
+
+                for (int i = 0; i < playerData.PlayerUnits.Count; i++)
+                {
+                    PlayerUnitData unit = playerData.PlayerUnits[i];
+
+                    // 通过UnitID匹配（syncData中的pieceID）
+                    if (unit.PlayerUnitDataSO.pieceID == data.MovedUnitSyncData.pieceID)
+                    {
+                        Debug.Log($"[网络] 通过UnitID找到单位: {unit.PlayerUnitDataSO.pieceID}，当前位置({unit.Position.x},{unit.Position.y})");
+
+                        // 创建更新后的单位数据
+                        PlayerUnitData updatedUnit = new PlayerUnitData(
+                            unit.UnitID,
+                            unit.UnitType,
+                            toPos,  // 新位置
+                            data.MovedUnitSyncData,  // 新的同步数据
+                            unit.bUnitIsActivated,
+                            unit.bCanDoAction,
+                            unit.bIsCharmed,
+                            unit.charmedRemainingTurns,
+                            unit.originalOwnerID,
+                            unit.BuildingData
+                        );
+
+                        // 直接更新
+                        playerData.PlayerUnits[i] = updatedUnit;
+                        found = true;
+
+                        Debug.Log($"[网络] 成功通过直接更新方式移动单位到({toPos.x},{toPos.y})");
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    Debug.LogError($"[网络] 无法找到要移动的单位: pieceID={data.MovedUnitSyncData.pieceID}");
+                }
+            }
         }
     }
 
