@@ -92,7 +92,7 @@ private int localPlayerId = -1;
     // *************************
 
     // 移动速度
-    public float MoveSpeed = 1.0f;
+    public float MoveSpeed = 0.5f;
 
     // 玩家的id,由GameManage统一分配
     public int PlayerID
@@ -348,6 +348,19 @@ private int localPlayerId = -1;
             if (PlayerDataManager.Instance.IsPositionOccupied(targetPos))
             {
                 int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
+
+                // 农民进入己方建筑
+                if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+                {
+                    // 检查目标位置是否是建筑
+                    PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
+                    if (targetUnit.HasValue && targetUnit.Value.IsBuilding())
+                    {
+                        Debug.Log("[农民进建筑] 农民尝试进入己方建筑");
+                        ExecuteFarmerEnterBuilding(currentPos, targetPos, ClickCellid);
+                        return;
+                    }
+                }
 
                 // 传教士魅惑敌方单位
                 if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary && IsAdjacentPosition(currentPos, targetPos))
@@ -1189,8 +1202,176 @@ private int localPlayerId = -1;
 
     }
 
+
+    private void ExecuteFarmerEnterBuilding(int2 farmerPos, int2 buildingPos, int buildingCellId)
+    {
+        if (SelectingUnit == null) return;
+
+        bCanContinue = false;
+
+        Debug.Log($"[农民进建筑] 开始执行: 农民位置({farmerPos.x},{farmerPos.y}) -> 建筑位置({buildingPos.x},{buildingPos.y})");
+
+        // 获取农民数据
+        PlayerUnitData? farmerData = PlayerDataManager.Instance.FindUnit(localPlayerId, farmerPos);
+        if (!farmerData.HasValue)
+        {
+            Debug.LogError("[农民进建筑] 找不到农民数据");
+            bCanContinue = true;
+            return;
+        }
+
+        int farmerID = farmerData.Value.UnitID;
+        int farmerPieceID = farmerData.Value.PlayerUnitDataSO.pieceID;
+
+        // 保存农民的GameObject引用（在移动前）
+        GameObject farmerObj = SelectingUnit;
+
+        // 使用新建立的移动方法让农民移动到建筑格子
+        MoveFarmerToBuilding(buildingCellId, farmerPos, () =>
+        {
+            // 移动完成后的回调：让农民消失
+            Debug.Log($"[农民进建筑] 农民已到达建筑，开始消失");
+
+            // 1. 从PlayerDataManager移除农民（使用原始位置farmerPos）
+            bool removed = PlayerDataManager.Instance.RemoveUnit(localPlayerId, farmerPos);
+            if (removed)
+            {
+                Debug.Log($"[农民进建筑] 已从PlayerDataManager移除农民");
+            }
+
+            // 2. 销毁农民GameObject（不影响建筑）
+            if (farmerObj != null)
+            {
+                // 播放消失动画（淡出效果）
+                farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
+                {
+                    Destroy(farmerObj);
+                    Debug.Log($"[农民进建筑] 农民GameObject已销毁");
+                });
+
+                // 从本地单位字典中移除农民（使用原始位置）
+                if (localPlayerUnits.ContainsKey(farmerPos))
+                {
+                    localPlayerUnits.Remove(farmerPos);
+                }
+            }
+
+            // 3. 从PieceManager移除
+            PieceManager.Instance.RemovePiece(farmerPieceID);
+
+            // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
+            GameManage.Instance.SetCellObject(farmerPos, null);
+
+            // 5. 网络同步农民消失（使用农民的原始位置）
+            SyncFarmerEnterBuilding(farmerID, farmerPos);
+
+            Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已进入建筑并消失");
+
+            // 重置选择状态
+            ReturnToDefault();
+            SelectingUnit = null;
+            bCanContinue = true;
+        });
+    }
+    private void MoveFarmerToBuilding(int targetCellId, int2 originalFarmerPos, System.Action onComplete)
+    {
+        if (SelectingUnit == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        // 获取起始和目标位置
+        int2 fromPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
+        int2 toPos = PlayerBoardInforDict[targetCellId].Cells2DPos;
+
+        // 检查AP
+        PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, fromPos);
+        if (!unitData.HasValue)
+        {
+            Debug.LogError("[MoveFarmerToBuilding] 找不到单位数据");
+            onComplete?.Invoke();
+            return;
+        }
+
+        int currentAP = PieceManager.Instance.GetPieceAP(unitData.Value.UnitID);
+        Debug.Log($"[MoveFarmerToBuilding] 当前AP: {currentAP}");
+
+        if (currentAP <= 0)
+        {
+            Debug.Log("[MoveFarmerToBuilding] AP不足，无法移动");
+            onComplete?.Invoke();
+            return;
+        }
+
+        // 寻找路径
+        _HexGrid.FindPath(LastSelectingCellID, targetCellId, currentAP);
+
+        if (!_HexGrid.HasPath)
+        {
+            Debug.Log("[MoveFarmerToBuilding] 没有找到路径");
+            _HexGrid.ClearPath();
+            onComplete?.Invoke();
+            return;
+        }
+
+        List<HexCell> pathCells = _HexGrid.GetPathCells();
+        int pathLength = pathCells.Count - 1;
+
+        if (pathLength > currentAP)
+        {
+            Debug.Log($"[MoveFarmerToBuilding] 路径长度({pathLength})超过AP({currentAP})");
+            _HexGrid.ClearPath();
+            onComplete?.Invoke();
+            return;
+        }
+
+        // 创建移动动画序列 - 只移动到建筑前，不实际进入建筑格子
+        Sequence moveSequence = DOTween.Sequence();
+        Vector3 currentPos = SelectingUnit.transform.position;
+
+        // 移动到倒数第二个格子（如果路径只有1格就直接消失）
+        int moveSteps = Mathf.Max(0, pathCells.Count - 1);
+
+        for (int i = 0; i < moveSteps; i++)
+        {
+            Vector3 waypoint = new Vector3(
+                pathCells[i].Position.x,
+                pathCells[i].Position.y + 2.5f,
+                pathCells[i].Position.z
+            );
+
+            // 创建弧形路径
+            Vector3 midPoint = (currentPos + waypoint) / 2f;
+            midPoint.y += 5.0f;
+            Vector3[] path = new Vector3[] { currentPos, midPoint, waypoint };
+
+            moveSequence.Append(SelectingUnit.transform.DOPath(path, MoveSpeed, PathType.CatmullRom)
+                .SetEase(Ease.Linear));
+            currentPos = waypoint;
+        }
+
+        moveSequence.OnComplete(() =>
+        {
+            // 注意：这里不更新PlayerDataManager和GameManage，因为农民将直接消失
+            // 农民仍然在原始位置的数据将在回调中被清理
+
+            _HexGrid.ClearPath();
+
+            // 消耗AP（移动到建筑附近的步数）
+            bool apConsumed = PieceManager.Instance.ConsumePieceAP(unitData.Value.PlayerUnitDataSO.pieceID, pathLength);
+            if (apConsumed)
+            {
+                Debug.Log($"[MoveFarmerToBuilding] 消耗{pathLength} AP");
+            }
+
+            // 调用完成回调（此时农民应该在建筑附近，但数据层面仍在原位置）
+            onComplete?.Invoke();
+        });
+    }
+
     #region ====攻击====
- 
+
     /// <summary>
     /// 在当前位置执行攻击，目标必须在相邻格
     /// </summary>
@@ -2377,6 +2558,24 @@ private int localPlayerId = -1;
         );
 
         Debug.Log($"[SyncLocalUnitAttack] 已发送攻击同步消息，攻击者位置: ({attackerPos.x},{attackerPos.y}), 目标摧毁: {targetDestroyed}");
+    }
+
+    private void SyncFarmerEnterBuilding(int farmerID, int2 buildingPos)
+    {
+        // 检查网络连接
+        if (NetGameSystem.Instance == null || !NetGameSystem.Instance.bIsConnected)
+        {
+            return; // 单机模式或未连接，不发送
+        }
+
+        // 发送单位移除消息
+        NetGameSystem.Instance.SendUnitRemoveMessage(
+            localPlayerId,
+            buildingPos,
+            farmerID
+        );
+
+        Debug.Log($"[SyncFarmerEnterBuilding] 已发送农民消失同步消息");
     }
 
     /// <summary>
