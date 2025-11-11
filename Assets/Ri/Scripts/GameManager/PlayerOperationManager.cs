@@ -2636,7 +2636,7 @@ public class PlayerOperationManager : MonoBehaviour
 
 
             // 选择位置不为空，处理教皇交换逻辑
-            if (otherPlayersUnits[msg.PlayerId][toPos]!=null)
+            if (otherPlayersUnits[msg.PlayerId].ContainsKey(toPos))
             {
                 GameObject targetObj= otherPlayersUnits[msg.PlayerId][toPos];
 
