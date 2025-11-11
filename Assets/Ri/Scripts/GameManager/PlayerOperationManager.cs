@@ -2184,16 +2184,50 @@ private int localPlayerId = -1;
     // 处理来自网络的创建单位消息
     public void HandleNetworkAddUnit(UnitAddMessage msg)
     {
-
         int2 pos = new int2(msg.PosX, msg.PosY);
         CardType unitType = (CardType)msg.UnitType;
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
 
+        if (unitType==CardType.Building)
+        {
+            bool success =GameManage.Instance._BuildingManager.CreateEnemyBuilding((syncBuildingData)msg.BuildingData);
+
+            if (success)
+            {
+                // 获取创建的GameObject
+                GameObject unitObj = GameManage.Instance._BuildingManager.GetBuildingGameObject();
+
+                if (unitObj != null)
+                {
+                    // 确保字典存在
+                    if (!otherPlayersUnits.ContainsKey(msg.PlayerId))
+                    {
+                        otherPlayersUnits[msg.PlayerId] = new Dictionary<int2, GameObject>();
+                    }
+
+                    // 保存到其他玩家单位字典
+                    otherPlayersUnits[msg.PlayerId][pos] = unitObj;
+
+                    // 更新 GameManage 的格子对象
+                    GameManage.Instance.SetCellObject(pos, unitObj);
+
+                    Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方建筑 ID:{msg.NewUnitSyncData.pieceID}");
 
 
+                }
+                else
+                {
+                    Debug.LogError($"[HandleNetworkAddUnit] 无法获取创建的GameObject");
+                }
+            }
+            else
+            {
+                Debug.LogError($"[HandleNetworkAddUnit] PieceManager.CreateEnemyPiece 失败");
+            }
+        }
         // 使用 PieceManager 创建敌方棋子
-        if (PieceManager.Instance != null)
+        else if(PieceManager.Instance != null)
         {
             bool success = PieceManager.Instance.CreateEnemyPiece(msg.NewUnitSyncData);
 
@@ -2218,9 +2252,7 @@ private int localPlayerId = -1;
 
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
 
-                    //Debug.Log("开始查询敌方单位位置");
-                    //PlayerDataManager.Instance.GetUnitPos(msg.NewUnitSyncData.pieceID);
-
+                 
                 }
                 else
                 {
