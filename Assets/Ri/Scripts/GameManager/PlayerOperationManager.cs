@@ -2964,22 +2964,52 @@ public class PlayerOperationManager : MonoBehaviour
             return; // 单机模式或未连接，不发送
         }
 
-        // 发送两条移动消息来表示交换
-        // 消息1: Pope移动到目标位置
-        NetGameSystem.Instance.SendUnitMoveMessage(
-            localPlayerId,
-            popePos,
-            targetPos,
-            popeSyncData
-        );
 
-        // 消息2: 目标单位移动到Pope原来的位置
-        NetGameSystem.Instance.SendUnitMoveMessage(
-            localPlayerId,
-            targetPos,
-            popePos,
-            targetSyncData
-        );
+        // 发送网络消息 - 移动
+        if (NetGameSystem.Instance != null)
+        {
+            UnitMoveMessage moveMsg = new UnitMoveMessage
+            {
+                PlayerId = localPlayerId,
+                FromX = popePos.x,
+                FromY = popePos.y,
+                ToX = targetPos.x,
+                ToY = targetPos.y
+            };
+            NetGameSystem.Instance.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
+        }
+
+        // 发送网络消息 - 移动
+        if (NetGameSystem.Instance != null)
+        {
+            UnitMoveMessage moveMsg = new UnitMoveMessage
+            {
+                PlayerId = localPlayerId,
+                FromX = targetPos.x,
+                FromY = targetPos.y,
+                ToX = popePos.x,
+                ToY = popePos.y
+            };
+            NetGameSystem.Instance.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
+        }
+
+
+        //// 发送两条移动消息来表示交换
+        //// 消息1: Pope移动到目标位置
+        //NetGameSystem.Instance.SendUnitMoveMessage(
+        //    localPlayerId,
+        //    popePos,
+        //    targetPos,
+        //    popeSyncData
+        //);
+
+        //// 消息2: 目标单位移动到Pope原来的位置
+        //NetGameSystem.Instance.SendUnitMoveMessage(
+        //    localPlayerId,
+        //    targetPos,
+        //    popePos,
+        //    targetSyncData
+        //);
 
         Debug.Log($"[SyncPopeSwapPosition] 已发送Pope交换位置同步消息");
     }
