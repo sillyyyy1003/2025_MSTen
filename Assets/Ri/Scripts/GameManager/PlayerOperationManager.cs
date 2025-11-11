@@ -655,23 +655,10 @@ private int localPlayerId = -1;
         {
             PlayerUnitData unit = data.PlayerUnits[i];
 
-
-            // 同时检查otherPlayersUnits和GameManage的CellObject
-            bool unitExistsInDict = otherPlayersUnits[playerId].ContainsKey(unit.Position);
-            GameObject cellObject = GameManage.Instance.GetCellObject(unit.Position);
-            bool unitExistsInGameManage = cellObject != null;
-
-            if (unitExistsInDict || unitExistsInGameManage)
+         
+            if (otherPlayersUnits[playerId].ContainsKey(unit.Position))
             {
-                Debug.Log($"[UpdateOtherPlayerDisplay] 单位已存在，跳过创建 - 位置:({unit.Position.x},{unit.Position.y}), " +
-                    $"在字典:{unitExistsInDict}, 在GameManage:{unitExistsInGameManage}");
-
-                // 如果只在GameManage中存在但不在字典中，同步到字典
-                if (!unitExistsInDict && unitExistsInGameManage)
-                {
-                    otherPlayersUnits[playerId][unit.Position] = cellObject;
-                    Debug.Log($"[UpdateOtherPlayerDisplay] 同步GameObject到字典");
-                }
+                Debug.Log($"单位已存在，跳过创建");
                 continue;
             }
 
@@ -2197,107 +2184,63 @@ private int localPlayerId = -1;
     // 处理来自网络的创建单位消息
     public void HandleNetworkAddUnit(UnitAddMessage msg)
     {
+
         int2 pos = new int2(msg.PosX, msg.PosY);
         CardType unitType = (CardType)msg.UnitType;
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
 
-        // 【关键修复】：添加重复检查 - 如果单位已存在则跳过
-        if (msg.PlayerId == localPlayerId)
-        {
-            Debug.Log("[HandleNetworkAddUnit] 这是本地玩家的单位，已在本地处理，跳过");
-            return;
-        }
 
-        // 检查是否已经存在GameObject
-        GameObject existingUnit = GameManage.Instance.GetCellObject(pos);
-        if (existingUnit != null)
-        {
-            Debug.LogWarning($"[HandleNetworkAddUnit] 该位置已有GameObject，跳过创建 - ({pos.x},{pos.y})");
-            return;
-        }
 
-        // 再检查字典
-        if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
-            otherPlayersUnits[msg.PlayerId].ContainsKey(pos))
+        // 使用 PieceManager 创建敌方棋子
+        if (PieceManager.Instance != null)
         {
-            Debug.LogWarning($"[HandleNetworkAddUnit] 单位已在字典中，跳过创建 - ({pos.x},{pos.y})");
-            return;
-        }
+            bool success = PieceManager.Instance.CreateEnemyPiece(msg.NewUnitSyncData);
 
-        // 从PlayerDataManager获取刚添加的单位数据（包含可能的BuildingData）
-        PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(msg.PlayerId, pos);
+            if (success)
+            {
+                // 获取创建的GameObject
+                GameObject unitObj = PieceManager.Instance.GetPieceGameObject();
 
-        if (unitData.HasValue)
-        {
-            // 使用统一的CreateEnemyUnit方法（已支持建筑）
-            CreateEnemyUnit(msg.PlayerId, unitData.Value);
-            Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位/建筑");
+                if (unitObj != null)
+                {
+                    // 确保字典存在
+                    if (!otherPlayersUnits.ContainsKey(msg.PlayerId))
+                    {
+                        otherPlayersUnits[msg.PlayerId] = new Dictionary<int2, GameObject>();
+                    }
+
+                    // 保存到其他玩家单位字典
+                    otherPlayersUnits[msg.PlayerId][pos] = unitObj;
+
+                    // 更新 GameManage 的格子对象
+                    GameManage.Instance.SetCellObject(pos, unitObj);
+
+                    Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
+
+                    //Debug.Log("开始查询敌方单位位置");
+                    //PlayerDataManager.Instance.GetUnitPos(msg.NewUnitSyncData.pieceID);
+
+                }
+                else
+                {
+                    Debug.LogError($"[HandleNetworkAddUnit] 无法获取创建的GameObject");
+                }
+            }
+            else
+            {
+                Debug.LogError($"[HandleNetworkAddUnit] PieceManager.CreateEnemyPiece 失败");
+            }
         }
         else
         {
-            Debug.LogError($"[HandleNetworkAddUnit] 无法从PlayerDataManager获取单位数据");
+            Debug.LogError($"[HandleNetworkAddUnit] PieceManager.Instance 为 null");
         }
-
-
+     
     }
 
-    //    int2 pos = new int2(msg.PosX, msg.PosY);
-    //    CardType unitType = (CardType)msg.UnitType;
-
-    //    Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
-
-
-
-    //    // 使用 PieceManager 创建敌方棋子
-    //    if (PieceManager.Instance != null)
-    //    {
-    //        bool success = PieceManager.Instance.CreateEnemyPiece(msg.NewUnitSyncData);
-
-    //        if (success)
-    //        {
-    //            // 获取创建的GameObject
-    //            GameObject unitObj = PieceManager.Instance.GetPieceGameObject();
-
-    //            if (unitObj != null)
-    //            {
-    //                // 确保字典存在
-    //                if (!otherPlayersUnits.ContainsKey(msg.PlayerId))
-    //                {
-    //                    otherPlayersUnits[msg.PlayerId] = new Dictionary<int2, GameObject>();
-    //                }
-
-    //                // 保存到其他玩家单位字典
-    //                otherPlayersUnits[msg.PlayerId][pos] = unitObj;
-
-    //                // 更新 GameManage 的格子对象
-    //                GameManage.Instance.SetCellObject(pos, unitObj);
-
-    //                Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
-
-    //                //Debug.Log("开始查询敌方单位位置");
-    //                //PlayerDataManager.Instance.GetUnitPos(msg.NewUnitSyncData.pieceID);
-
-    //            }
-    //            else
-    //            {
-    //                Debug.LogError($"[HandleNetworkAddUnit] 无法获取创建的GameObject");
-    //            }
-    //        }
-    //        else
-    //        {
-    //            Debug.LogError($"[HandleNetworkAddUnit] PieceManager.CreateEnemyPiece 失败");
-    //        }
-    //    }
-    //    else
-    //    {
-    //        Debug.LogError($"[HandleNetworkAddUnit] PieceManager.Instance 为 null");
-    //    }
-
-    //}
-
     // 操作同步管理
-
+ 
     private void SyncLocalUnitMove(int2 fromPos, int2 toPos)
     {
         // 检查网络连接
