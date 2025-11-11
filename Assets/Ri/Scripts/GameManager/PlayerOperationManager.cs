@@ -34,6 +34,9 @@ public class PlayerOperationManager : MonoBehaviour
     // 点击到的格子的id
     private int ClickCellid;
 
+    // 点击到准备建造建筑的格子的id
+    private int ClickBuildingCellid;
+
     // 射线检测指定为cell层级
     private int RayTestLayerMask = 1 << 6;
 
@@ -71,8 +74,6 @@ private int localPlayerId = -1;
 
     private int selectCellID;
 
-    // 是否选择建造
-    private bool bIsInBuilding;
 
     // 保存攻击前的原始位置（用于"移动+攻击"场景）
     private int2? attackerOriginalPosition = null;
@@ -123,15 +124,14 @@ private int localPlayerId = -1;
 
         }
         if (Input.GetKeyDown(KeyCode.B) 
-            && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer
-            && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
+            && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
         {
-            bIsInBuilding = true;
-            ShowBuildingPos();
-            // 农民生成建筑
-            Debug.Log("Building!");
-            GameManage.Instance._BuildingManager.CreateBuildingByName(
-                "紅月教_特殊建築", localPlayerId, PlayerBoardInforDict[ClickCellid].Cells3DPos);
+            //ClickBuildingCellid = ClickCellid;
+
+            syncBuildingData buildData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateBuildingByName(
+                         "紅月教_特殊建築", localPlayerId, PlayerBoardInforDict[SelectedEmptyCellID].Cells3DPos);
+
+           
         }
       
         if (Input.GetKeyDown(KeyCode.G) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
@@ -205,8 +205,6 @@ private int localPlayerId = -1;
         // 右键点击 - 移动/攻击
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
-            // 重置建筑操作
-            bIsInBuilding = false;
 
             _HexGrid.GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
@@ -269,12 +267,6 @@ private int localPlayerId = -1;
             // 检查是否点击了自己的单位
             if (localPlayerUnits.ContainsKey(clickPos))
             {
-                if(bIsInBuilding)
-                {
-
-                }
-                else
-                {
                     // 取消之前的选择
                     ReturnToDefault();
                     SelectedEmptyCellID = -1;
@@ -294,11 +286,11 @@ private int localPlayerId = -1;
 
                     OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
                     Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
-                }
+             }
 
-            }
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
             {
+                ClickBuildingCellid = -1;
                 Debug.Log("Get Enemy Unit " + clickPos);
                 PlayerUnitDataInterface.Instance.SetEnemyUnitPosition(clickPos);
             }
@@ -322,7 +314,6 @@ private int localPlayerId = -1;
                     selectCellID = ClickCellid;
                     SelectedEmptyCellID = ClickCellid; // 保存选中的空格子
                                                        //Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
-
 
                 }
                 else
@@ -461,7 +452,11 @@ private int localPlayerId = -1;
     {
 
     }
+    // 得到建造完成消息
+    public void GetBuildingOver()
+    {
 
+    }
 
     /// <summary>
     /// 尝试在当前选中的空格子创建单位

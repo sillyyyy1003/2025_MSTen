@@ -849,7 +849,8 @@ public struct syncBuildingData
     public int buildingID;
     public string buildingName;
     public int playerID;
-    public Vector3 position;
+    //25.11.10 RI 修改为序列化Vector3
+    public SerializableVector3 position;
 
     // 状態情報
     public int currentHP;
