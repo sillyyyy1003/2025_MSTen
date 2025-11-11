@@ -126,14 +126,11 @@ private int localPlayerId = -1;
         if (Input.GetKeyDown(KeyCode.B) 
             && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
         {
+            CreateBuilding();
             //ClickBuildingCellid = ClickCellid;
-
-            syncBuildingData buildData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateBuildingByName(
-                         "紅月教_特殊建築", localPlayerId, PlayerBoardInforDict[SelectedEmptyCellID].Cells3DPos);
-
-           
+         
         }
-      
+
         if (Input.GetKeyDown(KeyCode.G) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
         {
             // 传教士占领
@@ -728,6 +725,11 @@ private int localPlayerId = -1;
                 }
 
                 break;
+            case CardType.Building:
+                // 建筑使用独有逻辑
+                CreateBuilding();
+
+                return;
             default:
                 Debug.LogError($"未知的单位类型: {unitType}");
                 return;
@@ -736,6 +738,7 @@ private int localPlayerId = -1;
         syncPieceData unitData = (syncPieceData)PieceManager.Instance.CreatePiece(pieceType,
         SceneStateManager.Instance.PlayerReligion,
         GameManage.Instance.LocalPlayerID,
+        PlayerDataManager.Instance.GenerateUnitID(),
         worldPos);
 
 
@@ -811,38 +814,73 @@ private int localPlayerId = -1;
             }
         }
 
-        if (unitData.PlayerUnitDataSO.pieceID == 0)
+        GameObject unit = null;
+
+        // 检查是否为建筑单位
+        if (unitData.IsBuilding() && unitData.BuildingData.HasValue)
         {
-            Debug.Log("创建失败！ syncPieceData为空！");
+            // 这是建筑单位
+            syncBuildingData buildingData = unitData.BuildingData.Value;
+            Debug.Log($"创建敌方建筑: 玩家{playerId}, 建筑ID={buildingData.buildingID}, Name={buildingData.buildingName}");
+
+            // 使用BuildingManager创建敌方建筑
+            bool success = GameManage.Instance._BuildingManager.CreateEnemyBuilding(buildingData);
+            if (success)
+            {
+                // 获取建筑GameObject（需要BuildingManager提供获取方法）
+                // 如果BuildingManager没有提供，可以通过位置查找
+                unit = GameManage.Instance._BuildingManager.GetBuildingGameObject();
+                if (GameManage.Instance._BuildingManager.GetBuildingGameObject() == null)
+                {
+                    Debug.LogWarning($"无法获取建筑GameObject: BuildingID={buildingData.buildingID}");
+                    // 创建一个占位符
+                    unit = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    unit.transform.position = worldPos;
+                }
+                Debug.Log($"敌方建筑创建成功");
+            }
+            else
+            {
+                Debug.LogError("创建敌方建筑失败！");
+                return;
+            }
         }
-        Debug.Log("创建敌方单位 :玩家 " + playerId + " 单位: " + unitData.PlayerUnitDataSO.piecetype);
-        // 选择预制体
-        PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
-
-        GameObject prefab = PieceManager.Instance.GetPieceGameObject();
-        if (prefab == null)
-            prefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-
-        GameObject unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
-        unit.transform.position = new Vector3(
-            unit.transform.position.x,
-            unit.transform.position.y + 6.5f,
-            unit.transform.position.z
-        );
-
-
-
-        // 保存引用
-        if (!otherPlayersUnits.ContainsKey(playerId))
+        else
         {
-            otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
+
+            if (unitData.PlayerUnitDataSO.pieceID == 0)
+            {
+                Debug.Log("创建失败！ syncPieceData为空！");
+            }
+            Debug.Log("创建敌方单位 :玩家 " + playerId + " 单位: " + unitData.PlayerUnitDataSO.piecetype);
+            // 选择预制体
+            PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
+
+            GameObject prefab = PieceManager.Instance.GetPieceGameObject();
+            if (prefab == null)
+                prefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+
+            unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
+            unit.transform.position = new Vector3(
+                unit.transform.position.x,
+                unit.transform.position.y + 6.5f,
+                unit.transform.position.z
+            );
+
+
+
+            // 保存引用
+            if (!otherPlayersUnits.ContainsKey(playerId))
+            {
+                otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
+            }
+            otherPlayersUnits[playerId][unitData.Position] = unit;
+            GameManage.Instance.SetCellObject(unitData.Position, unit);
+
+            //Debug.Log("开始查询敌方单位位置");
+            //PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+
         }
-        otherPlayersUnits[playerId][unitData.Position] = unit;
-        GameManage.Instance.SetCellObject(unitData.Position, unit);
-
-        //Debug.Log("开始查询敌方单位位置");
-        //PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
-
     }
 
     #endregion
@@ -1029,7 +1067,80 @@ private int localPlayerId = -1;
     // 生成建筑
     private void CreateBuilding()
     {
+        syncBuildingData? buildDataNullable = (syncBuildingData)GameManage.Instance._BuildingManager.CreateBuildingByName(
+                      "紅月教_特殊建築", localPlayerId,
+                      PlayerDataManager.Instance.GenerateUnitID(),
+                      PlayerBoardInforDict[SelectedEmptyCellID].Cells3DPos);
 
+        if (buildDataNullable.HasValue)
+        {
+            syncBuildingData buildData = buildDataNullable.Value;
+
+            Debug.Log($"建筑创建成功: ID={buildData.buildingID}, Name={buildData.buildingName}, PlayerID={buildData.playerID}");
+
+
+            // 2. 将建筑作为Unit添加到PlayerData
+            int2 buildingPos2D = PlayerBoardInforDict[SelectedEmptyCellID].Cells2DPos;
+
+            // 创建syncPieceData（用于单位系统）
+            syncPieceData buildingPieceData = new syncPieceData
+            {
+                currentPID = localPlayerId,
+                pieceID = buildData.buildingID,
+                piecetype = ConvertCardTypeToPieceType(CardType.Building),  // 假设有Building类型，或用特殊值 
+            };
+
+            // 创建PlayerUnitData，包含buildingData
+            PlayerUnitData buildingUnit = new PlayerUnitData(
+                buildData.buildingID,
+                CardType.Building,  // 建筑类型
+                buildingPos2D,
+                buildingPieceData,
+                true,   // 已激活
+                false,  // 建筑不需要行动
+                false,  // 不被魅惑
+                0,      // 魅惑回合
+                localPlayerId,     // 原始所有者
+                buildData  // 传入完整的建筑数据
+            );
+
+            // 添加到PlayerData的PlayerUnits列表（作为特殊单位）
+            PlayerData localPlayerData = PlayerDataManager.Instance.GetPlayerData(localPlayerId);
+            localPlayerData.PlayerUnits.Add(buildingUnit);
+
+            // 添加到本地单位GameObject字典
+            if (GameManage.Instance._BuildingManager.GetBuildingGameObject() != null)
+            {
+                localPlayerUnits[buildingPos2D] = GameManage.Instance._BuildingManager.GetBuildingGameObject();
+                Debug.Log($"建筑GameObject已添加到localPlayerUnits");
+            }
+
+            // 添加描边效果
+            GameManage.Instance._BuildingManager.GetBuildingGameObject().AddComponent<ChangeMaterial>();
+
+            GameManage.Instance.SetCellObject(buildingPos2D, GameManage.Instance._BuildingManager.GetBuildingGameObject());
+            Debug.Log($"建筑已作为Unit添加到PlayerData.PlayerUnits: BuildingID={buildData.buildingID}");
+
+            // 3. 网络同步：使用现有的UNIT_ADD消息
+            if (NetGameSystem.Instance != null)
+            {
+                // 将buildingData序列化存储在syncPieceData中
+                // 可以使用tag字段或其他字段存储序列化的buildingData
+                NetGameSystem.Instance.SendUnitAddMessage(
+                    localPlayerId,
+                    CardType.Building,
+                    buildingPos2D,
+                    buildingPieceData,
+                    false,  // isUsed
+                    buildData  // buildingData - 传入完整的建筑数据
+                );
+                Debug.Log($"已发送建筑创建网络消息(UNIT_ADD): BuildingID={buildData.buildingID}");
+            }
+        }
+        else
+        {
+            Debug.LogError("建筑创建失败！");
+        }
     }
 
     // 检查指定位置的单位是否有足够的AP执行动作
@@ -2295,6 +2406,7 @@ private int localPlayerId = -1;
             case CardType.Solider: return PieceType.Military;
             case CardType.Missionary: return PieceType.Missionary;
             case CardType.Pope: return PieceType.Pope;
+            case CardType.Building: return PieceType.Building;
             default:
                 Debug.LogError($"未知的 CardType: {cardType}");
                 return PieceType.None;
@@ -2316,18 +2428,7 @@ private int localPlayerId = -1;
         }
     }
 
-    // 获取资源路径（根据实际项目调整路径）
-    private string GetResourcePathForUnitType(CardType unitType)
-    {
-        switch (unitType)
-        {
-            case CardType.Farmer: return "Cyou/Prefab/farmer";
-            case CardType.Solider: return "Cyou/Prefab/military";
-            case CardType.Missionary: return "Cyou/Prefab/Missionary";
-            case CardType.Pope: return "Cyou/Prefab/pope";
-            default: return null;
-        }
-    }
+   
 
     private void OnUnitAddedHandler(int playerId, PlayerUnitData unitData)
     {

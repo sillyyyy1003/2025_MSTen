@@ -140,6 +140,7 @@ public class UnitAddMessage
     public int PosX;
     public int PosY;
     public syncPieceData NewUnitSyncData; // PieceDataSO序列化为JSON字符串
+    public syncBuildingData? BuildingData;  // 新增
     public bool IsUsed; // 单位是否已使用
 }
 
@@ -1084,7 +1085,8 @@ public class NetGameSystem : MonoBehaviour
     /// 发送单位添加消息
     /// </summary>
     public void SendUnitAddMessage(int playerId, CardType unitType, int2 pos,
-        syncPieceData newUnitData, bool isUsed = false)
+        syncPieceData newUnitData, bool isUsed = false,
+        syncBuildingData? buildingData = null)
     {
         UnitAddMessage addData = new UnitAddMessage
         {
@@ -1092,7 +1094,8 @@ public class NetGameSystem : MonoBehaviour
             UnitType = (int)unitType,
             PosX = pos.x,
             PosY = pos.y,
-            NewUnitSyncData = newUnitData
+            NewUnitSyncData = newUnitData,
+            BuildingData = buildingData  // 添加建筑数据
         };
 
         NetworkMessage msg = new NetworkMessage

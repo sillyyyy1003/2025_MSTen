@@ -299,8 +299,8 @@ public class PieceManager : MonoBehaviour
     /// <param name="playerID">プレイヤーID</param>
     /// <param name="position">生成位置</param>
     /// <returns>生成された駒の同期データ（失敗時はnull）</returns>
-    public syncPieceData? CreatePiece(PieceType pieceType, Religion religion, int playerID, Vector3 position)
-    {
+    public syncPieceData? CreatePiece(PieceType pieceType, Religion religion, int playerID,int pieceID, Vector3 position)
+    {                                                                                     // 25.11.11 RI add pieceID 
         // UnitListTableからSOデータを取得
         var pieceDetail = new UnitListTable.PieceDetail(pieceType, religion);
         PieceDataSO data = unitListTable.GetPieceDataSO(pieceDetail);
@@ -328,7 +328,8 @@ public class PieceManager : MonoBehaviour
         // IDを割り当てて登録
         int baseId = playerID * 10000;
 
-        int pieceID = baseId + nextPieceID;
+        //25.11.11 RI change ID 
+        //int pieceID = baseId + nextPieceID;
         piece.SetPieceID(pieceID);
         allPieces[pieceID] = piece;
         nextPieceID++;

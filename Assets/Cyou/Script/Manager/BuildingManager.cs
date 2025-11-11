@@ -23,10 +23,16 @@ public class BuildingManager : MonoBehaviour
     // ===== 破壊データのキャッシュ =====
     private syncBuildingData? lastDestroyedBuildingData = null;
 
+
+
     // ===== 建物データ =====
     [SerializeField] private BuildingRegistry buildingRegistry; // 全建物のレジストリ
     private List<BuildingDataSO> allBuildingTypes = new List<BuildingDataSO>(); // 全建物（自分+相手、検索用）
     private List<BuildingDataSO> buildableBuildingTypes = new List<BuildingDataSO>(); // 自分が建設可能な建物のみ
+
+
+    //25.11.11 RI add GameObject
+    private GameObject buildingObject;
 
     // ===== イベント（内部使用・GameManagerには通知しない） =====
     public event Action<int> OnBuildingCreated;       // 建物ID
@@ -96,6 +102,17 @@ public class BuildingManager : MonoBehaviour
 
     #region 建物の生成
 
+
+    // 25.11.1 RI add return piece gameObject
+    public GameObject GetBuildingGameObject()
+    {
+        if (buildingObject != null)
+            return buildingObject;
+        return null;
+    }
+
+
+
     /// <summary>
     /// 建物を生成（GameManagerから呼び出し）
     /// </summary>
@@ -103,8 +120,9 @@ public class BuildingManager : MonoBehaviour
     /// <param name="playerID">プレイヤーID</param>
     /// <param name="position">生成位置</param>
     /// <returns>生成された建物の同期データ（失敗時はnull）</returns>
-    public syncBuildingData? CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
-    {
+
+    public syncBuildingData? CreateBuilding(BuildingDataSO buildingData, int playerID,int pieceID, Vector3 position)
+    {                                                                    //25.11.11 RI add piece ID
         if (buildingData == null)
         {
             Debug.LogError("建物データがnullです");
@@ -113,6 +131,9 @@ public class BuildingManager : MonoBehaviour
 
         // Prefabから建物を生成
         GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position, Quaternion.identity);
+
+        // 25.11.11 RI init building gameObject
+        buildingObject = buildingObj;
 
         //25.11.10 RI Fix GetComponent Bug
         //Building building = buildingObj.GetComponent<Building>();
@@ -129,21 +150,26 @@ public class BuildingManager : MonoBehaviour
         building.Initialize(buildingData, playerID);
 
         // IDを割り当てて登録
-        int buildingID = nextBuildingID;
-        building.SetBuildingID(buildingID);
-        buildings[buildingID] = building;
-        nextBuildingID++;
+        //25.11.11 RI change ID
+        ////int buildingID = nextBuildingID;
+        //building.SetBuildingID(buildingID);
+        //buildings[buildingID] = building;
+        //nextBuildingID++;
+
+        building.SetBuildingID(pieceID);
+        buildings[pieceID] = building;
+
 
         // イベントを購読
         building.OnBuildingCompleted += (completedBuilding) => HandleBuildingCompleted(completedBuilding.BuildingID);
         building.OnBuildingDestroyed += (destroyedBuilding) => HandleBuildingDestroyed(destroyedBuilding.BuildingID);
-        building.OnResourceGenerated += (amount) => OnResourceGenerated?.Invoke(buildingID, amount);
+        building.OnResourceGenerated += (amount) => OnResourceGenerated?.Invoke(pieceID, amount);
 
-        Debug.Log($"建物を生成しました: ID={buildingID}, Name={buildingData.buildingName}, PlayerID={playerID}");
-        OnBuildingCreated?.Invoke(buildingID);
+        Debug.Log($"建物を生成しました: ID={pieceID}, Name={buildingData.buildingName}, PlayerID={playerID}");
+        OnBuildingCreated?.Invoke(pieceID);
 
         // 同期データを作成して返す
-        return CreateCompleteSyncData(buildingID);
+        return CreateCompleteSyncData(pieceID);
     }
 
     /// <summary>
@@ -153,8 +179,8 @@ public class BuildingManager : MonoBehaviour
     /// <param name="playerID">プレイヤーID</param>
     /// <param name="position">生成位置</param>
     /// <returns>生成された建物の同期データ（失敗時はnull）</returns>
-    public syncBuildingData? CreateBuildingByName(string buildingName, int playerID, Vector3 position)
-    {
+    public syncBuildingData? CreateBuildingByName(string buildingName, int playerID,int pieceID, Vector3 position)
+    {                                                                                //25.11.11 RI add piece ID
         BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
 
         if (buildingData == null)
@@ -163,7 +189,7 @@ public class BuildingManager : MonoBehaviour
             return null;
         }
 
-        return CreateBuilding(buildingData, playerID, position);
+        return CreateBuilding(buildingData, playerID, pieceID, position);
     }
 
     /// <summary>
