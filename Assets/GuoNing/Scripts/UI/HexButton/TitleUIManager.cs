@@ -9,7 +9,7 @@ public class TitleUIManager : MonoBehaviour
 	[Header("Menus")]
 	public RectTransform LeftMenu;
 	public RectTransform RightMenu;
-
+	public Material mat;
 	// World UI
 	[Header("Left Menu")]
 	public HexButton Button_EndGame;
@@ -20,6 +20,8 @@ public class TitleUIManager : MonoBehaviour
 
 	[Header("Right Menu")]
 	public HexButton Button_Matching;
+
+
 
 	// Screen UI
 	[Header("OnlineButton")]
@@ -37,13 +39,17 @@ public class TitleUIManager : MonoBehaviour
 			// Close right menu
 			RightMenu.gameObject.SetActive(false);
 			// 如果有任意菜单是打开的，则将所有切换设定为关闭状态
-
+			mat.SetFloat("_UseMask", 1f);
+			mat.SetFloat("_BlurSize", 5f);
+			Debug.Log("Right mouse button clicked - Close Right Menu");
 		}
 
 		if (Building)
 		{
 			Building.Rotate(Vector3.up, 20f * Time.deltaTime);
 		}
+
+		
 	}
 
 	public void SetRightMenu(bool active)
