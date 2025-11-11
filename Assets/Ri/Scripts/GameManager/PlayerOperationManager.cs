@@ -2629,87 +2629,15 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[网络移动] 玩家 {msg.PlayerId} 移动: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
 
-        // 确保该玩家的字典存在
-        if (!otherPlayersUnits.ContainsKey(msg.PlayerId))
+        if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
+      otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
         {
-            otherPlayersUnits[msg.PlayerId] = new Dictionary<int2, GameObject>();
-        }
+            GameObject movingUnit = otherPlayersUnits[msg.PlayerId][fromPos];
 
-        GameObject movingUnit = null;
-
-        // 尝试从fromPos获取单位
-        if (otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
-        {
-            movingUnit = otherPlayersUnits[msg.PlayerId][fromPos];
-            Debug.Log($"[网络移动] 找到单位在fromPos: {fromPos}");
-        }
-        else
-        {
-            // ===== 关键修复：如果fromPos找不到，尝试从toPos获取 =====
-            // 这种情况发生在Pope交换的第二条消息：
-            // 第一条消息已经把Pope移到了toPos，现在要移走原本在toPos的单位
-            if (otherPlayersUnits[msg.PlayerId].ContainsKey(toPos))
-            {
-                movingUnit = otherPlayersUnits[msg.PlayerId][toPos];
-                Debug.Log($"[网络移动] 在fromPos找不到，但在toPos找到了单位（交换情况）");
-
-                // 这是交换的情况，需要先移除toPos的引用
-                otherPlayersUnits[msg.PlayerId].Remove(toPos);
-            }
-            else
-            {
-                // ===== 如果两个位置都找不到，尝试创建单位 =====
-                Debug.LogWarning($"[网络移动] fromPos和toPos都找不到单位，尝试创建");
-
-                // 从PlayerDataManager获取单位数据
-                PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(msg.PlayerId, toPos);
-
-                if (unitData.HasValue)
-                {
-                    Debug.Log($"[网络移动] 从PlayerDataManager找到单位数据，创建GameObject");
-                    movingUnit = CreateUnitGameObject(msg.PlayerId, unitData.Value);
-
-                    if (movingUnit != null)
-                    {
-                        // 直接放置在目标位置，不需要动画
-                        Vector3 targetWorldPos = Vector3.zero;
-                        foreach (var board in PlayerBoardInforDict.Values)
-                        {
-                            if (board.Cells2DPos.Equals(toPos))
-                            {
-                                targetWorldPos = new Vector3(
-                                    board.Cells3DPos.x,
-                                    board.Cells3DPos.y + 2.5f,
-                                    board.Cells3DPos.z
-                                );
-                                break;
-                            }
-                        }
-
-                        movingUnit.transform.position = targetWorldPos;
-                        otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
-                        GameManage.Instance.SetCellObject(toPos, movingUnit);
-
-                        Debug.Log($"[网络移动] 单位创建并放置完成");
-                        return;
-                    }
-                }
-
-                Debug.LogError($"[网络移动] 无法创建单位：玩家{msg.PlayerId} at ({toPos.x},{toPos.y})");
-                return;
-            }
-        }
-
-        // 如果找到了movingUnit，执行移动
-        if (movingUnit != null)
-        {
-            // 更新字典（如果还没移除fromPos）
-            if (otherPlayersUnits[msg.PlayerId].ContainsKey(fromPos))
-            {
-                otherPlayersUnits[msg.PlayerId].Remove(fromPos);
-            }
-
+            // 更新字典
+            otherPlayersUnits[msg.PlayerId].Remove(fromPos);
             otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
+
 
             // 获取目标世界坐标
             Vector3 targetWorldPos = Vector3.zero;
@@ -2726,6 +2654,7 @@ public class PlayerOperationManager : MonoBehaviour
                 }
             }
 
+
             // 执行移动动画
             movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
             {
@@ -2737,6 +2666,10 @@ public class PlayerOperationManager : MonoBehaviour
             GameManage.Instance.SetCellObject(toPos, movingUnit);
 
             Debug.Log($"[HandleNetworkMove] 视觉移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+        }
+        else
+        {
+            Debug.LogWarning($"[HandleNetworkMove] 找不到要移动的单位: 玩家{msg.PlayerId} at ({fromPos.x},{fromPos.y})");
         }
 
     }
