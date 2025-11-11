@@ -2709,6 +2709,18 @@ private int localPlayerId = -1;
                 otherPlayersUnits[msg.PlayerId].Remove(fromPos);
             }
 
+            // ===== 关键修复：在覆盖toPos之前，删除那里的旧GameObject =====
+            if (otherPlayersUnits[msg.PlayerId].ContainsKey(toPos))
+            {
+                GameObject oldUnit = otherPlayersUnits[msg.PlayerId][toPos];
+                if (oldUnit != null && oldUnit != movingUnit)  // 确保不是同一个对象
+                {
+                    Debug.Log($"[网络移动] 删除toPos({toPos.x},{toPos.y})的旧GameObject: {oldUnit.name}");
+                    Destroy(oldUnit);
+                    GameManage.Instance.SetCellObject(toPos, null);  // 同时清理GameManage引用
+                }
+            }
+
             otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
 
             // 获取目标世界坐标
