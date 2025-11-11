@@ -2451,9 +2451,41 @@ private int localPlayerId = -1;
         }
      
     }
+    public void HandleNetworkRemove(UnitRemoveMessage msg)
+    {
+        // 1. 跳过本地玩家的消息（本地已处理）
+        if (msg.PlayerId == localPlayerId)
+        {
+            return;
+        }
 
+        // 2. 获取位置
+        int2 pos = new int2(msg.PosX, msg.PosY);
+
+        // 3. 从敌方单位字典找到并移除GameObject
+        if (otherPlayersUnits.ContainsKey(msg.PlayerId) &&
+            otherPlayersUnits[msg.PlayerId].ContainsKey(pos))
+        {
+            GameObject unitObj = otherPlayersUnits[msg.PlayerId][pos];
+            otherPlayersUnits[msg.PlayerId].Remove(pos);
+
+            // 4. 播放消失动画并销毁
+            unitObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() => {
+                Destroy(unitObj);
+            });
+        }
+
+        // 5. 从PieceManager移除
+        if (msg.UnitID > 0)
+        {
+            PieceManager.Instance?.RemovePiece(msg.UnitID);
+        }
+
+        // 6. 清空GameManage的格子对象
+        GameManage.Instance.SetCellObject(pos, null);
+    }
     // 操作同步管理
- 
+
     private void SyncLocalUnitMove(int2 fromPos, int2 toPos)
     {
         // 检查网络连接

@@ -2008,6 +2008,12 @@ public class NetGameSystem : MonoBehaviour
             playerDataManager.RemoveUnit(data.PlayerId, pos);
         }
 
+        // 先通知 PlayerOperationManager 处理 GameObject
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkRemove(data);
+        }
+
         // 从 PlayerDataManager 移除
         if (playerDataManager != null)
         {
