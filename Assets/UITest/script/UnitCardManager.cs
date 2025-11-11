@@ -710,7 +710,8 @@ public class UnitCardManager : MonoBehaviour
         int index = cards.FindIndex(c => c.GetCardUnitID() == targetId);
         if (index < 0 || index >= cards.Count)
         {
-            Debug.Log($"[UnitCardManager] 没找到对应UnitID={targetId}的卡片，当前cards.Count={cards.Count}");
+            //25.11.11 RI 暂时注释掉
+            //Debug.Log($"[UnitCardManager] 没找到对应UnitID={targetId}的卡片，当前cards.Count={cards.Count}");
             yield break;
         }
 
