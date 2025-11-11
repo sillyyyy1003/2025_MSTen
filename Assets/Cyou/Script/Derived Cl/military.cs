@@ -41,7 +41,7 @@ public class MilitaryUnit : Piece
         return militaryData;
     }
     /// <summary>
-    /// 攻撃実行
+    /// 攻撃実行（駒を攻撃）
     /// </summary>
     public bool Attack(Piece target)
     {
@@ -59,6 +59,25 @@ public class MilitaryUnit : Piece
         return true;
     }
 
+    /// <summary>
+    /// 建物を攻撃
+    /// </summary>
+    public bool AttackBuilding(Buildings.Building target)
+    {
+        if (!militaryData.canAttack || target == null || !target.IsAlive)
+            return false;
+
+        if (Time.time - lastAttackTime < militaryData.attackCooldown)
+            return false;
+
+        if (!ConsumeAP(militaryData.attackAPCost))
+            return false;
+
+        PerformAttackOnBuilding(target);
+        lastAttackTime = Time.time;
+        return true;
+    }
+
     protected virtual void PerformAttack(Piece target)
     {
         int finalDamage = CalculateDamage();
@@ -69,6 +88,22 @@ public class MilitaryUnit : Piece
         if (UnityEngine.Random.value < militaryData.criticalChance)
         {
             finalDamage *= 2;
+            // クリティカルエフェクト表示
+        }
+    }
+
+    protected virtual void PerformAttackOnBuilding(Buildings.Building target)
+    {
+        int finalDamage = CalculateDamage();
+        Debug.Log($"十字軍が建物を攻撃: 建物={target.Data.buildingName}, 建物HP={target.CurrentHP}, 攻撃力={finalDamage}");
+        target.TakeDamage(finalDamage);
+        Debug.Log($"攻撃後の建物HP: {target.CurrentHP}");
+
+        // クリティカル判定
+        if (UnityEngine.Random.value < militaryData.criticalChance)
+        {
+            finalDamage *= 2;
+            Debug.Log($"クリティカルヒット！ダメージ: {finalDamage}");
             // クリティカルエフェクト表示
         }
     }

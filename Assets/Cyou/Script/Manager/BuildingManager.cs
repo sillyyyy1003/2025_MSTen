@@ -469,25 +469,8 @@ public class BuildingManager : MonoBehaviour
             return null;
         }
 
-        // 同期データを作成
-        syncBuildingData sbd = new syncBuildingData
-        {
-            buildingID = buildingID,
-            buildingName = building.Data.buildingName,
-            playerID = building.PlayerID,
-            position = building.transform.position,
-            currentHP = building.CurrentHP,
-            state = building.State,
-            remainingBuildCost = building.RemainingBuildCost,
-
-            // アップグレードレベル
-            hpLevel = building.HPLevel,
-            attackRangeLevel = building.AttackRangeLevel,
-            slotsLevel = building.SlotsLevel,
-            buildCostLevel = building.BuildCostLevel
-        };
-
-        return sbd;
+        // ファクトリーメソッドを使用して同期データを作成
+        return syncBuildingData.CreateFromBuilding(building);
     }
 
     #endregion
@@ -608,6 +591,32 @@ public class BuildingManager : MonoBehaviour
         return buildings.ContainsKey(buildingID);
     }
 
+    /// <summary>
+    /// 建物インスタンスを取得（己方・敵方両方から検索）
+    /// </summary>
+    /// <param name="buildingID">建物ID</param>
+    /// <returns>Buildingインスタンス（見つからない場合はnull）</returns>
+    public Building GetBuilding(int buildingID)
+    {
+        if (buildings.TryGetValue(buildingID, out Building building))
+        {
+            return building;
+        }
+        if (enemyBuildings.TryGetValue(buildingID, out building))
+        {
+            return building;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 建設可能な建物リストを取得
+    /// </summary>
+    /// <returns>建設可能な建物のDataSOリスト</returns>
+    public List<BuildingDataSO> GetBuildableBuildingTypes()
+    {
+        return buildableBuildingTypes;
+    }
 
     /// <summary>
     /// 指定プレイヤーのすべての建物IDを取得
@@ -684,15 +693,8 @@ public class BuildingManager : MonoBehaviour
         // 破壊データをキャッシュ（己方の建物の場合のみ）
         if (localPlayerID != -1 && ownerID == localPlayerID)
         {
-            lastDestroyedBuildingData = new syncBuildingData
-            {
-                buildingID = buildingID,
-                buildingName = building.Data.buildingName,
-                playerID = ownerID,
-                position = building.transform.position,
-                currentHP = 0, // 破壊されたのでHP=0
-                state = BuildingState.Ruined
-            };
+            // 完全な同期データを作成（破壊時の状態を保持）
+            lastDestroyedBuildingData = syncBuildingData.CreateFromBuilding(building);
         }
 
         // 建物を削除
@@ -858,4 +860,27 @@ public struct syncBuildingData
     public int attackRangeLevel;   // 攻撃範囲等級 (0-3)
     public int slotsLevel;         // スロット数等級 (0-3)
     public int buildCostLevel;     // 建造コスト等級 (0-3)
+
+    /// <summary>
+    /// Buildingインスタンスから完全なsyncBuildingDataを生成
+    /// </summary>
+    public static syncBuildingData CreateFromBuilding(Building building)
+    {
+        return new syncBuildingData
+        {
+            buildingID = building.BuildingID,
+            buildingName = building.Data.buildingName,
+            playerID = building.PlayerID,
+            position = building.transform.position,
+            currentHP = building.CurrentHP,
+            state = building.State,
+            remainingBuildCost = building.RemainingBuildCost,
+
+            // アップグレードレベル
+            hpLevel = building.HPLevel,
+            attackRangeLevel = building.AttackRangeLevel,
+            slotsLevel = building.SlotsLevel,
+            buildCostLevel = building.BuildCostLevel
+        };
+    }
 }
