@@ -2194,6 +2194,12 @@ private int localPlayerId = -1;
 
         if (unitData.HasValue)
         {
+            if (otherPlayersUnits[msg.PlayerId].ContainsKey(pos))
+            {
+                Debug.Log($"单位已存在，跳过创建");
+                return;
+            }
+
             // 使用统一的CreateEnemyUnit方法（已支持建筑）
             CreateEnemyUnit(msg.PlayerId, unitData.Value);
             Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位/建筑");
