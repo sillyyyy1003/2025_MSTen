@@ -211,7 +211,11 @@ public class BuildingManager : MonoBehaviour
         for (int i=0;i< allBuildingTypes.Count;i++)
         {
             if (allBuildingTypes[i].buildingName == sbd.buildingName)
+            {
                 buildingData = allBuildingTypes[i];
+                Debug.Log("can find building data!!!!!");
+
+            }
         }
         //BuildingDataSO buildingData = allBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
 
@@ -220,15 +224,17 @@ public class BuildingManager : MonoBehaviour
             Debug.LogError($"建物データが見つかりません: {sbd.buildingName}");
             return false;
         }
-
+        // 25.11.11 RI 修改创建逻辑
         // Prefabから建物を生成
-        GameObject buildingObj = Instantiate(buildingData.buildingPrefab, sbd.position, Quaternion.identity);
-        Building building = buildingObj.GetComponent<Building>();
+        buildingObject = Instantiate(buildingData.buildingPrefab, sbd.position, Quaternion.identity);
+       
+        //25.11.11 RI 修改为AddComponent
+        Building building = buildingObject.AddComponent<Building>();
 
         if (building == null)
         {
             Debug.LogError($"Buildingコンポーネントがありません: {sbd.buildingName}");
-            Destroy(buildingObj);
+            Destroy(buildingObject);
             return false;
         }
 
