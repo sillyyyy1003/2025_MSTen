@@ -67,10 +67,10 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
-                   
 
-// 本地玩家ID
-private int localPlayerId = -1;
+
+    // 本地玩家ID
+    private int localPlayerId = -1;
 
     private int selectCellID;
 
@@ -123,12 +123,12 @@ private int localPlayerId = -1;
             HandleMouseInput();
 
         }
-        if (Input.GetKeyDown(KeyCode.B) 
+        if (Input.GetKeyDown(KeyCode.B)
             && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
         {
             CreateBuilding();
             //ClickBuildingCellid = ClickCellid;
-         
+
         }
 
         if (Input.GetKeyDown(KeyCode.G) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
@@ -137,13 +137,13 @@ private int localPlayerId = -1;
             // 通过PieceManager判断
             if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
                 && _HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1)
-                && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos) )
+                && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
             {
-                
-                    _HexGrid.GetCell(LastSelectingCellID).Walled = true;
-                    PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
-                    HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
-              
+
+                _HexGrid.GetCell(LastSelectingCellID).Walled = true;
+                PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
+                HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
+
             }
             else
             {
@@ -264,26 +264,26 @@ private int localPlayerId = -1;
             // 检查是否点击了自己的单位
             if (localPlayerUnits.ContainsKey(clickPos))
             {
-                    // 取消之前的选择
-                    ReturnToDefault();
-                    SelectedEmptyCellID = -1;
+                // 取消之前的选择
+                ReturnToDefault();
+                SelectedEmptyCellID = -1;
 
 
-                    // 选择新单位
-                    SelectingUnit = localPlayerUnits[clickPos];
-                    if (!SelectingUnit.GetComponent<ChangeMaterial>())
-                        SelectingUnit.AddComponent<ChangeMaterial>();
+                // 选择新单位
+                SelectingUnit = localPlayerUnits[clickPos];
+                if (!SelectingUnit.GetComponent<ChangeMaterial>())
+                    SelectingUnit.AddComponent<ChangeMaterial>();
 
-                    SelectingUnit.GetComponent<ChangeMaterial>().Outline();
-                    LastSelectingCellID = ClickCellid;
+                SelectingUnit.GetComponent<ChangeMaterial>().Outline();
+                LastSelectingCellID = ClickCellid;
 
 
-                    PlayerDataManager.Instance.nowChooseUnitID = PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos);
-                    PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
+                PlayerDataManager.Instance.nowChooseUnitID = PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos);
+                PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
 
-                    OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
-                    Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
-             }
+                OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
+                Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
+            }
 
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
             {
@@ -350,7 +350,7 @@ private int localPlayerId = -1;
                 int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
 
                 // Pope交换位置
-                if (  ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+                if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
                 {
                     if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
                     {
@@ -368,7 +368,7 @@ private int localPlayerId = -1;
 
                     }
 
-                  
+
                 }
 
                 // 农民进入己方建筑
@@ -436,7 +436,7 @@ private int localPlayerId = -1;
                 // 传教士移动
                 if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
                 {
-                  
+
                     if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
                     {
                         MoveToSelectCell(ClickCellid);
@@ -446,7 +446,7 @@ private int localPlayerId = -1;
                         Debug.LogWarning("Missionary  Cant Move To That Cell!");
                     }
 
-                } 
+                }
                 // 农民移动
                 else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
                 {
@@ -835,9 +835,9 @@ private int localPlayerId = -1;
 
 
         // 发送网络消息
-        if (GameManage.Instance._NetGameSystem != null)
+        if (NetGameSystem.Instance != null)
         {
-            GameManage.Instance._NetGameSystem.SendUnitAddMessage(
+            NetGameSystem.Instance.SendUnitAddMessage(
                 localPlayerId,
                 unitType,
                 position,
@@ -924,7 +924,7 @@ private int localPlayerId = -1;
         else
         {
 
-            if (unitData.PlayerUnitDataSO.piecetype == PieceType.None)
+            if (unitData.PlayerUnitDataSO.pieceID == 0)
             {
                 Debug.Log("创建失败！ syncPieceData为空！");
             }
@@ -981,7 +981,7 @@ private int localPlayerId = -1;
     }
 
 
-   
+
 
     // 移动到选择的棋盘
     private void MoveToSelectCell(int targetCellId)
@@ -1094,7 +1094,7 @@ private int localPlayerId = -1;
 
 
                 // 发送网络消息 - 移动
-                if (GameManage.Instance._NetGameSystem != null)
+                if (NetGameSystem.Instance != null)
                 {
                     UnitMoveMessage moveMsg = new UnitMoveMessage
                     {
@@ -1104,7 +1104,7 @@ private int localPlayerId = -1;
                         ToX = toPos.x,
                         ToY = toPos.y
                     };
-                    GameManage.Instance._NetGameSystem.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
+                    NetGameSystem.Instance.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
                     Debug.Log($"[本地] 已发送移动消息到网络: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
                 }
             });
@@ -1345,6 +1345,7 @@ private int localPlayerId = -1;
         {
             Debug.Log("[Pope交换] 动画完成，开始更新数据");
 
+            // ===== 修复：使用正确的交换逻辑 =====
 
             // 1. 先从PlayerDataManager移除两个单位（保存引用）
             PlayerData playerData = PlayerDataManager.Instance.GetPlayerData(localPlayerId);
@@ -1464,6 +1465,48 @@ private int localPlayerId = -1;
             {
                 Debug.LogError($"[Pope交换] 无法获取交换后的单位数据，网络同步失败！");
             }
+
+
+            // ===== 完整上下文参考 =====
+
+            // 在动画完成回调中的完整代码应该是：
+
+            swapSequence.OnComplete(() =>
+            {
+                Debug.Log("[Pope交换] 动画完成，开始更新数据");
+
+                // 1-6. 数据更新、GameObject更新、AP消耗等（保持不变）
+                // ... 你的现有代码 ...
+
+                // 7. 网络同步 - 发送交换位置消息
+                // ===== 关键修复：必须使用交换后的数据 =====
+                PlayerUnitData? popeAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, targetPos);
+                PlayerUnitData? targetAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, popePos);
+
+                if (popeAfterSwap.HasValue && targetAfterSwap.HasValue)
+                {
+                    SyncPopeSwapPosition(
+                        popePos,
+                        targetPos,
+                        popeAfterSwap.Value.PlayerUnitDataSO,
+                        targetAfterSwap.Value.PlayerUnitDataSO
+                    );
+                    Debug.Log($"[Pope交换] 已发送网络同步消息（使用交换后的数据）");
+                }
+                else
+                {
+                    Debug.LogError($"[Pope交换] 无法获取交换后的单位数据，网络同步失败！");
+                }
+
+                // 重新启用输入
+                bCanContinue = true;
+
+                Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
+            });
+            // 重新启用输入
+            bCanContinue = true;
+
+            Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
         });
     }
 
@@ -2196,7 +2239,7 @@ private int localPlayerId = -1;
         else
         {
 
-            Debug.Log("已找到对方数据: "+targetData.Value.PlayerUnitDataSO.piecetype);
+            Debug.Log("已找到对方数据: " + targetData.Value.PlayerUnitDataSO.piecetype);
         }
         // 获取双方的 PieceID
         int missionaryPieceID = missionaryData.Value.PlayerUnitDataSO.pieceID;
@@ -2252,7 +2295,7 @@ private int localPlayerId = -1;
             // 添加到本地玩家字典
             localPlayerUnits[targetPos] = targetUnit;
 
-        
+
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
@@ -2698,8 +2741,6 @@ private int localPlayerId = -1;
 
     }
 
-
-
     // 处理来自网络的创建单位消息
     public void HandleNetworkAddUnit(UnitAddMessage msg)
     {
@@ -2708,9 +2749,9 @@ private int localPlayerId = -1;
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
 
-        if (unitType==CardType.Building)
+        if (unitType == CardType.Building)
         {
-            bool success =GameManage.Instance._BuildingManager.CreateEnemyBuilding((syncBuildingData)msg.BuildingData);
+            bool success = GameManage.Instance._BuildingManager.CreateEnemyBuilding((syncBuildingData)msg.BuildingData);
 
             if (success)
             {
@@ -2746,7 +2787,7 @@ private int localPlayerId = -1;
             }
         }
         // 使用 PieceManager 创建敌方棋子
-        else if(PieceManager.Instance != null)
+        else if (PieceManager.Instance != null)
         {
             bool success = PieceManager.Instance.CreateEnemyPiece(msg.NewUnitSyncData);
 
@@ -2771,7 +2812,7 @@ private int localPlayerId = -1;
 
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
 
-                 
+
                 }
                 else
                 {
@@ -2787,7 +2828,7 @@ private int localPlayerId = -1;
         {
             Debug.LogError($"[HandleNetworkAddUnit] PieceManager.Instance 为 null");
         }
-     
+
     }
     public void HandleNetworkRemove(UnitRemoveMessage msg)
     {
@@ -2824,67 +2865,7 @@ private int localPlayerId = -1;
     }
     // 操作同步管理
 
-    private void SyncLocalUnitMove(int2 fromPos, int2 toPos)
-    {
-        // 检查网络连接
-        if (NetGameSystem.Instance == null || !NetGameSystem.Instance.bIsConnected)
-        {
-            return; // 单机模式或未连接，不发送
-        }
 
-        // 获取移动后的单位数据
-        PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, toPos);
-
-        if (unitData.HasValue)
-        {
-            // 发送网络消息
-            NetGameSystem.Instance.SendUnitMoveMessage(
-                localPlayerId,
-                fromPos,
-                toPos,
-                unitData.Value.PlayerUnitDataSO
-            );
-
-            Debug.Log($"[SyncLocalUnitMove] 已发送移动同步消息");
-        }
-        else
-        {
-            Debug.LogWarning($"[SyncLocalUnitMove] 找不到移动后的单位数据 at ({toPos.x},{toPos.y})");
-        }
-    }
-
-    /// <summary>
-    /// 本地玩家创建单位后调用此方法进行网络同步
-    /// 在 TryCreateUnit 成功后调用
-    /// </summary>
-    private void SyncLocalUnitAdd(CardType unitType, int2 pos)
-    {
-        // 检查网络连接
-        if (NetGameSystem.Instance == null || !NetGameSystem.Instance.bIsConnected)
-        {
-            return; // 单机模式或未连接，不发送
-        }
-
-        // 获取新添加的单位数据
-        PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, pos);
-
-        if (unitData.HasValue)
-        {
-            // 发送网络消息
-            NetGameSystem.Instance.SendUnitAddMessage(
-                localPlayerId,
-                unitType,
-                pos,
-                unitData.Value.PlayerUnitDataSO
-            );
-
-            Debug.Log($"[SyncLocalUnitAdd] 已发送创建单位同步消息");
-        }
-        else
-        {
-            Debug.LogWarning($"[SyncLocalUnitAdd] 找不到新创建的单位数据 at ({pos.x},{pos.y})");
-        }
-    }
 
     /// <summary>
     /// 本地玩家攻击后调用此方法进行网络同步
@@ -3060,14 +3041,14 @@ private int localPlayerId = -1;
         }
     }
 
-   
+
 
     private void OnUnitAddedHandler(int playerId, PlayerUnitData unitData)
     {
 
     }
 
-    private void OnUnitRemovedHandler(int playerId, int2 position,bool isCharm)
+    private void OnUnitRemovedHandler(int playerId, int2 position, bool isCharm)
     {
         Debug.Log($"[事件] OnUnitRemovedHandler: 玩家 {playerId} at ({position.x},{position.y})");
 
@@ -3075,7 +3056,7 @@ private int localPlayerId = -1;
         {
             Debug.Log("[事件] 本地玩家移除单位");
             // 本地玩家移除单位（发生在被攻击时）
-            if (localPlayerUnits.ContainsKey(position)&& !isCharm)
+            if (localPlayerUnits.ContainsKey(position) && !isCharm)
             {
                 Destroy(localPlayerUnits[position]);
                 localPlayerUnits.Remove(position);
@@ -3086,7 +3067,7 @@ private int localPlayerId = -1;
                 localPlayerUnits.Remove(position);
 
                 // 更新魅惑后的新显示
-                UpdateOtherPlayerDisplay(localPlayerId==1?0:1,PlayerDataManager.Instance.GetPlayerData(localPlayerId == 1 ? 0 : 1));
+                UpdateOtherPlayerDisplay(localPlayerId == 1 ? 0 : 1, PlayerDataManager.Instance.GetPlayerData(localPlayerId == 1 ? 0 : 1));
             }
             GameManage.Instance.SetCellObject(position, null);
         }

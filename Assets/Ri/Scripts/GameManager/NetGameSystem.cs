@@ -1116,11 +1116,10 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log($"[网络-客户端] 发送 UNIT_ADD 消息到服务器");
         }
     }
-
-
-    /// <summary>
-    /// 发送单位移动消息
-    /// </summary>
+ 
+        /// <summary>
+        /// 发送单位移动消息
+        /// </summary>
     public void SendUnitMoveMessage(int playerId, int2 fromPos, int2 toPos, syncPieceData movedUnitData)
     {
         UnitMoveMessage moveData = new UnitMoveMessage
@@ -2167,7 +2166,7 @@ public class NetGameSystem : MonoBehaviour
                 // 如果目标单位不存在，可能需要先从NewUnitSyncData创建
                 // 注意：这种情况通常不应该发生，说明同步顺序有问题
                 // 但为了健壮性，我们可以尝试添加单位
-                CardType unitType=CardType.None;
+                CardType unitType = CardType.None;
                 // 根据syncPieceData推断单位类型
                 switch (data.NewUnitSyncData.piecetype)
                 {
