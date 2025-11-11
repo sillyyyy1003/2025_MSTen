@@ -2634,38 +2634,96 @@ public class PlayerOperationManager : MonoBehaviour
         {
             GameObject movingUnit = otherPlayersUnits[msg.PlayerId][fromPos];
 
-            // 更新字典
-            otherPlayersUnits[msg.PlayerId].Remove(fromPos);
-            otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
 
-
-            // 获取目标世界坐标
-            Vector3 targetWorldPos = Vector3.zero;
-            foreach (var board in PlayerBoardInforDict.Values)
+            // 选择位置不为空，处理教皇交换逻辑
+            if (otherPlayersUnits[msg.PlayerId][toPos]!=null)
             {
-                if (board.Cells2DPos.Equals(toPos))
+                GameObject targetObj= otherPlayersUnits[msg.PlayerId][toPos];
+
+                // 更新本地gameobj字典
+                otherPlayersUnits[msg.PlayerId][fromPos] = targetObj;
+                otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
+
+                // 获取目标世界坐标
+                Vector3 fromWorldPos = Vector3.zero;
+                foreach (var board in PlayerBoardInforDict.Values)
                 {
-                    targetWorldPos = new Vector3(
-                        board.Cells3DPos.x,
-                        board.Cells3DPos.y + 2.5f,
-                        board.Cells3DPos.z
-                    );
-                    break;
+                    if (board.Cells2DPos.Equals(fromPos))
+                    {
+                        fromWorldPos = new Vector3(
+                            board.Cells3DPos.x,
+                            board.Cells3DPos.y,
+                            board.Cells3DPos.z
+                        );
+                        break;
+                    }
                 }
+
+                // 获取目标世界坐标
+                Vector3 targetWorldPos = Vector3.zero;
+                foreach (var board in PlayerBoardInforDict.Values)
+                {
+                    if (board.Cells2DPos.Equals(toPos))
+                    {
+                        targetWorldPos = new Vector3(
+                            board.Cells3DPos.x,
+                            board.Cells3DPos.y,
+                            board.Cells3DPos.z
+                        );
+                        break;
+                    }
+                }
+
+
+                // 执行移动动画
+                movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
+                {
+                    Debug.Log($"[教皇] 移动动画完成");
+                });
+                // 执行移动动画
+                targetObj.transform.DOMove(fromWorldPos, MoveSpeed).OnComplete(() =>
+                {
+                    Debug.Log($"[交换单位] 移动动画完成");
+                });
             }
-
-
-            // 执行移动动画
-            movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
+            else
             {
-                Debug.Log($"[HandleNetworkMove] 移动动画完成");
-            });
+                // 更新字典
+                otherPlayersUnits[msg.PlayerId].Remove(fromPos);
 
-            // 更新 GameManage
-            GameManage.Instance.SetCellObject(fromPos, null);
-            GameManage.Instance.SetCellObject(toPos, movingUnit);
+                otherPlayersUnits[msg.PlayerId][toPos] = movingUnit;
 
-            Debug.Log($"[HandleNetworkMove] 视觉移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+
+
+                // 获取目标世界坐标
+                Vector3 targetWorldPos = Vector3.zero;
+                foreach (var board in PlayerBoardInforDict.Values)
+                {
+                    if (board.Cells2DPos.Equals(toPos))
+                    {
+                        targetWorldPos = new Vector3(
+                            board.Cells3DPos.x,
+                            board.Cells3DPos.y,
+                            board.Cells3DPos.z
+                        );
+                        break;
+                    }
+                }
+
+
+                // 执行移动动画
+                movingUnit.transform.DOMove(targetWorldPos, MoveSpeed).OnComplete(() =>
+                {
+                    Debug.Log($"[HandleNetworkMove] 移动动画完成");
+                });
+
+                // 更新 GameManage
+                GameManage.Instance.SetCellObject(fromPos, null);
+                GameManage.Instance.SetCellObject(toPos, movingUnit);
+
+                Debug.Log($"[HandleNetworkMove] 视觉移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+            }
+            
         }
         else
         {
@@ -2912,19 +2970,19 @@ public class PlayerOperationManager : MonoBehaviour
             NetGameSystem.Instance.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
         }
 
-        // 发送网络消息 - 移动
-        if (NetGameSystem.Instance != null)
-        {
-            UnitMoveMessage moveMsg = new UnitMoveMessage
-            {
-                PlayerId = localPlayerId,
-                FromX = targetPos.x,
-                FromY = targetPos.y,
-                ToX = popePos.x,
-                ToY = popePos.y
-            };
-            NetGameSystem.Instance.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
-        }
+        //// 发送网络消息 - 移动
+        //if (NetGameSystem.Instance != null)
+        //{
+        //    UnitMoveMessage moveMsg = new UnitMoveMessage
+        //    {
+        //        PlayerId = localPlayerId,
+        //        FromX = targetPos.x,
+        //        FromY = targetPos.y,
+        //        ToX = popePos.x,
+        //        ToY = popePos.y
+        //    };
+        //    NetGameSystem.Instance.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
+        //}
 
 
         //// 发送两条移动消息来表示交换
