@@ -28,8 +28,26 @@ public enum TerrainTextureType
 public enum SpecialIndexType
 {
 	Pope = 1, // 教皇的初始位置	
-	Gold = 2 // 金矿
+	Gold = 2, // 金矿
+	Temple=3, // 特殊建筑
 };
+
+
+public enum PlantType
+{
+	t0m0 = 0,      
+	t0m1 = 1,  
+	t0m2 = 2,
+	DessertGrass = 3,
+	Grass = 4,     
+	Bush = 5,      
+	Forest = 6,    
+	FallingForest = 7,
+	RainForest = 8,  
+	Swamp = 9,      
+	DessertTree = 10	
+}
+
 
 
 /// <summary>
@@ -95,7 +113,7 @@ public class HexCell : MonoBehaviour
 				return;
 			}
 			elevation = value;
-			Grid.ShaderData.ViewElevationChanged(this);
+			//Grid.ShaderData.ViewElevationChanged(this);
 			RefreshPosition();
 			ValidateRivers();
 
@@ -124,7 +142,7 @@ public class HexCell : MonoBehaviour
 				return;
 			}
 			waterLevel = value;
-			Grid.ShaderData.ViewElevationChanged(this);
+			//Grid.ShaderData.ViewElevationChanged(this);
 			ValidateRivers();
 			Refresh();
 		}
@@ -252,6 +270,22 @@ public class HexCell : MonoBehaviour
 	}
 
 	/// <summary>
+	/// Plant type
+	/// </summary>
+	public int PlantIndex
+	{
+		get=> plantIndex;
+		set
+		{
+			if (plantIndex != value)
+			{
+				plantIndex = value;
+				RefreshSelfOnly();
+			}
+		}
+	}
+
+	/// <summary>
 	/// Special feature index.
 	/// </summary>
 	public int SpecialIndex
@@ -334,7 +368,8 @@ public class HexCell : MonoBehaviour
 	/// <summary>
 	/// Whether the cell counts as visible.
 	/// </summary>
-	public bool IsVisible => visibility > 0 && Explorable;
+	//public bool IsVisible => visibility > 0 && Explorable;
+	public bool IsVisible = true; 
 
 	/// <summary>
 	/// Whether the cell is explorable. If not it never counts as explored or visible.
@@ -398,11 +433,13 @@ public class HexCell : MonoBehaviour
 
 	int urbanLevel, farmLevel, plantLevel;
 
+	int plantIndex;	//植被种类
+
 	int specialIndex;
 
 	int distance;
 
-	int visibility;
+	private int visibility = 1;
 
 
 	/// <summary>
@@ -692,6 +729,7 @@ public class HexCell : MonoBehaviour
 		writer.Write((byte)urbanLevel);
 		writer.Write((byte)farmLevel);
 		writer.Write((byte)plantLevel);
+		writer.Write((byte)plantIndex);	// 2025.10.29 
 		writer.Write((byte)specialIndex);
 		writer.Write(Walled);
 
@@ -736,6 +774,7 @@ public class HexCell : MonoBehaviour
 		urbanLevel = reader.ReadByte();
 		farmLevel = reader.ReadByte();
 		plantLevel = reader.ReadByte();
+		plantIndex = reader.ReadByte();
 		specialIndex = reader.ReadByte();
 
 		if (reader.ReadBoolean())

@@ -71,8 +71,7 @@ public class HexGameUI : MonoBehaviour
 			if (currentCellIndex >= 0 &&
 				grid.IsValidDestination(grid.GetCell(currentCellIndex)))
 			{
-				//grid.FindPath(
-				//	selectedUnit.Location, grid.GetCell(currentCellIndex), selectedUnit);
+				//grid.FindPath(selectedUnit.Location, grid.GetCell(currentCellIndex), selectedUnit);
 			}
 			else
 			{

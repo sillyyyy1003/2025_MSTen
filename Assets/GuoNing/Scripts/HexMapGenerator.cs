@@ -121,11 +121,15 @@ public class HexMapGenerator : MonoBehaviour
 	// 生物群落（地形类型 + 植被等级）
 	struct Biome
 	{
-		public int terrain, plant;
-		public Biome(int terrain, int plant)
+		
+		public int terrain;         // 地图纹理索引 
+		public int plantIndex;      // HexFeatureCollection索引 
+		public int plantLevel;		// 密度Level
+		public Biome(int terrain, int plant,int level)
 		{
 			this.terrain = terrain;
-			this.plant = plant;
+			this.plantIndex = plant;
+			this.plantLevel = level;
 		}
 	}
 
@@ -137,16 +141,35 @@ public class HexMapGenerator : MonoBehaviour
 	//	new Biome(0, 0), new Biome(1, 1), new Biome(1, 2), new Biome(1, 3)
 	//};
 	static Biome[] biomes = {
-		new Biome((int)TerrainTextureType.Snow, 0), new Biome((int)TerrainTextureType.Snow, 0), new Biome((int)TerrainTextureType.Snow, 0), new Biome((int)TerrainTextureType.FallingForest, 0),
-		new Biome((int)TerrainTextureType.Swamp, 0), new Biome((int)TerrainTextureType.FallingForest, 0), new Biome((int)TerrainTextureType.Forest, 1), new Biome((int)TerrainTextureType.RainForest, 2),
-		new Biome((int)TerrainTextureType.Desert, 0), new Biome((int)TerrainTextureType.Forest, 0), new Biome((int)TerrainTextureType.Forest, 1), new Biome((int)TerrainTextureType.RainForest, 2),
-		new Biome((int)TerrainTextureType.Desert, 0), new Biome((int)TerrainTextureType.Sand, 1), new Biome((int)TerrainTextureType.Forest, 2), new Biome((int)TerrainTextureType.RainForest, 3)
+		// t0
+		new Biome((int)TerrainTextureType.Snow, 0,3), 
+		new Biome((int)TerrainTextureType.Snow, 1,3), 
+		new Biome((int)TerrainTextureType.Snow, 2,1),
+		new Biome((int)TerrainTextureType.FallingForest,3,2),
+
+		// t1
+		new Biome((int)TerrainTextureType.FallingForest, 4,2), 
+		new Biome((int)TerrainTextureType.FallingForest, 5,1), 
+		new Biome((int)TerrainTextureType.Forest,6,2), 
+		new Biome((int)TerrainTextureType.RainForest,7,2),
+
+		// t2
+		new Biome((int)TerrainTextureType.Desert,8 ,2),
+		new Biome((int)TerrainTextureType.Forest, 9,1), 
+		new Biome((int)TerrainTextureType.Forest, 10,2), 
+		new Biome((int)TerrainTextureType.RainForest, 11,2),
+
+		// t3
+		new Biome((int)TerrainTextureType.Desert,12,1), 
+		new Biome((int)TerrainTextureType.Sand, 13,2),
+		new Biome((int)TerrainTextureType.Forest,14,3), 
+		new Biome((int)TerrainTextureType.RainForest, 15,3)
 	};
 
 	//湿度 ↑
 	//m=0   m=1   m=2   m=3
 	//┌────┬────┬────┬────┐
-	//│砂  │雪   │雪  │雪  │ t=0  → 极寒区（雪线以上）
+	//│砂   │雪  │雪  │雪  │ t=0  → 极寒区（雪线以上）
 	//├────┼────┼────┼────┤
 	//│砂  │泥  │泥   │泥  │ t=1  → 寒冷湿地/冻土带
 	//├────┼────┼────┼────┤
@@ -154,6 +177,7 @@ public class HexMapGenerator : MonoBehaviour
 	//├────┼────┼────┼────┤
 	//│砂  │草  │草   │草  │ t=3  → 热带草原/雨林边缘
 	//└────┴────┴────┴────┘
+
 
 
 
@@ -191,14 +215,15 @@ public class HexMapGenerator : MonoBehaviour
 		CreateClimate();		// 创建气候
 		CreateRivers();			// 创建河流
 		SpawnPopes(5);
-
 		SetTerrainType();
+
 		for (int i = 0; i < cellCount; i++)
 		{
 			grid.GetCell(i).SearchPhase = 0;
 			grid.SetGameBoardInfo(grid.GetCell(i));
 		}
 		Random.state = originalRandomState;
+		
 	}
 
 	void CreateLand()
@@ -518,6 +543,7 @@ public class HexMapGenerator : MonoBehaviour
 		searchFrontier.Clear();
 		return budget;
 	}
+
 	void SetTerrainType()
 	{
 		// 随机选择一个通道用来为温度扰动（Noise）选择偏移——与 DetermineTemperature 相关
@@ -587,20 +613,25 @@ public class HexMapGenerator : MonoBehaviour
 				// 根据最终的 terrain 决定植物等级变化：
 				// 如果是雪地（4），则没有植被（plant = 0）。
 				// 否则：如果当前 biome 的 plant 等级 < 3 且该格子有河流，则植物等级 +1（河边植物更丰富）
-				if (cellBiome.terrain == 4)
+				if (cellBiome.terrain == (int)TerrainTextureType.Snow)
 				{
-					cellBiome.plant = 0;
+					cellBiome.plantLevel = 3;
+					cellBiome.plantIndex= (int)PlantType.t0m0;
 				}
-				else if (cellBiome.plant < 3 && cell.HasRiver)
+				else if (cellBiome.plantLevel < 3 && cell.HasRiver)
 				{
-					cellBiome.plant += 1;
+					cellBiome.plantLevel += 1;
 				}
 
 				// 将决定好的地形索引写回格子
 				cell.TerrainTypeIndex = cellBiome.terrain;
 
+				
 				// 设定植物等级：数值越低，植被越稀疏
-				 cell.PlantLevel = cellBiome.plant;
+				 cell.PlantLevel = cellBiome.plantLevel;
+
+				 cell.PlantIndex = cellBiome.plantIndex;
+
 			}
 			// 水下（或海岸）格子的处理逻辑
 			else
@@ -854,37 +885,38 @@ public class HexMapGenerator : MonoBehaviour
 	/// </summary>
 	float DetermineTemperature(HexCell cell)
 	{
-		// 1️ 纬度系数（Z 方向）：用于模拟南北温差
-		//    cell.Coordinates.Z 越大代表越靠北或越靠南
-		//    latitude 范围通常是 0 ~ 1，对应地图从底部到顶部
+		// 根据格子的 Z 坐标计算纬度，范围约为 [0, 1]
 		float latitude = (float)cell.Coordinates.Z / grid.CellCountZ;
 
-		// 2️ 基础温度：根据纬度在 [lowTemperature, highTemperature] 区间插值
-		//    通常 lowTemperature = 0（极地），highTemperature = 1（赤道）
-		//    Mathf.LerpUnclamped 允许 latitude 超出 [0,1] 也能计算（用于噪声偏移或极端气候）
-		float temperature =
-			Mathf.LerpUnclamped(lowTemperature, highTemperature, latitude);
+		// 如果是双半球模式（包含南北半球）
+		if (hemisphere == HemisphereMode.Both)
+		{
+			latitude *= 2f;              // 纬度范围扩展为 [0, 2]
+			if (latitude > 1f)
+			{
+				latitude = 2f - latitude; // 超过 1 的部分反射，形成南北对称的温度分布
+			}
+		}
+		// 如果是北半球模式
+		else if (hemisphere == HemisphereMode.North)
+		{
+			latitude = 1f - latitude;    // 反转纬度，使北方更冷、南方更暖
+		}
 
-		// 3️ 海拔修正：海拔越高温度越低
-		//    (cell.ViewElevation - waterLevel) 越大 → 温度衰减越多
-		//    elevationMaximum - waterLevel + 1f 是归一化的高度范围
+		// 根据纬度在低温和高温之间进行插值，得到基础温度
+		float temperature = Mathf.LerpUnclamped(lowTemperature, highTemperature, latitude);
+
+		// 根据格子海拔修正温度：海拔越高温度越低
 		temperature *= 1f - (cell.ViewElevation - waterLevel) /
 			(elevationMaximum - waterLevel + 1f);
 
-		// 4️ 噪声扰动（Noise Jitter）：
-		//    从噪声贴图采样随机值，让温度分布更自然、非线性
-		//    temperatureJitterChannel 表示采样噪声的哪个通道（0~3）
-		//    *0.1f 缩放 world position，控制噪声图案大小
-		float jitter =
-			HexMetrics.SampleNoise(cell.Position * 0.1f)[temperatureJitterChannel];
+		// 使用噪声采样，为温度添加随机扰动，使分布更自然
+		float jitter = HexMetrics.SampleNoise(cell.Position * 0.1f)[temperatureJitterChannel];
 
-		// 5️ 将噪声扰动应用到温度上：
-		//    jitter 原始值为 0~1 → (jitter*2f - 1f) 映射为 -1~+1
-		//    temperatureJitter 控制扰动强度（例如 0.2 表示 ±20% 温度变化）
+		// 将噪声映射到 [-1, 1] 范围，并乘以扰动强度
 		temperature += (jitter * 2f - 1f) * temperatureJitter;
 
-		// 6️ 返回最终温度值（一般在 0~1 之间，但不强制 Clamp）
-		//    不进行 Mathf.Clamp01，可以保留极端值差异以生成更多地貌变化
+		// 返回最终计算出的温度值
 		return temperature;
 	}
 

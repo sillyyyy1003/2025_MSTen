@@ -11,8 +11,8 @@ public class Timer : MonoBehaviour
 {
     // 配置
     [Header("计时器设置")]
-    public float turnTimeLimit = 60f;      // 每回合独立时间
-    public float timePoolInitial = 300f;   // 倒计时池初始时间
+    public float turnTimeLimit = 30f;      // 每回合独立时间
+    public float timePoolInitial = 40f;   // 倒计时池初始时间
 
     // 状态
     private float currentTurnTime;
@@ -81,4 +81,19 @@ public class Timer : MonoBehaviour
     public float GetTurnTime() => currentTurnTime;
     public float GetTimePool() => currentTimePool;
     public bool IsUsingTimePool() => isUsingTimePool;
+
+    public void SetTurnTimeLimit(int limit)
+    {
+
+        turnTimeLimit = limit;
+
+    }
+
+    public void SetTimePoolInitial(int limit)
+    {
+
+        timePoolInitial = limit;
+
+    }
+
 }

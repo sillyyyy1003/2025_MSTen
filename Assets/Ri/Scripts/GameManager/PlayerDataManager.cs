@@ -6,6 +6,9 @@ using UnityEngine;
 using GameData;
 using UnityEngine.UIElements;
 using TMPro;
+using System.Linq;
+using System.Runtime.InteropServices;
+
 
 
 // 玩家单位的数据
@@ -22,25 +25,45 @@ public struct PlayerUnitData
     public int2 Position;
 
     // 玩家拥有的单位GameObject
-    public GameObject PlayerUnitObject;
+    //public GameObject PlayerUnitObject;
 
     // 单位的数据
-    public PieceDataSO PlayerUnitDataSO;
+    public syncPieceData PlayerUnitDataSO;
+
 
     // 该单位是否已经上场
-    public bool bUnitIsUsed;
+    public bool bUnitIsActivated;
 
-    public PlayerUnitData(int unitId, CardType type, int2 pos, GameObject unitObject = null, PieceDataSO unitData = null,bool isUsed=false)
+    // 是否能够行动
+    public bool bCanDoAction;
+
+    // 魅惑相关属性
+    public bool bIsCharmed;              // 是否被魅惑
+    public int charmedRemainingTurns;    // 魅惑剩余回合数（每个回合结束时-1）
+    public int originalOwnerID;          // 原始所有者ID（用于归还控制权）
+
+
+    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1)
     {
         UnitID = unitId;
         UnitType = type;
         Position = pos;
-        PlayerUnitObject = unitObject;
         PlayerUnitDataSO = unitData;
-        bUnitIsUsed = isUsed;
+        bUnitIsActivated = isActivated;
+        bCanDoAction = canDo;
+        bIsCharmed = isCharmed;
+        charmedRemainingTurns = charmedTurns;
+        originalOwnerID = originalOwner;
+    }
+    public void ChangeUnitDataSO(syncPieceData unitData)
+    {
+        PlayerUnitDataSO = unitData;
+    }
+    public void SetCanDoAction(bool canDo)
+    {
+        bCanDoAction = canDo;
     }
 }
-
 
 // 玩家数据
 [Serializable]
@@ -58,22 +81,63 @@ public struct PlayerData
     // 玩家宗教
     public Religion PlayerReligion;
 
+    // 玩家占领的格子id
+    public List<int> PlayerOwnedCells;
+
+    
+
     public PlayerData(int playerId)
     {
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
         Resources = 0;
-        PlayerReligion = Religion.None;
+        PlayerReligion = Religion.SilkReligion;
+        PlayerOwnedCells = new List<int>();
+    }
+    public bool UpdateUnitSyncDataByPos(int2 position, syncPieceData newData)
+    {
+        for (int i = 0; i < PlayerUnits.Count; i++)
+        {
+            if (PlayerUnits[i].Position.Equals(position))
+            {
+                PlayerUnitData updatedUnit = PlayerUnits[i];
+                updatedUnit.PlayerUnitDataSO = newData;
+                PlayerUnits[i] = updatedUnit;
+                return true;
+            }
+        }
+        return false;
+    }
+    public void AddOwnedCell(int id)
+    {
+        PlayerOwnedCells.Add(id);
     }
 
-    // 添加单位，此为单位加入手牌(单位与位置)
-    public void AddUnit(int unitId, CardType type, int2 pos, GameObject unitObject,PieceDataSO unitData)
+    // 更新单位行动力
+    public bool UpdateUnitCanDoActionByPos(int2 position, bool canDoAction)
     {
-        PlayerUnits.Add(new PlayerUnitData(unitId, type, pos, unitObject, unitData));
+        for (int i = 0; i < PlayerUnits.Count; i++)
+        {
+            if (PlayerUnits[i].Position.Equals(position))
+            {
+                PlayerUnitData updatedUnit = PlayerUnits[i];
+                updatedUnit.bCanDoAction = canDoAction;
+                PlayerUnits[i] = updatedUnit;
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    // 添加单位，此为单位加入手牌(单位与位置)
+    public void AddUnit(int unitId, CardType type, int2 pos, GameObject unitObject, syncPieceData unitData)
+    {
+        PlayerUnits.Add(new PlayerUnitData(unitId, type, pos, unitData));
         Debug.Log($"玩家 {PlayerID} 在 ({pos.x},{pos.y}) 添加了 {type}，ID: {unitId}");
     }
 
- 
+
     // 更新单位的GameObject引用
     public bool UpdateUnitGameObject(int unitId, GameObject unitObject)
     {
@@ -82,7 +146,6 @@ public struct PlayerData
             if (PlayerUnits[i].UnitID == unitId)
             {
                 PlayerUnitData updatedUnit = PlayerUnits[i];
-                updatedUnit.PlayerUnitObject = unitObject;
                 PlayerUnits[i] = updatedUnit;
                 return true;
             }
@@ -172,6 +235,7 @@ public struct PlayerData
     {
         return PlayerUnits.Count;
     }
+
 }
 
 public class PlayerDataManager : MonoBehaviour
@@ -191,6 +255,12 @@ public class PlayerDataManager : MonoBehaviour
     // 当前选择中的单位id
     public int nowChooseUnitID;
 
+    // 当前选择中的单位类型
+    public CardType nowChooseUnitType;
+
+    // 建筑
+    [SerializeField] private BuildingRegistry buildingRegistry;
+
     // 事件: 玩家数据变化
     public event Action<int, PlayerData> OnPlayerDataChanged;
 
@@ -198,7 +268,7 @@ public class PlayerDataManager : MonoBehaviour
     public event Action<int, PlayerUnitData> OnUnitAdded;
 
     // 事件: 单位移除
-    public event Action<int, int2> OnUnitRemoved;
+    public event Action<int, int2,bool> OnUnitRemoved;
 
     // 事件: 单位移动
     public event Action<int, int2, int2> OnUnitMoved;
@@ -223,7 +293,9 @@ public class PlayerDataManager : MonoBehaviour
     // 生成新的单位ID
     private int GenerateUnitID()
     {
-        return unitIdCounter++;
+        int baseId = GameManage.Instance.LocalPlayerID * 10000;
+        Debug.Log("new generatr unit ID is " + baseId);
+        return baseId + (unitIdCounter++);
     }
 
     // 重置ID计数器（用于新游戏开始时）
@@ -273,6 +345,60 @@ public class PlayerDataManager : MonoBehaviour
         Debug.Log($"PlayerDataManager: 更新玩家 {playerId} 数据");
     }
 
+    /// <summary>
+    /// 根据位置更新单位的同步数据
+    /// 这个方法对于网络同步非常重要
+    /// </summary>
+    public bool UpdateUnitSyncDataByPos(int playerId, int2 pos, syncPieceData newData)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+            bool success = data.UpdateUnitSyncDataByPos(pos, newData);
+
+            if (success)
+            {
+                allPlayersData[playerId] = data;
+
+                // 触发数据变更事件
+                OnPlayerDataChanged?.Invoke(playerId, data);
+
+                Debug.Log($"[PlayerDataManager] 玩家 {playerId} 位置 ({pos.x},{pos.y}) 的单位同步数据已更新");
+                return true;
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerDataManager] 找不到玩家 {playerId} 在位置 ({pos.x},{pos.y}) 的单位");
+            }
+        }
+        else
+        {
+            Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
+        }
+
+        return false;
+    }
+
+
+    // 更新单位行动力
+    public bool UpdateUnitCanDoActionByPos(int playerId, int2 pos, bool canDoAction)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+            bool success = data.UpdateUnitCanDoActionByPos(pos, canDoAction);
+
+            if (success)
+            {
+                allPlayersData[playerId] = data;
+                OnPlayerDataChanged?.Invoke(playerId, data);
+                Debug.Log($"[PlayerDataManager] 单位 at ({pos.x},{pos.y}) 的 bCanDoAction 更新为: {canDoAction}");
+                return true;
+            }
+        }
+        return false;
+    }
+
     // 移除玩家
     public void RemovePlayer(int playerId)
     {
@@ -320,7 +446,7 @@ public class PlayerDataManager : MonoBehaviour
     // *************************
 
     // 将一个单位上场
-    public void AddUnitToDeck(int playerID,int unitID)
+    public void AddUnitToDeck(int playerID, int unitID)
     {
 
     }
@@ -333,12 +459,12 @@ public class PlayerDataManager : MonoBehaviour
     /// <returns></returns>
     public int GetActivateUnitCount(bool activated)
     {
-        int allCount=allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits.Count;
-        int count=0;
+        int allCount = allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits.Count;
+        int count = 0;
 
-        foreach(var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
+        foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
         {
-            if (a.bUnitIsUsed)
+            if (a.bUnitIsActivated)
                 count++;
         }
         if (activated)
@@ -357,7 +483,7 @@ public class PlayerDataManager : MonoBehaviour
         List<int> list_unitID = new List<int>();
         foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
         {
-            if (a.UnitType==type&&a.bUnitIsUsed)
+            if (a.UnitType == type && a.bUnitIsActivated)
                 list_unitID.Add(a.UnitID);
         }
 
@@ -370,13 +496,25 @@ public class PlayerDataManager : MonoBehaviour
         int count = 0;
         foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
         {
-            if (a.UnitType == type && !a.bUnitIsUsed)
+            if (a.UnitType == type && !a.bUnitIsActivated)
                 count++;
         }
 
         return count;
     }
 
+    // 拿到玩家尚未行动的单位数量
+    public int GetUnitCanUse()
+    {
+        int count = 0;
+        foreach (var a in allPlayersData[GameManage.Instance.LocalPlayerID].PlayerUnits)
+        {
+            if (a.bCanDoAction)
+                count++;
+        }
+
+        return count;
+    }
     // 通过位置获取一个单位的id
     public int GetUnitIDBy2DPos(int2 pos)
     {
@@ -389,24 +527,59 @@ public class PlayerDataManager : MonoBehaviour
             return 0;
 
     }
+
+    // 得到当前选择的单位类型
+    public CardType GetUnitTypeIDBy2DPos(int2 pos)
+    {
+        PlayerUnitData? foundUnit = allPlayersData[GameManage.Instance.LocalPlayerID].FindUnitAt(pos);
+        if (foundUnit != null)
+        {
+            return foundUnit.Value.UnitType;
+        }
+        else
+            return CardType.None;
+
+    }
+
+    // 获取一个单位的位置
+    public Vector3 GetUnitPos(int unitID)
+    {
+        int2 pos = default;
+        foreach (var a in allPlayersData)
+        {
+            if (a.Value.FindUnitById(unitID) != null)
+            {
+                pos = a.Value.FindUnitById(unitID).Value.Position;
+            }
+        }
+
+
+        Debug.Log("unit ID is " + unitID +
+            " unit 2Dpos is " + pos
+            + " unit 3D pos is " + GameManage.Instance.GetCellObject(pos).transform.position);
+
+        return GameManage.Instance.GetCellObject(pos).transform.position;
+    }
+
+
     // 添加单位(种类与位置) - 返回生成的UnitID
-    public int AddUnit(int playerId, CardType type, int2 pos, GameObject unitObject=null,PieceDataSO unitData = null, bool isUsed = false)
+    public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject = null, bool bUnitIsActivated = true)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
             int newUnitId = GenerateUnitID();
 
             PlayerData data = allPlayersData[playerId];
-            data.AddUnit(newUnitId, type, pos, unitObject, unitData);
+            data.AddUnit(unitData.pieceID, type, pos, unitObject, unitData);
             allPlayersData[playerId] = data;
 
-            
+
 
             // 添加ID映射
             unitIdToPlayerIdMap[newUnitId] = playerId;
 
             // 触发事件
-            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitObject, unitData));
+            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitData));
             OnPlayerDataChanged?.Invoke(playerId, data);
 
             return newUnitId;
@@ -414,30 +587,37 @@ public class PlayerDataManager : MonoBehaviour
         return -1; // 失败返回-1
     }
 
-    // 添加单位(完整数据) - 如果UnitData中的ID为0，则生成新ID
-    //public int AddUnit(int playerId, PlayerUnitData unitData)
+    ///// <summary>
+    ///// 添加单位时使用 syncPieceData（重载版本）
+    ///// 这是网络同步版本的 AddUnit
+    ///// </summary>
+    //public void AddUnit(int playerId, CardType type, int2 pos, syncPieceData pieceData, GameObject unitObject)
     //{
     //    if (allPlayersData.ContainsKey(playerId))
     //    {
-    //        // 如果没有ID，生成新的
-    //        if (unitData.UnitID == 0)
-    //        {
-    //            unitData.UnitID = GenerateUnitID();
-    //        }
-
     //        PlayerData data = allPlayersData[playerId];
-    //        data.AddUnit(unitData);
+
+    //        // 使用 syncPieceData 创建单位
+    //        data.AddUnit(nextUnitId, type, pos, pieceData, unitObject);
+
+    //        // 记录ID映射
+    //        unitIdToPlayerIdMap[nextUnitId] = playerId;
+
     //        allPlayersData[playerId] = data;
 
-    //        // 添加ID映射
-    //        unitIdToPlayerIdMap[unitData.UnitID] = playerId;
-
+    //        // 触发事件
+    //        PlayerUnitData unitData = new PlayerUnitData(nextUnitId, type, pos, pieceData, unitObject);
     //        OnUnitAdded?.Invoke(playerId, unitData);
     //        OnPlayerDataChanged?.Invoke(playerId, data);
 
-    //        return unitData.UnitID;
+    //        nextUnitId++;
+
+    //        Debug.Log($"[PlayerDataManager] 玩家 {playerId} 添加单位: {type} at ({pos.x},{pos.y}), UnitID={nextUnitId - 1}, PieceID={pieceData.pieceID}");
     //    }
-    //    return -1;
+    //    else
+    //    {
+    //        Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
+    //    }
     //}
 
     // 更新单位的GameObject引用
@@ -504,7 +684,7 @@ public class PlayerDataManager : MonoBehaviour
                 allPlayersData[playerId] = data;
 
                 // 触发事件
-                OnUnitRemoved?.Invoke(playerId, pos);
+                OnUnitRemoved?.Invoke(playerId, pos,false);
                 OnPlayerDataChanged?.Invoke(playerId, data);
             }
 
@@ -543,7 +723,7 @@ public class PlayerDataManager : MonoBehaviour
                 // 触发事件
                 if (unitData.HasValue)
                 {
-                    OnUnitRemoved?.Invoke(playerId, unitData.Value.Position);
+                    OnUnitRemoved?.Invoke(playerId, unitData.Value.Position,false);
                 }
                 OnPlayerDataChanged?.Invoke(playerId, data);
             }
@@ -571,10 +751,7 @@ public class PlayerDataManager : MonoBehaviour
 
         PlayerUnitData? unitData = data.FindUnitById(unitId);
 
-        if (unitData.HasValue)
-        {
-            return unitData.Value.PlayerUnitObject;
-        }
+
 
         return null;
     }
@@ -589,6 +766,7 @@ public class PlayerDataManager : MonoBehaviour
         }
 
         int playerId = unitIdToPlayerIdMap[unitId];
+        Debug.Log($"Player:ID为 {playerId}");
         PlayerData data = GetPlayerData(playerId);
 
         return data.FindUnitById(unitId);
@@ -693,7 +871,7 @@ public class PlayerDataManager : MonoBehaviour
             Debug.Log($"玩家 {kvp.Key}: {kvp.Value.GetUnitCount()} 个单位");
             foreach (var unit in kvp.Value.PlayerUnits)
             {
-                Debug.Log($"  - ID:{unit.UnitID} {unit.UnitType} at ({unit.Position.x},{unit.Position.y}) GameObject:{(unit.PlayerUnitObject != null ? unit.PlayerUnitObject.name : "null")}");
+                Debug.Log($"  - ID:{unit.UnitID} {unit.UnitType} at ({unit.Position.x},{unit.Position.y})");
             }
         }
 
@@ -735,4 +913,326 @@ public class PlayerDataManager : MonoBehaviour
         }
         return -1; // 没有单位
     }
+
+    public void SetPlayerResourses(int newResources)
+    {
+        int playerId = GameManage.Instance.LocalPlayerID;
+
+        if (!allPlayersData.TryGetValue(playerId, out PlayerData data))
+        {
+            Debug.LogWarning($"UpdatePlayerResources: Player {playerId} not found!");
+            return;
+        }
+
+        data.Resources = newResources;
+        allPlayersData[playerId] = data;
+
+        Debug.Log($"Player {playerId} Resources updated to {newResources}");
+
+    }
+
+    public int GetCreateUnitResoursesCost(CardType type)
+    {
+        switch (type)
+        {
+            case CardType.Missionary:
+                return 3;
+            case CardType.Farmer:
+                return 2;
+            case CardType.Solider:
+                return 5;
+            case CardType.Building:
+                return 3;
+            default:
+                return 99;
+
+        }
+
+    }
+
+    // *************************
+    //     魅惑单位管理
+    // *************************
+
+    /// <summary>
+    /// 设置单位为被魅惑状态
+    /// </summary>
+    public bool SetUnitCharmed(int playerId, int2 pos, int originalOwnerId, int turns = 3)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+
+            for (int i = 0; i < data.PlayerUnits.Count; i++)
+            {
+                if (data.PlayerUnits[i].Position.Equals(pos))
+                {
+                    PlayerUnitData updatedUnit = data.PlayerUnits[i];
+                    updatedUnit.bIsCharmed = true;
+                    updatedUnit.charmedRemainingTurns = turns;
+                    updatedUnit.originalOwnerID = originalOwnerId;
+                    data.PlayerUnits[i] = updatedUnit;
+
+                    allPlayersData[playerId] = data;
+                    OnPlayerDataChanged?.Invoke(playerId, data);
+
+                    Debug.Log($"单位在 ({pos.x},{pos.y}) 被魅惑，原始所有者: {originalOwnerId}, 剩余回合: {turns}");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 转移单位所有权（用于魅惑功能）
+    /// 直接在数据层面转移单位，不删除重建GameObject
+    /// </summary>
+    /// <param name="fromPlayerId">原所有者ID</param>
+    /// <param name="toPlayerId">新所有者ID</param>
+    /// <param name="pos">单位位置</param>
+    /// <param name="updatedSyncData">更新后的同步数据（playerID已更新）</param>
+    /// <param name="charmedTurns">魅惑持续回合数（0表示解除魅惑）</param>
+    /// <returns>转移是否成功</returns>
+    public bool TransferUnitOwnership(int fromPlayerId, int toPlayerId, int2 pos, syncPieceData updatedSyncData, int charmedTurns = 0)
+    {
+        Debug.Log($"[TransferUnitOwnership] 开始转移单位 - 从玩家{fromPlayerId}到玩家{toPlayerId} at ({pos.x},{pos.y})");
+
+        // 1. 从原所有者获取单位数据
+        if (!allPlayersData.ContainsKey(fromPlayerId))
+        {
+            Debug.LogError($"[TransferUnitOwnership] 找不到原所有者: {fromPlayerId}");
+            return false;
+        }
+
+        PlayerData fromPlayerData = allPlayersData[fromPlayerId];
+        PlayerUnitData? unitToTransfer = null;
+        int unitIndex = -1;
+
+        for (int i = 0; i < fromPlayerData.PlayerUnits.Count; i++)
+        {
+            if (fromPlayerData.PlayerUnits[i].Position.Equals(pos))
+            {
+                unitToTransfer = fromPlayerData.PlayerUnits[i];
+                unitIndex = i;
+                break;
+            }
+        }
+
+        if (!unitToTransfer.HasValue)
+        {
+            Debug.LogError($"[TransferUnitOwnership] 在原所有者处未找到单位 at ({pos.x},{pos.y})");
+            return false;
+        }
+
+        // 2. 从原所有者移除单位
+        fromPlayerData.PlayerUnits.RemoveAt(unitIndex);
+        allPlayersData[fromPlayerId] = fromPlayerData;
+
+        // 移除unitId映射
+        if (unitIdToPlayerIdMap.ContainsKey(unitToTransfer.Value.UnitID))
+        {
+            unitIdToPlayerIdMap.Remove(unitToTransfer.Value.UnitID);
+        }
+
+        // 触发移除事件
+        OnUnitRemoved?.Invoke(fromPlayerId, pos,true);
+        OnPlayerDataChanged?.Invoke(fromPlayerId, fromPlayerData);
+
+        Debug.Log($"[TransferUnitOwnership] 已从玩家{fromPlayerId}移除单位");
+
+        // 3. 准备转移后的单位数据
+        PlayerUnitData transferredUnit = unitToTransfer.Value;
+
+        // 更新同步数据
+        transferredUnit.PlayerUnitDataSO = updatedSyncData;
+
+        // 设置魅惑状态
+        if (charmedTurns > 0)
+        {
+            // 被魅惑状态
+            transferredUnit.bIsCharmed = true;
+            transferredUnit.charmedRemainingTurns = charmedTurns;
+            transferredUnit.originalOwnerID = fromPlayerId;
+            Debug.Log($"[TransferUnitOwnership] 设置魅惑状态 - 剩余回合:{charmedTurns}, 原所有者:{fromPlayerId}");
+        }
+        else
+        {
+            // 解除魅惑（归还控制权）
+            transferredUnit.bIsCharmed = false;
+            transferredUnit.charmedRemainingTurns = 0;
+            transferredUnit.originalOwnerID = -1;
+            Debug.Log($"[TransferUnitOwnership] 解除魅惑状态");
+        }
+
+        // 4. 添加到新所有者
+        if (!allPlayersData.ContainsKey(toPlayerId))
+        {
+            Debug.LogError($"[TransferUnitOwnership] 找不到新所有者: {toPlayerId}");
+            return false;
+        }
+
+        PlayerData toPlayerData = allPlayersData[toPlayerId];
+        toPlayerData.PlayerUnits.Add(transferredUnit);
+        allPlayersData[toPlayerId] = toPlayerData;
+
+        // 更新unitId映射
+        unitIdToPlayerIdMap[transferredUnit.UnitID] = toPlayerId;
+
+        // 触发添加事件
+        OnUnitAdded?.Invoke(toPlayerId, transferredUnit);
+        OnPlayerDataChanged?.Invoke(toPlayerId, toPlayerData);
+
+        Debug.Log($"[TransferUnitOwnership] 单位已添加到玩家{toPlayerId}");
+        Debug.Log($"[TransferUnitOwnership] 转移完成 - 单位ID:{transferredUnit.UnitID}, 类型:{transferredUnit.UnitType}");
+
+        return true;
+    }
+
+    /// <summary>
+    /// 批量转移单位所有权（用于一次性转移多个单位）
+    /// </summary>
+    public bool TransferMultipleUnits(int fromPlayerId, int toPlayerId, List<int2> positions, List<syncPieceData> updatedSyncDataList, int charmedTurns = 0)
+    {
+        if (positions.Count != updatedSyncDataList.Count)
+        {
+            Debug.LogError("[TransferMultipleUnits] 位置列表和同步数据列表长度不匹配");
+            return false;
+        }
+
+        bool allSuccess = true;
+        for (int i = 0; i < positions.Count; i++)
+        {
+            bool success = TransferUnitOwnership(fromPlayerId, toPlayerId, positions[i], updatedSyncDataList[i], charmedTurns);
+            if (!success)
+            {
+                Debug.LogWarning($"[TransferMultipleUnits] 转移单位失败 at ({positions[i].x},{positions[i].y})");
+                allSuccess = false;
+            }
+        }
+
+        return allSuccess;
+    }
+
+
+
+    /// <summary>
+    /// 减少被魅惑单位的剩余回合数，并检查是否需要归还控制权
+    /// 在回合结束时调用
+    /// </summary>
+    public List<CharmExpireInfo> UpdateCharmedUnits(int playerId)
+    {
+        List<CharmExpireInfo> expiredUnits = new List<CharmExpireInfo>();
+
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+
+            for (int i = data.PlayerUnits.Count - 1; i >= 0; i--)
+            {
+                if (data.PlayerUnits[i].bIsCharmed)
+                {
+                    PlayerUnitData unit = data.PlayerUnits[i];
+                    unit.charmedRemainingTurns--;
+
+                    if (unit.charmedRemainingTurns <= 0)
+                    {
+                        // 魅惑效果已过期，需要归还控制权
+                        expiredUnits.Add(new CharmExpireInfo
+                        {
+                            UnitID = unit.UnitID,
+                            Position = unit.Position,
+                            OriginalOwnerID = unit.originalOwnerID,
+                            UnitData = unit
+                        });
+
+                        // 从当前玩家移除
+                        data.PlayerUnits.RemoveAt(i);
+                    }
+                    else
+                    {
+                        // 更新剩余回合数
+                        data.PlayerUnits[i] = unit;
+                    }
+                }
+            }
+
+            allPlayersData[playerId] = data;
+            OnPlayerDataChanged?.Invoke(playerId, data);
+        }
+
+        return expiredUnits;
+    }
+
+    /// <summary>
+    /// 归还被魅惑单位的控制权给原始所有者
+    /// </summary>
+    public bool ReturnCharmedUnit(int originalOwnerId, PlayerUnitData unitData)
+    {
+        if (!allPlayersData.ContainsKey(originalOwnerId))
+        {
+            Debug.LogError($"找不到原始所有者: {originalOwnerId}");
+            return false;
+        }
+
+        PlayerData data = allPlayersData[originalOwnerId];
+
+        // 重置魅惑状态
+        PlayerUnitData returnedUnit = unitData;
+        returnedUnit.bIsCharmed = false;
+        returnedUnit.charmedRemainingTurns = 0;
+        returnedUnit.originalOwnerID = -1;
+
+        // 更新同步数据中的playerID
+        syncPieceData updatedSyncData = returnedUnit.PlayerUnitDataSO;
+        updatedSyncData.currentPID = originalOwnerId;
+        returnedUnit.PlayerUnitDataSO = updatedSyncData;
+
+        // 添加回原始所有者
+        data.PlayerUnits.Add(returnedUnit);
+        allPlayersData[originalOwnerId] = data;
+
+        // 更新ID映射
+        unitIdToPlayerIdMap[returnedUnit.UnitID] = originalOwnerId;
+
+        OnUnitAdded?.Invoke(originalOwnerId, returnedUnit);
+        OnPlayerDataChanged?.Invoke(originalOwnerId, data);
+
+        Debug.Log($"单位 {returnedUnit.UnitID} 在 ({returnedUnit.Position.x},{returnedUnit.Position.y}) 归还给原始所有者 {originalOwnerId}");
+        return true;
+    }
+
+    /// <summary>
+    /// 检查单位是否被魅惑
+    /// </summary>
+    public bool IsUnitCharmed(int playerId, int2 pos)
+    {
+        PlayerUnitData? unit = FindUnit(playerId, pos);
+        return unit.HasValue && unit.Value.bIsCharmed;
+    }
+
+    /// <summary>
+    /// 获取被魅惑单位的原始所有者
+    /// </summary>
+    public int GetCharmedUnitOriginalOwner(int playerId, int2 pos)
+    {
+        PlayerUnitData? unit = FindUnit(playerId, pos);
+        if (unit.HasValue && unit.Value.bIsCharmed)
+        {
+            return unit.Value.originalOwnerID;
+        }
+        return -1;
+    }
 }
+
+/// <summary>
+/// 魅惑过期信息结构体
+/// </summary>
+public struct CharmExpireInfo
+{
+    public int UnitID;
+    public int2 Position;
+    public int OriginalOwnerID;
+    public PlayerUnitData UnitData;
+}
+

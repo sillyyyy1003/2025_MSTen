@@ -1,66 +1,75 @@
-using GameData.UI;
+ï»¿using GameData.UI;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using GameData;
 
 
 public class ButtonMenuManager : MonoBehaviour
 {
 
-    [Header("References")]
+    [Header("Button Menu Elements")]
 
     /// <summary>
-    ///µ±Ç°µÄÃæ°å²ãµÄÉè¶¨
+    ///å½“å‰çš„é¢æ¿å±‚çš„è®¾å®š
     /// </summary>
     public ButtonMenuData currentMenuData;
 
     /// <summary>
-    /// ËùÓĞÃæ°å²ãµÄÉè¶¨¼¯£¨´ÓÍâ²¿³õÊ¼»¯£©
+    /// æ‰€æœ‰é¢æ¿å±‚çš„è®¾å®šé›†ï¼ˆä»å¤–éƒ¨åˆå§‹åŒ–ï¼‰
     /// </summary>
     public List<ButtonMenuData> allMenus;
 
     /// <summary>
-    /// Áù¸ö°´Å¥±¾Ìå
+    /// å…­ä¸ªæŒ‰é’®æœ¬ä½“
     /// </summary>
     public Button[] uiButtons;
 
     /// <summary>
-    /// Ã¿¸ö°´Å¥µÄÎÄ×Ö
+    /// æ¯ä¸ªæŒ‰é’®çš„æ–‡å­—
     /// </summary>
     public TextMeshProUGUI[] uiButtonLabels;
 
     /// <summary>
-    /// Ã¿¸ö°´Å¥µÄÍ¼Æ¬
+    /// æ¯ä¸ªæŒ‰é’®çš„å›¾ç‰‡
     /// </summary>
     public Image[] uiButtonIcons;
 
     /// <summary>
-    /// Õû¸öÃæ°åµÄ±³¾°
+    /// æ•´ä¸ªé¢æ¿çš„èƒŒæ™¯
     /// </summary>
     public Image uiBackground;
 
     /// <summary>
-    /// ÄÚ²¿Ê¹ÓÃµÄÃæ°åÉè¶¨¼¯
+    /// å†…éƒ¨ä½¿ç”¨çš„é¢æ¿è®¾å®šé›†
     /// </summary>
     private Dictionary<string, ButtonMenuData> menuDict = new Dictionary<string, ButtonMenuData>();
 
     /// <summary>
-    ///ÔÚ¸ùÃæ°åÑ¡ÔñµÄ¶ÔÏóÀàĞÍ
-    ///0=Missionary´«½ÌÊ¿
-    ///1=SoliderÊ¿±ø
-    ///2=FarmerÅ©Ãñ
-    ///3=Building½¨Öş
-	///4=Pope½Ì»Ê
+    ///åœ¨æ ¹é¢æ¿é€‰æ‹©çš„å¯¹è±¡ç±»å‹
+    ///0=Missionaryä¼ æ•™å£«
+    ///1=Soliderå£«å…µ
+    ///2=Farmerå†œæ°‘
+    ///3=Buildingå»ºç­‘
+	///4=Popeæ•™çš‡
 	///5=None
     /// </summary>
-    private CardType unitChoosed = CardType.None;
+    private CardType cardTypeChoosed = CardType.None;
 
-    //µ¥Àı
+    // === Event å®šä¹‰åŒºåŸŸ ===
+    public event System.Action<CardType> OnCardTypeSelected;
+    public event System.Action<CardType> OnCardPurchasedIntoDeck;
+    public event System.Action<CardType> OnCardPurchasedIntoMap;
+    public event System.Action<CardType, CardSkill> OnCardSkillUsed;
+    public event System.Action<CardType, TechTree> OnTechUpdated;
+
+
+
+    //å•ä¾‹
     public static ButtonMenuManager Instance { get; private set; }
-
 
 
     private void Awake()
@@ -81,12 +90,29 @@ public class ButtonMenuManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        foreach (var menu in allMenus)
-            menuDict[menu.menuId] = menu;
+        Religion playerReligion = GameUIManager.Instance.GetPlayerReligion();
 
+        menuDict.Clear();
+
+        foreach (var entry in ButtonMenuFactory.GetAllMenuKeys())
+        {
+            string id = entry;
+            ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(id, playerReligion);
+
+            if (data != null)
+            {
+                menuDict[id] = data;
+            }
+        }
+
+        Debug.Log($"[ButtonMenuManager] å…¨ãƒ¡ãƒ‹ãƒ¥ãƒ¼ç”Ÿæˆå®Œäº†: {menuDict.Count}ä»¶");
+
+        // === è½½å…¥æ ¹ç›®å½• ===
         LoadMenu("ButtonMenu_Root");
 
-        unitChoosed = 0;
+
+        cardTypeChoosed = CardType.None;
+
     }
 
 
@@ -108,57 +134,20 @@ public class ButtonMenuManager : MonoBehaviour
         }
 
 
-        if (!menuDict.TryGetValue(id, out currentMenuData))
-        {
-            Debug.LogError($"Menu not found: {id}");
-            return;
-        }
-
-
         currentMenuData = menuDict[id];
 
-        //Ä¿±êÄ¿Â¼Îª¸ùÄ¿Â¼
-        if(id == "ButtonMenu_Root")
+        //ç›®æ ‡ç›®å½•ä¸ºæ ¹ç›®å½•
+        if(currentMenuData.level==MenuLevel.Root)
         {
             EventSystem.current.SetSelectedGameObject(null);
-            unitChoosed = CardType.None;
-            UnitCardManager.Instance.SetTargetCardType(unitChoosed);
-            UnitCardManager.Instance.EnableSingleMode(true);
+            cardTypeChoosed = CardType.None;
+            UnitCardManager.Instance.SetTargetCardType(cardTypeChoosed);
         }
-        else if (id == "ButtonMenu_Second")//Ä¿±êÄ¿Â¼ÎªµÚ¶şÄ¿Â¼
+        else if (currentMenuData.level == MenuLevel.Second)//ç›®æ ‡ç›®å½•ä¸ºç¬¬äºŒç›®å½•
         {
-            UnitCardManager.Instance.SetTargetCardType(unitChoosed);
-            if (unitChoosed == CardType.Pope|| unitChoosed == CardType.None)
-            {
-
-                UnitCardManager.Instance.EnableSingleMode(true);
-
-            }
-            else
-            {
-
-                UnitCardManager.Instance.EnableSingleMode(false);
-            }
+            UnitCardManager.Instance.SetTargetCardType(cardTypeChoosed);
 
         }
-
-
-
-
-
-        //if(id == "ButtonMenu_Root"&& unitChoosed!=CardType.None)
-        //{
-        //    EventSystem.current.SetSelectedGameObject(uiButtons[(int)unitChoosed].gameObject);
-        //}
-        //else
-        //{
-        //
-        //    EventSystem.current.SetSelectedGameObject(null);
-        //}
-
-
-
-
 
 
         Debug.Log($"[LoadMenu] currentMenuData = {(currentMenuData == null ? "NULL" : currentMenuData.menuId)}");
@@ -167,96 +156,182 @@ public class ButtonMenuManager : MonoBehaviour
 
         for (int i = 0; i < uiButtons.Length; i++)
         {
+
             var btnData = currentMenuData.buttons[i];
-            var button = uiButtons[i];
-            var label = uiButtonLabels[i];
-            var icon = uiButtonIcons[i];
+            var index = btnData.slotNo;
+
+            var button = uiButtons[index];
+            var label = uiButtonLabels[index];
+            var icon = uiButtonIcons[index];
+            ColorBlock cb = button.colors;
+            Image backgroundimage = button.GetComponent<Image>();
+
+            button.gameObject.SetActive(true);
 
 
-            button.gameObject.SetActive(btnData.isActive);
-
-            if (!btnData.isActive) continue;
-
-            // --- ÏÔÊ¾¿ØÖÆ£¨ButtonMenuManager µÄÁé»îµã£©---
+            // --- è®¾å®šæ˜¾ç¤º ---
+            backgroundimage.sprite = btnData.backgroundSprite;
             if (btnData.contentType == GameData.UI.ButtonContentType.Text)
             {
-                label.text = btnData.labelText;     // ¶¯Ì¬ÉèÖÃÎÄ×Ö
+                label.text = btnData.labelText;
                 icon.enabled = false;
             }
             else
             {
-                icon.sprite = btnData.iconSprite;   // ¶¯Ì¬ÉèÖÃÍ¼±ê
+                icon.sprite = btnData.iconSprite;
                 icon.enabled = true;
                 label.text = string.Empty;
             }
 
-            // --- °ó¶¨µã»÷ÊÂ¼ş ---
-            int index = i;
+            cb.normalColor = btnData.baseColor;
+            cb.highlightedColor = btnData.hoverColor;
+            cb.pressedColor = btnData.pressedColor;
+            cb.selectedColor = btnData.selectedColor;
+            cb.disabledColor = btnData.disabledColor;
+            backgroundimage.color = btnData.backgroundColor;
+
+            if (!btnData.isActive) {
+                button.interactable = false;
+                continue;
+            }
+
+            // --- ç»‘å®šç‚¹å‡»äº‹ä»¶ ---
+            button.interactable = true;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => OnButtonClicked(index));
+            
         }
 
     }
-
 
     public void OnButtonClicked(int index)
     {
         EventSystem.current.SetSelectedGameObject(null);
-        Debug.Log($"[OnButtonClicked] Button {index} clicked");
+        //Debug.Log($"[OnButtonClicked] Button {index} clicked");
 
         if (currentMenuData == null || index >= currentMenuData.buttons.Length)
             return;
 
-        string currentMenuId = currentMenuData.menuId;
-
-        var data = currentMenuData.buttons[index];
-        Debug.Log($"[OnButtonClicked] triggerEvent = {data.triggerEvent}, " +
-            $"nextMenuId = {data.nextMenuId}");
-
-        
-
-        switch (data.triggerEvent)
+        // === åˆ¤æ–­æ˜¯å“ªç§å­ç±» ===
+        ButtonData btn = currentMenuData.GetButtonBySlot(index);
+        switch (btn)
         {
-            case MenuEventType.NextMenu:
-                if (string.IsNullOrEmpty(data.nextMenuId))
-                    break;
-                if (currentMenuId == "ButtonMenu_Root")
+            case NaviButtonData navi:
+                MenuLevel currentMenuLevel = currentMenuData.level;
+                CardType type = navi.cardType;
+
+                if (currentMenuLevel == MenuLevel.Root)
                 {
-                    unitChoosed = (CardType)index;
-                    Debug.Log("CardTypeChanged");
+                    cardTypeChoosed = type;
+                    Debug.Log($"[Broadcast] CardTypeSelected: {type}");
+                    OnCardTypeSelected?.Invoke(type);
                 }
 
-                LoadMenu(data.nextMenuId);
+                string nextMenuId = ButtonMenuFactory.GetMenuId(navi.nextLevel, type);
 
+                LoadMenu(nextMenuId);
 
                 break;
-            case MenuEventType.Purchase:
 
-
-                UnitCardManager.Instance.AddCardCount(1);
-                break;
-            case MenuEventType.UseCardSkill:
-
-
-
-
+            case CardSkillButtonData skill:
                 UnitCardManager.Instance.SetDeckSelected(false);
+
+                int cardID = UnitCardManager.Instance.GetChoosedUnitId();
+                if (cardID == -1) break;
+
+                if (PlayerUnitDataInterface.Instance.UseCardSkill(cardID, skill.cardSkill))
+                {
+                    Debug.Log($"[Broadcast] CardSkillUsed: {skill.cardType} - {skill.cardSkill}");
+                    OnCardSkillUsed?.Invoke(skill.cardType, skill.cardSkill);
+                }
+
                 break;
-            case MenuEventType.UpdateCardParameter:
 
+            case ParamUpdateButtonData param:
+                UnitCardManager.Instance.SetDeckSelected(false);
 
-
+                if (PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter))
+                {
+                    Debug.Log($"[Broadcast] TechUpdated: {param.cardType} - {param.targetParameter}");
+                    OnTechUpdated?.Invoke(param.cardType, param.targetParameter);
+                    LoadSingleMenu(MenuLevel.Third, param.cardType);
+                }
 
                 break;
-            default:
-                break;
 
+            case PurchaseButtonData purchase:
+
+                if (UnitCardManager.Instance.IsDeckSelected())
+                {
+                    if (PlayerUnitDataInterface.Instance.AddDeckNumByType(purchase.cardType))
+                    {
+                        Debug.Log($"[Broadcast] CardPurchasedIntoDeck: {purchase.cardType}");
+                        OnCardPurchasedIntoDeck?.Invoke(purchase.cardType);
+
+                    }
+
+                }
+                else
+                {
+                    if (PlayerUnitDataInterface.Instance.BuyUnitToMapByType(purchase.cardType))
+                    {
+                        Debug.Log($"[Broadcast] CardPurchasedIntoMap: {purchase.cardType}");
+                        OnCardPurchasedIntoMap?.Invoke(purchase.cardType);
+
+                    }
+
+                }
+
+                break;
 
 
         }
 
+
+
+    
+
     }
 
+    public CardType GetCardTypeChoosed()
+    {
 
+        return cardTypeChoosed;
+    }
+
+    public void SetCardTypeChoosed(CardType card)
+    {
+
+        cardTypeChoosed = card;
+    }
+
+    public void LoadSingleMenu(MenuLevel level, CardType type)
+    {
+        Religion playerReligion = GameUIManager.Instance.GetPlayerReligion();
+
+        //è·å–å¯¹åº” menuId
+        string menuId = ButtonMenuFactory.GetMenuId(level, type);
+
+        if (string.IsNullOrEmpty(menuId))
+        {
+            Debug.LogError($"[ButtonMenuManager] æ‰¾ä¸åˆ°èœå•: Level={level}, Type={type}");
+            return;
+        }
+
+        //åˆ›å»ºå¯¹åº”çš„æ•°æ®
+        ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(menuId, playerReligion);
+
+        if (data == null)
+        {
+            Debug.LogError($"[ButtonMenuManager] èœå•åˆ›å»ºå¤±è´¥: {menuId}");
+            return;
+        }
+
+        // è¦†ç›–æˆ–æ–°å¢
+        menuDict[menuId] = data;
+
+        // åŠ è½½å®ƒ
+        LoadMenu(menuId);
+    }
 }
 

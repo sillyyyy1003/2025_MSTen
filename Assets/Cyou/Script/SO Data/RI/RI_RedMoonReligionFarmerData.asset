@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de9c8be9c0b9344478ecfc9e5c44e3ba, type: 3}
   m_Name: RI_RedMoonReligionFarmerData
   m_EditorClassIdentifier: 
+  piecePrefabResourcePath: Cyou/Prefab/farmer
   originalPID: 0
   pieceName: "\u7D05\u6708\u6559_\u8FB2\u6C11"
   populationCost: 2
@@ -25,24 +26,12 @@ MonoBehaviour:
   attackRange: 0
   attackCooldown: 1
   attackAPCost: 20
-  maxHPByLevel:
-  - 2
-  - 3
-  - 4
-  - 4
-  maxAPByLevel:
-  - 3
-  - 5
-  - 5
-  - 5
-  attackPowerByLevel:
-  - 0
-  - 0
-  - 0
-  - 0
+  maxHPByLevel: 02000000030000000400000004000000
+  maxAPByLevel: 03000000050000000500000005000000
+  attackPowerByLevel: 00000000000000000000000000000000
   hpUpgradeCost: 030000000400000000000000
   apUpgradeCost: 040000000000000000000000
-  piecePrefab: {fileID: 7153972553235425938, guid: 9f1317f8bb1f13e4b8e70e285367a1b5,
+  piecePrefab: {fileID: 6161320943670931638, guid: a37e79c5fea041d4d8cbe3cf7b2e589e,
     type: 3}
   buildingSpeedModifier: 1
   productEfficiency: 1

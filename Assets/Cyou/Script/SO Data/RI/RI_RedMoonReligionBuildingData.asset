@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a511dd377733864c9606e1ab8f5b5b4, type: 3}
+  m_Name: RI_RedMoonReligionBuildingData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  religion: 2
+  buildingName: "\u7D05\u6708\u6559_\u7279\u6B8A\u5EFA\u7BC9"
+  maxHp: 100
+  buildStartAPCost: 1
+  buildingAPCost: 0
+  resourceGenInterval: 1
+  cellType: 0
+  isSpecialBuilding: 1
+  maxUnitCapacity: 0
+  generationType: 5
+  baseProductionAmount: 2
+  goldenProductionAmount: 5
+  apCostperTurn: 1
+  productionMultiplier: 1
+  maxHpByLevel: 190000001e0000002d000000
+  attackRangeByLevel: 000000000100000002000000
+  maxSlotsByLevel: 040000000500000006000000
+  buildingAPCostByLevel: 090000000600000003000000
+  hpUpgradeCost: 0600000009000000
+  attackRangeUpgradeCost: 080000000a000000
+  slotsUpgradeCost: 080000000a000000
+  buildCostUpgradeCost: 0600000008000000
+  buildingPrefab: {fileID: 1000010046023388, guid: 1589993158ba34786b54f448bdeb6085,
+    type: 3}

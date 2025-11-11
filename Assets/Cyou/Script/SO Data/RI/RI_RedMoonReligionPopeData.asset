@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ffd4666a14aedd47ac8cd659cb3b84b, type: 3}
   m_Name: RI_RedMoonReligionPopeData
   m_EditorClassIdentifier: 
+  piecePrefabResourcePath: Cyou/Prefab/pope
   originalPID: 0
   pieceName: "\u7D05\u6708\u6559_\u6559\u7687"
   populationCost: 5
@@ -25,24 +26,12 @@ MonoBehaviour:
   attackRange: 0
   attackCooldown: 1
   attackAPCost: 20
-  maxHPByLevel:
-  - 3
-  - 5
-  - 7
-  - 7
-  maxAPByLevel:
-  - 5
-  - 3
-  - 3
-  - 3
-  attackPowerByLevel:
-  - 0
-  - 0
-  - 0
-  - 0
+  maxHPByLevel: 03000000050000000700000007000000
+  maxAPByLevel: 05000000030000000300000003000000
+  attackPowerByLevel: 00000000000000000000000000000000
   hpUpgradeCost: 060000000800000000000000
   apUpgradeCost: 060000000000000000000000
-  piecePrefab: {fileID: 8868254160552346048, guid: 1724c1e5396873943a03922f74eff83a,
+  piecePrefab: {fileID: 7018129620868149870, guid: 57e69155f9f1daf4393a75d8f1ede772,
     type: 3}
   swapCooldown: 05000000030000000300000003000000
   hpBuff: 00000000000000000000000000000000

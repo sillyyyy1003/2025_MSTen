@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69739e068a956504e9ac53b5c1402ddc, type: 3}
   m_Name: RI_RedMoonReligionMissionaryData
   m_EditorClassIdentifier: 
+  piecePrefabResourcePath: Cyou/Prefab/missionary
   originalPID: 0
   pieceName: "\u7D05\u6708\u6559_\u5BA3\u6559\u5E2B"
   populationCost: 3
@@ -25,24 +26,12 @@ MonoBehaviour:
   attackRange: 0
   attackCooldown: 1
   attackAPCost: 20
-  maxHPByLevel:
-  - 5
-  - 7
-  - 10
-  - 10
-  maxAPByLevel:
-  - 5
-  - 7
-  - 8
-  - 8
-  attackPowerByLevel:
-  - 0
-  - 0
-  - 0
-  - 0
+  maxHPByLevel: 05000000070000000a0000000a000000
+  maxAPByLevel: 05000000070000000800000008000000
+  attackPowerByLevel: 00000000000000000000000000000000
   hpUpgradeCost: 050000000600000000000000
   apUpgradeCost: 050000000600000000000000
-  piecePrefab: {fileID: 7153972553235425938, guid: bc85a3009b2bf0347b0ab50c4ed35fac,
+  piecePrefab: {fileID: 4639449946712196576, guid: 0ff76caa76069064db4cd2b9a131630c,
     type: 3}
   occupyAPCost: 2
   convertAPCost: 3

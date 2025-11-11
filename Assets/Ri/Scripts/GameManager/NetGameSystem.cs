@@ -8,6 +8,9 @@ using UnityEngine;
 using Newtonsoft.Json;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using GameData;
+using Unity.Mathematics;
+using UnityEngine.Rendering.Universal;
 
 
 
@@ -25,8 +28,8 @@ public enum NetworkMessageType
     // 游戏流程
     GAME_START,
     GAME_OVER,
-    
-    
+
+
     // 房间管理 
     PLAYER_READY,      // 玩家准备
     PLAYER_NOT_READY,  // 玩家取消准备
@@ -41,6 +44,8 @@ public enum NetworkMessageType
     UNIT_ADD,
     UNIT_REMOVE,
     UNIT_ATTACK,
+    UNIT_CHARM,          // 单位魅惑
+    CHARM_EXPIRE,        // 魅惑过期（归还控制权）
 
     // 同步
     SYNC_DATA,
@@ -71,8 +76,8 @@ public class NetworkMessage
 [Serializable]
 public class ConnectMessage
 {
-    public string PlayerName; 
-    public string PlayerIP;  
+    public string PlayerName;
+    public string PlayerIP;
 }
 
 [Serializable]
@@ -97,8 +102,8 @@ public class PlayerInfo
 public class PlayerJoinedMessage
 {
     public uint PlayerId;
-    public string PlayerName; 
-    public string PlayerIP;   
+    public string PlayerName;
+    public string PlayerIP;
 }
 
 // 玩家准备消息
@@ -124,6 +129,7 @@ public class UnitMoveMessage
     public int FromY;
     public int ToX;
     public int ToY;
+    public syncPieceData MovedUnitSyncData; // 移动后的单位同步数据
 }
 
 [Serializable]
@@ -132,8 +138,8 @@ public class UnitAddMessage
     public int PlayerId;
     public int UnitType; // PlayerUnitType as int
     public int PosX;
-    public int PosY; 
-    public string UnitDataSOJson; // PieceDataSO序列化为JSON字符串
+    public int PosY;
+    public syncPieceData NewUnitSyncData; // PieceDataSO序列化为JSON字符串
     public bool IsUsed; // 单位是否已使用
 }
 
@@ -143,6 +149,7 @@ public class UnitRemoveMessage
     public int PlayerId;
     public int PosX;
     public int PosY;
+    public int UnitID; // 被移除单位的ID
 }
 
 // 攻击消息
@@ -152,15 +159,55 @@ public class UnitAttackMessage
     public int AttackerPlayerId;
     public int AttackerPosX;
     public int AttackerPosY;
+
+    // 原始位置字段
+    public int AttackerOriginalPosX;    // 攻击者原始位置（移动前的位置）
+    public int AttackerOriginalPosY;
+    public bool HasMoved;               // 标记攻击者是否进行了移动
+
     public int TargetPlayerId;
     public int TargetPosX;
     public int TargetPosY;
+    public syncPieceData AttackerSyncData; // 攻击者的同步数据（HP可能变化）
+    public syncPieceData? TargetSyncData;  // 目标的同步数据（如果存活），null表示被击杀
+    public bool TargetDestroyed;           // 目标是否被摧毁
 }
+
+// 魅惑消息
+[Serializable]
+public class UnitCharmMessage
+{
+    public int MissionaryPlayerId;      // 传教士所属玩家ID
+    public int MissionaryID;            // 传教士ID
+    public int MissionaryPosX;          // 传教士位置
+    public int MissionaryPosY;
+
+    public int TargetPlayerId;          // 目标单位原始所有者ID
+    public int TargetID;                // 目标单位ID
+    public int TargetPosX;              // 目标单位位置
+    public int TargetPosY;
+
+    public syncPieceData NewUnitSyncData;  // 新创建的被魅惑单位的同步数据
+    public int CharmedTurns;            // 魅惑持续回合数
+}
+
+// 魅惑过期消息（归还控制权）
+[Serializable]
+public class CharmExpireMessage
+{
+    public int CurrentOwnerId;          // 当前控制者ID（魅惑者）
+    public int OriginalOwnerId;         // 原始所有者ID
+    public int UnitID;                  // 单位ID
+    public int PosX;                    // 单位位置
+    public int PosY;
+    public syncPieceData UnitSyncData;  // 单位同步数据
+}
+
 [Serializable]
 public class TurnEndMessage
 {
     public int PlayerId;
-    public string PlayerDataJson; // PlayerData序列化
+    public SerializablePlayerData PlayerDataJson; // PlayerData序列化
 }
 
 // 辅助消息类
@@ -170,6 +217,88 @@ public class TurnStartMessage
     public int PlayerId;
 }
 
+[Serializable]
+public struct SerializablePlayerUnitData
+{
+    public int UnitID;
+    public int UnitType;
+    public int PositionX;
+    public int PositionY;
+    public bool bUnitIsActivated;
+    public syncPieceData SyncData;
+
+    public static SerializablePlayerUnitData FromPlayerUnitData(PlayerUnitData data)
+    {
+        return new SerializablePlayerUnitData
+        {
+            UnitID = data.UnitID,
+            UnitType = (int)data.UnitType,
+            PositionX = data.Position.x,
+            PositionY = data.Position.y,
+            bUnitIsActivated = data.bUnitIsActivated,
+            SyncData = data.PlayerUnitDataSO
+
+        };
+    }
+
+    public PlayerUnitData ToPlayerUnitData()
+    {
+        return new PlayerUnitData(
+            UnitID,
+            (CardType)UnitType,
+            new Unity.Mathematics.int2(PositionX, PositionY),
+            SyncData,
+            bUnitIsActivated
+        );
+    }
+}
+
+[Serializable]
+public struct SerializablePlayerData
+{
+    public int PlayerID;
+    public List<SerializablePlayerUnitData> PlayerUnits;
+    public int Resources;
+    public int PlayerReligion;
+    public List<int> PlayerOwnedCells;
+
+    public static SerializablePlayerData FromPlayerData(PlayerData data)
+    {
+        SerializablePlayerData serializableData = new SerializablePlayerData
+        {
+            PlayerID = data.PlayerID,
+            Resources = data.Resources,
+            PlayerReligion = (int)data.PlayerReligion,
+            PlayerOwnedCells = new List<int>(data.PlayerOwnedCells),
+            PlayerUnits = new List<SerializablePlayerUnitData>()
+        };
+
+        foreach (var unit in data.PlayerUnits)
+        {
+            serializableData.PlayerUnits.Add(
+                SerializablePlayerUnitData.FromPlayerUnitData(unit)
+            );
+        }
+
+        return serializableData;
+    }
+
+    public PlayerData ToPlayerData()
+    {
+        PlayerData playerData = new PlayerData(PlayerID);
+        playerData.Resources = Resources;
+        playerData.PlayerReligion = (Religion)PlayerReligion;
+        playerData.PlayerOwnedCells = new List<int>(PlayerOwnedCells);
+        playerData.PlayerUnits = new List<PlayerUnitData>();
+
+        foreach (var unit in PlayerUnits)
+        {
+            playerData.PlayerUnits.Add(unit.ToPlayerUnitData());
+        }
+
+        return playerData;
+    }
+}
 
 // *************************
 //      主要网络系统
@@ -254,7 +383,7 @@ public class NetGameSystem : MonoBehaviour
     // *************************
 
     private void Awake()
-    { 
+    {
         // 单例设置
         if (Instance == null)
         {
@@ -275,7 +404,7 @@ public class NetGameSystem : MonoBehaviour
         }
 
         // 初始化消息处理器
-        InitializeMessageHandlers();   
+        InitializeMessageHandlers();
 
         // 初始化房间相关字典 
         clientReadyStatus = new Dictionary<uint, bool>();
@@ -292,18 +421,18 @@ public class NetGameSystem : MonoBehaviour
             playerName = SceneStateManager.Instance.PlayerName;
             playerIP = SceneStateManager.Instance.PlayerIP; // 获取本地IP
 
-          
-                // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
-                if (!isServer)
-                {
 
-                    // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
-                    //serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
-                }
-                // 延迟启动网络,确保所有单例初始化完成
-                StartCoroutine(DelayedNetworkStart());
+            // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+            if (!isServer)
+            {
+
+                // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                //serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+            }
+            // 延迟启动网络,确保所有单例初始化完成
+            StartCoroutine(DelayedNetworkStart());
         }
-           
+
     }
 
     private IEnumerator DelayedNetworkStart()
@@ -350,14 +479,14 @@ public class NetGameSystem : MonoBehaviour
             gameManage = GameObject.Find("GameManager").GetComponent<GameManage>();
         }
 
-        if (gameManage == null)
-        {
-            Debug.LogError("无法找到 GameManage!");
-        }
-        else
-        {
-            Debug.Log($"成功获取 GameManage");
-        }
+        //if (gameManage == null)
+        //{
+        //    Debug.LogError("无法找到 GameManage!");
+        //}
+        //else
+        //{
+        //    Debug.Log($"成功获取 GameManage");
+        //}
 
         playerDataManager = PlayerDataManager.Instance;
 
@@ -378,19 +507,23 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.PLAYER_JOINED, HandlePlayerJoined },
                 
                 // 房间状态相关
-                { NetworkMessageType.PLAYER_LEFT, HandlePlayerLeft }, 
-                { NetworkMessageType.PLAYER_READY, HandlePlayerReady }, 
-                { NetworkMessageType.PLAYER_NOT_READY, HandlePlayerNotReady }, 
+                { NetworkMessageType.PLAYER_LEFT, HandlePlayerLeft },
+                { NetworkMessageType.PLAYER_READY, HandlePlayerReady },
+                { NetworkMessageType.PLAYER_NOT_READY, HandlePlayerNotReady },
                 { NetworkMessageType.ROOM_STATUS_UPDATE, HandleRoomStatusUpdate }, 
                
                 // 游戏流程相关
                 { NetworkMessageType.GAME_START, HandleGameStart },
                 { NetworkMessageType.TURN_START, HandleTurnStart },
                 { NetworkMessageType.TURN_END, HandleTurnEnd },
+                 // 单位相关
                 { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
                 { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
-                { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },  
+                { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },
+                { NetworkMessageType.UNIT_CHARM, HandleUnitCharm },
+                { NetworkMessageType.CHARM_EXPIRE, HandleCharmExpire },
+
                 { NetworkMessageType.PING, HandlePing },
                 { NetworkMessageType.PONG, HandlePong }
         };
@@ -453,7 +586,7 @@ public class NetGameSystem : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[服务器] 启动失败: {ex.Message}"); 
+            Debug.LogError($"[服务器] 启动失败: {ex.Message}");
             isRunning = false;
         }
     }
@@ -468,7 +601,7 @@ public class NetGameSystem : MonoBehaviour
                 IPEndPoint clientEP = null;
                 byte[] data = udpClient.Receive(ref clientEP);
                 string json = Encoding.UTF8.GetString(data);
-             
+
                 if (json == "PingCheck")
                 {
                     // 告知客户端“服务器在线”
@@ -537,7 +670,7 @@ public class NetGameSystem : MonoBehaviour
 
                         OnClientConnected?.Invoke(clientId);
                     }
-                 
+
                     // 转发其他消息
                     else if (message.MessageType != NetworkMessageType.PING &&
                              message.MessageType != NetworkMessageType.PONG &&
@@ -589,7 +722,7 @@ public class NetGameSystem : MonoBehaviour
                     IsReady = clientReady
                 });
                 // 调试输出
-                Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
+                //Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
             }
         }
     }
@@ -616,7 +749,7 @@ public class NetGameSystem : MonoBehaviour
         MainThreadDispatcher.Enqueue(() => {
             OnRoomStatusUpdated?.Invoke(roomPlayers);
 
-            Debug.Log("SendRoomStatusToAll");
+            //Debug.Log("SendRoomStatusToAll");
             CheckAllPlayersReady();
         });
     }
@@ -624,7 +757,7 @@ public class NetGameSystem : MonoBehaviour
     // 检查所有玩家是否准备完毕
     private void CheckAllPlayersReady()
     {
-        Debug.Log("CheckAllPlayersReady");
+        //Debug.Log("CheckAllPlayersReady");
         if (roomPlayers.Count < 2) // 至少需要2个玩家
         {
             OnAllPlayersReady?.Invoke(false);
@@ -634,7 +767,7 @@ public class NetGameSystem : MonoBehaviour
         bool allReady = true;
         foreach (var player in roomPlayers)
         {
-            Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
+            //Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
             if (!player.IsReady)
             {
                 allReady = false;
@@ -771,9 +904,11 @@ public class NetGameSystem : MonoBehaviour
             int boardCount = gameManage.GetBoardCount();
             int[] positions = new int[connectedPlayers.Count];
 
+
             // 简单分配: 第一个玩家在0, 最后一个玩家在最后一个格子
             for (int i = 0; i < positions.Length; i++)
             {
+                positions[i] = gameManage.GetStartPosForNetGame(i);
                 // 更改为保存的起始位置
                 //if (i == 0)
                 //    positions[i] = 0;
@@ -782,12 +917,12 @@ public class NetGameSystem : MonoBehaviour
                 //else
                 //    positions[i] = (boardCount / positions.Length) * i;
 
-                if (i == 0)
-                    positions[i] = 0;
-                else if (i == positions.Length - 1)
-                    positions[i] = boardCount - 1;
-                else
-                    positions[i] = (boardCount / positions.Length) * i;
+                //if (i == 0)
+                //    positions[i] = 0;
+                //else if (i == positions.Length - 1)
+                //    positions[i] = boardCount - 1;
+                //else
+                //    positions[i] = (boardCount / positions.Length) * i;
             }
 
             return positions;
@@ -801,7 +936,7 @@ public class NetGameSystem : MonoBehaviour
     //      客户端功能
     // *************************
 
-    public void  ConnectToServer()
+    public void ConnectToServer()
     {
         // 添加服务器检测
         bool serverExists = false;
@@ -846,7 +981,7 @@ public class NetGameSystem : MonoBehaviour
         {
             Debug.LogWarning("[客户端] 未检测到服务器，连接失败。");
             SceneManager.LoadScene("SelectScene");
-            return ;
+            return;
         }
 
 
@@ -859,7 +994,7 @@ public class NetGameSystem : MonoBehaviour
             // 发送连接请求
             ConnectMessage connectMsg = new ConnectMessage
             {
-                PlayerName = playerName, 
+                PlayerName = playerName,
                 PlayerIP = playerIP
             };
 
@@ -945,6 +1080,249 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 发送单位添加消息
+    /// </summary>
+    public void SendUnitAddMessage(int playerId, CardType unitType, int2 pos,
+        syncPieceData newUnitData, bool isUsed = false)
+    {
+        UnitAddMessage addData = new UnitAddMessage
+        {
+            PlayerId = playerId,
+            UnitType = (int)unitType,
+            PosX = pos.x,
+            PosY = pos.y,
+            NewUnitSyncData = newUnitData
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_ADD,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(addData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_ADD 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_ADD 消息到服务器");
+        }
+    }
+
+
+    /// <summary>
+    /// 发送单位移动消息
+    /// </summary>
+    public void SendUnitMoveMessage(int playerId, int2 fromPos, int2 toPos, syncPieceData movedUnitData)
+    {
+        UnitMoveMessage moveData = new UnitMoveMessage
+        {
+            PlayerId = playerId,
+            FromX = fromPos.x,
+            FromY = fromPos.y,
+            ToX = toPos.x,
+            ToY = toPos.y,
+            MovedUnitSyncData = movedUnitData
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_MOVE,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(moveData)
+        };
+
+        if (isServer)
+        {
+            // 服务器广播给所有客户端（排除自己）
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_MOVE 消息给所有客户端");
+        }
+        else
+        {
+            // 客户端发送给服务器
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_MOVE 消息到服务器");
+        }
+    }
+
+    /// <summary>
+    /// 发送单位移除消息
+    /// </summary>
+    public void SendUnitRemoveMessage(int playerId, int2 pos, int unitId)
+    {
+        UnitRemoveMessage removeData = new UnitRemoveMessage
+        {
+            PlayerId = playerId,
+            PosX = pos.x,
+            PosY = pos.y,
+            UnitID = unitId
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_REMOVE,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(removeData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_REMOVE 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_REMOVE 消息到服务器");
+        }
+    }
+
+    /// <summary>
+    /// 发送单位攻击消息
+    /// </summary>
+    public void SendUnitAttackMessage(
+        int attackerPlayerId,
+        int2 attackerPos,
+        int targetPlayerId,
+        int2 targetPos,
+        syncPieceData attackerData,
+        syncPieceData? targetData,
+        bool targetDestroyed,
+        int2? attackerOriginalPos = null,    // 【新增】原始位置（可选）
+        bool hasMoved = false)               // 【新增】是否移动标记
+    {
+        // 如果没有提供原始位置，使用当前位置作为原始位置
+        int2 originalPos = attackerOriginalPos ?? attackerPos;
+
+        UnitAttackMessage attackData = new UnitAttackMessage
+        {
+            AttackerPlayerId = attackerPlayerId,
+            AttackerPosX = attackerPos.x,
+            AttackerPosY = attackerPos.y,
+
+            // 【新增】设置原始位置
+            AttackerOriginalPosX = originalPos.x,
+            AttackerOriginalPosY = originalPos.y,
+            HasMoved = hasMoved,
+
+            TargetPlayerId = targetPlayerId,
+            TargetPosX = targetPos.x,
+            TargetPosY = targetPos.y,
+            AttackerSyncData = attackerData,
+            TargetSyncData = targetData,
+            TargetDestroyed = targetDestroyed
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_ATTACK,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(attackData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_ATTACK 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_ATTACK 消息到服务器");
+        }
+    }
+
+
+    // 发送单位魅惑消息
+    public void SendUnitCharmMessage(
+        int missionaryPlayerId,
+        int missionaryID,
+        int2 missionaryPos,
+        int targetPlayerId,
+        int targetID,
+        int2 targetPos,
+        syncPieceData newUnitSyncData,
+        int charmedTurns = 3)
+    {
+        UnitCharmMessage charmData = new UnitCharmMessage
+        {
+            MissionaryPlayerId = missionaryPlayerId,
+            MissionaryID = missionaryID,
+            MissionaryPosX = missionaryPos.x,
+            MissionaryPosY = missionaryPos.y,
+
+            TargetPlayerId = targetPlayerId,
+            TargetID = targetID,
+            TargetPosX = targetPos.x,
+            TargetPosY = targetPos.y,
+
+            NewUnitSyncData = newUnitSyncData,
+            CharmedTurns = charmedTurns
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_CHARM,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(charmData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_CHARM 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_CHARM 消息到服务器");
+        }
+    }
+
+    // 发送魅惑过期消息（归还控制权）
+    public void SendCharmExpireMessage(
+        int currentOwnerId,
+        int originalOwnerId,
+        int unitID,
+        int2 pos,
+        syncPieceData unitSyncData)
+    {
+        CharmExpireMessage expireData = new CharmExpireMessage
+        {
+            CurrentOwnerId = currentOwnerId,
+            OriginalOwnerId = originalOwnerId,
+            UnitID = unitID,
+            PosX = pos.x,
+            PosY = pos.y,
+            UnitSyncData = unitSyncData
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.CHARM_EXPIRE,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(expireData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 CHARM_EXPIRE 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 CHARM_EXPIRE 消息到服务器");
+        }
+    }
+
+
     // 发送消息到服务器
     private void SendToServer(NetworkMessage message)
     {
@@ -977,7 +1355,7 @@ public class NetGameSystem : MonoBehaviour
     // 设置准备状态
     public void SetReadyStatus(bool ready)
     {
-        Debug.Log("Ready? = "+ready);
+        Debug.Log("Ready? = " + ready);
         isLocalReady = ready;
 
         if (isServer)
@@ -1130,17 +1508,17 @@ public class NetGameSystem : MonoBehaviour
         if (isServer)
         {
             PlayerReadyMessage data = JsonConvert.DeserializeObject<PlayerReadyMessage>(message.JsonData);
-           
+
             Debug.Log($"[服务器] 收到玩家 {data.PlayerId} 的准备请求");
             Debug.Log($"[服务器] clientReadyStatus包含该ID? {clientReadyStatus.ContainsKey(data.PlayerId)}");
             Debug.Log($"[服务器] 当前房间人数: {roomPlayers.Count}");
-          
-            if (clientReadyStatus.ContainsKey(data.PlayerId)&& roomPlayers.Count >=2)
+
+            if (clientReadyStatus.ContainsKey(data.PlayerId) && roomPlayers.Count >= 2)
             {
                 clientReadyStatus[data.PlayerId] = true;
                 UpdateRoomPlayersList();
                 SendRoomStatusToAll();
-              
+
                 Debug.Log($"玩家 {data.PlayerId} 准备完毕");
             }
             else
@@ -1180,7 +1558,7 @@ public class NetGameSystem : MonoBehaviour
         CheckAllPlayersReady();
     }
 
-   
+
 
     // 添加重试协程
     private IEnumerator RetryHandleTurnStart(NetworkMessage message, float delay)
@@ -1348,30 +1726,48 @@ public class NetGameSystem : MonoBehaviour
 
         Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
 
-        // 解析玩家数据
-        if (!string.IsNullOrEmpty(data.PlayerDataJson))
+        //  转换为 PlayerData
+        PlayerData playerData = data.PlayerDataJson.ToPlayerData();
+
+        Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
+
+        // 重新加载所有单位的 PieceDataSO
+        //for (int i = 0; i < playerData.PlayerUnits.Count; i++)
+        //{
+        //    PlayerUnitData unit = playerData.PlayerUnits[i];
+
+        //    if (unit.PlayerUnitDataSO.pieceID!=-1)
+        //    {
+        //        //PieceDataSO pieceData = LoadPieceDataSO(unit.UnitType);
+
+        //        //if (pieceData != null)
+        //        //{
+        //        //    unit.PlayerUnitDataSO = pieceData;
+        //        //    playerData.PlayerUnits[i] = unit;
+        //        //    Debug.Log($" 重新加载 {unit.UnitType} 的 PieceDataSO: {pieceData.name}");
+        //        //}
+        //        //else
+        //        //{
+        //        //    Debug.LogError($"❌ 无法加载 {unit.UnitType} 的 PieceDataSO");
+        //        //}
+        //    }
+        //}
+        // 更新数据
+        if (playerDataManager != null)
         {
-            PlayerData playerData = JsonUtility.FromJson<PlayerData>(data.PlayerDataJson);
-
-            Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
-
-
-            // 更新数据
-            if (playerDataManager != null)
-            {
-                playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
-            }
-
-
-            // 通知 GameManage 更新显示
-            if (gameManage != null)
-            {
-                // 调用 PlayerOperationManager 更新其他玩家显示
-                gameManage.UpdateOtherPlayerShow(data.PlayerId, playerData);
-                Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
-            }
-
+            playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
         }
+
+
+        // 通知 GameManage 更新显示
+        if (gameManage != null)
+        {
+            // 调用 PlayerOperationManager 更新其他玩家显示
+            gameManage.UpdateOtherPlayerShow(data.PlayerId, playerData);
+            Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
+        }
+
+
 
         // 如果是服务器,切换到下一个回合
         if (isServer)
@@ -1470,13 +1866,60 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
         }
     }
+
+    /// <summary>
+    /// 统一的 PieceDataSO 加载方法
+    /// </summary>
+    //private PieceDataSO LoadPieceDataSO(CardType cardType)
+    //{
+    //    PieceDataSO pieceData = null;
+
+    //    // 方法1: 从 UnitListTable 加载
+    //    if (UnitListTable.Instance != null)
+    //    {
+    //        pieceData = UnitListTable.Instance.GetPieceDataByCardType(cardType);
+    //        if (pieceData != null)
+    //        {
+    //            return pieceData;
+    //        }
+    //    }
+
+    //    // 方法2: 从 Resources 加载
+    //    string resourcePath = GetResourcePathForCardType(cardType);
+    //    if (!string.IsNullOrEmpty(resourcePath))
+    //    {
+    //        pieceData = Resources.Load<PieceDataSO>(resourcePath);
+    //        if (pieceData != null)
+    //        {
+    //            return pieceData;
+    //        }
+    //    }
+
+    //    Debug.LogError($"无法加载 PieceDataSO for CardType: {cardType}");
+    //    return null;
+    //}
+
+    //private string GetResourcePathForCardType(CardType cardType)
+    //{
+    //    switch (cardType)
+    //    {
+    //        case CardType.Farmer: return "Cyou/Prefab/farmer";
+    //        case CardType.Solider: return "Cyou/Prefab/military";
+    //        case CardType.Missionary: return "Cyou/Prefab/Missionary";
+    //        case CardType.Pope: return "Cyou/Prefab/pope";
+    //        default: return null;
+    //    }
+    //}
+
+
+
     // 单位移动
     private void HandleUnitMove(NetworkMessage message)
     {
         UnitMoveMessage data = JsonConvert.DeserializeObject<UnitMoveMessage>(message.JsonData);
 
-        Unity.Mathematics.int2 fromPos = new Unity.Mathematics.int2(data.FromX, data.FromY);
-        Unity.Mathematics.int2 toPos = new Unity.Mathematics.int2(data.ToX, data.ToY);
+        int2 fromPos = new int2(data.FromX, data.FromY);
+        int2 toPos = new int2(data.ToX, data.ToY);
 
         Debug.Log($"[网络] 玩家 {data.PlayerId} 移动单位: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
 
@@ -1486,18 +1929,41 @@ public class NetGameSystem : MonoBehaviour
             gameManage = GameManage.Instance;
         }
 
-        // 只通知 PlayerOperationManager 处理视觉效果
+        if (playerDataManager == null)
+        {
+            playerDataManager = PlayerDataManager.Instance;
+        }
+
+        // 更新 PlayerDataManager
+        if (playerDataManager != null)
+        {
+            // 移动单位
+            bool moveSuccess = playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+
+            if (moveSuccess)
+            {
+                // 更新同步数据
+                playerDataManager.UpdateUnitSyncDataByPos(data.PlayerId, toPos, data.MovedUnitSyncData);
+
+                Debug.Log($"[网络] PlayerDataManager 已更新单位移动数据");
+            }
+        }
+
+        // 通知 PlayerOperationManager 处理视觉效果
         if (gameManage != null && gameManage._PlayerOperation != null)
         {
             gameManage._PlayerOperation.HandleNetworkMove(data);
         }
     }
+
+
+
     // 单位添加
     private void HandleUnitAdd(NetworkMessage message)
     {
         UnitAddMessage data = JsonConvert.DeserializeObject<UnitAddMessage>(message.JsonData);
 
-        Unity.Mathematics.int2 pos = new Unity.Mathematics.int2(data.PosX, data.PosY);
+        int2 pos = new int2(data.PosX, data.PosY);
         CardType unitType = (CardType)data.UnitType;
 
         Debug.Log($"[网络] 玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
@@ -1507,11 +1973,22 @@ public class NetGameSystem : MonoBehaviour
             gameManage = GameManage.Instance;
         }
 
-        // 只通知 PlayerOperationManager 处理
+        // 添加到 PlayerDataManager
+        if (playerDataManager != null)
+        {
+            // 使用 syncPieceData 添加单位
+            playerDataManager.AddUnit(data.PlayerId, unitType, pos, data.NewUnitSyncData, null);
+
+            Debug.Log($"[网络] PlayerDataManager 已添加单位数据");
+        }
+
+        // 通知 PlayerOperationManager 创建视觉对象
         if (gameManage != null && gameManage._PlayerOperation != null)
         {
             gameManage._PlayerOperation.HandleNetworkAddUnit(data);
         }
+
+
     }
 
     // 单位移除
@@ -1519,7 +1996,7 @@ public class NetGameSystem : MonoBehaviour
     {
         UnitRemoveMessage data = JsonConvert.DeserializeObject<UnitRemoveMessage>(message.JsonData);
 
-        Unity.Mathematics.int2 pos = new Unity.Mathematics.int2(data.PosX, data.PosY);
+        int2 pos = new int2(data.PosX, data.PosY);
 
         Debug.Log($"玩家 {data.PlayerId} 移除单位 at ({pos.x},{pos.y})");
 
@@ -1527,10 +2004,16 @@ public class NetGameSystem : MonoBehaviour
         {
             playerDataManager.RemoveUnit(data.PlayerId, pos);
         }
-        else
+
+        // 从 PlayerDataManager 移除
+        if (playerDataManager != null)
         {
-            playerDataManager = PlayerDataManager.Instance;
-            playerDataManager.RemoveUnit(data.PlayerId, pos);
+            bool removeSuccess = playerDataManager.RemoveUnit(data.PlayerId, pos);
+
+            if (removeSuccess)
+            {
+                Debug.Log($"[网络] PlayerDataManager 已移除单位数据");
+            }
         }
     }
 
@@ -1539,10 +2022,10 @@ public class NetGameSystem : MonoBehaviour
     {
         UnitAttackMessage data = JsonConvert.DeserializeObject<UnitAttackMessage>(message.JsonData);
 
-        Unity.Mathematics.int2 attackerPos = new Unity.Mathematics.int2(data.AttackerPosX, data.AttackerPosY);
-        Unity.Mathematics.int2 targetPos = new Unity.Mathematics.int2(data.TargetPosX, data.TargetPosY);
+        int2 attackerPos = new int2(data.AttackerPosX, data.AttackerPosY);
+        int2 targetPos = new int2(data.TargetPosX, data.TargetPosY);
 
-        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y})");
+        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y}) ");
 
         // 确保管理器存在
         if (gameManage == null)
@@ -1550,10 +2033,140 @@ public class NetGameSystem : MonoBehaviour
             gameManage = GameManage.Instance;
         }
 
-        // 通知 PlayerOperationManager 处理
-        if (gameManage != null && gameManage._PlayerOperation != null)
+        // 更新 PlayerDataManager 中的数据
+        if (playerDataManager != null)
         {
-            gameManage._PlayerOperation.HandleNetworkAttack(data);
+            // 更新攻击者的同步数据
+            bool attackerUpdated = playerDataManager.UpdateUnitSyncDataByPos(
+                data.AttackerPlayerId, attackerPos, data.AttackerSyncData);
+
+            if (attackerUpdated)
+            {
+                Debug.Log($"[网络] 攻击者数据已更新");
+            }
+
+            // 先通知 PlayerOperationManager 处理
+            // 这样 HandleNetworkAttack 可以找到 UnitID 并从 PieceManager 移除
+            if (gameManage != null && gameManage._PlayerOperation != null)
+            {
+                gameManage._PlayerOperation.HandleNetworkAttack(data);
+            }
+
+            // 然后再处理 PlayerDataManager 的数据移除/更新
+            if (data.TargetDestroyed)
+            {
+                // 目标被摧毁，从 PlayerDataManager 移除
+                bool targetRemoved = playerDataManager.RemoveUnit(data.TargetPlayerId, targetPos);
+
+                if (targetRemoved)
+                {
+                    Debug.Log($"[网络] 目标单位已从PlayerDataManager移除");
+                }
+                else
+                {
+                    Debug.LogWarning($"[网络] ✗ 从PlayerDataManager移除目标失败");
+                }
+            }
+            else if (data.TargetSyncData.HasValue)
+            {
+                // 目标存活，更新同步数据
+                bool targetUpdated = playerDataManager.UpdateUnitSyncDataByPos(
+                    data.TargetPlayerId, targetPos, data.TargetSyncData.Value);
+
+                if (targetUpdated)
+                {
+                    Debug.Log($"[网络] 目标数据已更新");
+                }
+            }
+        }
+    }
+
+    // 单位魅惑
+    private void HandleUnitCharm(NetworkMessage message)
+    {
+        UnitCharmMessage data = JsonConvert.DeserializeObject<UnitCharmMessage>(message.JsonData);
+
+        int2 missionaryPos = new int2(data.MissionaryPosX, data.MissionaryPosY);
+        int2 targetPos = new int2(data.TargetPosX, data.TargetPosY);
+
+        Debug.Log($"[网络] 玩家 {data.MissionaryPlayerId} 的传教士魅惑单位 at ({targetPos.x},{targetPos.y})");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // ===== 新增：确保目标单位数据存在 =====
+        if (playerDataManager != null)
+        {
+            // 检查目标单位是否存在于PlayerDataManager中
+            PlayerUnitData? targetUnit = playerDataManager.FindUnit(data.TargetPlayerId, targetPos);
+
+            if (!targetUnit.HasValue)
+            {
+                Debug.LogWarning($"[网络魅惑] 目标单位不存在于PlayerDataManager，可能需要先创建");
+
+                // 如果目标单位不存在，可能需要先从NewUnitSyncData创建
+                // 注意：这种情况通常不应该发生，说明同步顺序有问题
+                // 但为了健壮性，我们可以尝试添加单位
+                CardType unitType=CardType.None;
+                // 根据syncPieceData推断单位类型
+                switch (data.NewUnitSyncData.piecetype)
+                {
+                    case PieceType.Pope:
+                        unitType = CardType.Pope;
+                        break;
+                    case PieceType.Missionary:
+                        unitType = CardType.Missionary;
+                        break;
+                    case PieceType.Military:
+                        unitType = CardType.Solider;
+                        break;
+                    case PieceType.Farmer:
+                        unitType = CardType.Farmer;
+                        break;
+
+                }
+                playerDataManager.AddUnit(
+                    data.TargetPlayerId,
+                    unitType,
+                    targetPos,
+                    data.NewUnitSyncData,
+                    null
+                );
+
+                Debug.Log($"[网络魅惑] 已添加缺失的目标单位数据");
+            }
+        }
+
+
+        if (playerDataManager != null && gameManage != null && gameManage._PlayerOperation != null)
+        {
+            // 通知 PlayerOperationManager 处理魅惑
+            gameManage._PlayerOperation.HandleNetworkCharm(data);
+        }
+    }
+
+    // 魅惑过期（归还控制权）
+    private void HandleCharmExpire(NetworkMessage message)
+    {
+        CharmExpireMessage data = JsonConvert.DeserializeObject<CharmExpireMessage>(message.JsonData);
+
+        int2 pos = new int2(data.PosX, data.PosY);
+
+        Debug.Log($"[网络] 单位 {data.UnitID} at ({pos.x},{pos.y}) 魅惑过期，归还给玩家 {data.OriginalOwnerId}");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        if (playerDataManager != null && gameManage != null && gameManage._PlayerOperation != null)
+        {
+            // 通知 PlayerOperationManager 处理魅惑过期
+            gameManage._PlayerOperation.HandleNetworkCharmExpire(data);
         }
     }
 

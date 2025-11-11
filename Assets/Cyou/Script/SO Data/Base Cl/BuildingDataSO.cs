@@ -10,6 +10,10 @@ namespace GameData
     [CreateAssetMenu(fileName = "BuildingData", menuName = "GameData/BaseBuilding/BuildingData")]
     public class BuildingDataSO : ScriptableObject
     {
+        [Header("Prefab Path")]
+        public string piecePrefabResourcePath;
+        [Header("宗教")]
+        public Religion religion = Religion.None; // 所属する宗教
         [Header("基本属性")]
         public string buildingName;
         public int maxHp = 100;

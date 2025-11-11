@@ -33,7 +33,7 @@ public static class HexMetrics
 	/// <summary>
 	/// Factor of the solid uniform region inside a hex cell.
 	/// </summary>
-	public const float solidFactor = 0.8f;
+	public const float solidFactor = 0.8f;	//Connection厚度
 
 	/// <summary>
 	/// Factor of the blending region inside a hex cell.
@@ -76,9 +76,9 @@ public static class HexMetrics
 	public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);
 
 	/// <summary>
-	/// Strength of cell position terturbation.
+	/// Strength of cell position terturbation.扰动的强度
 	/// </summary>
-	public const float cellPerturbStrength = 4f;
+	public const float cellPerturbStrength = 0f;
 
 	/// <summary>
 	/// Strength of vertical elevation perturbation.
@@ -98,7 +98,7 @@ public static class HexMetrics
 	/// <summary>
 	/// Height of walls.
 	/// </summary>
-	public const float wallHeight = 3f;
+	public const float wallHeight = 1.5f;
 
 	/// <summary>
 	/// Vertical wall offset, negative to prevent them from floating above the surface.
@@ -163,9 +163,10 @@ public static class HexMetrics
 	};
 
 	static readonly float[][] featureThresholds = {
-		new float[] {0.0f, 0.0f, 0.4f},
-		new float[] {0.0f, 0.4f, 0.6f},
-		new float[] {0.4f, 0.6f, 0.8f}
+		new float[] { 0.0f, 0.2f, 0.4f },
+		new float[] { 0.2f, 0.4f, 0.6f },
+		new float[] { 0.4f, 0.6f, 0.72f },
+		new float[] { 0.6f, 0.72f, 0.8f }
 	};
 
 	/// <summary>
@@ -248,6 +249,7 @@ public static class HexMetrics
 	/// <param name="level">Feature level.</param>
 	/// <returns>Array containing the thresholds.</returns>
 	public static float[] GetFeatureThresholds(int level) => featureThresholds[level];
+
 
 	/// <summary>
 	/// Get the first outer cell corner for a direction.
