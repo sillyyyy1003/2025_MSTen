@@ -99,7 +99,7 @@ public class GameManage : MonoBehaviour
 
 
     // 网络系统引用 (在Inspector中赋值或通过代码获取)
-    public NetGameSystem _NetGameSystem;
+    //public NetGameSystem _NetGameSystem;
 
     // 玩家相机引用
     public GameCamera _GameCamera;
@@ -239,9 +239,9 @@ public class GameManage : MonoBehaviour
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
-        if (_NetGameSystem != null && !_NetGameSystem.bIsServer)
+        if (NetGameSystem.Instance!= null && !NetGameSystem.Instance.bIsServer)
         {
-            _LocalPlayerID = (int)_NetGameSystem.bLocalClientId;
+            _LocalPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
@@ -258,7 +258,7 @@ public class GameManage : MonoBehaviour
 
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
+        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.RedMoonReligion);
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
@@ -282,7 +282,7 @@ public class GameManage : MonoBehaviour
             }
         }
 
-        _NetGameSystem.GetGameManage();
+        NetGameSystem.Instance.GetGameManage();
 
         _GameCamera.SetCanUseCamera(true);
         // 触发游戏开始事件
@@ -458,9 +458,9 @@ public class GameManage : MonoBehaviour
         };
 
         // 发送到网络
-        if (_NetGameSystem != null)
+        if (NetGameSystem.Instance != null)
         {
-            _NetGameSystem.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
+            NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             Debug.Log($" 已发送回合结束消息");
 
 
@@ -486,14 +486,14 @@ public class GameManage : MonoBehaviour
         Debug.Log($"[服务器] 切换到玩家 {nextPlayerId}");
 
         // 如果是服务器，广播 TURN_START
-        if (_NetGameSystem != null && _NetGameSystem.bIsServer)
+        if (NetGameSystem.Instance != null && NetGameSystem.Instance.bIsServer)
         {
             TurnStartMessage turnStartData = new TurnStartMessage
             {
                 PlayerId = nextPlayerId
             };
 
-            _NetGameSystem.SendMessage(NetworkMessageType.TURN_START, turnStartData);
+            NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_START, turnStartData);
             Debug.Log($"[服务器] 已广播 TURN_START 消息");
         }
 

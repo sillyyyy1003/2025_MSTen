@@ -30,6 +30,9 @@ public class SceneStateManager : MonoBehaviour
     // 是否为单机模式
     public bool bIsSingle=false;
 
+    // 是否为单机模式
+    public bool bIsDirectConnect = false;
+
     // 设置本地保存玩家名数据
     private const string PLAYER_NAME_KEY = "PlayerName";
     private const string DEFAULT_NAME = "玩家1";

@@ -113,7 +113,8 @@ public class UnitCard : MonoBehaviour
         // 面板数据更新
         if (showDataPanel|| alwaysOpen)
 		{
-			SetDetailData();
+			//25.11.11 RI 暂时修改
+			//SetDetailData();
 
 
         }

@@ -28,7 +28,10 @@ public struct PlayerUnitData
     //public GameObject PlayerUnitObject;
 
     // 单位的数据
-    public syncPieceData PlayerUnitDataSO;
+    public syncPieceData PlayerUnitDataSO;  
+    
+    // 建筑的数据（如果这是一个建筑单位）
+    public syncBuildingData? BuildingData;  // nullable，只有建筑单位才有值
 
 
     // 该单位是否已经上场
@@ -43,7 +46,7 @@ public struct PlayerUnitData
     public int originalOwnerID;          // 原始所有者ID（用于归还控制权）
 
 
-    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1)
+    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1, syncBuildingData? buildingData = null)
     {
         UnitID = unitId;
         UnitType = type;
@@ -54,6 +57,7 @@ public struct PlayerUnitData
         bIsCharmed = isCharmed;
         charmedRemainingTurns = charmedTurns;
         originalOwnerID = originalOwner;
+        BuildingData = buildingData;
     }
     public void ChangeUnitDataSO(syncPieceData unitData)
     {
@@ -62,6 +66,18 @@ public struct PlayerUnitData
     public void SetCanDoAction(bool canDo)
     {
         bCanDoAction = canDo;
+    }
+
+    // 判断是否为建筑单位
+    public bool IsBuilding()
+    {
+        return BuildingData.HasValue;
+    }
+
+    // 获取建筑数据
+    public syncBuildingData? GetBuildingData()
+    {
+        return BuildingData;
     }
 }
 
@@ -291,11 +307,12 @@ public class PlayerDataManager : MonoBehaviour
     // *************************
 
     // 生成新的单位ID
-    private int GenerateUnitID()
+    public int GenerateUnitID()
     {
-        int baseId = GameManage.Instance.LocalPlayerID * 10000;
-        Debug.Log("new generatr unit ID is " + baseId);
-        return baseId + (unitIdCounter++);
+        int baseId = GameManage.Instance.LocalPlayerID * 10000 + unitIdCounter;
+        Debug.Log("new generate unit ID is " + baseId);
+        unitIdCounter++;
+        return baseId;
     }
 
     // 重置ID计数器（用于新游戏开始时）
@@ -363,7 +380,7 @@ public class PlayerDataManager : MonoBehaviour
                 // 触发数据变更事件
                 OnPlayerDataChanged?.Invoke(playerId, data);
 
-                Debug.Log($"[PlayerDataManager] 玩家 {playerId} 位置 ({pos.x},{pos.y}) 的单位同步数据已更新");
+                Debug.Log($"[PlayerDataManager] 玩家 {playerId} 位置 ({pos.x},{pos.y}) 的{newData.pieceID}同步数据已更新");
                 return true;
             }
             else
@@ -567,7 +584,7 @@ public class PlayerDataManager : MonoBehaviour
     {
         if (allPlayersData.ContainsKey(playerId))
         {
-            int newUnitId = GenerateUnitID();
+            //int newUnitId = GenerateUnitID();
 
             PlayerData data = allPlayersData[playerId];
             data.AddUnit(unitData.pieceID, type, pos, unitObject, unitData);
@@ -576,13 +593,13 @@ public class PlayerDataManager : MonoBehaviour
 
 
             // 添加ID映射
-            unitIdToPlayerIdMap[newUnitId] = playerId;
+            unitIdToPlayerIdMap[unitData.pieceID] = playerId;
 
             // 触发事件
-            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitData));
+            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(unitData.pieceID, type, pos, unitData));
             OnPlayerDataChanged?.Invoke(playerId, data);
 
-            return newUnitId;
+            return unitData.pieceID;
         }
         return -1; // 失败返回-1
     }
