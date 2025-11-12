@@ -107,7 +107,7 @@ public struct PlayerData
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
         Resources = 0;
-        PlayerReligion = Religion.SilkReligion;
+        PlayerReligion = SceneStateManager.Instance.PlayerReligion;
         PlayerOwnedCells = new List<int>();
     }
     public bool UpdateUnitSyncDataByPos(int2 position, syncPieceData newData)
@@ -251,6 +251,10 @@ public struct PlayerData
     {
         return PlayerUnits.Count;
     }
+    public void SetReligion()
+    {
+        PlayerReligion = SceneStateManager.Instance.PlayerReligion;
+    }
 
 }
 
@@ -333,15 +337,15 @@ public class PlayerDataManager : MonoBehaviour
         if (!allPlayersData.ContainsKey(playerId))
         {
             allPlayersData[playerId] = new PlayerData(playerId);
-            Debug.Log($"PlayerDataManager: 创建玩家 {playerId}");
+            //allPlayersData[playerId].SetReligion();
+            Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }
         else
         {
             Debug.LogWarning($"PlayerDataManager: 玩家 {playerId} 已存在");
         }
-
-        // 设置玩家宗教
-        PieceManager.Instance.SetPieceRligion(allPlayersData[GameManage.Instance.LocalPlayerID].PlayerReligion);
+        PieceManager.Instance.SetPieceRligion(allPlayersData[playerId].PlayerReligion);
+    
     }
 
     // 获取玩家数据
