@@ -166,7 +166,7 @@ public class GameSceneUIManager : MonoBehaviour
     private void CreatePlayerListItem(PlayerInfo player)
     {
         // 使用预制体创建玩家列表项
-        GameObject item = Instantiate(PlayerItemPrefab, this.GetComponent<Canvas>().transform.Find("NetRoomUI").transform);
+        GameObject item = Instantiate(PlayerItemPrefab, NetRoomUIObject.transform);
         item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[(int)player.PlayerId];
        
         playerListItems[player.PlayerId] = item;

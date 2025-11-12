@@ -10,6 +10,9 @@ using GameData;
 using GamePieces;
 using UnityEngine.UI;
 using static UnityEditor.PlayerSettings;
+using Mono.Cecil;
+using UnityEngine.Rendering.Universal;
+
 
 /// <summary>
 /// 玩家操作管理，负责处理因玩家操作导致的数据变动
@@ -30,6 +33,9 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 点击到的格子的id
     private int ClickCellid;
+
+    // 点击到准备建造建筑的格子的id
+    private int ClickBuildingCellid;
 
     // 射线检测指定为cell层级
     private int RayTestLayerMask = 1 << 6;
@@ -59,15 +65,15 @@ public class PlayerOperationManager : MonoBehaviour
     // 玩家数据管理器引用
     //private PlayerDataManager playerDataManager;
 
-    // 本地玩家ID
-    private int localPlayerId = -1;
+    // 格子list，检测移动范围用
+    List<HexCell> HexCellList = new List<HexCell>();
+                   
+
+// 本地玩家ID
+private int localPlayerId = -1;
 
     private int selectCellID;
 
-    //// 是否选中了农民
-    //private bool bIsChooseFarmer;
-    //// 是否选中了传教士
-    //private bool bIsChooseMissionary;
 
     // 保存攻击前的原始位置（用于"移动+攻击"场景）
     private int2? attackerOriginalPosition = null;
@@ -117,23 +123,30 @@ public class PlayerOperationManager : MonoBehaviour
             HandleMouseInput();
 
         }
-        if (Input.GetKeyDown(KeyCode.F) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+        if (Input.GetKeyDown(KeyCode.B) 
+            && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
         {
-            // 农民生成建筑
+            //ClickBuildingCellid = ClickCellid;
+
+            syncBuildingData buildData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateBuildingByName(
+                         "紅月教_特殊建築", localPlayerId, PlayerBoardInforDict[SelectedEmptyCellID].Cells3DPos);
+
+           
         }
-        if (Input.GetKeyDown(KeyCode.H) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
-        {
-            // 传教士魅惑
-        }
+      
         if (Input.GetKeyDown(KeyCode.G) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
         {
             // 传教士占领
             // 通过PieceManager判断
             if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
-                && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
+                && _HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1)
+                && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos) )
             {
-                _HexGrid.GetCell(LastSelectingCellID).Walled = true;
-                PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
+                
+                    _HexGrid.GetCell(LastSelectingCellID).Walled = true;
+                    PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
+                    HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
+              
             }
             else
             {
@@ -147,6 +160,7 @@ public class PlayerOperationManager : MonoBehaviour
     //        输入处理
     // *************************
 
+    #region =====输入处理=====
     private void HandleMouseInput()
     {
         if (IsPointerOverUIElement())
@@ -169,8 +183,6 @@ public class PlayerOperationManager : MonoBehaviour
                     clickCount++;
                     if (clickCount == 2)
                     {
-
-
                         HandleLeftClick(true);
 
                         // 重置计数器
@@ -193,6 +205,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 右键点击 - 移动/攻击
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
+
             _HexGrid.GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
         }
@@ -254,40 +267,30 @@ public class PlayerOperationManager : MonoBehaviour
             // 检查是否点击了自己的单位
             if (localPlayerUnits.ContainsKey(clickPos))
             {
-                // 取消之前的选择
-                ReturnToDefault();
-                SelectedEmptyCellID = -1;
+                    // 取消之前的选择
+                    ReturnToDefault();
+                    SelectedEmptyCellID = -1;
 
 
-                // 选择新单位
-                SelectingUnit = localPlayerUnits[clickPos];
-                SelectingUnit.GetComponent<ChangeMaterial>().Outline();
-                LastSelectingCellID = ClickCellid;
+                    // 选择新单位
+                    SelectingUnit = localPlayerUnits[clickPos];
+                    if (!SelectingUnit.GetComponent<ChangeMaterial>())
+                        SelectingUnit.AddComponent<ChangeMaterial>();
+
+                    SelectingUnit.GetComponent<ChangeMaterial>().Outline();
+                    LastSelectingCellID = ClickCellid;
 
 
-                PlayerDataManager.Instance.nowChooseUnitID = PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos);
-                PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
+                    PlayerDataManager.Instance.nowChooseUnitID = PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos);
+                    PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
 
+                    OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
+                    Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
+             }
 
-                //if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
-                //{
-
-                //    bIsChooseFarmer = true;
-                //    bIsChooseMissionary = false;
-                //}
-                //if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
-                //{
-                //    bIsChooseMissionary = true;
-                //    bIsChooseFarmer = false;
-                //}
-
-
-                OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
-                Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
-
-            }
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
             {
+                ClickBuildingCellid = -1;
                 Debug.Log("Get Enemy Unit " + clickPos);
                 PlayerUnitDataInterface.Instance.SetEnemyUnitPosition(clickPos);
             }
@@ -311,7 +314,6 @@ public class PlayerOperationManager : MonoBehaviour
                     selectCellID = ClickCellid;
                     SelectedEmptyCellID = ClickCellid; // 保存选中的空格子
                                                        //Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
-
 
                 }
                 else
@@ -391,15 +393,6 @@ public class PlayerOperationManager : MonoBehaviour
                         return;
                     }
 
-
-                    //// 【新增】攻击前检查AP
-                    //if (!CheckUnitHasEnoughAP(currentPos, 1))
-                    //{
-                    //    Debug.Log("[攻击] AP不足，无法攻击");
-                    //    return;
-                    //}
-                    //// 攻击敌方单位
-                    //AttackUnit(targetPos, ClickCellid);
                 }
                 else
                 {
@@ -411,12 +404,8 @@ public class PlayerOperationManager : MonoBehaviour
                 // 传教士移动
                 if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
                 {
-                    List<HexCell> list = new List<HexCell>();
-                    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Count; i++)
-                    {
-                        list.Add(_HexGrid.GetCell(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells[i]));
-                    }
-                    if (_HexGrid.SearchCellRange(list, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
+                  
+                    if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
                     {
                         MoveToSelectCell(ClickCellid);
                     }
@@ -450,12 +439,24 @@ public class PlayerOperationManager : MonoBehaviour
     {
         return 0;
     }
-
+    #endregion
     // *************************
     //         公有函数
     // *************************
 
+    #region =====创建相关=====
 
+
+    // 显示当前农民所在位置，等待点选后消耗行动力创建建筑
+    private void ShowBuildingPos()
+    {
+
+    }
+    // 得到建造完成消息
+    public void GetBuildingOver()
+    {
+
+    }
 
     /// <summary>
     /// 尝试在当前选中的空格子创建单位
@@ -527,7 +528,7 @@ public class PlayerOperationManager : MonoBehaviour
         return true;
     }
 
-
+    #endregion
 
     /// <summary>
     /// 初始化玩家
@@ -563,6 +564,7 @@ public class PlayerOperationManager : MonoBehaviour
     //        回合相关
     // *************************
 
+    #region ====回合管理====
     // 回合开始
     public void TurnStart()
     {
@@ -576,7 +578,6 @@ public class PlayerOperationManager : MonoBehaviour
             unit.SetCanDoAction(true);
             Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + " canDo is " + unit.bCanDoAction);
         }
-
     }
 
     // 回合结束
@@ -651,40 +652,27 @@ public class PlayerOperationManager : MonoBehaviour
 
         }
 
-
-
-        // 清除旧的单位显示
-        //foreach (var unit in otherPlayersUnits[playerId].Values)
-        //{
-        //    if (unit != null)
-        //    {
-        //        Destroy(unit);
-        //        Debug.Log("otherPlayers unit is " + unit.name);
-        //    }
-
-        //}
-        //otherPlayersUnits[playerId].Clear();
-
         // 创建新的单位显示
 
         for (int i = 0; i < data.PlayerUnits.Count; i++)
         {
             PlayerUnitData unit = data.PlayerUnits[i];
 
-            Debug.LogWarning($"创建敌方单位: {unit.UnitType} at ({unit.Position.x},{unit.Position.y}" +
-                $" player ID:{unit.PlayerUnitDataSO.playerID}) unit ID:{unit.PlayerUnitDataSO.pieceID}");
-
+         
             if (otherPlayersUnits[playerId].ContainsKey(unit.Position))
             {
                 Debug.Log($"单位已存在，跳过创建");
                 continue;
             }
 
+            Debug.LogWarning($"创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}" +
+               $" player ID:{unit.PlayerUnitDataSO.currentPID}) unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
             CreateEnemyUnit(playerId, unit);
         }
     }
 
+    #endregion
     // *************************
     //        私有函数
     // *************************
@@ -732,6 +720,13 @@ public class PlayerOperationManager : MonoBehaviour
             case CardType.Pope:
                 pieceType = PieceType.Pope;
                 GetStartWall(cellId);
+
+                // init Hex Cell List
+                for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Count; i++)
+                {
+                    HexCellList.Add(_HexGrid.GetCell(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells[i]));
+                }
+
                 break;
             default:
                 Debug.LogError($"未知的单位类型: {unitType}");
@@ -778,6 +773,7 @@ public class PlayerOperationManager : MonoBehaviour
     //         单位相关
     // *************************
 
+    #region ====创建单位相关====
     // 创建玩家教皇
     private void CreatePlayerPope(int startBoardID)
     {
@@ -793,24 +789,6 @@ public class PlayerOperationManager : MonoBehaviour
 
 
         GameManage.Instance._GameCamera.GetPlayerPosition(GameManage.Instance.FindCell(startBoardID).Cells3DPos);
-
-    }
-
-    // 单位使用技能
-    public void UnitUseSkill(CardType type)
-    {
-        switch (type)
-        {
-            case CardType.Farmer:
-
-                break;
-
-            case CardType.Missionary:
-
-                break;
-
-
-        }
 
     }
     // 创建敌方单位
@@ -833,6 +811,11 @@ public class PlayerOperationManager : MonoBehaviour
             }
         }
 
+        if (unitData.PlayerUnitDataSO.pieceID == 0)
+        {
+            Debug.Log("创建失败！ syncPieceData为空！");
+        }
+        Debug.Log("创建敌方单位 :玩家 " + playerId + " 单位: " + unitData.PlayerUnitDataSO.piecetype);
         // 选择预制体
         PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
 
@@ -861,6 +844,30 @@ public class PlayerOperationManager : MonoBehaviour
         //PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
 
     }
+
+    #endregion
+
+
+    // 单位使用技能
+    public void UnitUseSkill(CardType type)
+    {
+        switch (type)
+        {
+            case CardType.Farmer:
+
+                break;
+
+            case CardType.Missionary:
+
+                break;
+
+
+        }
+
+    }
+
+
+   
 
     // 移动到选择的棋盘
     private void MoveToSelectCell(int targetCellId)
@@ -932,8 +939,10 @@ public class PlayerOperationManager : MonoBehaviour
                 localPlayerUnits.Remove(fromPos);
                 localPlayerUnits[toPos] = SelectingUnit;
 
+                //_HexGrid.GetCell(fromPos.x, fromPos.y).Unit = false;
+                //_HexGrid.GetCell(toPos.x, toPos.y).Unit = true;
                 // 更新格子上是否有单位
-
+                //Debug.Log("移动成功！cell x " + toPos.x + " cell y " + toPos.y + "  cell unit is " + _HexGrid.GetCell(toPos.x, toPos.y).Unit);
 
                 // 更新GameManage的格子对象
                 GameManage.Instance.MoveCellObject(fromPos, toPos);
@@ -989,6 +998,7 @@ public class PlayerOperationManager : MonoBehaviour
         else
         {
             _HexGrid.ClearPath();
+            //Debug.Log("移动失败！cell x "+toPos.x+" cell y "+toPos.y+"  cell unit is " + _HexGrid.GetCell(toPos.x, toPos.y).Unit);
             bCanContinue = true;
         }
 
@@ -1068,11 +1078,8 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
-    // ============================================
-    // 新增方法4：ExecuteAttack
-    // 在当前位置执行攻击（必须已经在攻击范围内）
-    // ============================================
-
+    #region ====攻击====
+ 
     /// <summary>
     /// 在当前位置执行攻击，目标必须在相邻格
     /// </summary>
@@ -1190,146 +1197,6 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
-    // ============================================
-    // ExecuteCharm - 传教士魅惑敌方单位
-    // ============================================
-    private void ExecuteCharm(int2 targetPos, int targetOwnerId)
-    {
-        if (SelectingUnit == null) return;
-
-        // 获取传教士位置
-        int2 missionaryPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
-
-        // 必须在相邻格才能魅惑
-        if (!IsAdjacentPosition(missionaryPos, targetPos))
-        {
-            Debug.LogError("[ExecuteCharm] 错误：目标不在魅惑范围内！");
-            bCanContinue = true;
-            return;
-        }
-
-        // 获取传教士数据
-        PlayerUnitData? missionaryData = PlayerDataManager.Instance.FindUnit(localPlayerId, missionaryPos);
-        if (!missionaryData.HasValue)
-        {
-            Debug.LogError("[ExecuteCharm] 找不到传教士数据");
-            bCanContinue = true;
-            return;
-        }
-
-        // 获取目标数据
-        PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, targetPos);
-        if (!targetData.HasValue)
-        {
-            Debug.LogError("[ExecuteCharm] 找不到目标数据");
-            bCanContinue = true;
-            return;
-        }
-
-        // 获取双方的 PieceID
-        int missionaryPieceID = missionaryData.Value.PlayerUnitDataSO.pieceID;
-        int targetPieceID = targetData.Value.PlayerUnitDataSO.pieceID;
-
-        Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
-
-        // 调用PieceManager的ConvertEnemy方法
-        syncPieceData? convertResult = PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID);
-
-        if (!convertResult.HasValue)
-        {
-            Debug.Log("[ExecuteCharm] 魅惑失败！");
-            bCanContinue = true;
-            return;
-        }
-
-        Debug.Log("[ExecuteCharm] 魅惑成功！创建新的我方单位: "+ convertResult.Value.piecetype);
-
-        // 获取目标GameObject
-        GameObject targetUnit = null;
-        if (otherPlayersUnits.ContainsKey(targetOwnerId) &&
-            otherPlayersUnits[targetOwnerId].ContainsKey(targetPos))
-        {
-            targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
-        }
-
-        // 1. 消灭敌方单位（从敌方玩家移除）
-        PlayerDataManager.Instance.RemoveUnit(targetOwnerId, targetPos);
-
-        // 销毁敌方单位GameObject
-        if (targetUnit != null)
-        {
-            // 播放消失动画
-            targetUnit.transform.DOScale(0f, 0.5f).OnComplete(() =>
-            {
-                if (otherPlayersUnits.ContainsKey(targetOwnerId))
-                {
-                    otherPlayersUnits[targetOwnerId].Remove(targetPos);
-                }
-                Destroy(targetUnit);
-            });
-        }
-
-        // 2. 在该位置创建新的我方单位（使用返回的syncPieceData）
-        syncPieceData newUnitData = convertResult.Value;
-        newUnitData.playerID = localPlayerId; // 设置为本地玩家
-
-        // 使用PieceManager创建新的己方棋子
-        bool createSuccess = PieceManager.Instance.CreateEnemyPiece(newUnitData);
-
-        if (createSuccess)
-        {
-            // 获取创建的GameObject
-            GameObject newUnitObj = PieceManager.Instance.GetPieceGameObject();
-
-            if (newUnitObj != null)
-            {
-                // 添加到本地玩家单位字典
-                localPlayerUnits[targetPos] = newUnitObj;
-
-                // 更新GameManage的格子对象
-                GameManage.Instance.SetCellObject(targetPos, newUnitObj);
-
-                // 3. 将新单位标记为被魅惑状态，并添加到PlayerDataManager
-                CardType unitType = ConvertPieceTypeToCardType(newUnitData.piecetype);
-
-                // 添加到PlayerDataManager（先使用标准方法添加）
-                int newUnitID = PlayerDataManager.Instance.AddUnit(
-                    localPlayerId,
-                    unitType,
-                    targetPos,
-                    newUnitData,
-                    null,  // GameObject由PieceManager管理
-                    false  // isUsed
-                );
-
-                // 然后设置魅惑状态
-                if (newUnitID >= 0)
-                {
-                    PlayerDataManager.Instance.SetUnitCharmed(localPlayerId, targetPos, targetOwnerId, 3);
-                    Debug.Log($"[ExecuteCharm] 创建被魅惑单位成功 - 新单位ID:{newUnitID}, 原所有者:{targetOwnerId}, 剩余回合:3");
-                }
-
-                // 4. 网络同步魅惑操作
-                SyncLocalUnitCharm(missionaryPieceID, missionaryPos, targetPieceID, targetOwnerId, targetPos, newUnitData);
-
-                // 播放魅惑特效（可选）
-                if (newUnitObj != null)
-                {
-                    newUnitObj.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
-                }
-            }
-            else
-            {
-                Debug.LogError("[ExecuteCharm] 无法获取创建的GameObject");
-            }
-        }
-        else
-        {
-            Debug.LogError("[ExecuteCharm] PieceManager.CreateEnemyPiece 失败");
-        }
-
-        bCanContinue = true;
-    }
 
     // ============================================
     // 新增方法5：ExecuteMoveToDeadTargetPosition
@@ -1724,6 +1591,125 @@ public class PlayerOperationManager : MonoBehaviour
     }
 
 
+
+    #endregion
+
+
+    #region ====魅惑====
+    // ============================================
+    // ExecuteCharm - 传教士魅惑敌方单位
+    // ============================================
+    private void ExecuteCharm(int2 targetPos, int targetOwnerId)
+    {
+        if (SelectingUnit == null) return;
+
+        // 获取传教士位置
+        int2 missionaryPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
+
+        // 必须在相邻格才能魅惑
+        if (!IsAdjacentPosition(missionaryPos, targetPos))
+        {
+            Debug.LogError("[ExecuteCharm] 错误：目标不在魅惑范围内！");
+            bCanContinue = true;
+            return;
+        }
+
+        // 获取传教士数据
+        PlayerUnitData? missionaryData = PlayerDataManager.Instance.FindUnit(localPlayerId, missionaryPos);
+        if (!missionaryData.HasValue)
+        {
+            Debug.LogError("[ExecuteCharm] 找不到传教士数据");
+            bCanContinue = true;
+            return;
+        }
+
+        // 获取目标数据
+        PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, targetPos);
+        if (!targetData.HasValue)
+        {
+            Debug.LogError("[ExecuteCharm] 找不到目标数据");
+            bCanContinue = true;
+            return;
+        }
+        else
+        {
+
+            Debug.Log("已找到对方数据: "+targetData.Value.PlayerUnitDataSO.piecetype);
+        }
+        // 获取双方的 PieceID
+        int missionaryPieceID = missionaryData.Value.PlayerUnitDataSO.pieceID;
+        int targetPieceID = targetData.Value.PlayerUnitDataSO.pieceID;
+
+        Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
+
+        // 调用PieceManager的ConvertEnemy方法
+        PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID);
+        syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
+
+
+        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
+
+        // 获取目标GameObject（需要转移到本地玩家）
+        GameObject targetUnit = null;
+        if (otherPlayersUnits.ContainsKey(targetOwnerId) &&
+            otherPlayersUnits[targetOwnerId].ContainsKey(targetPos))
+        {
+            targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
+            Debug.Log("获取目标unit!");
+        }
+
+
+        // 1. 在PlayerDataManager中转移单位所有权
+        syncPieceData newUnitData = convertResult;
+        newUnitData.currentPID = localPlayerId; // 设置为本地玩家
+
+        bool transferSuccess = PlayerDataManager.Instance.TransferUnitOwnership(
+            targetOwnerId,      // 从原所有者
+            localPlayerId,      // 转移给本地玩家
+            targetPos,          // 位置
+            newUnitData,        // 更新后的同步数据
+            3                   // 魅惑持续3回合
+        );
+
+        if (!transferSuccess)
+        {
+            Debug.LogError("[ExecuteCharm] 转移单位所有权失败");
+            bCanContinue = true;
+            return;
+        }
+
+        // 2. 更新GameObject的字典引用
+        if (targetUnit != null)
+        {
+            // 从敌方字典移除
+            if (otherPlayersUnits.ContainsKey(targetOwnerId))
+            {
+                otherPlayersUnits[targetOwnerId].Remove(targetPos);
+            }
+
+            // 添加到本地玩家字典
+            localPlayerUnits[targetPos] = targetUnit;
+
+        
+            // 播放魅惑特效
+            targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
+
+            Debug.Log($"[ExecuteCharm] 单位GameObject已转移到本地玩家控制");
+        }
+        else
+        {
+            Debug.LogWarning("[ExecuteCharm] 未找到目标GameObject，但数据层转移成功");
+        }
+
+        // 3. 网络同步魅惑操作（使用更新后的数据）
+        SyncLocalUnitCharm(missionaryPieceID, missionaryPos, targetPieceID, targetOwnerId, targetPos, newUnitData);
+
+        Debug.Log($"[ExecuteCharm] 魅惑完成 - 原所有者:{targetOwnerId}, 新所有者:{localPlayerId}");
+
+        bCanContinue = true;
+    }
+
+
     // 处理来自网络的魅惑消息
     public void HandleNetworkCharm(UnitCharmMessage msg)
     {
@@ -1738,91 +1724,155 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[网络魅惑] 玩家 {msg.MissionaryPlayerId} 魅惑单位 at ({targetPos.x},{targetPos.y})");
 
-        // 1. 获取并销毁目标单位GameObject
+
+        // 1. 在PlayerDataManager中转移单位所有权
+        bool transferSuccess = PlayerDataManager.Instance.TransferUnitOwnership(
+            msg.TargetPlayerId,         // 从原所有者
+            msg.MissionaryPlayerId,     // 转移给魅惑者
+            targetPos,                  // 位置
+            msg.NewUnitSyncData,        // 更新后的同步数据
+            msg.CharmedTurns            // 魅惑持续回合数
+        );
+
+        if (!transferSuccess)
+        {
+            Debug.LogError("[网络魅惑] 转移单位所有权失败");
+            return;
+        }
+
+        // 2. 更新GameObject的字典引用
         GameObject targetUnit = null;
 
+        // 从原所有者字典中获取单位
         if (msg.TargetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
         {
-            // 我的单位被魅惑了
             targetUnit = localPlayerUnits[targetPos];
             localPlayerUnits.Remove(targetPos);
+            Debug.Log("Get Units Local:" + targetUnit.name);
         }
         else if (otherPlayersUnits.ContainsKey(msg.TargetPlayerId) &&
                  otherPlayersUnits[msg.TargetPlayerId].ContainsKey(targetPos))
         {
-            // 其他玩家的单位被魅惑
             targetUnit = otherPlayersUnits[msg.TargetPlayerId][targetPos];
             otherPlayersUnits[msg.TargetPlayerId].Remove(targetPos);
+            Debug.Log("Get Units Other:" + targetUnit.name);
         }
 
-        // 销毁原单位GameObject
-        if (targetUnit != null)
+        if (targetUnit == null)
         {
-            targetUnit.transform.DOScale(0f, 0.5f).OnComplete(() => Destroy(targetUnit));
-        }
+            Debug.LogWarning($"[网络魅惑] 未找到目标GameObject at ({targetPos.x},{targetPos.y})，尝试创建");
 
-        // 2. 从原所有者的PlayerDataManager移除
-        PlayerDataManager.Instance.RemoveUnit(msg.TargetPlayerId, targetPos);
+            // 从PlayerDataManager获取单位数据
+            PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(msg.MissionaryPlayerId, targetPos);
 
-        // 3. 创建新的被魅惑单位（属于魅惑者）
-        bool createSuccess = PieceManager.Instance.CreateEnemyPiece(msg.NewUnitSyncData);
-
-        if (createSuccess)
-        {
-            GameObject newUnitObj = PieceManager.Instance.GetPieceGameObject();
-
-            if (newUnitObj != null)
+            if (unitData.HasValue)
             {
-                // 添加到魅惑者的单位字典
-                if (msg.MissionaryPlayerId == localPlayerId)
+                // 创建GameObject
+                targetUnit = CreateUnitGameObject(msg.MissionaryPlayerId, unitData.Value);
+
+                if (targetUnit != null)
                 {
-                    localPlayerUnits[targetPos] = newUnitObj;
+                    Debug.Log($"[网络魅惑] 成功创建目标单位GameObject");
                 }
                 else
                 {
-                    if (!otherPlayersUnits.ContainsKey(msg.MissionaryPlayerId))
-                    {
-                        otherPlayersUnits[msg.MissionaryPlayerId] = new Dictionary<int2, GameObject>();
-                    }
-                    otherPlayersUnits[msg.MissionaryPlayerId][targetPos] = newUnitObj;
-                }
-
-                // 更新GameManage的格子对象
-                GameManage.Instance.SetCellObject(targetPos, newUnitObj);
-
-                // 添加到PlayerDataManager（魅惑者的单位列表）
-                CardType unitType = ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype);
-
-                int newUnitID = PlayerDataManager.Instance.AddUnit(
-                    msg.MissionaryPlayerId,
-                    unitType,
-                    targetPos,
-                    msg.NewUnitSyncData,
-                    null,
-                    true
-                );
-
-                // 设置魅惑状态
-                if (newUnitID >= 0)
-                {
-                    PlayerDataManager.Instance.SetUnitCharmed(
-                        msg.MissionaryPlayerId,
-                        targetPos,
-                        msg.TargetPlayerId,
-                        msg.CharmedTurns
-                    );
-                }
-
-                Debug.Log($"[网络魅惑] 创建被魅惑单位成功 - 新所有者:{msg.MissionaryPlayerId}, 原所有者:{msg.TargetPlayerId}");
-
-                // 播放魅惑特效
-                if (newUnitObj != null)
-                {
-                    newUnitObj.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
+                    Debug.LogError($"[网络魅惑] 创建GameObject失败");
+                    return;
                 }
             }
+            else
+            {
+                Debug.LogError($"[网络魅惑] 无法从PlayerDataManager获取单位数据");
+                return;
+            }
         }
+
+        // 添加到新所有者字典
+        if (targetUnit != null)
+        {
+            if (msg.MissionaryPlayerId == localPlayerId && !localPlayerUnits.ContainsKey(targetPos))
+            {
+                localPlayerUnits[targetPos] = targetUnit;
+                Debug.Log($"[网络魅惑] 单位添加到本地玩家字典");
+            }
+            else
+            {
+                if (!otherPlayersUnits.ContainsKey(msg.MissionaryPlayerId))
+                {
+                    otherPlayersUnits[msg.MissionaryPlayerId] = new Dictionary<int2, GameObject>();
+                }
+                otherPlayersUnits[msg.MissionaryPlayerId][targetPos] = targetUnit;
+                Debug.Log($"[网络魅惑] 单位添加到玩家{msg.MissionaryPlayerId}字典");
+            }
+
+            // 播放魅惑特效
+            targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
+
+            Debug.Log($"[网络魅惑] 单位GameObject已转移 - 从玩家{msg.TargetPlayerId}到玩家{msg.MissionaryPlayerId}");
+        }
+        else
+        {
+            Debug.LogWarning("[网络魅惑] 未找到目标GameObject，但数据层转移成功");
+        }
+
+        Debug.Log($"[网络魅惑] 转移完成 - 新所有者:{msg.MissionaryPlayerId}, 原所有者:{msg.TargetPlayerId}");
     }
+
+    /// <summary>
+    /// 创建单位GameObject（用于网络同步时创建缺失的GameObject）
+    /// </summary>
+    /// <param name="playerId">单位所属玩家ID</param>
+    /// <param name="unitData">单位数据</param>
+    /// <returns>创建的GameObject，失败返回null</returns>
+    private GameObject CreateUnitGameObject(int playerId, PlayerUnitData unitData)
+    {
+        // 获取单位类型对应的预制体
+        PieceType pieceType = ConvertCardTypeToPieceType(unitData.UnitType);
+
+        // 使用PieceManager创建单位
+        bool success = PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
+
+        if (!success)
+        {
+            Debug.LogError($"[CreateUnitGameObject] PieceManager创建失败: {unitData.UnitType}");
+            return null;
+        }
+
+        // 获取创建的GameObject
+        GameObject unitObj = PieceManager.Instance.GetPieceGameObject();
+
+        if (unitObj == null)
+        {
+            Debug.LogError($"[CreateUnitGameObject] 获取GameObject失败");
+            return null;
+        }
+
+        // 设置位置
+        Vector3 worldPos = Vector3.zero;
+        foreach (var board in PlayerBoardInforDict.Values)
+        {
+            if (board.Cells2DPos.Equals(unitData.Position))
+            {
+                worldPos = board.Cells3DPos;
+                break;
+            }
+        }
+
+        unitObj.transform.position = new Vector3(
+            worldPos.x,
+            worldPos.y + 2.5f,
+            worldPos.z
+        );
+
+        // 更新GameManage的格子对象
+        GameManage.Instance.SetCellObject(unitData.Position, unitObj);
+
+        Debug.Log($"[CreateUnitGameObject] 成功创建单位: {unitData.UnitType} at ({unitData.Position.x},{unitData.Position.y})");
+
+        return unitObj;
+    }
+
+
 
     // 处理来自网络的魅惑过期消息
     public void HandleNetworkCharmExpire(CharmExpireMessage msg)
@@ -1831,9 +1881,31 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[网络魅惑过期] 单位 {msg.UnitID} 归还给玩家 {msg.OriginalOwnerId}");
 
-        // 1. 从当前控制者移除单位
+        // ===== 关键修改：不删除重建GameObject，直接转移所有权 =====
+
+        // 1. 更新同步数据中的playerID
+        syncPieceData returnedData = msg.UnitSyncData;
+        returnedData.currentPID = msg.OriginalOwnerId;
+
+        // 2. 在PlayerDataManager中转移单位所有权（归还给原所有者，解除魅惑状态）
+        bool transferSuccess = PlayerDataManager.Instance.TransferUnitOwnership(
+            msg.CurrentOwnerId,     // 从当前控制者
+            msg.OriginalOwnerId,    // 归还给原所有者
+            pos,                    // 位置
+            returnedData,           // 更新后的同步数据
+            0                       // 魅惑回合数为0（解除魅惑）
+        );
+
+        if (!transferSuccess)
+        {
+            Debug.LogError("[网络魅惑过期] 转移单位所有权失败");
+            return;
+        }
+
+        // 3. 更新GameObject的字典引用
         GameObject unitObj = null;
 
+        // 从当前控制者字典中获取单位
         if (msg.CurrentOwnerId == localPlayerId && localPlayerUnits.ContainsKey(pos))
         {
             unitObj = localPlayerUnits[pos];
@@ -1846,60 +1918,31 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[msg.CurrentOwnerId].Remove(pos);
         }
 
-        // 从PlayerDataManager移除
-        PlayerDataManager.Instance.RemoveUnit(msg.CurrentOwnerId, pos);
-
-        // 如果有GameObject，暂时销毁它，因为我们会通过PieceManager重新创建
+        // 添加到原所有者字典
         if (unitObj != null)
         {
-            Destroy(unitObj);
-        }
-
-        // 2. 重新创建单位（更新playerID为原所有者）
-        syncPieceData returnedData = msg.UnitSyncData;
-        returnedData.playerID = msg.OriginalOwnerId;
-
-        bool createSuccess = PieceManager.Instance.CreateEnemyPiece(returnedData);
-
-        if (createSuccess)
-        {
-            GameObject newUnitObj = PieceManager.Instance.GetPieceGameObject();
-
-            if (newUnitObj != null)
+            if (msg.OriginalOwnerId == localPlayerId)
             {
-                // 添加到原所有者的单位字典
-                if (msg.OriginalOwnerId == localPlayerId)
-                {
-                    localPlayerUnits[pos] = newUnitObj;
-                }
-                else
-                {
-                    if (!otherPlayersUnits.ContainsKey(msg.OriginalOwnerId))
-                    {
-                        otherPlayersUnits[msg.OriginalOwnerId] = new Dictionary<int2, GameObject>();
-                    }
-                    otherPlayersUnits[msg.OriginalOwnerId][pos] = newUnitObj;
-                }
-
-                // 更新GameManage的格子对象
-                GameManage.Instance.SetCellObject(pos, newUnitObj);
-
-                // 添加到PlayerDataManager（归还给原所有者，不再是魅惑状态）
-                CardType unitType = ConvertPieceTypeToCardType(returnedData.piecetype);
-
-                PlayerDataManager.Instance.AddUnit(
-                    msg.OriginalOwnerId,
-                    unitType,
-                    pos,
-                    returnedData,
-                    null,
-                    true
-                );
-                // 魅惑状态已经在ReturnCharmedUnit中重置，这里不需要再设置
-
-                Debug.Log($"[网络魅惑过期] 单位归还成功 - 原所有者:{msg.OriginalOwnerId}");
+                localPlayerUnits[pos] = unitObj;
             }
+            else
+            {
+                if (!otherPlayersUnits.ContainsKey(msg.OriginalOwnerId))
+                {
+                    otherPlayersUnits[msg.OriginalOwnerId] = new Dictionary<int2, GameObject>();
+                }
+                otherPlayersUnits[msg.OriginalOwnerId][pos] = unitObj;
+            }
+            PieceManager.Instance.AddConvertedUnit(msg.OriginalOwnerId, msg.UnitID);
+
+            Debug.Log($"[网络魅惑过期] 单位GameObject已归还 - 从玩家{msg.CurrentOwnerId}到玩家{msg.OriginalOwnerId}");
         }
+        else
+        {
+            Debug.LogWarning("[网络魅惑过期] 未找到单位GameObject，但数据层转移成功");
+        }
+
+        Debug.Log($"[网络魅惑过期] 归还完成 - 原所有者:{msg.OriginalOwnerId}");
     }
 
     // 处理本地魅惑过期（不通过网络，直接在本地处理）
@@ -1909,55 +1952,61 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[本地魅惑过期] 单位 {expireInfo.UnitID} 归还给玩家 {expireInfo.OriginalOwnerID}");
 
-        // 1. 从当前控制者（本地玩家）移除单位GameObject
+        // ===== 关键修改：不删除重建GameObject，直接转移所有权 =====
+
+        // 1. 更新同步数据中的playerID
+        syncPieceData returnedData = expireInfo.UnitData.PlayerUnitDataSO;
+        returnedData.currentPID = expireInfo.OriginalOwnerID;
+
+        // 2. 在PlayerDataManager中转移单位所有权（已经在UpdateCharmedUnits中处理了移除，这里只需添加回去）
+        // 注意：UpdateCharmedUnits已经从当前玩家移除了单位，所以这里直接归还即可
+        PlayerDataManager.Instance.ReturnCharmedUnit(expireInfo.OriginalOwnerID, expireInfo.UnitData);
+
+        // 3. 更新GameObject的字典引用
         GameObject unitObj = null;
 
+        // 从本地玩家字典中获取单位
         if (localPlayerUnits.ContainsKey(pos))
         {
             unitObj = localPlayerUnits[pos];
             localPlayerUnits.Remove(pos);
         }
 
-        // 如果有GameObject，暂时销毁它
+        // 添加到原所有者字典
         if (unitObj != null)
         {
-            Destroy(unitObj);
-        }
-
-        // 2. 重新创建单位（更新playerID为原所有者）
-        syncPieceData returnedData = expireInfo.UnitData.PlayerUnitDataSO;
-        returnedData.playerID = expireInfo.OriginalOwnerID;
-
-        bool createSuccess = PieceManager.Instance.CreateEnemyPiece(returnedData);
-
-        if (createSuccess)
-        {
-            GameObject newUnitObj = PieceManager.Instance.GetPieceGameObject();
-
-            if (newUnitObj != null)
+            if (expireInfo.OriginalOwnerID == localPlayerId)
             {
-                // 添加到原所有者的单位字典
-                if (expireInfo.OriginalOwnerID == localPlayerId)
-                {
-                    localPlayerUnits[pos] = newUnitObj;
-                }
-                else
-                {
-                    if (!otherPlayersUnits.ContainsKey(expireInfo.OriginalOwnerID))
-                    {
-                        otherPlayersUnits[expireInfo.OriginalOwnerID] = new Dictionary<int2, GameObject>();
-                    }
-                    otherPlayersUnits[expireInfo.OriginalOwnerID][pos] = newUnitObj;
-                }
-
-                // 更新GameManage的格子对象
-                GameManage.Instance.SetCellObject(pos, newUnitObj);
-
-                Debug.Log($"[本地魅惑过期] 单位归还成功 - 原所有者:{expireInfo.OriginalOwnerID}");
+                // 这种情况不应该发生（本地玩家的单位被魅惑后过期，应该通过网络处理）
+                Debug.LogWarning("[本地魅惑过期] 单位归还给本地玩家，这种情况不应该发生");
+                localPlayerUnits[pos] = unitObj;
             }
+            else
+            {
+                if (!otherPlayersUnits.ContainsKey(expireInfo.OriginalOwnerID))
+                {
+                    otherPlayersUnits[expireInfo.OriginalOwnerID] = new Dictionary<int2, GameObject>();
+                }
+                otherPlayersUnits[expireInfo.OriginalOwnerID][pos] = unitObj;
+            }
+
+            Debug.Log($"[本地魅惑过期] 单位GameObject已归还给玩家{expireInfo.OriginalOwnerID}");
         }
+        else
+        {
+            Debug.LogWarning("[本地魅惑过期] 未找到单位GameObject，但数据层转移成功");
+        }
+
+        // 4. 网络同步魅惑过期
+        SyncCharmExpire(expireInfo.UnitID, pos, expireInfo.OriginalOwnerID, returnedData);
+
+        Debug.Log($"[本地魅惑过期] 归还完成 - 原所有者:{expireInfo.OriginalOwnerID}");
     }
 
+
+
+
+    #endregion
 
 
     // 处理来自网络的移动消息
@@ -2075,28 +2124,11 @@ public class PlayerOperationManager : MonoBehaviour
         {
             Debug.LogError($"[HandleNetworkAddUnit] PieceManager.Instance 为 null");
         }
-        //// 更新数据
-        //if (PlayerDataManager.Instance != null)
-        //{
-        //    PlayerDataManager.Instance.AddUnit(msg.PlayerId, unitType, pos,
-        //        msg.NewUnitSyncData);
-        //}
-
-        //// 创建单位
-        //int unitId = PlayerDataManager.Instance.GetUnitIDBy2DPos(pos);
-        //PlayerUnitData unitData = new PlayerUnitData(unitId, unitType, pos,
-        //   msg.NewUnitSyncData, msg.IsUsed);
-
-        //CreateEnemyUnit(msg.PlayerId, unitData);
-
-        //Debug.Log($"[网络创建] 完成");
+     
     }
 
     // 操作同步管理
-    /// <summary>
-    /// 本地玩家移动单位后调用此方法进行网络同步
-    /// 在 HandleRightClick 中移动完成后调用
-    /// </summary>
+ 
     private void SyncLocalUnitMove(int2 fromPos, int2 toPos)
     {
         // 检查网络连接
@@ -2302,7 +2334,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
-    private void OnUnitRemovedHandler(int playerId, int2 position)
+    private void OnUnitRemovedHandler(int playerId, int2 position,bool isCharm)
     {
         Debug.Log($"[事件] OnUnitRemovedHandler: 玩家 {playerId} at ({position.x},{position.y})");
 
@@ -2310,10 +2342,18 @@ public class PlayerOperationManager : MonoBehaviour
         {
             Debug.Log("[事件] 本地玩家移除单位");
             // 本地玩家移除单位（发生在被攻击时）
-            if (localPlayerUnits.ContainsKey(position))
+            if (localPlayerUnits.ContainsKey(position)&& !isCharm)
             {
                 Destroy(localPlayerUnits[position]);
                 localPlayerUnits.Remove(position);
+            }
+            else
+            {
+                Destroy(localPlayerUnits[position]);
+                localPlayerUnits.Remove(position);
+
+                // 更新魅惑后的新显示
+                UpdateOtherPlayerDisplay(localPlayerId==1?0:1,PlayerDataManager.Instance.GetPlayerData(localPlayerId == 1 ? 0 : 1));
             }
             GameManage.Instance.SetCellObject(position, null);
         }

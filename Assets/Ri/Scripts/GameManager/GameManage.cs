@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using GameData;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -107,8 +108,14 @@ public class GameManage : MonoBehaviour
 
     // 单位创建引用
     public Instantiater _Instantiater;
+
+    // BuildingManager引用
+    public BuildingManager _BuildingManager;
+
     // 玩家数据管理器引用
     private PlayerDataManager _PlayerDataManager;
+
+
 
 
 
@@ -249,6 +256,10 @@ public class GameManage : MonoBehaviour
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
 
+        // 初始化buildingManager
+        _BuildingManager.SetLocalPlayerID(LocalPlayerID);
+        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
+
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
         {
@@ -319,6 +330,10 @@ public class GameManage : MonoBehaviour
             //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
             //_GameCamera.GetPlayerPosition(GameBoardInforDict[PlayerStartPositions[0]].Cells3DPos);
 
+
+            // 初始化buildingManager
+            _BuildingManager.SetLocalPlayerID(LocalPlayerID);
+            _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
 
             Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合
@@ -423,27 +438,12 @@ public class GameManage : MonoBehaviour
         {
             Debug.Log($"[魅惑过期] 单位 {expireInfo.UnitID} at ({expireInfo.Position.x},{expireInfo.Position.y}) 魅惑效果结束，归还给玩家 {expireInfo.OriginalOwnerID}");
 
-            // 从当前玩家移除单位（已在UpdateCharmedUnits中完成）
-            // 归还给原所有者
-            bool returnSuccess = _PlayerDataManager.ReturnCharmedUnit(expireInfo.OriginalOwnerID, expireInfo.UnitData);
-
-            if (returnSuccess)
-            {
-                // 处理GameObject的转移
-                _PlayerOperation.HandleCharmExpireLocal(expireInfo);
-
-                // 网络同步魅惑过期
-                if (_NetGameSystem != null && _NetGameSystem.bIsConnected)
-                {
-                    _NetGameSystem.SendCharmExpireMessage(
-                        LocalPlayerID,
-                        expireInfo.OriginalOwnerID,
-                        expireInfo.UnitID,
-                        expireInfo.Position,
-                        expireInfo.UnitData.PlayerUnitDataSO
-                    );
-                }
-            }
+            // 注意：UpdateCharmedUnits已经从当前玩家移除了单位
+            // HandleCharmExpireLocal会处理：
+            // 1. 数据层转移（TransferUnitOwnership或ReturnCharmedUnit）
+            // 2. GameObject字典更新
+            // 3. 网络同步
+            _PlayerOperation.HandleCharmExpireLocal(expireInfo);
         }
 
         // 获取本地玩家数据
@@ -684,7 +684,7 @@ public class GameManage : MonoBehaviour
             Debug.Log("格子 " + fromPos + " 移除单位: " );
 
             CellObjects[toPos] = obj;
-            _PlayerOperation._HexGrid.GetCell(fromPos.x, fromPos.y).Unit = true;
+            _PlayerOperation._HexGrid.GetCell(toPos.x, toPos.y).Unit = true;
             Debug.Log("格子 " + toPos + " 拥有单位: " + obj.name);
         }
     }

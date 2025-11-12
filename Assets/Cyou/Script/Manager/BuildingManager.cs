@@ -113,7 +113,10 @@ public class BuildingManager : MonoBehaviour
 
         // Prefabから建物を生成
         GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position, Quaternion.identity);
-        Building building = buildingObj.GetComponent<Building>();
+
+        //25.11.10 RI Fix GetComponent Bug
+        //Building building = buildingObj.GetComponent<Building>();
+        Building building = buildingObj.AddComponent<Building>();
 
         if (building == null)
         {
@@ -848,7 +851,8 @@ public struct syncBuildingData
     public int buildingID;
     public string buildingName;
     public int playerID;
-    public Vector3 position;
+    //25.11.10 RI 修改为序列化Vector3
+    public SerializableVector3 position;
 
     // 状態情報
     public int currentHP;

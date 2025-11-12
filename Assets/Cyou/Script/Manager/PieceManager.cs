@@ -5,6 +5,7 @@ using System.Linq;
 using GameData;
 using GamePieces;
 using DG.Tweening.Core.Easing;
+using UnityEngine.UIElements;
 
 //25.11.4 RI 添加序列化Vector3 变量
 
@@ -153,6 +154,9 @@ public class PieceManager : MonoBehaviour
 
     //25.11.1 RI add GameObject
     private GameObject pieceObject;
+
+    //25.11.9 RI add syncPieceData List
+    private Dictionary<int, syncPieceData> allPiecesSyncData = new Dictionary<int, syncPieceData>();
     // ===== 依存関係 =====
     [SerializeField] private UnitListTable unitListTable;
 
@@ -348,6 +352,13 @@ public class PieceManager : MonoBehaviour
             return pieceObject;
         return null;
     }
+
+    // 25.11.1 RI add return piece syncPieceData
+    public syncPieceData GetPieceSyncPieceData(int unitID)
+    {
+        return allPiecesSyncData[unitID];
+    }
+
     /// <summary>
     /// 駒を生成（GameManagerから呼び出し）
     /// </summary>
@@ -396,8 +407,14 @@ public class PieceManager : MonoBehaviour
         Debug.Log($"駒を生成しました: ID={pieceID}, Type={pieceType}, Religion={religion}, PlayerID={playerID}");
         OnPieceCreated?.Invoke(pieceID);
 
-        // 完全な同期データを返す
-        return syncPieceData.CreateFromPiece(piece);
+
+        // 25.11.12 RI change return data
+        syncPieceData pieceData=syncPieceData.CreateFromPiece(piece);
+        allPiecesSyncData.Add(pieceID, pieceData);
+        
+        // 只需要返回基本信息的同步数据
+        return pieceData;
+
     }
 
     /// <summary>
@@ -443,6 +460,9 @@ public class PieceManager : MonoBehaviour
 
         // 记录到全駒集合
         allPieces[spd.pieceID] = piece;
+        //25.11.5 RI add syncPieceData 
+        if(!allPiecesSyncData.ContainsKey(spd.pieceID))
+            allPiecesSyncData.Add(spd.pieceID, spd);
 
         // 死亡イベントを購読
         piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
@@ -819,6 +839,14 @@ public class PieceManager : MonoBehaviour
             .ToList();
     }
 
+    //25.11.9 RI 添加设置玩家id下的魅惑单位归还
+    //public void SetPlayerPieces(int playerID,int unitID)
+    //{
+    //   for()
+       
+    //}
+
+
     /// <summary>
     /// 指定プレイヤーの指定種類の駒IDを取得
     /// </summary>
@@ -1154,6 +1182,18 @@ public class PieceManager : MonoBehaviour
         return false;
     }
 
+
+    // 25.11.9 RI 添加被魅惑单位归还后的特殊数据处理
+    public void AddConvertedUnit(int playerID,int pieceID)
+    {
+        if (allPieces.ContainsKey(pieceID))
+        {
+            allPieces[pieceID].SetPlayerID(playerID);
+        }
+       
+    }
+
+
     /// <summary>
     /// 宣教師が領地を占領
     /// </summary>
@@ -1376,6 +1416,9 @@ public class PieceManager : MonoBehaviour
         {
             if (allPieces.TryGetValue(pieceID, out Piece piece))
             {
+                //25.11.9  RI 添加测试debug
+                Debug.Log($"駒ID={pieceID} ");
+
                 // AP回復
                 piece.RecoverAP(piece.Data.aPRecoveryRate);
 
