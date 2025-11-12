@@ -131,7 +131,6 @@ public class MilitaryDataSOEditor : PieceDataSOEditor
         serializedObject.Update();
 
         EditorGUILayout.Space();
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("armorValue"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("criticalChance"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("damageType"));
 
