@@ -184,6 +184,7 @@ public class BuildingAttackTest : MonoBehaviour
             PieceType.Military,
             testReligion,
             testPlayerID,
+            1,
             militarySpawnPosition
         );
 
@@ -230,6 +231,7 @@ public class BuildingAttackTest : MonoBehaviour
         syncBuildingData? syncData = buildingManager.CreateBuildingByName(
             buildingName,
             enemyPlayerID, // 敵プレイヤーの建物として生成
+            1,
             buildingSpawnPosition
         );
 
