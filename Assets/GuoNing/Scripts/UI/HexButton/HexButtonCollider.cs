@@ -7,12 +7,10 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(PolygonCollider2D))]
-public class HexButtonCollider : MonoBehaviour, IPointerClickHandler
+public class HexButtonCollider : MonoBehaviour
 {
-	private PolygonCollider2D hexCollider2D;
+	public PolygonCollider2D hexCollider2D { get; private set; }
 
-	[Header("点击事件")]
-	public UnityEvent onClick;
 	void Awake()
 	{
 		//======= 设置六边形碰撞器 =======
@@ -28,23 +26,6 @@ public class HexButtonCollider : MonoBehaviour, IPointerClickHandler
 
 		hexCollider2D.pathCount = 1;      // 一个路径
 		hexCollider2D.SetPath(0, hexPoints);
-	}
-
-	/// <summary>
-	/// 点击事件（由 EventSystem 调用）
-	/// </summary>
-	public void OnPointerClick(PointerEventData eventData)
-	{
-		// 判断点击是否在六边形范围内（一般由 Collider 自动判断，但这里保险）
-		if (hexCollider2D.OverlapPoint(eventData.pointerCurrentRaycast.worldPosition))
-		{
-			onClick?.Invoke();
-		}
-	}
-
-	public void SetString()
-	{
-		GetComponentInChildren<Image>().color = Color.red;
 	}
 
 

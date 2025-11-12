@@ -9,6 +9,7 @@ public class BuildingDataSOEditor : Editor
     {
         serializedObject.Update();
 
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("religion"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("buildingName"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("maxHp"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("buildStartAPCost"));

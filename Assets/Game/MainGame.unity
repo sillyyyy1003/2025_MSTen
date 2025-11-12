@@ -123,6 +123,18 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &8718343 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7819550314296720989, guid: 0240edcb80155b849809eff09fae7267,
+    type: 3}
+  m_PrefabInstance: {fileID: 909387979}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &24593050
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -775,7 +787,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nowChooseUnitID: 0
   nowChooseUnitType: 0
-  buildingRegistry: {fileID: 11400000, guid: 7173f6d9ba6e94243abc74c054f4d749, type: 2}
+  buildingRegistry: {fileID: 0}
 --- !u!114 &131122553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -792,6 +804,7 @@ MonoBehaviour:
   _GameCamera: {fileID: 332689579}
   _PlayerOperation: {fileID: 291931288}
   _Instantiater: {fileID: 153493154}
+  _BuildingManager: {fileID: 985164580}
 --- !u!4 &131122554
 Transform:
   m_ObjectHideFlags: 0
@@ -853,6 +866,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1615081801}
+  - {fileID: 985164579}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &153493156
@@ -2182,12 +2196,12 @@ PrefabInstance:
     - target: {fileID: 4941370090156680076, guid: 0240edcb80155b849809eff09fae7267,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 50
+      value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 4941370090156680076, guid: 0240edcb80155b849809eff09fae7267,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -50
+      value: -70
       objectReference: {fileID: 0}
     - target: {fileID: 4941370090156680076, guid: 0240edcb80155b849809eff09fae7267,
         type: 3}
@@ -2407,6 +2421,51 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &985164578
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 985164579}
+  - component: {fileID: 985164580}
+  m_Layer: 0
+  m_Name: BuildingManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &985164579
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 985164578}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 153493155}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &985164580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 985164578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1c98f6d83ca1824cb6612f496a5ffc4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buildingRegistry: {fileID: 11400000, guid: 7173f6d9ba6e94243abc74c054f4d749, type: 2}
 --- !u!1 &1218458962
 GameObject:
   m_ObjectHideFlags: 0
@@ -3235,12 +3294,12 @@ PrefabInstance:
     - target: {fileID: 2111541058362085115, guid: ec0e7c6284a7f5f47b49ce8786188d61,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -170
+      value: -190
       objectReference: {fileID: 0}
     - target: {fileID: 2111541058362085115, guid: ec0e7c6284a7f5f47b49ce8786188d61,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -92.5
+      value: -112.5
       objectReference: {fileID: 0}
     - target: {fileID: 2111541058362085115, guid: ec0e7c6284a7f5f47b49ce8786188d61,
         type: 3}
@@ -3410,45 +3469,45 @@ MonoBehaviour:
     singleSprite: {fileID: 1153311290, guid: f4f2993d6134ed544a7d2f6e79a331ed, type: 3}
     spriteSheet: []
     note: 
+  - id: 11
+    singleSprite: {fileID: 21300000, guid: ce851b811537b84449c464348cc51cab, type: 3}
+    spriteSheet: []
+    note: 
   - id: 7
-    singleSprite: {fileID: 0}
+    singleSprite: {fileID: 21300000, guid: 0d5a20f496f1a2b4688c545d183a16a4, type: 3}
     spriteSheet:
     - {fileID: 21300000, guid: 5389d7def11e2b0468439310dc820bda, type: 3}
     - {fileID: 21300000, guid: fb58ae5edc1c59f4586ebeea467e776b, type: 3}
     - {fileID: 21300000, guid: 87e935b7c81f93a4f9a192dd29100b6e, type: 3}
     note: 
   - id: 8
-    singleSprite: {fileID: 0}
+    singleSprite: {fileID: 21300000, guid: 2566f3973fe74e145ae720a37ad540b7, type: 3}
     spriteSheet:
     - {fileID: 21300000, guid: c6056c84d13d3fc49a0bacd7e4866d0c, type: 3}
     - {fileID: 21300000, guid: 2566f3973fe74e145ae720a37ad540b7, type: 3}
     note: 
   - id: 9
-    singleSprite: {fileID: 21300000, guid: 24c60fc47ce350e4cb4515e67ca05469, type: 3}
+    singleSprite: {fileID: 21300000, guid: ed6f1ba0bcee47c4bb347d8120ea8008, type: 3}
     spriteSheet: []
     note: 
   - id: 10
-    singleSprite: {fileID: 21300000, guid: e6e119aeeb9712447a75ec1f38ec8206, type: 3}
-    spriteSheet: []
-    note: 
-  - id: 11
-    singleSprite: {fileID: 21300000, guid: 0fc8a8e2541b60043a677813520ba542, type: 3}
+    singleSprite: {fileID: 21300000, guid: 0acde239fb6e6b3468a3c5a1420bd39b, type: 3}
     spriteSheet: []
     note: 
   - id: 12
-    singleSprite: {fileID: 21300000, guid: 20268a43a9178f44a9ee8f341a26aec3, type: 3}
+    singleSprite: {fileID: 21300000, guid: cb4e59159c84c544d9a33105fcc1c89f, type: 3}
     spriteSheet: []
     note: 
   - id: 13
-    singleSprite: {fileID: 21300000, guid: 2b3858f5feb06d4498b0c40f987690f4, type: 3}
+    singleSprite: {fileID: 21300000, guid: 0d5a20f496f1a2b4688c545d183a16a4, type: 3}
     spriteSheet: []
     note: 
   - id: 14
-    singleSprite: {fileID: 21300000, guid: acaa1045531edf744a2e4d76ce4d510a, type: 3}
+    singleSprite: {fileID: 21300000, guid: cb4e59159c84c544d9a33105fcc1c89f, type: 3}
     spriteSheet: []
     note: 
   - id: 15
-    singleSprite: {fileID: 21300000, guid: c668606b901ee4945a673aaed6b5d6ff, type: 3}
+    singleSprite: {fileID: 21300000, guid: ed6f1ba0bcee47c4bb347d8120ea8008, type: 3}
     spriteSheet: []
     note: 
 --- !u!1 &2099899056
@@ -3714,30 +3773,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0038989cd663c1409624aa31119c36e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isInitialize: 0
-  localPlayerId: 0
-  playerReligion: 0
-  Resources: 0
-  AllUnitCount: 0
-  AllUnitCountLimit: 0
-  ActivateMissionaryCount: 0
-  ActivateSoliderCount: 0
-  ActivateFarmerCount: 0
-  ActivateBuildingCount: 0
-  InactiveUnitCount: 0
-  DeckMissionaryCount: 0
-  DeckSoliderCount: 0
-  DeckFarmerCount: 0
-  DeckBuildingCount: 0
-  MissionaryUnits: []
-  SoliderUnits: []
-  FarmerUnits: []
-  BuildingUnits: []
-  PopeUnitData:
-    UnitId: 0
-    UnitType: 0
-    HP: 0
-    AP: 0
   religionIcon: {fileID: 909387987}
   resourcesValue: {fileID: 909387986}
   activateMissionaryValue: {fileID: 909387984}
@@ -3750,6 +3785,7 @@ MonoBehaviour:
   playerIconParent: {fileID: 527660466}
   miniMap: {fileID: 1874568612}
   EndTurn: {fileID: 1218458964}
+  InactiveUnit: {fileID: 8718343}
   CountdownTime: {fileID: 320742768}
   timer: {fileID: 2117784777}
 --- !u!1001 &2125054216

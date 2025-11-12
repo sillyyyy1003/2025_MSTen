@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using GameData;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -107,8 +108,14 @@ public class GameManage : MonoBehaviour
 
     // 单位创建引用
     public Instantiater _Instantiater;
+
+    // BuildingManager引用
+    public BuildingManager _BuildingManager;
+
     // 玩家数据管理器引用
     private PlayerDataManager _PlayerDataManager;
+
+
 
 
 
@@ -249,6 +256,10 @@ public class GameManage : MonoBehaviour
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
 
+        // 初始化buildingManager
+        _BuildingManager.SetLocalPlayerID(LocalPlayerID);
+        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
+
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
         {
@@ -319,6 +330,10 @@ public class GameManage : MonoBehaviour
             //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
             //_GameCamera.GetPlayerPosition(GameBoardInforDict[PlayerStartPositions[0]].Cells3DPos);
 
+
+            // 初始化buildingManager
+            _BuildingManager.SetLocalPlayerID(LocalPlayerID);
+            _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
 
             Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合

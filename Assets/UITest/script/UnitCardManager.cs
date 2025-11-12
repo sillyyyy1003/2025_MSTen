@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -177,7 +179,7 @@ public class UnitCardManager : MonoBehaviour
 
         if(type == CardType.Pope)
         {
-            card.SetData(GameUIManager.Instance.PopeUnitData);
+            card.SetData(GameUIManager.Instance.GetPopeUnitData());
             card.alwaysOpen = true;
         }
         else {
@@ -422,8 +424,12 @@ public class UnitCardManager : MonoBehaviour
 
             PlayerDataManager.Instance.nowChooseUnitID = choosedUnitId;
             PlayerDataManager.Instance.nowChooseUnitType = currentCardType;
-
             OnCardSelected?.Invoke(choosedUnitId);
+
+            Vector3 Pos = PlayerDataManager.Instance.GetUnitPos(choosedUnitId);
+
+            GameManage.Instance._GameCamera.GetPlayerPosition(Pos);
+
 
         }
 		else
