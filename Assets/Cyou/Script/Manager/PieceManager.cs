@@ -209,140 +209,6 @@ public class PieceManager : MonoBehaviour
         return localPlayerID;
     }
 
-
-    #region 駒の同期
-    /// <summary>
-    /// HPが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangeHPData(int pieceID, int hp)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// HPレベルが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangeHPLevelData(int pieceID, int hplevel)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// 農民のサクリファイスレベルが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangeFarmerLevelData(int pieceID, int sacrificelevel)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// 軍隊の攻撃力レベルが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangeMilitaryAtkLevelData(int pieceID, int atklevel)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// 教皇のスワップクールダウンレベルが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangePopeSwapCDLevelData(int pieceID, int cdlevel)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// 教皇のバフレベルが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangePopeBuffLevelData(int pieceID, int bufflevel)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// 宣教師の魅惑レベルが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangeMissionaryConvertLevelData(int pieceID, int convertlevel)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// 宣教師の占領レベルが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangeMissionaryOccupyLevelData(int pieceID, int occupylevel)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// プレイヤーIDが変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangePieceCurrentPID(int pieceID, int currentpid)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    /// <summary>
-    /// 位置が変更された駒の完全な同期データを取得
-    /// </summary>
-    public syncPieceData? ChangePiecePosData(int pieceID, Vector3 position)
-    {
-        if (!allPieces.TryGetValue(pieceID, out Piece piece))
-        {
-            Debug.LogError($"駒が見つかりません: ID={pieceID}");
-            return null;
-        }
-        return syncPieceData.CreateFromPiece(piece);
-    }
-
-    #endregion
-
     #region 駒の生成
 
     // 25.11.1 RI add return piece gameObject
@@ -664,7 +530,7 @@ public class PieceManager : MonoBehaviour
                 if (specialUpgradeType == SpecialUpgradeType.FarmerSacrifice)
                     if (farmer.UpgradeSacrifice())
                     {
-                        return ChangeFarmerLevelData(pieceID, farmer.SacrificeLevel);
+                        return syncPieceData.CreateFromPiece(piece);
                     }
                     else
                         return null;
@@ -674,7 +540,7 @@ public class PieceManager : MonoBehaviour
                 if (specialUpgradeType == SpecialUpgradeType.MilitaryAttackPower)
                     if (military.UpgradeAttackPower())
                     {
-                        return ChangeMilitaryAtkLevelData(pieceID, military.AttackPowerLevel);
+                        return syncPieceData.CreateFromPiece(piece);
                     }
                 break;
 
@@ -682,12 +548,12 @@ public class PieceManager : MonoBehaviour
                 if (specialUpgradeType == SpecialUpgradeType.MissionaryOccupy)
                     if (missionary.UpgradeOccupy())
                     {
-                        return ChangeMissionaryOccupyLevelData(pieceID, missionary.OccupyLevel);
+                        return syncPieceData.CreateFromPiece(piece);
                     }
                     else if (specialUpgradeType == SpecialUpgradeType.MissionaryConvertEnemy)
                         if (missionary.UpgradeConvertEnemy())
                         {
-                            return ChangeMissionaryConvertLevelData(pieceID, missionary.ConvertEnemyLevel);
+                            return syncPieceData.CreateFromPiece(piece);
                         }
                 break;
 
@@ -695,12 +561,12 @@ public class PieceManager : MonoBehaviour
                 if (specialUpgradeType == SpecialUpgradeType.PopeSwapCooldown)
                     if (pope.UpgradeSwapCooldown())
                     {
-                        return ChangePopeSwapCDLevelData(pieceID, pope.SwapCooldownLevel);
+                        return syncPieceData.CreateFromPiece(piece);
                     }
                     else if (specialUpgradeType == SpecialUpgradeType.PopeBuff)
                         if (pope.UpgradeBuff())
                         {
-                            return ChangePopeBuffLevelData(pieceID, pope.BuffLevel);
+                            return syncPieceData.CreateFromPiece(piece);
                         }
                 break;
         }
@@ -1117,7 +983,7 @@ public class PieceManager : MonoBehaviour
                 // イベント発火
                 OnPieceCharmed?.Invoke(targetID, missionary.CurrentPID);
 
-                return ChangePieceCurrentPID(targetID, missionary.CurrentPID);
+                return syncPieceData.CreateFromPiece(target);
             }
             else
             {
@@ -1245,7 +1111,7 @@ public class PieceManager : MonoBehaviour
 
         if (farmer.Sacrifice(target))
         {
-            return ChangeHPData(targetID, (int)target.CurrentHP);
+            return syncPieceData.CreateFromPiece(target);
         }
         return null;
     }
@@ -1316,7 +1182,7 @@ public class PieceManager : MonoBehaviour
             piece.TakeDamage(damage);
         }
 
-        return ChangeHPData(pieceID, (int)piece.CurrentHP);
+        return syncPieceData.CreateFromPiece(piece);
     }
 
     /// <summary>
@@ -1334,7 +1200,7 @@ public class PieceManager : MonoBehaviour
         }
 
         piece.Heal(amount);
-        return ChangeHPData(pieceID, (int)piece.CurrentHP);
+        return syncPieceData.CreateFromPiece(piece);
     }
 
     #endregion
