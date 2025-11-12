@@ -339,6 +339,9 @@ public class PlayerDataManager : MonoBehaviour
         {
             Debug.LogWarning($"PlayerDataManager: 玩家 {playerId} 已存在");
         }
+
+        // 设置玩家宗教
+        PieceManager.Instance.SetPieceRligion(allPlayersData[GameManage.Instance.LocalPlayerID].PlayerReligion);
     }
 
     // 获取玩家数据
