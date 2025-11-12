@@ -106,7 +106,7 @@ public struct PlayerData
     {
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
-        Resources = 0;
+        Resources = 100;
         PlayerReligion = SceneStateManager.Instance.PlayerReligion;
         PlayerOwnedCells = new List<int>();
     }
@@ -255,7 +255,7 @@ public struct PlayerData
     {
         PlayerReligion = SceneStateManager.Instance.PlayerReligion;
     }
-
+  
 }
 
 public class PlayerDataManager : MonoBehaviour

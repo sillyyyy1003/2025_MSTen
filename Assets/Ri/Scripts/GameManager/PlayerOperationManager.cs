@@ -573,8 +573,17 @@ public class PlayerOperationManager : MonoBehaviour
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + " canDo is " + unit.bCanDoAction);
+            // 若有建筑则增加resource
+            if (unit.UnitType == CardType.Building)
+            {
+                int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
+                res += 5;
+                PlayerDataManager.Instance.SetPlayerResourses(res);
+            }
+            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction+ " Resource is "+ PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
         }
+
+
     }
 
     // 回合结束
@@ -960,7 +969,7 @@ public class PlayerOperationManager : MonoBehaviour
         int2 toPos = PlayerBoardInforDict[targetCellId].Cells2DPos;
 
         PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, fromPos);
-        Debug.Log("now unit AP is " + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+        Debug.Log("now unit " + unitData.Value.UnitID+ "AP is" + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         if (PieceManager.Instance.GetPieceAP(unitData.Value.UnitID) > 0)
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
