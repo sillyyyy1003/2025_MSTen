@@ -5,7 +5,7 @@
         _MainTex ("Main Texture (RenderTexture)", 2D) = "white" {}
         _MaskTex ("Mask Texture", 2D) = "white" {}
         _UseMask ("Use Mask", Float) = 0
-         _BlurSize("Blur Size", Range(0, 5)) = 1
+        _BlurSize("Blur Size", Range(0, 5)) = 1
     }
     SubShader
     {
