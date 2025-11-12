@@ -248,6 +248,15 @@ public class Farmer : Piece
         }
     }
 
+    /// <summary>
+    /// AP回復をオーバーライド（農民はAPを回復できない）
+    /// </summary>
+    public new void RecoverAP(int amount)
+    {
+        // 農民はAPを回復できないため、何もしない
+        Debug.Log($"農民ID={PieceID}はAPを回復できません");
+    }
+
     #region アップグレード管理
 
     // ===== プロパティ =====

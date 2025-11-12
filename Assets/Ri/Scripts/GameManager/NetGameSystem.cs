@@ -140,6 +140,7 @@ public class UnitAddMessage
     public int PosX;
     public int PosY;
     public syncPieceData NewUnitSyncData; // PieceDataSO序列化为JSON字符串
+    public syncBuildingData? BuildingData;  // 新增
     public bool IsUsed; // 单位是否已使用
 }
 
@@ -421,14 +422,18 @@ public class NetGameSystem : MonoBehaviour
             playerName = SceneStateManager.Instance.PlayerName;
             playerIP = SceneStateManager.Instance.PlayerIP; // 获取本地IP
 
-
-            // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
-            if (!isServer)
+            if(SceneStateManager.Instance.bIsDirectConnect)
             {
-
                 // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
-                //serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+                if (!isServer)
+                {
+                    //互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                    serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+                }
+              
             }
+           
+               
             // 延迟启动网络,确保所有单例初始化完成
             StartCoroutine(DelayedNetworkStart());
         }
@@ -1084,7 +1089,8 @@ public class NetGameSystem : MonoBehaviour
     /// 发送单位添加消息
     /// </summary>
     public void SendUnitAddMessage(int playerId, CardType unitType, int2 pos,
-        syncPieceData newUnitData, bool isUsed = false)
+        syncPieceData newUnitData, bool isUsed = false,
+        syncBuildingData? buildingData = null)
     {
         UnitAddMessage addData = new UnitAddMessage
         {
@@ -1092,7 +1098,8 @@ public class NetGameSystem : MonoBehaviour
             UnitType = (int)unitType,
             PosX = pos.x,
             PosY = pos.y,
-            NewUnitSyncData = newUnitData
+            NewUnitSyncData = newUnitData,
+            BuildingData = buildingData  // 添加建筑数据
         };
 
         NetworkMessage msg = new NetworkMessage
@@ -1113,11 +1120,10 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log($"[网络-客户端] 发送 UNIT_ADD 消息到服务器");
         }
     }
-
-
-    /// <summary>
-    /// 发送单位移动消息
-    /// </summary>
+ 
+        /// <summary>
+        /// 发送单位移动消息
+        /// </summary>
     public void SendUnitMoveMessage(int playerId, int2 fromPos, int2 toPos, syncPieceData movedUnitData)
     {
         UnitMoveMessage moveData = new UnitMoveMessage
@@ -1934,21 +1940,69 @@ public class NetGameSystem : MonoBehaviour
             playerDataManager = PlayerDataManager.Instance;
         }
 
-        // 更新 PlayerDataManager
+        // ===== 修复：不再使用MoveUnit，直接更新数据 =====
         if (playerDataManager != null)
         {
-            // 移动单位
+            // 方法1：尝试使用MoveUnit
             bool moveSuccess = playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
 
             if (moveSuccess)
             {
-                // 更新同步数据
+                // 移动成功，更新同步数据
                 playerDataManager.UpdateUnitSyncDataByPos(data.PlayerId, toPos, data.MovedUnitSyncData);
-
                 Debug.Log($"[网络] PlayerDataManager 已更新单位移动数据");
+            }
+            else
+            {
+                // ===== 关键修复：MoveUnit失败时，直接修改单位数据 =====
+                Debug.LogWarning($"[网络] MoveUnit失败，尝试直接更新数据（可能是交换操作）");
+
+                // 获取PlayerData
+                PlayerData playerData = playerDataManager.GetPlayerData(data.PlayerId);
+
+                // 查找目标位置是否已经有单位（从消息中的syncData判断）
+                bool found = false;
+
+                for (int i = 0; i < playerData.PlayerUnits.Count; i++)
+                {
+                    PlayerUnitData unit = playerData.PlayerUnits[i];
+
+                    // 通过UnitID匹配（syncData中的pieceID）
+                    if (unit.PlayerUnitDataSO.pieceID == data.MovedUnitSyncData.pieceID)
+                    {
+                        Debug.Log($"[网络] 通过UnitID找到单位: {unit.PlayerUnitDataSO.pieceID}，当前位置({unit.Position.x},{unit.Position.y})");
+
+                        // 创建更新后的单位数据
+                        PlayerUnitData updatedUnit = new PlayerUnitData(
+                            unit.UnitID,
+                            unit.UnitType,
+                            toPos,  // 新位置
+                            data.MovedUnitSyncData,  // 新的同步数据
+                            unit.bUnitIsActivated,
+                            unit.bCanDoAction,
+                            unit.bIsCharmed,
+                            unit.charmedRemainingTurns,
+                            unit.originalOwnerID,
+                            unit.BuildingData
+                        );
+
+                        // 直接更新
+                        playerData.PlayerUnits[i] = updatedUnit;
+                        found = true;
+
+                        Debug.Log($"[网络] 成功通过直接更新方式移动单位到({toPos.x},{toPos.y}) {updatedUnit.UnitID}");
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    Debug.LogError($"[网络] 无法找到要移动的单位: pieceID={data.MovedUnitSyncData.pieceID}");
+                }
             }
         }
 
+        // ===== 关键！！！必须调用这个方法来更新视觉效果 =====
         // 通知 PlayerOperationManager 处理视觉效果
         if (gameManage != null && gameManage._PlayerOperation != null)
         {
@@ -2003,6 +2057,12 @@ public class NetGameSystem : MonoBehaviour
         if (playerDataManager != null)
         {
             playerDataManager.RemoveUnit(data.PlayerId, pos);
+        }
+
+        // 先通知 PlayerOperationManager 处理 GameObject
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkRemove(data);
         }
 
         // 从 PlayerDataManager 移除
@@ -2110,7 +2170,7 @@ public class NetGameSystem : MonoBehaviour
                 // 如果目标单位不存在，可能需要先从NewUnitSyncData创建
                 // 注意：这种情况通常不应该发生，说明同步顺序有问题
                 // 但为了健壮性，我们可以尝试添加单位
-                CardType unitType=CardType.None;
+                CardType unitType = CardType.None;
                 // 根据syncPieceData推断单位类型
                 switch (data.NewUnitSyncData.piecetype)
                 {
@@ -2235,19 +2295,19 @@ public class NetGameSystem : MonoBehaviour
     //      运行时配置
     // *************************
 
-    public void SetConfig(bool asServer, string ip, int networkPort, int maxPlayerCount = 2)
-    {
-        if (isRunning)
-        {
-            Debug.LogWarning("请在启动前设置配置!");
-            return;
-        }
+    //public void SetConfig(bool asServer, string ip, int networkPort, int maxPlayerCount = 2)
+    //{
+    //    if (isRunning)
+    //    {
+    //        Debug.LogWarning("请在启动前设置配置!");
+    //        return;
+    //    }
 
-        isServer = asServer;
-        serverIP = ip;
-        port = networkPort;
-        maxPlayers = maxPlayerCount;
-    }
+    //    isServer = asServer;
+    //    serverIP = ip;
+    //    port = networkPort;
+    //    maxPlayers = maxPlayerCount;
+    //}
 
     //public void SetPlayerName(string name)
     //{

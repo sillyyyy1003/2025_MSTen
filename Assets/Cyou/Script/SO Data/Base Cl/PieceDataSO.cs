@@ -15,6 +15,7 @@ namespace GameData
         [Header("基本パラメータ")]
         [Obsolete("originalPIDは使用されていません。実行時のoriginalPIDはPiece.Initialize()の引数から設定されます。", false)]
         public int originalPID;//【非推奨】最初にどのプレイヤーに属すか（現在は使用されていない）
+        public Religion religion;//駒の宗教
         public string pieceName;
 
 
