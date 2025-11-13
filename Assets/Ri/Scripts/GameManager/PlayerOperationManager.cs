@@ -19,9 +19,11 @@ using UnityEngine.Rendering.Universal;
 /// </summary>
 public class PlayerOperationManager : MonoBehaviour
 {
-    // HexGrid的引用
-    public HexGrid _HexGrid;
+    //2025.11.13 Guoning
+	static readonly int cellHighlightingId = Shader.PropertyToID("_CellHighlighting");
 
+	// HexGrid的引用
+	public HexGrid _HexGrid;
 
     private Camera GameCamera;
 
@@ -120,9 +122,15 @@ public class PlayerOperationManager : MonoBehaviour
     {
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
-            HandleMouseInput();
+			/*
+             *     2025.11.13 Guoning
+            if(Input.GetMouseButton(0)|| Input.GetMouseButton(1))
+                HandleMouseInput();
+			else UpdateCellHighlightData(GetCellUnderCursor());
+            */
+			HandleMouseInput();
 
-        }
+		}
         if (Input.GetKeyDown(KeyCode.B)
             && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
         {
@@ -152,20 +160,55 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
+	// *************************
+	//       追加高亮选择处理
+	// *************************
+	void UpdateCellHighlightData(HexCell cell)
+	{
+		if (cell == null)
+		{
+			ClearCellHighlightData();
+			return;
+		}
 
-    // *************************
-    //        输入处理
-    // *************************
+		// Works up to brush size 6.
+		Shader.SetGlobalVector(
+			cellHighlightingId,
+			new Vector4(
+				cell.Coordinates.HexX,
+				cell.Coordinates.HexZ,
+				1f,
+				HexMetrics.wrapSize
+			)
+		);
+	}
 
-    #region =====输入处理=====
-    private void HandleMouseInput()
+	void ClearCellHighlightData() =>
+		Shader.SetGlobalVector(cellHighlightingId, new Vector4(0f, 0f, -1f, 0f));
+	HexCell GetCellUnderCursor() =>
+		_HexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
+	// *************************
+	//       追加高亮选择处理
+	// *************************
+
+
+
+
+
+	// *************************
+	//        输入处理
+	// *************************
+
+	#region =====输入处理=====
+	private void HandleMouseInput()
     {
         if (GameManage.Instance.IsPointerOverUIElement())
         {
             return;
         }
-        // 左键点击 - 选择单位
-        if (Input.GetMouseButtonDown(0) && bCanContinue)
+
+		// 左键点击 - 选择单位
+		if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
             _HexGrid.GetCell(selectCellID).DisableHighlight();
 
@@ -202,7 +245,6 @@ public class PlayerOperationManager : MonoBehaviour
         // 右键点击 - 移动/攻击
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
-
             _HexGrid.GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
         }

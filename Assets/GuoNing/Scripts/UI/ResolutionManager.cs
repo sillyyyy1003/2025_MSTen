@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEditor.Progress;
 
 struct ResolutionSetting
 {
@@ -41,9 +40,8 @@ public class ResolutionManager : MonoBehaviour
 	/// </summary>
 	private ResolutionSetting[] resolutionSettings = new[]
 	{
-
 		new ResolutionSetting(1920, 1080),	// 1080P
-		new ResolutionSetting(800, 600),		// 900P
+		new ResolutionSetting(1600, 900),	// 900P
 		new ResolutionSetting(1280, 720),	// 720P
 	};
 
@@ -51,6 +49,7 @@ public class ResolutionManager : MonoBehaviour
 	private Resolution resolution;
 	public TMP_Dropdown dropdown;
 
+	bool isFullScreen = true;
 
 
 	//--------------------------------------------------------------------------------
@@ -95,13 +94,37 @@ public class ResolutionManager : MonoBehaviour
 		}
 
 
+		// todo list：use save load function load settings
 		dropdown.ClearOptions();
 		dropdown.AddOptions(options);
 		dropdown.value = currentIndex;
 		dropdown.RefreshShownValue();
 
-
-
+	
 
 	}
+
+	public void OnChangeResolution(int index)
+	{
+		Debug.Log(index);
+		// Set resolution
+		currentResolutionIndex = index;
+		ResolutionSetting setting = resolutionSettings[index];
+
+		// set full screen
+		Screen.SetResolution(setting.width, setting.height, Screen.fullScreen = isFullScreen);
+
+		Debug.Log("Resolution changed to: " + Screen.width + " x " + Screen.height + ", FullScreen: " + isFullScreen);
+	}
+
+	public void OnChangeFullScreen(bool isFullScreen)
+	{
+		this.isFullScreen = isFullScreen;
+		ResolutionSetting setting = resolutionSettings[currentResolutionIndex];
+		Screen.SetResolution(setting.width, setting.height, Screen.fullScreen = isFullScreen);
+
+		Debug.Log("Resolution changed to: " + Screen.width + " x " + Screen.height + ", FullScreen: " + Screen.fullScreen);
+	}
+	
+
 }
