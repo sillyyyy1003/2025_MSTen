@@ -43,7 +43,7 @@ public class ResolutionManager : MonoBehaviour
 	{
 
 		new ResolutionSetting(1920, 1080),	// 1080P
-		new ResolutionSetting(800, 600),		// 900P
+		new ResolutionSetting(1600, 900),	// 900P
 		new ResolutionSetting(1280, 720),	// 720P
 	};
 
