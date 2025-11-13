@@ -101,12 +101,15 @@ public class GameCamera : MonoBehaviour
 
     void HandleMovement()
     {
+        if (GameManage.Instance.IsPointerOverUIElement())
+            return;
+
         Vector3 moveInput = Vector3.zero;
 
         // 键盘控制 WASD
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
-        moveInput += new Vector3(x, 0f, z);
+        moveInput += new Vector3(x/10, 0f, z / 10);
 
         // 鼠标到屏幕边缘
          Vector3 mousePos = Input.mousePosition;

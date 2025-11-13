@@ -78,7 +78,7 @@ public struct syncPieceData
     /// Pieceインスタンスから完全なsyncPieceDataを生成
     /// </summary>
     public static syncPieceData CreateFromPiece(Piece piece)
-    {
+    {                                                    //25.11.12 ri ADD Religion para
         // 駒の種類を取得
         PieceType pieceType = piece switch
         {
@@ -88,11 +88,12 @@ public struct syncPieceData
             Pope => PieceType.Pope,
             _ => PieceType.None
         };
-
+        Debug.Log("piece religion is "+piece.Data.religion);
         return new syncPieceData
         {
             piecetype = pieceType,
-            religion = piece.Data.religion,
+            //25.11.12 ri C Religion para
+            religion = PieceManager.Instance.pieceReligion,
             piecePos = piece.transform.position,
             pieceID = piece.PieceID,
             currentHP = piece.CurrentHP,
@@ -154,6 +155,10 @@ public class PieceManager : MonoBehaviour
 
     //25.11.1 RI add GameObject
     private GameObject pieceObject;
+
+
+    //25.11.1 RI add Player religion
+    public Religion pieceReligion;
 
     //25.11.9 RI add syncPieceData List
     private Dictionary<int, syncPieceData> allPiecesSyncData = new Dictionary<int, syncPieceData>();
@@ -225,6 +230,13 @@ public class PieceManager : MonoBehaviour
         return allPiecesSyncData[unitID];
     }
 
+    // 25.11.12 RI add set piece religion
+    public void SetPieceRligion(Religion re)
+    {
+        pieceReligion = re;
+    }
+
+
     /// <summary>
     /// 駒を生成（GameManagerから呼び出し）
     /// </summary>
@@ -277,6 +289,7 @@ public class PieceManager : MonoBehaviour
 
         // 25.11.12 RI change return data
         syncPieceData pieceData=syncPieceData.CreateFromPiece(piece);
+        Debug.Log("piece re is " + pieceData.religion);
         allPiecesSyncData.Add(pieceID, pieceData);
         
         // 只需要返回基本信息的同步数据
