@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18386695, g: 0.22903016, b: 0.30321783, a: 1}
+  m_IndirectSpecularColor: {r: 0.18386677, g: 0.22902982, b: 0.30321708, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -3163,7 +3163,7 @@ MonoBehaviour:
   Button_Setting: {fileID: 514636528}
   OptionMenu: {fileID: 2121299629}
   OnlineMenu: {fileID: 931611999}
-  RightDetailMenu: {fileID: 1331801380}
+  RightDetailMenu: {fileID: 0}
   Button_CreateGame: {fileID: 631856370}
   Button_AddGame: {fileID: 64319158}
   Building: {fileID: 971119254}
@@ -6508,7 +6508,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1331801380
 RectTransform:
   m_ObjectHideFlags: 0
