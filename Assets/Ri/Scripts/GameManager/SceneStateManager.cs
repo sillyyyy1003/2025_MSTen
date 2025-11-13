@@ -18,6 +18,9 @@ public class SceneStateManager : MonoBehaviour
     // 玩家id
     public int PlayerID;
 
+    // 玩家单位上限，根据宗教不同来制定
+    public int PlayerUnitLimit=20;
+
     // 玩家选择的宗教
     public Religion PlayerReligion;
 
@@ -26,6 +29,9 @@ public class SceneStateManager : MonoBehaviour
 
     // 是否为单机模式
     public bool bIsSingle=false;
+
+    // 是否为单机模式
+    public bool bIsDirectConnect = false;
 
     // 设置本地保存玩家名数据
     private const string PLAYER_NAME_KEY = "PlayerName";
@@ -94,7 +100,7 @@ public class SceneStateManager : MonoBehaviour
     {
         PlayerName = name;
         PlayerPrefs.SetString(PLAYER_NAME_KEY, name);
-        Debug.Log("Save PlayerName: " + name);
+        //Debug.Log("Save PlayerName: " + name);
 
 
         PlayerPrefs.SetString(SERVER_IP_KEY,SERVER_IP);

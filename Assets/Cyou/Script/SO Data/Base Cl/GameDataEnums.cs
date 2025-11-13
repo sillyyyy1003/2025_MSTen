@@ -39,7 +39,9 @@ namespace GameData
 
     public enum PieceType
     {
-        None, Military, Farmer, Missionary, Pope
+        None, Military, Farmer, Missionary, Pope,
+        //25.11.11 RI add building enum
+        Building
     }
 
     public enum Religion

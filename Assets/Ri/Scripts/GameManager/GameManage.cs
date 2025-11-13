@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using GameData;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ public struct BoardInfor
 
     // 每个格子的地块信息 是否可通过
     public TerrainType type;
-    
+
     // 是否是起始位置
     public bool bIsStartPos;
 
@@ -98,7 +99,7 @@ public class GameManage : MonoBehaviour
 
 
     // 网络系统引用 (在Inspector中赋值或通过代码获取)
-    public NetGameSystem _NetGameSystem;
+    //public NetGameSystem _NetGameSystem;
 
     // 玩家相机引用
     public GameCamera _GameCamera;
@@ -107,8 +108,14 @@ public class GameManage : MonoBehaviour
 
     // 单位创建引用
     public Instantiater _Instantiater;
+
+    // BuildingManager引用
+    public BuildingManager _BuildingManager;
+
     // 玩家数据管理器引用
     private PlayerDataManager _PlayerDataManager;
+
+
 
 
 
@@ -163,13 +170,13 @@ public class GameManage : MonoBehaviour
             GameObject pdm = new GameObject("PlayerDataManager");
             _PlayerDataManager = pdm.AddComponent<PlayerDataManager>();
         }
-        
+
     }
 
 
 
     // Update is called once per frame
-   
+
 
     // *************************
     //        游戏流程函数
@@ -179,7 +186,7 @@ public class GameManage : MonoBehaviour
     public void CheckIsServer(bool server)
     {
         _GameCamera.SetCanUseCamera(false);
-        if(server)
+        if (server)
         {
 
         }
@@ -195,7 +202,7 @@ public class GameManage : MonoBehaviour
     {
         _GameCamera.SetCanUseCamera(true);
 
-       
+
         // 单机测试
         GameInit();
     }
@@ -206,7 +213,7 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 开始初始化游戏...");
         Debug.Log($"接收到玩家数: {data.PlayerIds.Length}");
         Debug.Log($"起始位置数: {data.StartPositions.Length}");
-        
+
         // 清空之前的数据
         AllPlayerIds.Clear();
         PlayerStartPositions.Clear();
@@ -232,9 +239,9 @@ public class GameManage : MonoBehaviour
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
-        if (_NetGameSystem != null && !_NetGameSystem.bIsServer)
+        if (NetGameSystem.Instance!= null && !NetGameSystem.Instance.bIsServer)
         {
-            _LocalPlayerID = (int)_NetGameSystem.bLocalClientId;
+            _LocalPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
@@ -248,6 +255,10 @@ public class GameManage : MonoBehaviour
         }
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
+
+        // 初始化buildingManager
+        _BuildingManager.SetLocalPlayerID(LocalPlayerID);
+        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.RedMoonReligion);
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
@@ -271,7 +282,7 @@ public class GameManage : MonoBehaviour
             }
         }
 
-        _NetGameSystem.GetGameManage();
+        NetGameSystem.Instance.GetGameManage();
 
         _GameCamera.SetCanUseCamera(true);
         // 触发游戏开始事件
@@ -289,12 +300,12 @@ public class GameManage : MonoBehaviour
         Debug.Log("GameManage: 本地测试模式初始化...");
 
         SetIsGamingOrNot(true);
-     
+
         // 使用协程开始游戏，避免脚本Start执行顺序问题
-           if (!bIsStartSingleGame)
-                StartCoroutine(TrueStartGame());
-        
-      
+        if (!bIsStartSingleGame)
+            StartCoroutine(TrueStartGame());
+
+
         return true;
     }
     private IEnumerator TrueStartGame()
@@ -319,6 +330,10 @@ public class GameManage : MonoBehaviour
             //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
             //_GameCamera.GetPlayerPosition(GameBoardInforDict[PlayerStartPositions[0]].Cells3DPos);
 
+
+            // 初始化buildingManager
+            _BuildingManager.SetLocalPlayerID(LocalPlayerID);
+            _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
 
             Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合
@@ -388,9 +403,7 @@ public class GameManage : MonoBehaviour
             // 更新UI
             if (GameSceneUIManager.Instance != null)
             {
-                GameSceneUIManager.Instance.SetTurnText(true);
-                GameSceneUIManager.Instance.SetEndTurn(true);
-                GameSceneUIManager.Instance.StartTurn();
+                GameSceneUIManager.Instance.StartMyTurn(true);
             }
         }
         else
@@ -401,8 +414,8 @@ public class GameManage : MonoBehaviour
             // 更新UI
             if (GameSceneUIManager.Instance != null)
             {
-                GameSceneUIManager.Instance.SetTurnText(false);
-                GameSceneUIManager.Instance.SetEndTurn(false);
+                GameSceneUIManager.Instance.StartMyTurn(false);
+
             }
         }
     }
@@ -418,6 +431,21 @@ public class GameManage : MonoBehaviour
 
         Debug.Log($"玩家 {LocalPlayerID} 结束回合");
 
+        // 处理被魅惑单位的倒计时和归还
+        List<CharmExpireInfo> expiredUnits = _PlayerDataManager.UpdateCharmedUnits(LocalPlayerID);
+
+        foreach (var expireInfo in expiredUnits)
+        {
+            Debug.Log($"[魅惑过期] 单位 {expireInfo.UnitID} at ({expireInfo.Position.x},{expireInfo.Position.y}) 魅惑效果结束，归还给玩家 {expireInfo.OriginalOwnerID}");
+
+            // 注意：UpdateCharmedUnits已经从当前玩家移除了单位
+            // HandleCharmExpireLocal会处理：
+            // 1. 数据层转移（TransferUnitOwnership或ReturnCharmedUnit）
+            // 2. GameObject字典更新
+            // 3. 网络同步
+            _PlayerOperation.HandleCharmExpireLocal(expireInfo);
+        }
+
         // 获取本地玩家数据
         PlayerData localData = _PlayerDataManager.GetPlayerData(LocalPlayerID);
 
@@ -430,9 +458,9 @@ public class GameManage : MonoBehaviour
         };
 
         // 发送到网络
-        if (_NetGameSystem != null)
+        if (NetGameSystem.Instance != null)
         {
-            _NetGameSystem.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
+            NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             Debug.Log($" 已发送回合结束消息");
 
 
@@ -458,14 +486,14 @@ public class GameManage : MonoBehaviour
         Debug.Log($"[服务器] 切换到玩家 {nextPlayerId}");
 
         // 如果是服务器，广播 TURN_START
-        if (_NetGameSystem != null && _NetGameSystem.bIsServer)
+        if (NetGameSystem.Instance != null && NetGameSystem.Instance.bIsServer)
         {
             TurnStartMessage turnStartData = new TurnStartMessage
             {
                 PlayerId = nextPlayerId
             };
 
-            _NetGameSystem.SendMessage(NetworkMessageType.TURN_START, turnStartData);
+            NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_START, turnStartData);
             Debug.Log($"[服务器] 已广播 TURN_START 消息");
         }
 
@@ -548,7 +576,7 @@ public class GameManage : MonoBehaviour
     }
     public void UpdateOtherPlayerShow(int playerId, PlayerData data)
     {
-        _PlayerOperation.UpdateOtherPlayerDisplay(playerId,data);
+        _PlayerOperation.UpdateOtherPlayerDisplay(playerId, data);
     }
 
 
@@ -568,19 +596,19 @@ public class GameManage : MonoBehaviour
     // 根据格子id返回其周围所有可创建单位的格子id
     public List<int> GetBoardNineSquareGrid(int id)
     {
-        Debug.Log("pos is "+GetBoardInfor(id).Cells2DPos);
+        Debug.Log("pos is " + GetBoardInfor(id).Cells2DPos);
         List<int> startPos = new List<int>();
         for (int dx = -1; dx <= 1; dx++)
         {
             for (int dy = -1; dy <= 1; dy++)
             {
-              
-                    int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
-                    if(GameBoardInforDict2D.ContainsKey(pos))
-                    {
-                        startPos.Add(GameBoardInforDict2D[pos].id);
-                        //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
-                    }
+
+                int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
+                if (GameBoardInforDict2D.ContainsKey(pos))
+                {
+                    startPos.Add(GameBoardInforDict2D[pos].id);
+                    //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                }
             }
         }
         return startPos;
@@ -596,7 +624,7 @@ public class GameManage : MonoBehaviour
         return GetBoardInfor(id);
     }
 
-   
+
     // 查找某个格子上是否有单位
     public bool FindUnitOnCell(int2 pos)
     {
@@ -618,13 +646,30 @@ public class GameManage : MonoBehaviour
         return null;
     }
 
+    // 通过2D坐标获取格子
+    public BoardInfor GetCell2D(int2 pos)
+    {
+        if (GameBoardInforDict2D.ContainsKey(pos))
+            return GameBoardInforDict2D[pos];
+        return GameBoardInforDict2D[0];
+    }
+
+
     // 设置格子上的GameObject
     public void SetCellObject(int2 pos, GameObject obj)
     {
         if (obj == null)
+        {
             CellObjects.Remove(pos);
+            _PlayerOperation._HexGrid.GetCell(pos.x, pos.y).Unit = false;
+            Debug.Log("格子 " + pos + " 移除单位: " );
+        }
         else
+        {
             CellObjects[pos] = obj;
+            _PlayerOperation._HexGrid.GetCell(pos.x, pos.y).Unit = true;
+            Debug.Log("格子 " + pos + " 拥有单位: " + obj.name);
+        }
     }
 
     // 移动格子上的对象
@@ -633,8 +678,14 @@ public class GameManage : MonoBehaviour
         if (CellObjects.ContainsKey(fromPos))
         {
             GameObject obj = CellObjects[fromPos];
+
             CellObjects.Remove(fromPos);
+            _PlayerOperation._HexGrid.GetCell(fromPos.x, fromPos.y).Unit = false;
+            Debug.Log("格子 " + fromPos + " 移除单位: " );
+
             CellObjects[toPos] = obj;
+            _PlayerOperation._HexGrid.GetCell(toPos.x, toPos.y).Unit = true;
+            Debug.Log("格子 " + toPos + " 拥有单位: " + obj.name);
         }
     }
     public int GetStartPosForNetGame(int i)
@@ -645,7 +696,7 @@ public class GameManage : MonoBehaviour
     public void SetGameBoardInfor(BoardInfor infor)
     {
         // 如果已经储存数据 清除当前数据
-        if(GameBoardInfor.Contains(infor))
+        if (GameBoardInfor.Contains(infor))
         {
             GameBoardInfor.Clear();
             GameBoardInforDict.Clear();
@@ -670,12 +721,12 @@ public class GameManage : MonoBehaviour
         //}
     }
 
-  
+
     // *************************
     //        网络消息处理
     // *************************
 
-  
+
     // 获取所有玩家ID
     public List<int> GetAllPlayerIds()
     {

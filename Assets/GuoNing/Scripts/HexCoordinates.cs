@@ -128,23 +128,29 @@ public struct HexCoordinates
 	/// <returns>Hex coordinates.</returns>
 	public static HexCoordinates FromPosition(Vector3 position)
 	{
+		// 将世界坐标的 x 转换为六边形坐标系的 x 值
 		float x = position.x / HexMetrics.innerDiameter;
 		float y = -x;
 
+		// z 方向上的偏移量，因六边形行列是交错排列的，需要根据 z 值进行修正
 		float offset = position.z / (HexMetrics.outerRadius * 3f);
 		x -= offset;
 		y -= offset;
 
+		// 将浮点数坐标四舍五入为最接近的整数格子坐标
 		int iX = Mathf.RoundToInt(x);
 		int iY = Mathf.RoundToInt(y);
-		int iZ = Mathf.RoundToInt(-x -y);
+		int iZ = Mathf.RoundToInt(-x - y);
 
+		// 校正误差：由于浮点数运算和四舍五入造成的精度问题，三个轴的和可能不为 0
 		if (iX + iY + iZ != 0)
 		{
+			// 计算每个方向上的误差大小
 			float dX = Mathf.Abs(x - iX);
 			float dY = Mathf.Abs(y - iY);
-			float dZ = Mathf.Abs(-x -y - iZ);
+			float dZ = Mathf.Abs(-x - y - iZ);
 
+			// 修正误差最大的那个轴，保证坐标满足 iX + iY + iZ = 0
 			if (dX > dY && dX > dZ)
 			{
 				iX = -iY - iZ;
@@ -155,9 +161,9 @@ public struct HexCoordinates
 			}
 		}
 
+		// 将最终的整数六边形坐标（q, r）返回（此实现中使用 XZ 轴）
 		return new HexCoordinates(iX, iZ);
 	}
-
 	/// <summary>
 	/// Create a string representation of the coordinates.
 	/// </summary>

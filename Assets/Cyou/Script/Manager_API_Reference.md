@@ -67,7 +67,16 @@ public void SetLocalPlayerID(int playerID)
 PieceManager.Instance.SetLocalPlayerID(1); // プレイヤー1として設定
 ```
 
-**実装箇所:** `PieceManager.cs:108-112`
+**重要な機能:**
+- **駒ID範囲の自動割り当て**: プレイヤーIDに基づいて駒IDの範囲が自動的に設定されます
+  - Player 0: 0～9999
+  - Player 1: 10000～19999
+  - Player 2: 20000～29999
+  - Player 3: 30000～39999
+- これにより、魅惑時などに駒IDの重複が発生しません
+- 駒IDを見ればどのプレイヤーの駒か一目瞭然
+
+**実装箇所:** `PieceManager.cs:108-114`
 
 ---
 
@@ -159,7 +168,7 @@ if (PieceManager.Instance.CreateEnemyPiece(enemyData))
 1. UnitListTableから駒データSOを取得
 2. Prefabから駒を生成
 3. 駒を初期化
-4. enemyPieces辞書に登録
+4. allPieces辞書に登録
 5. syncPieceDataから状態を設定（HP、レベル、職業別スキルレベル等）
 
 **実装箇所:** `PieceManager.cs:273-366`
@@ -509,7 +518,7 @@ if (attackData.HasValue)
 ---
 
 #### `ConvertEnemy()`
-宣教師が敵を魅惑し、同期データを返します。
+宣教師が敵を魅惑し、一時的に支配します。魅惑は一定ターン数で自動的に解除されます。
 
 **シグネチャ:**
 ```csharp
@@ -518,13 +527,38 @@ public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
 
 **パラメータ:**
 - `missionaryID`: 宣教師の駒ID
-- `targetID`: ターゲットの駒ID
+- `targetID`: ターゲットの敵駒ID
 
 **戻り値:**
-- 成功: `syncPieceData`（ターゲットの現在PIDを含む）
+- 魅惑成功: `syncPieceData`（ターゲットの現在PIDと魅惑ターン数を含む）
+- 即死の場合: null（OnPieceDeathイベントで処理）
 - 失敗: null
 
-**実装箇所:** `PieceManager.cs:828-849`
+**使用例:**
+```csharp
+syncPieceData? charmData = PieceManager.Instance.ConvertEnemy(missionaryID, enemyPieceID);
+
+if (charmData.HasValue)
+{
+    Debug.Log($"魅惑成功！{charmData.Value.charmedTurnsRemaining}ターン支配");
+    SendToNetwork(charmData.Value);
+}
+```
+
+**重要な動作:**
+1. 魅惑試行を実行（成功率は宣教師の`convertEnemyLevel`に依存）
+2. 魅惑成功時：
+   - ターゲットに魅惑状態を設定（`Piece.SetCharmed()`）
+   - 魅惑ターン数は`MissionaryDataSO.conversionTurnDuration[convertEnemyLevel]`から取得
+   - ターゲットの`currentPID`を宣教師の`CurrentPID`に変更（辞書移動なし）
+   - `OnPieceCharmed`イベントを発火
+3. 即死の場合（レベル1以上の宣教師・軍隊）：
+   - ターゲットが即死し、`OnPieceDeath`イベントで処理される
+4. 魅惑解除：
+   - 毎ターン`ProcessTurnStart()`で自動的にカウンター減算
+   - カウンターが0になると`currentPID`が元の`OriginalPID`に戻る（辞書移動なし）
+
+**実装箇所:** `PieceManager.cs:959-1006`
 
 ---
 
@@ -758,7 +792,7 @@ public syncPieceData? RemovePiece(int pieceID)
 ### ターン処理
 
 #### `ProcessTurnStart()`
-指定プレイヤーのターン開始処理を実行します。
+指定プレイヤーのターン開始処理を実行します（AP回復、魅惑カウンター処理）。
 
 **シグネチャ:**
 ```csharp
@@ -774,7 +808,22 @@ public void ProcessTurnStart(int playerID)
 PieceManager.Instance.ProcessTurnStart(currentPlayerID);
 ```
 
-**実装箇所:** `PieceManager.cs:1052-1065`
+**処理内容:**
+1. **AP回復**: 指定プレイヤーのすべての駒のAPを回復
+2. **魅惑カウンター処理**:
+   - 各駒の`ProcessCharmedTurn()`を呼び出し
+   - 魅惑カウンターを-1
+   - カウンターが0になった駒は自動的に元の所有者に復帰
+   - `currentPID`が`OriginalPID`に戻る（辞書移動なし）
+
+**魅惑解除の自動処理:**
+```csharp
+// 魅惑が解除されると自動的に以下が実行される：
+// 1. 駒のcurrentPIDがOriginalPIDに戻る
+// 2. OnUncharmedイベントが発火
+```
+
+**実装箇所:** `PieceManager.cs:1218-1254`
 
 ---
 
@@ -821,14 +870,82 @@ public int GetLocalPlayerID()
 
 ---
 
-### 建物の生成
-
-#### `CreateBuilding()`
-己方の建物を生成してIDを返します。
+#### `InitializeBuildingData()`
+宗教に基づいて建物データを初期化します（BuildingRegistryから自動取得）。
 
 **シグネチャ:**
 ```csharp
-public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
+public void InitializeBuildingData(Religion playerReligion, Religion enemyReligion)
+```
+
+**パラメータ:**
+- `playerReligion`: 自陣営の宗教
+- `enemyReligion`: 対戦相手の宗教
+
+**使用例:**
+```csharp
+using GameData; // Religion enumを使用するため
+
+// 宗教を指定するだけで自動的に該当建物を取得
+buildingManager.InitializeBuildingData(Religion.SilkReligion, Religion.MadScientistReligion);
+```
+
+**動作:**
+1. BuildingRegistryから指定された宗教の建物を自動的に取得
+2. 自陣営の建物を `buildableBuildingTypes`（建設可能リスト）に設定
+3. 自陣営と対戦相手の建物を `allBuildingTypes`（全建物リスト）に設定
+4. 建設可能な建物は自陣営のもののみ
+5. 敵の建物データは同期用に保持（`CreateEnemyBuilding()`で使用）
+
+**必要な設定:**
+- BuildingManagerのInspectorで`BuildingRegistry`を設定する必要があります
+- 各BuildingDataSOアセットで`religion`フィールドを適切に設定する必要があります
+
+**注意:**
+- この関数を呼び出す前に、BuildingRegistryに全建物のBuildingDataSOを登録しておく必要があります
+- 建物を生成する前に必ず呼び出してください
+
+**実装箇所:** `BuildingManager.cs:62-93`
+
+**BuildingDataSOの設定:**
+
+各建物のScriptableObjectに宗教フィールドが追加されています：
+
+```csharp
+[Header("宗教")]
+public Religion religion = Religion.None; // 所属する宗教
+```
+
+対戦ゲームの設計上：
+- **自陣営の建物**: 建設可能（`buildableBuildingTypes`から取得）
+- **敵陣営の建物**: 建設不可だが、データを知る必要がある（`allBuildingTypes`に含まれる）
+
+**BuildingRegistryの準備:**
+
+BuildingRegistryには宗教フィルタリング機能が追加されています：
+
+```csharp
+/// <summary>
+/// 指定された宗教の建物のみを取得
+/// </summary>
+public List<BuildingDataSO> GetBuildingsByReligion(Religion religion)
+
+/// <summary>
+/// 複数の宗教の建物を取得
+/// </summary>
+public List<BuildingDataSO> GetBuildingsByReligions(params Religion[] religions)
+```
+
+---
+
+### 建物の生成
+
+#### `CreateBuilding()`
+己方の建物を生成し、同期データを返します。
+
+**シグネチャ:**
+```csharp
+public syncBuildingData? CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
 ```
 
 **パラメータ:**
@@ -837,26 +954,68 @@ public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 pos
 - `position`: 生成位置
 
 **戻り値:**
-- 成功: 生成された建物のID（正の整数）
-- 失敗: -1
+- 成功: 生成された建物の同期データ（`syncBuildingData`）
+- 失敗: null
+
+**使用例:**
+```csharp
+// 建物を生成
+syncBuildingData? buildingData = buildingManager.CreateBuilding(
+    buildingDataSO,
+    playerID: 1,
+    new Vector3(10, 0, 10)
+);
+
+if (buildingData.HasValue)
+{
+    Debug.Log($"建物を生成しました: ID={buildingData.Value.buildingID}");
+    // ネットワーク経由で相手に送信
+    SendToNetwork(buildingData.Value);
+}
+```
 
 **注意:**
 - このメソッドで生成された建物は `buildings` 辞書（己方の建物）に追加されます
 - 敵方の建物を生成する場合は `CreateEnemyBuilding()` を使用してください
+- 戻り値の同期データはネットワーク送信に即座に使用できます
 
-**実装箇所:** `BuildingManager.cs:62-102`
+**実装箇所:** `BuildingManager.cs:99-144`
 
 ---
 
 #### `CreateBuildingByName()`
-建物名から建物を生成します（便利メソッド）。
+建物名から建物を生成し、同期データを返します（便利メソッド）。
 
 **シグネチャ:**
 ```csharp
-public int CreateBuildingByName(string buildingName, int playerID, Vector3 position)
+public syncBuildingData? CreateBuildingByName(string buildingName, int playerID, Vector3 position)
 ```
 
-**実装箇所:** `BuildingManager.cs:113-124`
+**パラメータ:**
+- `buildingName`: 建物名
+- `playerID`: プレイヤーID
+- `position`: 生成位置
+
+**戻り値:**
+- 成功: 生成された建物の同期データ（`syncBuildingData`）
+- 失敗: null
+
+**使用例:**
+```csharp
+syncBuildingData? buildingData = buildingManager.CreateBuildingByName(
+    "祭壇",
+    playerID: 1,
+    new Vector3(10, 0, 10)
+);
+
+if (buildingData.HasValue)
+{
+    Debug.Log($"建物を生成しました: {buildingData.Value.buildingName}");
+    SendToNetwork(buildingData.Value);
+}
+```
+
+**実装箇所:** `BuildingManager.cs:146-164`
 
 ---
 
@@ -1636,20 +1795,28 @@ public struct syncPieceData
 {
     public PieceType piecetype;
     public Religion religion;
-    public Vector3 piecePos;
-    public int playerID;           // 元々のプレイヤーID
+    public SerializableVector3 piecePos;
     public int pieceID;
     public int currentHP;
     public int currentHPLevel;
-    public int currentPID;         // 現在のプレイヤーID（魅惑された場合など）
-    public int swapCooldownLevel;  // 教皇専用
-    public int buffLevel;          // 教皇専用
-    public int occupyLevel;        // 宣教師専用
-    public int convertEnemyLevel;  // 宣教師専用
-    public int sacrificeLevel;     // 農民専用
-    public int attackPowerLevel;   // 軍隊専用
+    public int currentPID;            // 現在のプレイヤーID（魅惑された場合など）
+    public int swapCooldownLevel;     // 教皇専用
+    public int buffLevel;             // 教皇専用
+    public int occupyLevel;           // 宣教師専用
+    public int convertEnemyLevel;     // 宣教師専用
+    public int sacrificeLevel;        // 農民専用
+    public int attackPowerLevel;      // 軍隊専用
+    public int charmedTurnsRemaining; // 魅惑残りターン数（ネットワーク同期用）
+
+    // ヘルパープロパティ：pieceIDから元の所有者を計算
+    public int OriginalPlayerID => pieceID / 10000;
 }
 ```
+
+**魅惑関連フィールドの説明:**
+- `currentPID`: 魅惑された駒の場合、魅惑したプレイヤーのIDが設定される
+- `charmedTurnsRemaining`: 魅惑が解除されるまでの残りターン数（0の場合は魅惑されていない）
+- `OriginalPlayerID`: pieceIDから計算される元の所有者（pieceID / 10000）。魅惑されても変わらない
 
 ### swapPieceData構造体
 ```csharp

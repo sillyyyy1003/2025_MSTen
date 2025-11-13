@@ -15,7 +15,7 @@ public class GameCamera : MonoBehaviour
     private float moveSpeedMinZoom = 10f;  // 缩小时的移动速度
     private float moveSpeedMaxZoom = 40f;  // 放大时的移动速度
     public float edgeScrollSpeed = 30f;   // 鼠标到屏幕边缘时的移动速度
-    public int edgeSize = 10;             // 屏幕边缘触发范围（像素）
+    public int edgeSize = 1;             // 屏幕边缘触发范围（像素）
 
     [Header("旋转设置")]
     public float rotationSpeed = 100f;    // Q/E 旋转速度（可选）

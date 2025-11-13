@@ -244,6 +244,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 40079169}
   m_CullTransparentMesh: 1
+--- !u!1 &151968400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 151968402}
+  - component: {fileID: 151968401}
+  m_Layer: 0
+  m_Name: PM
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &151968401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151968400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4db2196be2b48bd429aa6a6370759ded, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  unitListTable: {fileID: 1789075467}
+--- !u!4 &151968402
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151968400}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 871.3468, y: 519.5777, z: -34.423706}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &188783682
 GameObject:
   m_ObjectHideFlags: 0
@@ -483,6 +528,51 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &311390071
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 311390073}
+  - component: {fileID: 311390072}
+  m_Layer: 0
+  m_Name: BM
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &311390072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 311390071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1c98f6d83ca1824cb6612f496a5ffc4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buildingRegistry: {fileID: 11400000, guid: f70f4dae7fb444a46803d19fffca7183, type: 2}
+--- !u!4 &311390073
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 311390071}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 871.3468, y: 519.5777, z: -34.423706}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &358685632
 GameObject:
   m_ObjectHideFlags: 0
@@ -1721,7 +1811,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1695341312}
-  - component: {fileID: 1695341311}
+  - component: {fileID: 1695341313}
   m_Layer: 0
   m_Name: DemoUITest
   m_TagString: Untagged
@@ -1729,26 +1819,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1695341311
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1695341310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99279b1604eee814d97d44f3ecf37243, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  unitListTable: {fileID: 0}
-  buildingRegistry: {fileID: 0}
-  defaultReligion: 5
-  defaultPlayerID: 1
-  uiCanvas: {fileID: 0}
-  buttonContainer: {fileID: 0}
-  infoText: {fileID: 0}
-  turnText: {fileID: 0}
 --- !u!4 &1695341312
 Transform:
   m_ObjectHideFlags: 0
@@ -1764,6 +1834,30 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1695341313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1695341310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 666678f5df844a64091ff8e78d9c644b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pieceManager: {fileID: 151968401}
+  buildingManager: {fileID: 311390072}
+  testReligion: 1
+  militarySpawnPosition: {x: 0, y: 0, z: 0}
+  buildingSpawnPosition: {x: 5, y: 0, z: 0}
+  testPlayerID: 1
+  enemyPlayerID: 2
+  createMilitaryKey: 49
+  createBuildingKey: 50
+  attackKey: 32
+  autoAttackKey: 97
+  showDebugInfo: 1
 --- !u!1 &1788878274
 GameObject:
   m_ObjectHideFlags: 0
@@ -1944,18 +2038,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pieceDataEntries:
-  - pieceType: 2
-    religion: 1
-    pieceDataSO: {fileID: 11400000, guid: ae53624264a7525448b31cc1079e5758, type: 2}
-  - pieceType: 3
-    religion: 1
-    pieceDataSO: {fileID: 11400000, guid: caf75aa74a14ce3488d40ef7c9af0943, type: 2}
   - pieceType: 1
     religion: 1
-    pieceDataSO: {fileID: 0}
-  - pieceType: 2
-    religion: 2
-    pieceDataSO: {fileID: 11400000, guid: b071b4efd1569404eaa31d7ab5742cde, type: 2}
+    pieceDataSO: {fileID: 11400000, guid: 8147df12aa38b4c42ad427f0bc0ab5f0, type: 2}
 --- !u!1 &1826658662
 GameObject:
   m_ObjectHideFlags: 0
@@ -2207,3 +2292,5 @@ SceneRoots:
   - {fileID: 1141019393}
   - {fileID: 1789075466}
   - {fileID: 1695341312}
+  - {fileID: 311390073}
+  - {fileID: 151968402}

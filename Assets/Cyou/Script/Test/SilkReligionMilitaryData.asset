@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed41a46d664f4324e88e57bd495150e4, type: 3}
+  m_Name: SilkReligionMilitaryData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath:
+  religion: 1
+  originalPID: 0
+  pieceName: "\u7D72\u7E54\u6559_\u5341\u5B57\u8ECD"
+  populationCost: 3
+  resourceCost: 5
+  initialLevel: 0
+  aPRecoveryRate: 10
+  moveAPCost: 1
+  moveSpeed: 1
+  canAttack: 1
+  attackPower: 20
+  attackRange: 2
+  attackCooldown: 1
+  attackAPCost: 1
+  maxHPByLevel: 0a0000000c0000000f0000000f000000
+  maxAPByLevel: 05000000070000000700000007000000
+  attackPowerByLevel: 02000000030000000400000004000000
+  hpUpgradeCost: 050000000600000000000000
+  apUpgradeCost: 070000000800000000000000
+  piecePrefab: {fileID: 7153972553235425938, guid: 67968626a9313654eb98a739ff2f6e17,
+    type: 3}
+  criticalChance: 0.1
+  damageType: 0
+  availableSkills: []
+  skillAPCost: 0
+  hasAntiConversionSkill: 00010101
+  attackPowerUpgradeCost: 050000000600000000000000

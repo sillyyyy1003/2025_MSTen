@@ -28,17 +28,10 @@ namespace GamePieces
         protected int hpLevel = 0; // HP レベル (0-3)
         protected int apLevel = 0; // AP レベル (0-3)
 
-
-        /// <summary>
-        /// 変換した駒の情報を保持する構造体
-        /// </summary>
-        public struct ConvertedPieceInfo
-        {
-            public Piece convertedPiece;
-            public int originalPlayerID;
-            public float convertedTurn;
-
-        }
+        // ===== 魅惑関連 =====
+        private int charmedTurnsRemaining = 0; // 残り魅惑ターン数
+        public int CharmedTurnsRemaining => charmedTurnsRemaining;
+        public bool IsCharmed => charmedTurnsRemaining > 0;
 
 
 
@@ -88,7 +81,7 @@ namespace GamePieces
         public virtual void Initialize(PieceDataSO data, int playerID)
         {
             pieceData = data;
-            originalPID = data.originalPID;
+            originalPID = playerID;  // 引数から設定（SOデータではなく実行時の所有者）
             currentPID = playerID;
 
             currentMaxHP = data.maxHPByLevel[0];
@@ -116,16 +109,16 @@ namespace GamePieces
             if (newPlayerID != OriginalPID)
             {
                 OnCharmed?.Invoke(this, charmer);
-                Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
+                Debug.Log($"Player{OriginalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}の駒になりました");
             }
             else if(newPlayerID==OriginalPID)
             {
                 OnUncharmed?.Invoke(this);
-                Debug.Log($"{pieceData.originalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}に復帰しました。");
+                Debug.Log($"Player{OriginalPID}の{pieceData.pieceName} がプレイヤー{newPlayerID}に復帰しました。");
             }
 
-            if(charmTurns>0)
-                StartCoroutine(RevertCharmAfterTurns(charmTurns,OriginalPID));
+            //if(charmTurns>0)
+            //    StartCoroutine(RevertCharmAfterTurns(charmTurns,OriginalPID));
 
 
         }
@@ -141,10 +134,45 @@ namespace GamePieces
                 yield return new WaitUntil(() =>1 >= 0);//GameManagerからターンの終了宣告を貰う
                     remainingTurns--;
             }
-            
+
             currentPID = originalPID;
             OnUncharmed?.Invoke(this);
             Debug.Log($"{OriginalPID}の駒{this.pieceData.pieceName}の魅惑が解けました");
+        }
+
+        /// <summary>
+        /// 魅惑状態にする（PieceManagerから呼び出し）
+        /// </summary>
+        /// <param name="turns">魅惑ターン数</param>
+        /// <param name="newPlayerID">魅惑したプレイヤーのID</param>
+        public void SetCharmed(int turns, int newPlayerID)
+        {
+            charmedTurnsRemaining = turns;
+            currentPID = newPlayerID;
+            Debug.Log($"駒ID={PieceID}が{turns}ターン魅惑されました（元のPID: {OriginalPID} → 新PID: {newPlayerID}）");
+        }
+
+        /// <summary>
+        /// 魅惑カウンターを減算（ターン進行時にPieceManagerから呼び出される）
+        /// </summary>
+        /// <returns>魅惑が解除されたらtrue</returns>
+        public bool ProcessCharmedTurn()
+        {
+            if (charmedTurnsRemaining > 0)
+            {
+                charmedTurnsRemaining--;
+                Debug.Log($"駒ID={PieceID}の魅惑残りターン: {charmedTurnsRemaining}");
+
+                if (charmedTurnsRemaining == 0)
+                {
+                    // 魅惑解除：元のプレイヤーIDに戻す
+                    currentPID = OriginalPID;
+                    OnUncharmed?.Invoke(this);
+                    Debug.Log($"駒ID={PieceID}の魅惑が解除されました（元のPID: {OriginalPID}に復帰）");
+                    return true;
+                }
+            }
+            return false;
         }
 
         protected virtual void SetupComponents()

@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using System.IO;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Component that represents an entire hexagon map.
@@ -335,9 +336,6 @@ public class HexGrid : MonoBehaviour
 		
 		cell.Elevation = 0;
 
-		//2025.10.31
-		cell.IsVisible = true;
-
 		AddCellToChunk(x, z, cell);
 	}
 
@@ -540,6 +538,12 @@ public class HexGrid : MonoBehaviour
 					continue;
 				}
 
+				//2025.11.06 追加特殊建筑不可通过 从寻路中剔除
+				if (neighbor.SpecialIndex == (int)SpecialIndexType.Temple)
+				{
+					continue;
+				}
+
 				// 山地不考虑
 				HexEdgeType edgeType = current.GetEdgeType(neighbor);
 				if (edgeType == HexEdgeType.Cliff)
@@ -601,6 +605,48 @@ public class HexGrid : MonoBehaviour
 	}
 
 
+	/// <summary>
+	/// 判断某个Hex Cell到玩家领地是否在距离范围内
+	/// </summary>
+	/// <param name="cellList">玩家的HexCell数组</param>
+	/// <param name="fromCell">选定的HexCell</param>
+	/// <param name="range">范围</param>
+	/// <returns></returns>
+	public bool SearchCellRange(List<HexCell> cellList, HexCell fromCell, int range)
+	{
+		// ↑11.6 RI 修改为public
+		for (int i = 0; i <cellList.Count; i++)
+		{
+
+			if (fromCell.Coordinates.DistanceTo(cellList[i].Coordinates) <= range)
+				return true;
+		}
+
+		return false;
+	}
+
+
+	/// <summary>
+	/// 返回某个格子到领地的最短直线距离
+	/// </summary>
+	/// <param name="cellList">领地HexCell数组</param>
+	/// <param name="fromCell">目标HexCell</param>
+	/// <returns>最短距离</returns>
+	int SearchCellDistance(List<HexCell> cellList, HexCell fromCell)
+	{
+		int distance = int.MaxValue;
+		foreach (var cell in  cellList)
+		{
+			if (cell.Coordinates.DistanceTo(fromCell.Coordinates) <= distance)
+				distance = cell.Coordinates.DistanceTo(fromCell.Coordinates);
+		}
+		return distance;
+	}
+
+
+
+
+
 	/*
 	/// <summary>
 	   /// Try to find a path.
@@ -610,11 +656,11 @@ public class HexGrid : MonoBehaviour
 	   /// <param name="unit">Unit for which the path is.</param>
 	   public void FindPath(HexCell fromCell, HexCell toCell, HexUnit unit)
 	   {
-	   	ClearPath();
-	   	currentPathFromIndex = fromCell.Index;
-	   	currentPathToIndex = toCell.Index;
-	   	currentPathExists = Search(fromCell, toCell, unit);
-	   	ShowPath(unit.Speed);
+	    ClearPath();
+	    currentPathFromIndex = fromCell.Index;
+	    currentPathToIndex = toCell.Index;
+	    currentPathExists = Search(fromCell, toCell, unit);
+	    ShowPath(unit.Speed);
 	   }
 
 	bool Search(HexCell fromCell, HexCell toCell, HexUnit unit)
@@ -911,4 +957,22 @@ public class HexGrid : MonoBehaviour
 
 		GameManage.Instance.SetGameBoardInfor(infor);
 	}
+
+	/// <summary>
+	/// 更新模型透明度
+	/// </summary>
+	/// <param name="index"></param>
+
+	public void UpdateCellFeature(int index)
+	{
+		int x = index % CellCountX;
+		int z = index / CellCountX;
+
+		int chunkX = x / HexMetrics.chunkSizeX;
+		int chunkZ = z / HexMetrics.chunkSizeZ;
+
+		chunks[chunkX + chunkZ * chunkCountX].features.UpdateFeature(index,cells[index].Unit);
+	}
+
+
 }

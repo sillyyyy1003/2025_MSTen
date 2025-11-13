@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -73,7 +75,7 @@ public class UnitCardManager : MonoBehaviour
 
     //====event====
     public event System.Action<int> OnCardSelected;
-
+    public event System.Action<CardType> OnCardDragCreated;
 
     public static UnitCardManager Instance { get; private set; }
 
@@ -113,6 +115,8 @@ public class UnitCardManager : MonoBehaviour
 	{
 
 
+
+
     }
 
     void Update()
@@ -126,6 +130,8 @@ public class UnitCardManager : MonoBehaviour
     /// <summary>根据玩家数据生成卡牌（暂留）PlayerData==>UIData</summary>
     void GenerateCardList(CardType type)
     {
+
+
 
     }
 
@@ -173,11 +179,11 @@ public class UnitCardManager : MonoBehaviour
 
         if(type == CardType.Pope)
         {
-            card.SetData(UIGameDataManager.Instance.PopeUnitData);
+            card.SetData(GameUIManager.Instance.GetPopeUnitData());
             card.alwaysOpen = true;
         }
         else {
-            List<UIUnitData> units = UIGameDataManager.Instance.GetActivateUnitDataList(type);
+            List<UIUnitData> units = GameUIManager.Instance.GetActivateUnitDataList(type);
 
             if (units != null && i < units.Count)
             {
@@ -229,9 +235,19 @@ public class UnitCardManager : MonoBehaviour
         if (i == targetDeckCount - 1)
         {
             storedCard.ShowSprite();
-            int index = i;
+
             Button cardBtn = storedCard.unitCardImage.GetComponent<Button>();
             cardBtn.onClick.AddListener(() => OnDeckClicked());
+
+            storedCard.OnCardDraggedUp = (type) =>
+            {
+                Debug.Log($"卡牌 {type} 被拖上去，触发棋子生成");
+                if (!UseStoredCard(type))
+                {
+                    storedCard.ReturnToOriginPos();
+
+                }
+            };
 
         }
 
@@ -239,6 +255,19 @@ public class UnitCardManager : MonoBehaviour
         deck.Add(storedCard);
 
     }
+
+    public bool UseStoredCard(CardType type)
+    {
+        if (PlayerUnitDataInterface.Instance.ActivateUnitFromDeck(type))
+        {
+            OnCardDragCreated?.Invoke(type);
+            return true;
+        }
+        return false;
+
+    }
+
+
 
     /// <summary>清空所有卡牌的数据和显示</summary>
     public void ClearAllCards()
@@ -325,14 +354,14 @@ public class UnitCardManager : MonoBehaviour
 
             ClearAllCards();
 
-            targetCardCount = UIGameDataManager.Instance.GetActivateUnitCount(targetCardType);
+            targetCardCount = GameUIManager.Instance.GetActivateUnitCount(targetCardType);
             GenerateActiveCards(targetCardCount, targetCardType);
             currentCardType = targetCardType;
             currentCardCount = targetCardCount;
 
             if (!enableSingleMode)
             {
-                targetCardCount = UIGameDataManager.Instance.GetActivateUnitCount(targetCardType);
+                targetCardCount = GameUIManager.Instance.GetActivateUnitCount(targetCardType);
                 GenerateStoredCards(targetDeckCount, targetCardType);
                 currentDeckCount = targetDeckCount;
             }
@@ -341,8 +370,8 @@ public class UnitCardManager : MonoBehaviour
         }
         else
         {
-            targetDeckCount = UIGameDataManager.Instance.GetUIDeckNum(targetCardType);
-            targetCardCount = UIGameDataManager.Instance.GetActivateUnitCount(targetCardType);
+            targetDeckCount = GameUIManager.Instance.GetUIDeckNum(targetCardType);
+            targetCardCount = GameUIManager.Instance.GetActivateUnitCount(targetCardType);
 
             if (targetCardCount != currentCardCount)
             {
@@ -385,7 +414,6 @@ public class UnitCardManager : MonoBehaviour
 
     void OnCardClicked(int clickedIndex)
 	{
-        if (cards[clickedIndex].alwaysOpen) return;
 
         if (cards[clickedIndex].GetPanelOpen())
 		{
@@ -393,6 +421,16 @@ public class UnitCardManager : MonoBehaviour
 			RearrangeCards(clickedIndex, false);
             openIndex = clickedIndex;
             choosedUnitId = cards[openIndex].GetCardUnitID();
+
+            PlayerDataManager.Instance.nowChooseUnitID = choosedUnitId;
+            PlayerDataManager.Instance.nowChooseUnitType = currentCardType;
+            OnCardSelected?.Invoke(choosedUnitId);
+
+            Vector3 Pos = PlayerDataManager.Instance.GetUnitPos(choosedUnitId);
+
+            GameManage.Instance._GameCamera.GetPlayerPosition(Pos);
+
+
         }
 		else
 		{
@@ -478,7 +516,7 @@ public class UnitCardManager : MonoBehaviour
 
 
     /// <summary>自动聚焦到展开的卡牌  根据CardId去取 CardType</summary>
-    private void SetContainerLookAt()
+    private void SetContainerLookAt(int id)
     {
 
 
@@ -672,7 +710,8 @@ public class UnitCardManager : MonoBehaviour
         int index = cards.FindIndex(c => c.GetCardUnitID() == targetId);
         if (index < 0 || index >= cards.Count)
         {
-            Debug.Log($"[UnitCardManager] 没找到对应UnitID={targetId}的卡片，当前cards.Count={cards.Count}");
+            //25.11.11 RI 暂时注释掉
+            //Debug.Log($"[UnitCardManager] 没找到对应UnitID={targetId}的卡片，当前cards.Count={cards.Count}");
             yield break;
         }
 

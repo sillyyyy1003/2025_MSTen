@@ -23,8 +23,16 @@ public class BuildingManager : MonoBehaviour
     // ===== 破壊データのキャッシュ =====
     private syncBuildingData? lastDestroyedBuildingData = null;
 
-    // ===== 依存関係 =====
-    [SerializeField] private List<BuildingDataSO> availableBuildingTypes; // 利用可能な建物タイプのリスト
+
+
+    // ===== 建物データ =====
+    [SerializeField] private BuildingRegistry buildingRegistry; // 全建物のレジストリ
+    private List<BuildingDataSO> allBuildingTypes = new List<BuildingDataSO>(); // 全建物（自分+相手、検索用）
+    private List<BuildingDataSO> buildableBuildingTypes = new List<BuildingDataSO>(); // 自分が建設可能な建物のみ
+
+
+    //25.11.11 RI add GameObject
+    private GameObject buildingObject;
 
     // ===== イベント（内部使用・GameManagerには通知しない） =====
     public event Action<int> OnBuildingCreated;       // 建物ID
@@ -51,9 +59,65 @@ public class BuildingManager : MonoBehaviour
         return localPlayerID;
     }
 
+    /// <summary>
+    /// 宗教に基づいて建物データを初期化（GameManagerから呼び出し）
+    /// BuildingRegistryから自動的に該当宗教の建物を取得
+    /// </summary>
+    /// <param name="playerReligion">自陣営の宗教</param>
+    /// <param name="enemyReligion">対戦相手の宗教</param>
+    public void InitializeBuildingData(Religion playerReligion, Religion enemyReligion)
+    {
+        if (buildingRegistry == null)
+        {
+            Debug.LogError("BuildingRegistry が設定されていません。Inspectorで設定してください。");
+            return;
+        }
+
+        // 各宗教の建物を取得
+        List<BuildingDataSO> playerBuildings = buildingRegistry.GetBuildingsByReligion(playerReligion);
+        List<BuildingDataSO> enemyBuildings = buildingRegistry.GetBuildingsByReligion(enemyReligion);
+
+        // 全建物リストを初期化（検索用：自分 + 相手）
+        allBuildingTypes = new List<BuildingDataSO>();
+        if (playerBuildings != null)
+        {
+            allBuildingTypes.AddRange(playerBuildings);
+
+        }
+        if (enemyBuildings != null)
+        {
+            allBuildingTypes.AddRange(enemyBuildings);
+        }
+
+        //25.11.11 RI add test
+        for(int i=0;i < allBuildingTypes.Count;i++)
+        {
+            Debug.Log("building type is " + allBuildingTypes[i].buildingName);
+        }
+        // 建設可能な建物リストを初期化（自分のみ）
+        buildableBuildingTypes = new List<BuildingDataSO>();
+        if (playerBuildings != null)
+        {
+            buildableBuildingTypes.AddRange(playerBuildings);
+        }
+
+        Debug.Log($"宗教に基づいて建物データを初期化しました: 自陣営={playerReligion}({buildableBuildingTypes.Count}個), 敵陣営={enemyReligion}({enemyBuildings?.Count ?? 0}個), 全建物数={allBuildingTypes.Count}");
+    }
+
     #endregion
 
     #region 建物の生成
+
+
+    // 25.11.1 RI add return piece gameObject
+    public GameObject GetBuildingGameObject()
+    {
+        if (buildingObject != null)
+            return buildingObject;
+        return null;
+    }
+
+
 
     /// <summary>
     /// 建物を生成（GameManagerから呼び出し）
@@ -61,44 +125,57 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingData">建物データSO</param>
     /// <param name="playerID">プレイヤーID</param>
     /// <param name="position">生成位置</param>
-    /// <returns>生成された建物のID（失敗時は-1）</returns>
-    public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
-    {
+    /// <returns>生成された建物の同期データ（失敗時はnull）</returns>
+
+    public syncBuildingData? CreateBuilding(BuildingDataSO buildingData, int playerID,int pieceID, Vector3 position)
+    {                                                                    //25.11.11 RI add piece ID
         if (buildingData == null)
         {
             Debug.LogError("建物データがnullです");
-            return -1;
+            return null;
         }
 
         // Prefabから建物を生成
         GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position, Quaternion.identity);
-        Building building = buildingObj.GetComponent<Building>();
+
+        // 25.11.11 RI init building gameObject
+        buildingObject = buildingObj;
+
+        //25.11.10 RI Fix GetComponent Bug
+        //Building building = buildingObj.GetComponent<Building>();
+        Building building = buildingObj.AddComponent<Building>();
 
         if (building == null)
         {
             Debug.LogError($"Buildingコンポーネントがありません: {buildingData.buildingName}");
             Destroy(buildingObj);
-            return -1;
+            return null;
         }
 
         // 建物を初期化
         building.Initialize(buildingData, playerID);
 
         // IDを割り当てて登録
-        int buildingID = nextBuildingID;
-        building.SetBuildingID(buildingID);
-        buildings[buildingID] = building;
-        nextBuildingID++;
+        //25.11.11 RI change ID
+        ////int buildingID = nextBuildingID;
+        //building.SetBuildingID(buildingID);
+        //buildings[buildingID] = building;
+        //nextBuildingID++;
+
+        building.SetBuildingID(pieceID);
+        buildings[pieceID] = building;
+
 
         // イベントを購読
         building.OnBuildingCompleted += (completedBuilding) => HandleBuildingCompleted(completedBuilding.BuildingID);
         building.OnBuildingDestroyed += (destroyedBuilding) => HandleBuildingDestroyed(destroyedBuilding.BuildingID);
-        building.OnResourceGenerated += (amount) => OnResourceGenerated?.Invoke(buildingID, amount);
+        building.OnResourceGenerated += (amount) => OnResourceGenerated?.Invoke(pieceID, amount);
 
-        Debug.Log($"建物を生成しました: ID={buildingID}, Name={buildingData.buildingName}, PlayerID={playerID}");
-        OnBuildingCreated?.Invoke(buildingID);
+        Debug.Log($"建物を生成しました: ID={pieceID}, Name={buildingData.buildingName}, PlayerID={playerID}");
+        OnBuildingCreated?.Invoke(pieceID);
 
-        return buildingID;
+        // 同期データを作成して返す
+        return CreateCompleteSyncData(pieceID);
     }
 
     /// <summary>
@@ -107,18 +184,18 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingName">建物名</param>
     /// <param name="playerID">プレイヤーID</param>
     /// <param name="position">生成位置</param>
-    /// <returns>生成された建物のID（失敗時は-1）</returns>
-    public int CreateBuildingByName(string buildingName, int playerID, Vector3 position)
-    {
-        BuildingDataSO buildingData = availableBuildingTypes?.Find(b => b.buildingName == buildingName);
+    /// <returns>生成された建物の同期データ（失敗時はnull）</returns>
+    public syncBuildingData? CreateBuildingByName(string buildingName, int playerID,int pieceID, Vector3 position)
+    {                                                                                //25.11.11 RI add piece ID
+        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
 
         if (buildingData == null)
         {
-            Debug.LogError($"建物データが見つかりません: {buildingName}");
-            return -1;
+            Debug.LogError($"建設可能な建物データが見つかりません: {buildingName}");
+            return null;
         }
 
-        return CreateBuilding(buildingData, playerID, position);
+        return CreateBuilding(buildingData, playerID, pieceID, position);
     }
 
     /// <summary>
@@ -128,23 +205,37 @@ public class BuildingManager : MonoBehaviour
     /// <returns>生成成功したらtrue</returns>
     public bool CreateEnemyBuilding(syncBuildingData sbd)
     {
-        // 建物データを検索（建物名から）
-        BuildingDataSO buildingData = availableBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
+        // 25.11.11 RI 修改创建逻辑
+        BuildingDataSO buildingData= buildableBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
+        // 建物データを検索（全建物から：自分 + 相手）
+        for (int i=0;i< allBuildingTypes.Count;i++)
+        {
+            if (allBuildingTypes[i].buildingName == sbd.buildingName)
+            {
+                buildingData = allBuildingTypes[i];
+                Debug.Log("can find building data!!!!!");
+
+            }
+        }
+        //BuildingDataSO buildingData = allBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
 
         if (buildingData == null)
         {
             Debug.LogError($"建物データが見つかりません: {sbd.buildingName}");
             return false;
         }
-
+        // 25.11.11 RI 修改创建逻辑
         // Prefabから建物を生成
-        GameObject buildingObj = Instantiate(buildingData.buildingPrefab, sbd.position, Quaternion.identity);
-        Building building = buildingObj.GetComponent<Building>();
+        buildingObject = Instantiate(buildingData.buildingPrefab, sbd.position, Quaternion.identity);
+
+        //25.11.11 RI 修改为AddComponent
+        //Building building = buildingObject.GetComponent<Building>();
+        Building building = buildingObject.AddComponent<Building>();
 
         if (building == null)
         {
             Debug.LogError($"Buildingコンポーネントがありません: {sbd.buildingName}");
-            Destroy(buildingObj);
+            Destroy(buildingObject);
             return false;
         }
 
@@ -427,25 +518,8 @@ public class BuildingManager : MonoBehaviour
             return null;
         }
 
-        // 同期データを作成
-        syncBuildingData sbd = new syncBuildingData
-        {
-            buildingID = buildingID,
-            buildingName = building.Data.buildingName,
-            playerID = building.PlayerID,
-            position = building.transform.position,
-            currentHP = building.CurrentHP,
-            state = building.State,
-            remainingBuildCost = building.RemainingBuildCost,
-
-            // アップグレードレベル
-            hpLevel = building.HPLevel,
-            attackRangeLevel = building.AttackRangeLevel,
-            slotsLevel = building.SlotsLevel,
-            buildCostLevel = building.BuildCostLevel
-        };
-
-        return sbd;
+        // ファクトリーメソッドを使用して同期データを作成
+        return syncBuildingData.CreateFromBuilding(building);
     }
 
     #endregion
@@ -566,6 +640,32 @@ public class BuildingManager : MonoBehaviour
         return buildings.ContainsKey(buildingID);
     }
 
+    /// <summary>
+    /// 建物インスタンスを取得（己方・敵方両方から検索）
+    /// </summary>
+    /// <param name="buildingID">建物ID</param>
+    /// <returns>Buildingインスタンス（見つからない場合はnull）</returns>
+    public Building GetBuilding(int buildingID)
+    {
+        if (buildings.TryGetValue(buildingID, out Building building))
+        {
+            return building;
+        }
+        if (enemyBuildings.TryGetValue(buildingID, out building))
+        {
+            return building;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 建設可能な建物リストを取得
+    /// </summary>
+    /// <returns>建設可能な建物のDataSOリスト</returns>
+    public List<BuildingDataSO> GetBuildableBuildingTypes()
+    {
+        return buildableBuildingTypes;
+    }
 
     /// <summary>
     /// 指定プレイヤーのすべての建物IDを取得
@@ -642,15 +742,8 @@ public class BuildingManager : MonoBehaviour
         // 破壊データをキャッシュ（己方の建物の場合のみ）
         if (localPlayerID != -1 && ownerID == localPlayerID)
         {
-            lastDestroyedBuildingData = new syncBuildingData
-            {
-                buildingID = buildingID,
-                buildingName = building.Data.buildingName,
-                playerID = ownerID,
-                position = building.transform.position,
-                currentHP = 0, // 破壊されたのでHP=0
-                state = BuildingState.Ruined
-            };
+            // 完全な同期データを作成（破壊時の状態を保持）
+            lastDestroyedBuildingData = syncBuildingData.CreateFromBuilding(building);
         }
 
         // 建物を削除
@@ -804,7 +897,8 @@ public struct syncBuildingData
     public int buildingID;
     public string buildingName;
     public int playerID;
-    public Vector3 position;
+    //25.11.10 RI 修改为序列化Vector3
+    public SerializableVector3 position;
 
     // 状態情報
     public int currentHP;
@@ -816,4 +910,27 @@ public struct syncBuildingData
     public int attackRangeLevel;   // 攻撃範囲等級 (0-3)
     public int slotsLevel;         // スロット数等級 (0-3)
     public int buildCostLevel;     // 建造コスト等級 (0-3)
+
+    /// <summary>
+    /// Buildingインスタンスから完全なsyncBuildingDataを生成
+    /// </summary>
+    public static syncBuildingData CreateFromBuilding(Building building)
+    {
+        return new syncBuildingData
+        {
+            buildingID = building.BuildingID,
+            buildingName = building.Data.buildingName,
+            playerID = building.PlayerID,
+            position = building.transform.position,
+            currentHP = building.CurrentHP,
+            state = building.State,
+            remainingBuildCost = building.RemainingBuildCost,
+
+            // アップグレードレベル
+            hpLevel = building.HPLevel,
+            attackRangeLevel = building.AttackRangeLevel,
+            slotsLevel = building.SlotsLevel,
+            buildCostLevel = building.BuildCostLevel
+        };
+    }
 }

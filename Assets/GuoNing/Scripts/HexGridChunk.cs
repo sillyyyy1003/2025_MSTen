@@ -15,8 +15,7 @@ public class HexGridChunk : MonoBehaviour
 	[SerializeField]
 	HexMesh terrain, rivers, roads, water, waterShore, estuaries;
 
-	[SerializeField]
-	HexFeatureManager features;
+	[SerializeField] public HexFeatureManager features;
 
 	int[] cellIndices;
 

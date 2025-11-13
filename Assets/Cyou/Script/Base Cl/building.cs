@@ -79,8 +79,8 @@ namespace Buildings
             currentSkillUses = data.GetMaxSlotsByLevel(0);
             //地面に金鉱があるか否かを判断すべき
 
-
-            ChangeState(BuildingState.UnderConstruction);
+            // 25.11.10 RI 修改为直接创建完毕
+            ChangeState(BuildingState.Active);
 
             // スロット初期化
             if (data.isSpecialBuilding)

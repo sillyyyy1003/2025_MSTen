@@ -1,4 +1,4 @@
-using GameData.UI;
+ï»¿using GameData.UI;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -14,52 +14,52 @@ public class ButtonMenuManager : MonoBehaviour
     [Header("Button Menu Elements")]
 
     /// <summary>
-    ///µ±Ç°µÄÃæ°å²ãµÄÉè¶¨
+    ///å½“å‰çš„é¢æ¿å±‚çš„è®¾å®š
     /// </summary>
     public ButtonMenuData currentMenuData;
 
     /// <summary>
-    /// ËùÓĞÃæ°å²ãµÄÉè¶¨¼¯£¨´ÓÍâ²¿³õÊ¼»¯£©
+    /// æ‰€æœ‰é¢æ¿å±‚çš„è®¾å®šé›†ï¼ˆä»å¤–éƒ¨åˆå§‹åŒ–ï¼‰
     /// </summary>
     public List<ButtonMenuData> allMenus;
 
     /// <summary>
-    /// Áù¸ö°´Å¥±¾Ìå
+    /// å…­ä¸ªæŒ‰é’®æœ¬ä½“
     /// </summary>
     public Button[] uiButtons;
 
     /// <summary>
-    /// Ã¿¸ö°´Å¥µÄÎÄ×Ö
+    /// æ¯ä¸ªæŒ‰é’®çš„æ–‡å­—
     /// </summary>
     public TextMeshProUGUI[] uiButtonLabels;
 
     /// <summary>
-    /// Ã¿¸ö°´Å¥µÄÍ¼Æ¬
+    /// æ¯ä¸ªæŒ‰é’®çš„å›¾ç‰‡
     /// </summary>
     public Image[] uiButtonIcons;
 
     /// <summary>
-    /// Õû¸öÃæ°åµÄ±³¾°
+    /// æ•´ä¸ªé¢æ¿çš„èƒŒæ™¯
     /// </summary>
     public Image uiBackground;
 
     /// <summary>
-    /// ÄÚ²¿Ê¹ÓÃµÄÃæ°åÉè¶¨¼¯
+    /// å†…éƒ¨ä½¿ç”¨çš„é¢æ¿è®¾å®šé›†
     /// </summary>
     private Dictionary<string, ButtonMenuData> menuDict = new Dictionary<string, ButtonMenuData>();
 
     /// <summary>
-    ///ÔÚ¸ùÃæ°åÑ¡ÔñµÄ¶ÔÏóÀàĞÍ
-    ///0=Missionary´«½ÌÊ¿
-    ///1=SoliderÊ¿±ø
-    ///2=FarmerÅ©Ãñ
-    ///3=Building½¨Öş
-	///4=Pope½Ì»Ê
+    ///åœ¨æ ¹é¢æ¿é€‰æ‹©çš„å¯¹è±¡ç±»å‹
+    ///0=Missionaryä¼ æ•™å£«
+    ///1=Soliderå£«å…µ
+    ///2=Farmerå†œæ°‘
+    ///3=Buildingå»ºç­‘
+	///4=Popeæ•™çš‡
 	///5=None
     /// </summary>
     private CardType cardTypeChoosed = CardType.None;
 
-    // === Event ¶¨ÒåÇøÓò ===
+    // === Event å®šä¹‰åŒºåŸŸ ===
     public event System.Action<CardType> OnCardTypeSelected;
     public event System.Action<CardType> OnCardPurchasedIntoDeck;
     public event System.Action<CardType> OnCardPurchasedIntoMap;
@@ -67,7 +67,8 @@ public class ButtonMenuManager : MonoBehaviour
     public event System.Action<CardType, TechTree> OnTechUpdated;
 
 
-    //µ¥Àı
+
+    //å•ä¾‹
     public static ButtonMenuManager Instance { get; private set; }
 
 
@@ -89,12 +90,14 @@ public class ButtonMenuManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Religion playerReligion = GameUIManager.Instance.GetPlayerReligion();
+
         menuDict.Clear();
 
         foreach (var entry in ButtonMenuFactory.GetAllMenuKeys())
         {
             string id = entry;
-            ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(id, Religion.None);
+            ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(id, playerReligion);
 
             if (data != null)
             {
@@ -102,9 +105,9 @@ public class ButtonMenuManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"[ButtonMenuManager] È«¥á¥Ë¥å©`Éú³ÉÍêÁË: {menuDict.Count}¼ş");
+        Debug.Log($"[ButtonMenuManager] å…¨ãƒ¡ãƒ‹ãƒ¥ãƒ¼ç”Ÿæˆå®Œäº†: {menuDict.Count}ä»¶");
 
-        // === ÔØÈë¸ùÄ¿Â¼ ===
+        // === è½½å…¥æ ¹ç›®å½• ===
         LoadMenu("ButtonMenu_Root");
 
 
@@ -133,14 +136,14 @@ public class ButtonMenuManager : MonoBehaviour
 
         currentMenuData = menuDict[id];
 
-        //Ä¿±êÄ¿Â¼Îª¸ùÄ¿Â¼
+        //ç›®æ ‡ç›®å½•ä¸ºæ ¹ç›®å½•
         if(currentMenuData.level==MenuLevel.Root)
         {
             EventSystem.current.SetSelectedGameObject(null);
             cardTypeChoosed = CardType.None;
             UnitCardManager.Instance.SetTargetCardType(cardTypeChoosed);
         }
-        else if (currentMenuData.level == MenuLevel.Second)//Ä¿±êÄ¿Â¼ÎªµÚ¶şÄ¿Â¼
+        else if (currentMenuData.level == MenuLevel.Second)//ç›®æ ‡ç›®å½•ä¸ºç¬¬äºŒç›®å½•
         {
             UnitCardManager.Instance.SetTargetCardType(cardTypeChoosed);
 
@@ -166,7 +169,7 @@ public class ButtonMenuManager : MonoBehaviour
             button.gameObject.SetActive(true);
 
 
-            // --- Éè¶¨ÏÔÊ¾ ---
+            // --- è®¾å®šæ˜¾ç¤º ---
             backgroundimage.sprite = btnData.backgroundSprite;
             if (btnData.contentType == GameData.UI.ButtonContentType.Text)
             {
@@ -192,7 +195,7 @@ public class ButtonMenuManager : MonoBehaviour
                 continue;
             }
 
-            // --- °ó¶¨µã»÷ÊÂ¼ş ---
+            // --- ç»‘å®šç‚¹å‡»äº‹ä»¶ ---
             button.interactable = true;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => OnButtonClicked(index));
@@ -209,7 +212,7 @@ public class ButtonMenuManager : MonoBehaviour
         if (currentMenuData == null || index >= currentMenuData.buttons.Length)
             return;
 
-        // === ÅĞ¶ÏÊÇÄÄÖÖ×ÓÀà ===
+        // === åˆ¤æ–­æ˜¯å“ªç§å­ç±» ===
         ButtonData btn = currentMenuData.GetButtonBySlot(index);
         switch (btn)
         {
@@ -236,22 +239,22 @@ public class ButtonMenuManager : MonoBehaviour
                 int cardID = UnitCardManager.Instance.GetChoosedUnitId();
                 if (cardID == -1) break;
 
-                if(PlayerUnitDataInterface.Instance.UseCardSkill(cardID, skill.cardSkill))
+                if (PlayerUnitDataInterface.Instance.UseCardSkill(cardID, skill.cardSkill))
                 {
                     Debug.Log($"[Broadcast] CardSkillUsed: {skill.cardType} - {skill.cardSkill}");
                     OnCardSkillUsed?.Invoke(skill.cardType, skill.cardSkill);
-
                 }
 
                 break;
 
             case ParamUpdateButtonData param:
+                UnitCardManager.Instance.SetDeckSelected(false);
 
-                if(PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter))
+                if (PlayerUnitDataInterface.Instance.UpgradeCard(param.cardType, param.targetParameter))
                 {
                     Debug.Log($"[Broadcast] TechUpdated: {param.cardType} - {param.targetParameter}");
                     OnTechUpdated?.Invoke(param.cardType, param.targetParameter);
-
+                    LoadSingleMenu(MenuLevel.Third, param.cardType);
                 }
 
                 break;
@@ -260,7 +263,7 @@ public class ButtonMenuManager : MonoBehaviour
 
                 if (UnitCardManager.Instance.IsDeckSelected())
                 {
-                    if (UIGameDataManager.Instance.AddDeckNumByType(purchase.cardType))
+                    if (PlayerUnitDataInterface.Instance.AddDeckNumByType(purchase.cardType))
                     {
                         Debug.Log($"[Broadcast] CardPurchasedIntoDeck: {purchase.cardType}");
                         OnCardPurchasedIntoDeck?.Invoke(purchase.cardType);
@@ -300,6 +303,35 @@ public class ButtonMenuManager : MonoBehaviour
     {
 
         cardTypeChoosed = card;
+    }
+
+    public void LoadSingleMenu(MenuLevel level, CardType type)
+    {
+        Religion playerReligion = GameUIManager.Instance.GetPlayerReligion();
+
+        //è·å–å¯¹åº” menuId
+        string menuId = ButtonMenuFactory.GetMenuId(level, type);
+
+        if (string.IsNullOrEmpty(menuId))
+        {
+            Debug.LogError($"[ButtonMenuManager] æ‰¾ä¸åˆ°èœå•: Level={level}, Type={type}");
+            return;
+        }
+
+        //åˆ›å»ºå¯¹åº”çš„æ•°æ®
+        ButtonMenuData data = ButtonMenuFactory.CreateButtonMenuData(menuId, playerReligion);
+
+        if (data == null)
+        {
+            Debug.LogError($"[ButtonMenuManager] èœå•åˆ›å»ºå¤±è´¥: {menuId}");
+            return;
+        }
+
+        // è¦†ç›–æˆ–æ–°å¢
+        menuDict[menuId] = data;
+
+        // åŠ è½½å®ƒ
+        LoadMenu(menuId);
     }
 }
 

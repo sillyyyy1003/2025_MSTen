@@ -78,11 +78,20 @@ PieceManager pieceManager = // 获取 PieceManager 引用
 pieceManager.SetLocalPlayerID(1);
 ```
 
+**重要功能:**
+- **棋子 ID 范围的自动分配**: 根据玩家 ID 自动设置棋子 ID 的范围
+  - Player 0: 0～9999
+  - Player 1: 10000～19999
+  - Player 2: 20000～29999
+  - Player 3: 30000～39999
+- 这样可以防止魅惑时棋子 ID 重复
+- 通过棋子 ID 可以一目了然地判断属于哪个玩家
+
 **注意:**
 - 必须在创建棋子前调用此方法
-- 用于网络同步中区分己方棋子（pieces）和敌方棋子（enemyPieces）
+- 用于网络同步中管理所有棋子（统一的 allPieces 字典）
 
-**实现位置:** `PieceManager.cs:20-24`
+**实现位置:** `PieceManager.cs:108-114`
 
 ---
 
@@ -167,14 +176,13 @@ public bool CreateEnemyPiece(syncPieceData spd)
 // 接收到敌方棋子数据时
 syncPieceData enemyData = new syncPieceData
 {
-    pieceID = 101,
+    pieceID = 20101,  // 20000-29999 为玩家2的ID范围
     pieceType = PieceType.Military,
     religion = Religion.RedMoon,
-    playerID = 2,
-    position = new Vector3(20, 0, 20),
+    piecePos = new SerializableVector3(20, 0, 20),
     currentHP = 80,
     currentHPLevel = 1,
-    currentAPLevel = 1,
+    currentPID = 2,
     attackPowerLevel = 2
 };
 
@@ -186,7 +194,7 @@ if (pieceManager.CreateEnemyPiece(enemyData))
 
 **注意:**
 - 此方法会自动设置棋子的所有状态（HP、AP、等级等）
-- 生成的棋子会被添加到 `enemyPieces` 字典
+- 生成的棋子会被添加到 `allPieces` 字典
 - 用于网络游戏中接收并创建对方的棋子
 
 **实现位置:** `PieceManager.cs:76-183`
@@ -660,30 +668,47 @@ if (pieceManager.AttackEnemy(militaryID, enemyID))
 ---
 
 #### `ConvertEnemy()`
-宣教师魅惑敌人。
+宣教师魅惑敌人，暂时控制对方棋子。魅惑会在一定回合数后自动解除。
 
 **函数签名:**
 ```csharp
-public bool ConvertEnemy(int missionaryID, int targetID)
+public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
 ```
 
 **参数:**
 - `missionaryID`: 宣教师棋子 ID
-- `targetID`: 目标棋子 ID
+- `targetID`: 目标敌方棋子 ID
 
 **返回值:**
-- `true`: 魅惑尝试成功（成功率判定在内部进行）
-- `false`: 失败
+- 魅惑成功: `syncPieceData`（包含目标的当前 PID 和魅惑回合数）
+- 即死的情况: null（由 OnPieceDeath 事件处理）
+- 失败: null
 
 **使用示例:**
 ```csharp
-if (pieceManager.ConvertEnemy(missionaryID, enemyID))
+syncPieceData? charmData = PieceManager.Instance.ConvertEnemy(missionaryID, enemyPieceID);
+
+if (charmData.HasValue)
 {
-    Debug.Log("尝试魅惑");
+    Debug.Log($"魅惑成功！控制{charmData.Value.charmedTurnsRemaining}回合");
+    SendToNetwork(charmData.Value);
 }
 ```
 
-**实现位置:** `PieceManager.cs:360-381`
+**重要行为:**
+1. 执行魅惑尝试（成功率取决于宣教师的 `convertEnemyLevel`）
+2. 魅惑成功时：
+   - 设置目标的魅惑状态（`Piece.SetCharmed()`）
+   - 魅惑回合数从 `MissionaryDataSO.conversionTurnDuration[convertEnemyLevel]` 获取
+   - 将目标的 `currentPID` 改为宣教师的 `CurrentPID`（无字典移动）
+   - 触发 `OnPieceCharmed` 事件
+3. 即死的情况（等级1以上的宣教师・军队）：
+   - 目标立即死亡，由 `OnPieceDeath` 事件处理
+4. 魅惑解除：
+   - 每回合通过 `ProcessTurnStart()` 自动减少计数器
+   - 计数器归零时 `currentPID` 恢复为原来的 `OriginalPID`（无字典移动）
+
+**实现位置:** `PieceManager.cs:959-1006`
 
 ---
 
@@ -838,7 +863,7 @@ pieceManager.RecoverPieceAP(farmerID, 10.0f);
 ### 回合处理
 
 #### `ProcessTurnStart()`
-执行指定玩家的回合开始处理。
+执行指定玩家的回合开始处理（AP 恢复、魅惑计数器处理）。
 
 **函数签名:**
 ```csharp
@@ -854,7 +879,22 @@ public void ProcessTurnStart(int playerID)
 pieceManager.ProcessTurnStart(currentPlayerID);
 ```
 
-**实现位置:** `PieceManager.cs:577-590`
+**处理内容:**
+1. **AP 恢复**: 恢复指定玩家所有棋子的 AP
+2. **魅惑计数器处理**:
+   - 调用每个棋子的 `ProcessCharmedTurn()`
+   - 魅惑计数器 -1
+   - 计数器归零的棋子自动返回原所有者
+   - `currentPID` 恢复为 `OriginalPID`（无字典移动）
+
+**魅惑解除的自动处理:**
+```csharp
+// 魅惑解除时会自动执行以下操作：
+// 1. 棋子的 currentPID 恢复为 OriginalPID
+// 2. 触发 OnUncharmed 事件
+```
+
+**实现位置:** `PieceManager.cs:1218-1254`
 
 ---
 
@@ -901,14 +941,82 @@ public int GetLocalPlayerID()
 
 ---
 
-### 建筑生成
-
-#### `CreateBuilding()`
-生成己方建筑并返回 ID。
+#### `InitializeBuildingData()`
+根据宗教初始化建筑数据（从 BuildingRegistry 自动获取）。
 
 **函数签名:**
 ```csharp
-public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
+public void InitializeBuildingData(Religion playerReligion, Religion enemyReligion)
+```
+
+**参数:**
+- `playerReligion`: 己方阵营的宗教
+- `enemyReligion`: 对战对手的宗教
+
+**使用示例:**
+```csharp
+using GameData; // 使用 Religion 枚举
+
+// 只需指定宗教，即可自动获取对应建筑
+buildingManager.InitializeBuildingData(Religion.SilkReligion, Religion.MadScientistReligion);
+```
+
+**工作流程:**
+1. 从 BuildingRegistry 自动获取指定宗教的建筑
+2. 将己方阵营的建筑设置到 `buildableBuildingTypes`（可建造列表）
+3. 将己方阵营和对手的建筑设置到 `allBuildingTypes`（全建筑列表）
+4. 只有己方阵营的建筑可以建造
+5. 敌方建筑数据保留用于同步（在 `CreateEnemyBuilding()` 中使用）
+
+**必要设置:**
+- 需要在 BuildingManager 的 Inspector 中设置 `BuildingRegistry`
+- 需要为每个 BuildingDataSO 资源适当设置 `religion` 字段
+
+**注意:**
+- 调用此函数前，需要在 BuildingRegistry 中注册所有建筑的 BuildingDataSO
+- 必须在生成建筑前调用此函数
+
+**实现位置:** `BuildingManager.cs:62-93`
+
+**BuildingDataSO 的设置:**
+
+每个建筑的 ScriptableObject 中添加了宗教字段：
+
+```csharp
+[Header("宗教")]
+public Religion religion = Religion.None; // 所属宗教
+```
+
+根据对战游戏设计：
+- **己方阵营建筑**: 可建造（从 `buildableBuildingTypes` 获取）
+- **敌方阵营建筑**: 不可建造，但需要知道数据（包含在 `allBuildingTypes` 中）
+
+**BuildingRegistry 的准备:**
+
+BuildingRegistry 添加了宗教筛选功能：
+
+```csharp
+/// <summary>
+/// 获取指定宗教的建筑
+/// </summary>
+public List<BuildingDataSO> GetBuildingsByReligion(Religion religion)
+
+/// <summary>
+/// 获取多个宗教的建筑
+/// </summary>
+public List<BuildingDataSO> GetBuildingsByReligions(params Religion[] religions)
+```
+
+---
+
+### 建筑生成
+
+#### `CreateBuilding()`
+生成己方建筑并返回同步数据。
+
+**函数签名:**
+```csharp
+public syncBuildingData? CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
 ```
 
 **参数:**
@@ -917,36 +1025,41 @@ public int CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 pos
 - `position`: 生成位置
 
 **返回值:**
-- 成功: 生成的建筑 ID（正整数）
-- 失败: -1
+- 成功: 生成的建筑同步数据（`syncBuildingData`）
+- 失败: null
 
 **使用示例:**
 ```csharp
-BuildingManager buildingManager = // 获取 BuildingManager 引用
-BuildingDataSO buildingData = // 获取建筑数据
+// 生成建筑
+syncBuildingData? buildingData = buildingManager.CreateBuilding(
+    buildingDataSO,
+    playerID: 1,
+    new Vector3(10, 0, 10)
+);
 
-int buildingID = buildingManager.CreateBuilding(buildingData, playerID: 1, new Vector3(10, 0, 10));
-
-if (buildingID >= 0)
+if (buildingData.HasValue)
 {
-    Debug.Log($"建筑生成成功: ID={buildingID}");
+    Debug.Log($"建筑生成成功: ID={buildingData.Value.buildingID}");
+    // 通过网络发送给对方
+    SendToNetwork(buildingData.Value);
 }
 ```
 
 **注意:**
 - 此方法生成的建筑会被添加到 `buildings` 字典（己方建筑）
 - 如需生成敌方建筑，请使用 `CreateEnemyBuilding()`
+- 返回的同步数据可直接用于网络发送
 
-**实现位置:** `BuildingManager.cs:62-102`
+**实现位置:** `BuildingManager.cs:99-144`
 
 ---
 
 #### `CreateBuildingByName()`
-通过建筑名称生成建筑（便捷方法）。
+通过建筑名称生成建筑并返回同步数据（便捷方法）。
 
 **函数签名:**
 ```csharp
-public int CreateBuildingByName(string buildingName, int playerID, Vector3 position)
+public syncBuildingData? CreateBuildingByName(string buildingName, int playerID, Vector3 position)
 ```
 
 **参数:**
@@ -955,15 +1068,25 @@ public int CreateBuildingByName(string buildingName, int playerID, Vector3 posit
 - `position`: 生成位置
 
 **返回值:**
-- 成功: 生成的建筑 ID
-- 失败: -1
+- 成功: 生成的建筑同步数据（`syncBuildingData`）
+- 失败: null
 
 **使用示例:**
 ```csharp
-int buildingID = buildingManager.CreateBuildingByName("祭坛", 1, new Vector3(10, 0, 10));
+syncBuildingData? buildingData = buildingManager.CreateBuildingByName(
+    "祭坛",
+    playerID: 1,
+    new Vector3(10, 0, 10)
+);
+
+if (buildingData.HasValue)
+{
+    Debug.Log($"建筑生成成功: {buildingData.Value.buildingName}");
+    SendToNetwork(buildingData.Value);
+}
 ```
 
-**实现位置:** `BuildingManager.cs:113-124`
+**实现位置:** `BuildingManager.cs:146-164`
 
 ---
 
@@ -2407,26 +2530,31 @@ public struct syncPieceData
     public int pieceID;
     public PieceType pieceType;
     public Religion religion;
-    public int playerID;
-    public Vector3 position;
+    public SerializableVector3 piecePos;
 
     // 状态信息
-    public int currentPID;          // 当前所属玩家 ID（魅惑后可能改变）
+    public int currentPID;             // 当前所属玩家 ID（魅惑后可能改变）
     public int currentHP;
+    public int charmedTurnsRemaining;  // 魅惑剩余回合数（网络同步用）
 
     // 等级信息
-    public int currentHPLevel;      // HP 等级 (0-3)
-    public int currentAPLevel;      // AP 等级 (0-3)
+    public int currentHPLevel;         // HP 等级 (0-3)
+    public int swapCooldownLevel;      // 教皇: 位置交换CD等级 (0-2)
+    public int buffLevel;              // 教皇: 增益等级 (0-3)
+    public int occupyLevel;            // 宣教师: 占领等级 (0-3)
+    public int convertEnemyLevel;      // 宣教师: 魅惑等级 (0-3)
+    public int sacrificeLevel;         // 农民: 献祭等级 (0-2)
+    public int attackPowerLevel;       // 军队: 攻击力等级 (0-3)
 
-    // 职业特定等级
-    public int attackPowerLevel;    // 军队: 攻击力等级 (0-3)
-    public int sacrificeLevel;      // 农民: 献祭等级 (0-2)
-    public int occupyLevel;         // 宣教师: 占领等级 (0-3)
-    public int convertEnemyLevel;   // 宣教师: 魅惑等级 (0-3)
-    public int swapCooldownLevel;   // 教皇: 位置交换CD等级 (0-2)
-    public int buffLevel;           // 教皇: 增益等级 (0-3)
+    // 辅助属性: 从 pieceID 计算原始所属玩家
+    public int OriginalPlayerID => pieceID / 10000;
 }
 ```
+
+**魅惑相关字段说明:**
+- `currentPID`: 被魅惑的棋子会设置为魅惑者的玩家 ID
+- `charmedTurnsRemaining`: 魅惑解除前的剩余回合数（0 表示未被魅惑）
+- `OriginalPlayerID`: 从 pieceID 计算得出的原始所属玩家（pieceID / 10000）。不会因魅惑而改变
 
 ### `swapPieceData`
 棋子位置交换数据结构。
@@ -2448,7 +2576,7 @@ public struct swapPieceData
 ### PieceManager的功能
 
 - ✅ **ID 基础管理**: 无需关注具体类型即可操作
-- ✅ **网络同步对应**: 己方和敌方棋子分离管理
+- ✅ **网络同步对应**: 统一管理所有棋子（allPieces 字典）
 - ✅ **同步数据自动生成**: 各种操作后返回 `syncPieceData`
 - ✅ **发送/接收分离**: 防止无限循环的清晰设计
 - ✅ **事件驱动**: 棋子死亡等自动通知

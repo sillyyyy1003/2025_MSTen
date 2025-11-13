@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a511dd377733864c9606e1ab8f5b5b4, type: 3}
   m_Name: RI_RedMoonReligionBuildingData
   m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  religion: 2
   buildingName: "\u7D05\u6708\u6559_\u7279\u6B8A\u5EFA\u7BC9"
   maxHp: 100
   buildStartAPCost: 1

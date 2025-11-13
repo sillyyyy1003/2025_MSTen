@@ -121,7 +121,10 @@ public class HexMapGenerator : MonoBehaviour
 	// 生物群落（地形类型 + 植被等级）
 	struct Biome
 	{
-		public int terrain, plantIndex, plantLevel;
+		
+		public int terrain;         // 地图纹理索引 
+		public int plantIndex;      // HexFeatureCollection索引 
+		public int plantLevel;		// 密度Level
 		public Biome(int terrain, int plant,int level)
 		{
 			this.terrain = terrain;
@@ -139,28 +142,28 @@ public class HexMapGenerator : MonoBehaviour
 	//};
 	static Biome[] biomes = {
 		// t0
-		new Biome((int)TerrainTextureType.Snow, (int)PlantType.BigStone,1), 
-		new Biome((int)TerrainTextureType.Snow, (int)PlantType.Wasteland,1), 
-		new Biome((int)TerrainTextureType.Snow, (int)PlantType.SmallStone,1),
-		new Biome((int)TerrainTextureType.FallingForest, (int)PlantType.Grass,1),
+		new Biome((int)TerrainTextureType.Snow, 0,3), 
+		new Biome((int)TerrainTextureType.Snow, 1,3), 
+		new Biome((int)TerrainTextureType.Snow, 2,1),
+		new Biome((int)TerrainTextureType.FallingForest,3,2),
 
 		// t1
-		new Biome((int)TerrainTextureType.FallingForest, (int)PlantType.Grass,1), 
-		new Biome((int)TerrainTextureType.FallingForest, (int)PlantType.Grass,1), 
-		new Biome((int)TerrainTextureType.Forest, (int)PlantType.Grass,1), 
-		new Biome((int)TerrainTextureType.RainForest, (int)PlantType.Bush,1),
+		new Biome((int)TerrainTextureType.FallingForest, 4,2), 
+		new Biome((int)TerrainTextureType.FallingForest, 5,1), 
+		new Biome((int)TerrainTextureType.Forest,6,2), 
+		new Biome((int)TerrainTextureType.RainForest,7,2),
 
 		// t2
-		new Biome((int)TerrainTextureType.Desert, (int)PlantType.DessertGrass ,2),
-		new Biome((int)TerrainTextureType.Forest, (int)PlantType.Bush,1), 
-		new Biome((int)TerrainTextureType.Forest, (int)PlantType.FallingForest,2), 
-		new Biome((int)TerrainTextureType.RainForest, (int)PlantType.Forest,2),
+		new Biome((int)TerrainTextureType.Desert,8 ,2),
+		new Biome((int)TerrainTextureType.Forest, 9,1), 
+		new Biome((int)TerrainTextureType.Forest, 10,2), 
+		new Biome((int)TerrainTextureType.RainForest, 11,2),
 
 		// t3
-		new Biome((int)TerrainTextureType.Desert, (int)PlantType.DessertGrass,1), 
-		new Biome((int)TerrainTextureType.Sand, (int)PlantType.DessertTree,2),
-		new Biome((int)TerrainTextureType.Forest, (int)PlantType.Forest,3), 
-		new Biome((int)TerrainTextureType.RainForest, (int)PlantType.RainForest,3)
+		new Biome((int)TerrainTextureType.Desert,12,1), 
+		new Biome((int)TerrainTextureType.Sand, 13,2),
+		new Biome((int)TerrainTextureType.Forest,14,3), 
+		new Biome((int)TerrainTextureType.RainForest, 15,3)
 	};
 
 	//湿度 ↑
@@ -612,8 +615,8 @@ public class HexMapGenerator : MonoBehaviour
 				// 否则：如果当前 biome 的 plant 等级 < 3 且该格子有河流，则植物等级 +1（河边植物更丰富）
 				if (cellBiome.terrain == (int)TerrainTextureType.Snow)
 				{
-					cellBiome.plantLevel = 1;
-					cellBiome.plantIndex= (int)PlantType.Wasteland;
+					cellBiome.plantLevel = 3;
+					cellBiome.plantIndex= (int)PlantType.t0m0;
 				}
 				else if (cellBiome.plantLevel < 3 && cell.HasRiver)
 				{

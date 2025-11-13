@@ -87,7 +87,6 @@ public class UnitCard : MonoBehaviour
 
             if (alwaysOpen)
             {
-                showDataPanel = true;
                 dataPanel.SetActive(true);
 
                 StartCoroutine(SlidePanelIn());
@@ -100,6 +99,8 @@ public class UnitCard : MonoBehaviour
 
 	void Update()
 	{
+
+
         // 常显数据更新
         if (unitData.UnitType!=CardType.None)
         {
@@ -110,10 +111,10 @@ public class UnitCard : MonoBehaviour
         }
 
         // 面板数据更新
-        if (showDataPanel)
+        if (showDataPanel|| alwaysOpen)
 		{
-			SetDetailData();
-
+			//25.11.11 RI 暂时修改
+			//SetDetailData();
 
 
         }
@@ -237,16 +238,16 @@ public class UnitCard : MonoBehaviour
 
     public void SetDetailData()
     {
-		//int id = unitData.UnitId;
-
-		//Piece detaildata = PlayerUnitDataInterface.Instance.GetUnitData(id);
-		//dataText.text = "MaxHP=" + detaildata.CurrentMaxAP.ToString() + "\n";
-		dataText.text = "MaxHP=???\n";
+		int id = unitData.UnitId;
+		Piece detaildata = PlayerUnitDataInterface.Instance.GetUnitData(id);
+		dataText.text = "MaxHP=" + detaildata.CurrentMaxAP.ToString() + "\n";
 
 
-    }
 
-    public int GetCardUnitID()
+
+	}
+
+	public int GetCardUnitID()
 	{
 
 		return unitData.UnitId;

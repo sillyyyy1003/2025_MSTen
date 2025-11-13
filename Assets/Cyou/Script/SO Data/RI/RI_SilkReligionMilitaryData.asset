@@ -22,30 +22,17 @@ MonoBehaviour:
   moveAPCost: 1
   moveSpeed: 1
   canAttack: 1
-  attackPower: 0
+  attackPower: 1
   attackRange: 2
   attackCooldown: 1
   attackAPCost: 1
-  maxHPByLevel:
-  - 10
-  - 12
-  - 15
-  - 15
-  maxAPByLevel:
-  - 5
-  - 7
-  - 7
-  - 7
-  attackPowerByLevel:
-  - 2
-  - 3
-  - 4
-  - 4
+  maxHPByLevel: 0a0000000c0000000f0000000f000000
+  maxAPByLevel: 05000000070000000700000007000000
+  attackPowerByLevel: 02000000030000000400000004000000
   hpUpgradeCost: 050000000600000000000000
   apUpgradeCost: 070000000800000000000000
   piecePrefab: {fileID: 7153972553235425938, guid: 67968626a9313654eb98a739ff2f6e17,
     type: 3}
-  armorValue: 10
   criticalChance: 0.1
   damageType: 0
   availableSkills: []
