@@ -675,8 +675,10 @@ public class GameUIManager : MonoBehaviour
     {
         Debug.Log($"购买卡进仓库: {type}");
         UpdateResourcesData();
-
-    }
+		
+        // 2025.11.14 Guoning 音声再生
+		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.BUYCARD);
+	}
 
     private void HandleCardPurchasedIntoMap(CardType type)
     {
@@ -684,6 +686,9 @@ public class GameUIManager : MonoBehaviour
         UpdateUIUnitDataListFromInterface(type);
         UpdateResourcesData();
         UpdateAllUnitCountData();
+
+		// 2025.11.14 Guoning 音声再生
+		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
 
     }
 
@@ -693,7 +698,9 @@ public class GameUIManager : MonoBehaviour
         UpdateResourcesData();
         UpdateAllUnitCountData();
 
-    }
+		// 2025.11.14 Guoning 音声再生
+		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
+	}
 
 
     private void HandleTimeIsOut()
@@ -720,7 +727,10 @@ public class GameUIManager : MonoBehaviour
 
         UpdateUIUnitDataListFromInterface(card);
 
-    }
+		// 2025.11.14 Guoning
+		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.UPGRADE);
+
+	}
 
     private void HandleInactiveUnitButtonPressed()
     {

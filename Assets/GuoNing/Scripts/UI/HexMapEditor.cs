@@ -198,7 +198,7 @@ public class HexMapEditor : MonoBehaviour
 				HexMetrics.wrapSize
 			)
 		);
-		Debug.Log($"Highlighting cell at {cell.Coordinates} with brush size {brushSize}");
+		
 	}
 
 	void ClearCellHighlightData() =>

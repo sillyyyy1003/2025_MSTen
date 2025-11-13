@@ -57,7 +57,7 @@ public class TitleUIManager : MonoBehaviour
 			// Reset button state
 			Button_Setting.ResetHexButton();
 			Button_OnlineGame.ResetHexButton();
-			
+			SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 		}
 
 		//=========Building model update
@@ -89,6 +89,9 @@ public class TitleUIManager : MonoBehaviour
 		// Reset button state
 		Button_Setting.ResetHexButton();
 		Button_OnlineGame.ResetHexButton();
+
+		SoundManager.Instance.StopBGM();
+		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.TITLE, loop: true);
 	}
 
 	/// <summary>
@@ -104,6 +107,7 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickSinglePlayer()
 	{
+	
 		SceneStateManager.Instance.bIsSingle = true;
 		SceneManager.LoadScene("MainGame");
 		Debug.Log("SinglePlayer");
@@ -114,7 +118,8 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickOnlineGame()
 	{
-		
+
+
 		//  Set option menu active
 		OnlineMenu.gameObject.SetActive(true);
 
@@ -128,6 +133,7 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickSetting()
 	{
+		
 		//  Set option menu active
 		OptionMenu.gameObject.SetActive(true);
 		OnlineMenu.gameObject.SetActive(false);
@@ -167,6 +173,7 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickAddGame()
 	{
+		
 		if (SceneStateManager.Instance != null)
 		{
 			SceneStateManager.Instance.SetAsServer(false);

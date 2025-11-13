@@ -1,6 +1,7 @@
 ﻿using SoundSystem;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements.Experimental;
 
 public class SoundManager : MonoBehaviour
 {
@@ -142,8 +143,11 @@ public class SoundManager : MonoBehaviour
             seManager = SEManager;
         }
 
-        // リソース辞書を初期化
-        InitializeAudioDictionaries();
+        bgmManager.transform.parent = this.transform;
+        seManager.transform.parent = this.transform;
+
+		// リソース辞書を初期化
+		InitializeAudioDictionaries();
     }
 
     private void Start()
@@ -306,6 +310,12 @@ public class SoundManager : MonoBehaviour
     {
         bgmManager.StopBGM(fadeDuration, delay, easing);
     }
+
+    public void PlayBGMLoop(TYPE_BGM type)
+    {
+		if (bgmClips.TryGetValue(type, out var clip))
+			bgmManager.PlayBGM(clip, volumeSettings.masterVolume * volumeSettings.bgmVolume, true, 5f,5f, null);
+	}
 
     #endregion BGM関連メソッド
 
@@ -539,4 +549,12 @@ public class SoundManager : MonoBehaviour
     /// <param name="_volume"></param>
     public void SetSEVolume(float _volume) { volumeSettings.seVolume = _volume; }
 
+
+	//--------------------------------------------------------------------------------
+	// 指定サウンド再生
+	//--------------------------------------------------------------------------------
+    public void PlayButtonClickedSound()
+    {
+        PlaySE(TYPE_SE.BUTTONCLICKED);
+	}
 }

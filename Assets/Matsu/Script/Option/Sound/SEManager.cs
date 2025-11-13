@@ -1,154 +1,154 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class SEManager : MonoBehaviour
 {
-    // ƒƒ“ƒo•Ï”
-    //--------------------------------------------------------------------------------
+	// ãƒ¡ãƒ³ãƒå¤‰æ•°
+	//--------------------------------------------------------------------------------
 
-    [SerializeField, Header("SE‚ÌAudioSource‚Ì”"), Tooltip("SE‚ÌAudioSource‚Ì”‚ğw’è‚µ‚ÄA“¯‚ÉÄ¶‚Å‚«‚é”‚ğ‘‚â‚·‚±‚Æ‚ª‚Å‚«‚Ü‚·B")]
-    private int sourceCount = 10;
+	[SerializeField, Header("SEã®AudioSourceã®æ•°"), Tooltip("SEã®AudioSourceã®æ•°ã‚’æŒ‡å®šã—ã¦ã€åŒæ™‚ã«å†ç”Ÿã§ãã‚‹æ•°ã‚’å¢—ã‚„ã™ã“ã¨ãŒã§ãã¾ã™ã€‚")]
+	private int sourceCount = 10;
 
-    private AudioSource[] seSources;
+	private AudioSource[] seSources;
 
-    private int currentIndex = 0;
-
-
-
-    //--------------------------------------------------------------------------------
-    // ƒvƒƒpƒeƒB
-    //--------------------------------------------------------------------------------
-
-    /// <summary> Ä¶’†‚ÌSE‚ÌAudioClip‚ğæ“¾‚·‚é </summary>
-    public AudioClip CurrentSE => seSources[currentIndex].clip;
-
-    /// <summary> Ä¶’†‚©‚Ç‚¤‚©‚ğæ“¾‚·‚é </summary>
-    public bool IsPlaying => seSources[currentIndex].isPlaying;
+	private int currentIndex = 0;
 
 
 
-    //--------------------------------------------------------------------------------
-    // ƒƒ\ƒbƒh
-    //--------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------
+	// ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£
+	//--------------------------------------------------------------------------------
 
-    private void Awake()
-    {
-        seSources = new AudioSource[sourceCount];
-        for (int i = 0; i < sourceCount; i++)
-        {
-            seSources[i] = gameObject.AddComponent<AudioSource>();
-        }
-    }
+	/// <summary> å†ç”Ÿä¸­ã®SEã®AudioClipã‚’å–å¾—ã™ã‚‹ </summary>
+	public AudioClip CurrentSE => seSources[currentIndex].clip;
+
+	/// <summary> å†ç”Ÿä¸­ã‹ã©ã†ã‹ã‚’å–å¾—ã™ã‚‹ </summary>
+	public bool IsPlaying => seSources[currentIndex].isPlaying;
 
 
-    /// <summary>
-    /// SE‚ğÄ¶‚·‚éi2D/3DØ‚è‘Ö‚¦‘Î‰j
-    /// </summary>
-    /// <param name="clip">Ä¶‚·‚éSE‚ÌAudioClip</param>
-    /// <param name="volume">‰¹—Ê</param>
-    /// <param name="is3D">3DÄ¶‚·‚é‚©</param>
-    public void PlaySE(AudioClip clip, float volume = 1.0f, bool is3D = false)
-    {
-        var source = seSources[currentIndex];
-        source.clip = clip;
-        source.volume = volume;
-        source.spatialBlend = is3D ? 1.0f : 0.0f; // 0=2D, 1=3D
-        source.transform.localPosition = Vector3.zero; // 2D‚ÍŒ´“_
-        source.Play();
 
-        currentIndex = (currentIndex + 1) % sourceCount;
-    }
+	//--------------------------------------------------------------------------------
+	// ãƒ¡ã‚½ãƒƒãƒ‰
+	//--------------------------------------------------------------------------------
 
-    /// <summary>
-    /// w’èˆÊ’u‚ÅSE‚ğÄ¶‚·‚éi3DÄ¶ê—pj
-    /// </summary>
-    /// <param name="clip">Ä¶‚·‚éSE‚ÌAudioClip</param>
-    /// <param name="position">Ä¶ˆÊ’u</param>
-    /// <param name="volume">‰¹—Ê</param>
-    /// <param name="minDistance">Å¬‹——£</param>
-    /// <param name="maxDistance">Å‘å‹——£</param>
-    /// <param name="rolloffMode">Œ¸ŠƒJ[ƒu</param>
-    /// <param name="dopplerLevel">ƒhƒbƒvƒ‰[Œø‰Ê</param>
-    /// <param name="spread">L‚ª‚è</param>
-    public void PlayPositionSE(
-        AudioClip clip,
-        Vector3 position,
-        float volume = 1.0f,
-        float minDistance = 1.0f,
-        float maxDistance = 500.0f,
-        AudioRolloffMode rolloffMode = AudioRolloffMode.Linear,
-        float dopplerLevel = 0.0f,
-        float spread = 0.0f)
-    {
-        var source = seSources[currentIndex];
-        source.clip = clip;
-        source.volume = volume;
-        source.spatialBlend = 1.0f; // 3D
-        source.transform.position = position;
-        source.minDistance = minDistance;
-        source.maxDistance = maxDistance;
-        source.rolloffMode = rolloffMode;
-        source.dopplerLevel = dopplerLevel;
-        source.spread = spread;
-        source.Play();
+	private void Awake()
+	{
+		seSources = new AudioSource[sourceCount];
+		for (int i = 0; i < sourceCount; i++)
+		{
+			seSources[i] = gameObject.AddComponent<AudioSource>();
+		}
+	}
 
-        currentIndex = (currentIndex + 1) % sourceCount;
-    }
 
-    /// <summary>
-    /// ƒ‰ƒ“ƒ_ƒ€‚ÈSE‚ğÄ¶‚·‚é
-    /// </summary>
-    /// <param name="clips">Ä¶‚·‚éSE‚ÌAudioClip‚Ì”z—ñ</param>
-    /// <param name="volume">‰¹—Ê</param>
-    public void PlayRandomSE(AudioClip[] clips, float volume = 1.0f)
-    {
-        int randomIndex = Random.Range(0, clips.Length);    // ƒ‰ƒ“ƒ_ƒ€‚ÈƒCƒ“ƒfƒbƒNƒX‚ğæ“¾
-        PlaySE(clips[randomIndex], volume);                 // ƒ‰ƒ“ƒ_ƒ€‚ÈSE‚ğÄ¶
-    }
+	/// <summary>
+	/// SEã‚’å†ç”Ÿã™ã‚‹ï¼ˆ2D/3Dåˆ‡ã‚Šæ›¿ãˆå¯¾å¿œï¼‰
+	/// </summary>
+	/// <param name="clip">å†ç”Ÿã™ã‚‹SEã®AudioClip</param>
+	/// <param name="volume">éŸ³é‡</param>
+	/// <param name="is3D">3Då†ç”Ÿã™ã‚‹ã‹</param>
+	public void PlaySE(AudioClip clip, float volume = 1.0f, bool is3D = false)
+	{
+		var source = seSources[currentIndex];
+		source.clip = clip;
+		source.volume = volume;
+		source.spatialBlend = is3D ? 1.0f : 0.0f; // 0=2D, 1=3D
+		source.transform.localPosition = Vector3.zero; // 2Dæ™‚ã¯åŸç‚¹
+		source.Play();
 
-    /// <summary>
-    /// w’èˆÊ’u‚Åƒ‰ƒ“ƒ_ƒ€‚È3D SE‚ğÄ¶‚·‚é
-    /// </summary>
-    /// <param name="clips">Ä¶‚·‚éSE‚ÌAudioClip‚Ì”z—ñ</param>
-    /// <param name="position">Ä¶ˆÊ’u</param>
-    /// <param name="volume">‰¹—Ê</param>
-    /// <param name="minDistance">Å¬‹——£</param>
-    /// <param name="maxDistance">Å‘å‹——£</param>
-    /// <param name="rolloffMode">Œ¸ŠƒJ[ƒu</param>
-    /// <param name="dopplerLevel">ƒhƒbƒvƒ‰[Œø‰Ê</param>
-    /// <param name="spread">L‚ª‚è</param>
-    public void PlayRandomPositionSE(
-        AudioClip[] clips,
-        Vector3 position,
-        float volume = 1.0f,
-        float minDistance = 1.0f,
-        float maxDistance = 500.0f,
-        AudioRolloffMode rolloffMode = AudioRolloffMode.Linear,
-        float dopplerLevel = 0.0f,
-        float spread = 0.0f)
-    {
-        int randomIndex = Random.Range(0, clips.Length);
-        PlayPositionSE(
-            clips[randomIndex],
-            position,
-            volume,
-            minDistance,
-            maxDistance,
-            rolloffMode,
-            dopplerLevel,
-            spread);
-    }
+		currentIndex = (currentIndex + 1) % sourceCount;
+	}
 
-    /// <summary>
-    /// SE‚Ì‰¹—Ê‚ğİ’è‚·‚é
-    /// </summary>
-    /// <param name="volume">‰¹—Ê</param>
-    public void SetVolume(float volume)
-    {
-        foreach (var source in seSources)
-        {
-            source.volume = Mathf.Clamp01(volume);
-        }
-    }
+	/// <summary>
+	/// æŒ‡å®šä½ç½®ã§SEã‚’å†ç”Ÿã™ã‚‹ï¼ˆ3Då†ç”Ÿå°‚ç”¨ï¼‰
+	/// </summary>
+	/// <param name="clip">å†ç”Ÿã™ã‚‹SEã®AudioClip</param>
+	/// <param name="position">å†ç”Ÿä½ç½®</param>
+	/// <param name="volume">éŸ³é‡</param>
+	/// <param name="minDistance">æœ€å°è·é›¢</param>
+	/// <param name="maxDistance">æœ€å¤§è·é›¢</param>
+	/// <param name="rolloffMode">æ¸›è¡°ã‚«ãƒ¼ãƒ–</param>
+	/// <param name="dopplerLevel">ãƒ‰ãƒƒãƒ—ãƒ©ãƒ¼åŠ¹æœ</param>
+	/// <param name="spread">åºƒãŒã‚Š</param>
+	public void PlayPositionSE(
+		AudioClip clip,
+		Vector3 position,
+		float volume = 1.0f,
+		float minDistance = 1.0f,
+		float maxDistance = 500.0f,
+		AudioRolloffMode rolloffMode = AudioRolloffMode.Linear,
+		float dopplerLevel = 0.0f,
+		float spread = 0.0f)
+	{
+		var source = seSources[currentIndex];
+		source.clip = clip;
+		source.volume = volume;
+		source.spatialBlend = 1.0f; // 3D
+		source.transform.position = position;
+		source.minDistance = minDistance;
+		source.maxDistance = maxDistance;
+		source.rolloffMode = rolloffMode;
+		source.dopplerLevel = dopplerLevel;
+		source.spread = spread;
+		source.Play();
+
+		currentIndex = (currentIndex + 1) % sourceCount;
+	}
+
+	/// <summary>
+	/// ãƒ©ãƒ³ãƒ€ãƒ ãªSEã‚’å†ç”Ÿã™ã‚‹
+	/// </summary>
+	/// <param name="clips">å†ç”Ÿã™ã‚‹SEã®AudioClipã®é…åˆ—</param>
+	/// <param name="volume">éŸ³é‡</param>
+	public void PlayRandomSE(AudioClip[] clips, float volume = 1.0f)
+	{
+		int randomIndex = Random.Range(0, clips.Length);    // ãƒ©ãƒ³ãƒ€ãƒ ãªã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å–å¾—
+		PlaySE(clips[randomIndex], volume);                 // ãƒ©ãƒ³ãƒ€ãƒ ãªSEã‚’å†ç”Ÿ
+	}
+
+	/// <summary>
+	/// æŒ‡å®šä½ç½®ã§ãƒ©ãƒ³ãƒ€ãƒ ãª3D SEã‚’å†ç”Ÿã™ã‚‹
+	/// </summary>
+	/// <param name="clips">å†ç”Ÿã™ã‚‹SEã®AudioClipã®é…åˆ—</param>
+	/// <param name="position">å†ç”Ÿä½ç½®</param>
+	/// <param name="volume">éŸ³é‡</param>
+	/// <param name="minDistance">æœ€å°è·é›¢</param>
+	/// <param name="maxDistance">æœ€å¤§è·é›¢</param>
+	/// <param name="rolloffMode">æ¸›è¡°ã‚«ãƒ¼ãƒ–</param>
+	/// <param name="dopplerLevel">ãƒ‰ãƒƒãƒ—ãƒ©ãƒ¼åŠ¹æœ</param>
+	/// <param name="spread">åºƒãŒã‚Š</param>
+	public void PlayRandomPositionSE(
+		AudioClip[] clips,
+		Vector3 position,
+		float volume = 1.0f,
+		float minDistance = 1.0f,
+		float maxDistance = 500.0f,
+		AudioRolloffMode rolloffMode = AudioRolloffMode.Linear,
+		float dopplerLevel = 0.0f,
+		float spread = 0.0f)
+	{
+		int randomIndex = Random.Range(0, clips.Length);
+		PlayPositionSE(
+			clips[randomIndex],
+			position,
+			volume,
+			minDistance,
+			maxDistance,
+			rolloffMode,
+			dopplerLevel,
+			spread);
+	}
+
+	/// <summary>
+	/// SEã®éŸ³é‡ã‚’è¨­å®šã™ã‚‹
+	/// </summary>
+	/// <param name="volume">éŸ³é‡</param>
+	public void SetVolume(float volume)
+	{
+		foreach (var source in seSources)
+		{
+			source.volume = Mathf.Clamp01(volume);
+		}
+	}
 }
