@@ -1,14 +1,9 @@
 fileFormatVersion: 2
-guid: 77b38a4de2af57c46bbadf774e2ed522
+guid: a1ec9302874e6a04c914e1f9430648f9
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: tuzi_02
-    second: {fileID: 2100000, guid: edb84bb3dcc01ef4cb50e0d00b8c657b, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
