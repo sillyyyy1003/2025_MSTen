@@ -40,7 +40,6 @@ public class TitleUIManager : MonoBehaviour
 	public Transform Building;//todo: make it a model manager later
 
 
-
 	//--------------------------------------------------------------------------------
 	// メソッド
 	//--------------------------------------------------------------------------------
@@ -81,8 +80,15 @@ public class TitleUIManager : MonoBehaviour
 
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
-
+	
+		//  Close all option menu& online menu for next usage
+		OptionMenu.gameObject.SetActive(false);
+		OnlineMenu.gameObject.SetActive(false);
 		UpdateBackground(false);
+
+		// Reset button state
+		Button_Setting.ResetHexButton();
+		Button_OnlineGame.ResetHexButton();
 	}
 
 	/// <summary>
