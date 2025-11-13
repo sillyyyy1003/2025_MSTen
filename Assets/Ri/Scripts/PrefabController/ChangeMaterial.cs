@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 更改材质脚本
+/// 
 /// </summary>
 public class ChangeMaterial : MonoBehaviour
 {
