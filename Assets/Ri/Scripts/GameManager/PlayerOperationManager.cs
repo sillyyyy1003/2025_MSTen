@@ -398,8 +398,13 @@ public class PlayerOperationManager : MonoBehaviour
             }
             else
             {
-                // 传教士移动
-                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+                // 教皇无法移动
+                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+                {
+                    return;
+                }
+                    // 传教士移动
+                    if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
                 {
 
                     if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
