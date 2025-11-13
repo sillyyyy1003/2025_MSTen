@@ -122,13 +122,13 @@ public class PlayerOperationManager : MonoBehaviour
     {
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
-			/*
-             *     2025.11.13 Guoning
+			
+            //2025.11.13 Guoning 修改鼠标移动留痕与点击判断
             if(Input.GetMouseButton(0)|| Input.GetMouseButton(1))
                 HandleMouseInput();
 			else UpdateCellHighlightData(GetCellUnderCursor());
-            */
-			HandleMouseInput();
+            
+			//HandleMouseInput();
 
 		}
         if (Input.GetKeyDown(KeyCode.B)
