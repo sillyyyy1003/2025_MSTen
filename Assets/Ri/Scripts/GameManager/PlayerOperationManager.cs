@@ -19,9 +19,11 @@ using UnityEngine.Rendering.Universal;
 /// </summary>
 public class PlayerOperationManager : MonoBehaviour
 {
-    // HexGrid的引用
-    public HexGrid _HexGrid;
+    //2025.11.13 Guoning
+	static readonly int cellHighlightingId = Shader.PropertyToID("_CellHighlighting");
 
+	// HexGrid的引用
+	public HexGrid _HexGrid;
 
     private Camera GameCamera;
 
@@ -80,7 +82,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 双击检测
     // 定义双击的最大时间间隔
-    public float doubleClickTimeThreshold = 0.3f;
+    public float doubleClickTimeThreshold = 0.1f;
     private float lastClickTime;
     private int clickCount = 0;
 
@@ -120,9 +122,15 @@ public class PlayerOperationManager : MonoBehaviour
     {
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
-            HandleMouseInput();
+			/*
+             *     2025.11.13 Guoning
+            if(Input.GetMouseButton(0)|| Input.GetMouseButton(1))
+                HandleMouseInput();
+			else UpdateCellHighlightData(GetCellUnderCursor());
+            */
+			HandleMouseInput();
 
-        }
+		}
         if (Input.GetKeyDown(KeyCode.B)
             && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
         {
@@ -152,20 +160,58 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
+	// *************************
+	//       追加高亮选择处理
+	// *************************
+	void UpdateCellHighlightData(HexCell cell)
+	{
+		if (cell == null)
+		{
+			ClearCellHighlightData();
+			return;
+		}
 
-    // *************************
-    //        输入处理
-    // *************************
+		// Works up to brush size 6.
+		Shader.SetGlobalVector(
+			cellHighlightingId,
+			new Vector4(
+				cell.Coordinates.HexX,
+				cell.Coordinates.HexZ,
+				0.5f,
+				HexMetrics.wrapSize
+			)
+		);
+	}
 
-    #region =====输入处理=====
-    private void HandleMouseInput()
+	void ClearCellHighlightData() =>
+		Shader.SetGlobalVector(cellHighlightingId, new Vector4(0f, 0f, -1f, 0f));
+	HexCell GetCellUnderCursor() =>
+		_HexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
+	// *************************
+	//       追加高亮选择处理
+	// *************************
+
+
+
+
+
+	// *************************
+	//        输入处理
+	// *************************
+
+	#region =====输入处理=====
+	private void HandleMouseInput()
     {
-        if (IsPointerOverUIElement())
+        if (GameManage.Instance.IsPointerOverUIElement())
         {
             return;
         }
-        // 左键点击 - 选择单位
-        if (Input.GetMouseButtonDown(0) && bCanContinue)
+
+		// 2025.11.13 GuoNing 清除高亮数据 
+		ClearCellHighlightData();
+
+		// 左键点击 - 选择单位
+		if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
             _HexGrid.GetCell(selectCellID).DisableHighlight();
 
@@ -202,48 +248,12 @@ public class PlayerOperationManager : MonoBehaviour
         // 右键点击 - 移动/攻击
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
-
             _HexGrid.GetCell(selectCellID).DisableHighlight();
             HandleRightClick();
         }
     }
 
-    // 检测鼠标指针是否在可交互的UI元素上（按钮、输入框等）
-    private bool IsPointerOverUIElement()
-    {
-        if (EventSystem.current == null)
-            return false;
-
-        // 创建指针事件数据
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = Input.mousePosition;
-
-        // 射线检测所有UI元素
-        List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-
-        // 只检查可交互的UI组件（按钮、输入框等）
-        foreach (var result in results)
-        {
-            if (result.gameObject.activeInHierarchy)
-            {
-                // 检查是否是按钮或其他可交互组件
-                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
-                    result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
-                    result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
+   
     private void HandleLeftClick(bool isDoubleClick)
     {
         Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
@@ -271,10 +281,19 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
-                if (!SelectingUnit.GetComponent<ChangeMaterial>())
-                    SelectingUnit.AddComponent<ChangeMaterial>();
+              
+                    foreach (Transform child in SelectingUnit.transform)
+                    {
+                        // 运行时动态添加组件
+                        if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+                        {
+                            child.gameObject.AddComponent<ChangeMaterial>();
+                        child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                        }
+                        child.GetComponent<ChangeMaterial>().Outline();
+                    }
 
-                SelectingUnit.GetComponent<ChangeMaterial>().Outline();
+                //SelectingUnit.GetComponent<ChangeMaterial>().Outline();
                 LastSelectingCellID = ClickCellid;
 
 
@@ -608,8 +627,17 @@ public class PlayerOperationManager : MonoBehaviour
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + " canDo is " + unit.bCanDoAction);
+            // 若有建筑则增加resource
+            if (unit.UnitType == CardType.Building)
+            {
+                int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
+                res += 5;
+                PlayerDataManager.Instance.SetPlayerResourses(res);
+            }
+            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction+ " Resource is "+ PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
         }
+
+
     }
 
     // 回合结束
@@ -821,7 +849,7 @@ public class PlayerOperationManager : MonoBehaviour
         GameObject pieceObj = PieceManager.Instance.GetPieceGameObject();
 
         // 添加描边效果
-        pieceObj.AddComponent<ChangeMaterial>();
+        //pieceObj.AddComponent<ChangeMaterial>();
 
 
         // 添加到数据管理器
@@ -995,7 +1023,7 @@ public class PlayerOperationManager : MonoBehaviour
         int2 toPos = PlayerBoardInforDict[targetCellId].Cells2DPos;
 
         PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, fromPos);
-        Debug.Log("now unit AP is " + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+        Debug.Log("now unit " + unitData.Value.UnitID+ "AP is" + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         if (PieceManager.Instance.GetPieceAP(unitData.Value.UnitID) > 0)
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
@@ -1123,11 +1151,19 @@ public class PlayerOperationManager : MonoBehaviour
     {
         if (SelectingUnit != null)
         {
-            var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
-            if (changeMaterial != null)
+            foreach (Transform child in SelectingUnit.transform)
             {
-                changeMaterial.Default();
+               
+                child.GetComponent<ChangeMaterial>().Default();
             }
+
+
+            //var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
+          
+            //if (changeMaterial != null)
+            //{
+            //    changeMaterial.Default();
+            //}
             Debug.Log("unit name: " + SelectingUnit.name);
         }
     }
