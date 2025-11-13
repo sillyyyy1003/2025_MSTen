@@ -278,10 +278,19 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
-                if (!SelectingUnit.GetComponent<ChangeMaterial>())
-                    SelectingUnit.AddComponent<ChangeMaterial>();
+              
+                    foreach (Transform child in SelectingUnit.transform)
+                    {
+                        // 运行时动态添加组件
+                        if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+                        {
+                            child.gameObject.AddComponent<ChangeMaterial>();
+                        child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                        }
+                        child.GetComponent<ChangeMaterial>().Outline();
+                    }
 
-                SelectingUnit.GetComponent<ChangeMaterial>().Outline();
+                //SelectingUnit.GetComponent<ChangeMaterial>().Outline();
                 LastSelectingCellID = ClickCellid;
 
 
@@ -837,7 +846,7 @@ public class PlayerOperationManager : MonoBehaviour
         GameObject pieceObj = PieceManager.Instance.GetPieceGameObject();
 
         // 添加描边效果
-        pieceObj.AddComponent<ChangeMaterial>();
+        //pieceObj.AddComponent<ChangeMaterial>();
 
 
         // 添加到数据管理器
@@ -1139,11 +1148,19 @@ public class PlayerOperationManager : MonoBehaviour
     {
         if (SelectingUnit != null)
         {
-            var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
-            if (changeMaterial != null)
+            foreach (Transform child in SelectingUnit.transform)
             {
-                changeMaterial.Default();
+               
+                child.GetComponent<ChangeMaterial>().Default();
             }
+
+
+            //var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
+          
+            //if (changeMaterial != null)
+            //{
+            //    changeMaterial.Default();
+            //}
             Debug.Log("unit name: " + SelectingUnit.name);
         }
     }

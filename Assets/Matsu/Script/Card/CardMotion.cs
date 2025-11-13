@@ -6,20 +6,20 @@ using UnityEngine.EventSystems;
 
 public class CardMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
-    [Header("ƒJ[ƒh‚Ì•‚‚«•û")]
+    [Header("ï¿½Jï¿½[ï¿½hï¿½Ì•ï¿½ï¿½ï¿½ï¿½ï¿½")]
     private Vector2 originalPos;
     [SerializeField] private float hoverOffsetY = 20f;
     [SerializeField] private float duration = 0.2f;
 
-    [Header("ƒJ[ƒh‚ÌÚ×•\¦")]
-    [SerializeField] private float expandedWidth = 300f; // ƒJ[ƒh‚ğL‚°‚é•
-    [SerializeField] private GameObject detailText; // Ú×ƒeƒLƒXƒgƒIƒuƒWƒFƒNƒg
-    [SerializeField] private RectTransform background; // ”wŒiƒIƒuƒWƒFƒNƒg
-    private Vector2 originalBackgroundSize; // ”wŒi‚ÌŒ³‚ÌƒTƒCƒY
-    private bool isExpanded = false; // ƒJ[ƒh‚ª“WŠJ‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©
+    [Header("ï¿½Jï¿½[ï¿½hï¿½ÌÚ")]
+    [SerializeField] private float expandedWidth = 300f; // ï¿½Jï¿½[ï¿½hï¿½ï¿½Lï¿½ï¿½ï¿½é•
+    [SerializeField] private GameObject detailText; // ï¿½Ú×ƒeï¿½Lï¿½Xï¿½gï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½g
+    [SerializeField] private RectTransform background; // ï¿½wï¿½iï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½g
+    private Vector2 originalBackgroundSize; // ï¿½wï¿½iï¿½ÌŒï¿½ï¿½ÌƒTï¿½Cï¿½Y
+    private bool isExpanded = false; // ï¿½Jï¿½[ï¿½hï¿½ï¿½ï¿½Wï¿½Jï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½é‚©ï¿½Ç‚ï¿½ï¿½ï¿½
 
     private RectTransform rectTransform;
-    private static CardMotion currentlyExpandedCard; // Œ»İ“WŠJ‚³‚ê‚Ä‚¢‚éƒJ[ƒh
+    private static CardMotion currentlyExpandedCard; // ï¿½ï¿½ï¿½İ“Wï¿½Jï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½Jï¿½[ï¿½h
 
     void Start()
     {
@@ -28,12 +28,12 @@ public class CardMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
         if (background != null)
         {
-            originalBackgroundSize = background.sizeDelta; // ”wŒi‚ÌŒ³‚ÌƒTƒCƒY‚ğ•Û‘¶
+            originalBackgroundSize = background.sizeDelta; // ï¿½wï¿½iï¿½ÌŒï¿½ï¿½ÌƒTï¿½Cï¿½Yï¿½ï¿½Û‘ï¿½
         }
 
         if (detailText != null)
         {
-            detailText.SetActive(false); // ‰Šúó‘Ô‚Å‚Í”ñ•\¦
+            detailText.SetActive(false); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô‚Å‚Í”ï¿½\ï¿½ï¿½
         }
     }
 
@@ -41,10 +41,10 @@ public class CardMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     {
         if (CompareTag("Card") && rectTransform != null && !isExpanded)
         {
-            // ƒJ[ƒh–{‘Ì‚ğ•‚‚©‚¹‚é
+            // ï¿½Jï¿½[ï¿½hï¿½{ï¿½Ì‚ğ•‚‚ï¿½ï¿½ï¿½ï¿½ï¿½
             rectTransform.DOAnchorPos(originalPos + new Vector2(0, hoverOffsetY), duration);
 
-            // ”wŒi‚àˆê‚É•‚‚©‚¹‚é
+            // ï¿½wï¿½iï¿½ï¿½êï¿½É•ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             if (background != null)
             {
                 background.DOAnchorPos(background.anchoredPosition + new Vector2(0, hoverOffsetY), duration);
@@ -56,10 +56,10 @@ public class CardMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     {
         if (CompareTag("Card") && rectTransform != null && !isExpanded)
         {
-            // ƒJ[ƒh–{‘Ì‚ğŒ³‚ÌˆÊ’u‚É–ß‚·
+            // ï¿½Jï¿½[ï¿½hï¿½{ï¿½Ì‚ï¿½ï¿½ï¿½ÌˆÊ’uï¿½É–ß‚ï¿½
             rectTransform.DOAnchorPos(originalPos, duration);
 
-            // ”wŒi‚àŒ³‚ÌˆÊ’u‚É–ß‚·
+            // ï¿½wï¿½iï¿½ï¿½ï¿½ï¿½ÌˆÊ’uï¿½É–ß‚ï¿½
             if (background != null)
             {
                 background.DOAnchorPos(background.anchoredPosition - new Vector2(0, hoverOffsetY), duration);
@@ -77,7 +77,7 @@ public class CardMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         {
             if (currentlyExpandedCard != null && currentlyExpandedCard != this)
             {
-                currentlyExpandedCard.CloseCard(); // ‘¼‚ÌƒJ[ƒh‚ğ•Â‚¶‚é
+                currentlyExpandedCard.CloseCard(); // ï¿½ï¿½ï¿½ÌƒJï¿½[ï¿½hï¿½ï¿½Â‚ï¿½ï¿½ï¿½
             }
 
             ExpandCard();
@@ -89,27 +89,27 @@ public class CardMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         isExpanded = true;
         currentlyExpandedCard = this;
 
-        // ƒJ[ƒh‚ğÅ‘O–Ê‚ÉˆÚ“®
+        // ï¿½Jï¿½[ï¿½hï¿½ï¿½Å‘Oï¿½Ê‚ÉˆÚ“ï¿½
         transform.SetAsLastSibling();
 
-        // ”wŒi‚ğ•\¦
+        // ï¿½wï¿½iï¿½ï¿½\ï¿½ï¿½
         if (background != null)
         {
-            background.gameObject.SetActive(true); // ”wŒi‚ğ•\¦
+            background.gameObject.SetActive(true); // ï¿½wï¿½iï¿½ï¿½\ï¿½ï¿½
             background.DOSizeDelta(new Vector2(expandedWidth, originalBackgroundSize.y), duration);
         }
 
-        // ƒJ[ƒh‚ğ¶‚ÉˆÚ“®‚·‚é
-        float moveLeftOffset = expandedWidth / 2; // ƒJ[ƒh‚Ì•‚ªL‚ª‚é•ª‚Ì”¼•ª‚¾‚¯¶‚ÉˆÚ“®
+        // ï¿½Jï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½ÉˆÚ“ï¿½ï¿½ï¿½ï¿½ï¿½
+        float moveLeftOffset = expandedWidth / 2; // ï¿½Jï¿½[ï¿½hï¿½Ì•ï¿½ï¿½ï¿½ï¿½Lï¿½ï¿½ï¿½é•ªï¿½Ì”ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÉˆÚ“ï¿½
         rectTransform.DOAnchorPos(originalPos - new Vector2(moveLeftOffset, 0), duration);
 
-        // Ú×ƒeƒLƒXƒg‚ğ•\¦
+        // ï¿½Ú×ƒeï¿½Lï¿½Xï¿½gï¿½ï¿½\ï¿½ï¿½
         if (detailText != null)
         {
             detailText.SetActive(true);
         }
 
-        // ‘¼‚ÌƒJ[ƒh‚ğ¶‰E‚ÉˆÚ“®
+        // ï¿½ï¿½ï¿½ÌƒJï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½Eï¿½ÉˆÚ“ï¿½
         //AdjustOtherCards();
     }
 
@@ -118,46 +118,46 @@ public class CardMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         isExpanded = false;
         currentlyExpandedCard = null;
 
-        // ”wŒi‚ğ”ñ•\¦
+        // ï¿½wï¿½iï¿½ï¿½ï¿½\ï¿½ï¿½
         if (background != null)
         {
             background.DOSizeDelta(originalBackgroundSize, duration).OnComplete(() =>
             {
-                background.gameObject.SetActive(false); // ”wŒi‚ğ”ñ•\¦
+                background.gameObject.SetActive(false); // ï¿½wï¿½iï¿½ï¿½ï¿½\ï¿½ï¿½
             });
         }
 
-        // ƒJ[ƒh‚ğŒ³‚ÌˆÊ’u‚É–ß‚·
+        // ï¿½Jï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½ÌˆÊ’uï¿½É–ß‚ï¿½
         rectTransform.DOAnchorPos(originalPos, duration);
 
-        // Ú×ƒeƒLƒXƒg‚ğ”ñ•\¦
+        // ï¿½Ú×ƒeï¿½Lï¿½Xï¿½gï¿½ï¿½ï¿½\ï¿½ï¿½
         if (detailText != null)
         {
             detailText.SetActive(false);
         }
 
-        // ‘¼‚ÌƒJ[ƒh‚ğŒ³‚ÌˆÊ’u‚É–ß‚·
+        // ï¿½ï¿½ï¿½ÌƒJï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½ÌˆÊ’uï¿½É–ß‚ï¿½
         ResetOtherCards();
     }
 
     private void AdjustOtherCards()
     {
-        // Panel‚Ì‰E’[‚ÌˆÊ’u‚ğæ“¾
+        // Panelï¿½Ì‰Eï¿½[ï¿½ÌˆÊ’uï¿½ï¿½æ“¾
         RectTransform panelRect = transform.parent.GetComponent<RectTransform>();
         float panelRightEdge = panelRect.rect.width;
 
-        // ‘¼‚ÌƒJ[ƒh‚ğ¶‰E‚ÉˆÚ“®‚·‚éƒƒWƒbƒN‚ğÀ‘•
+        // ï¿½ï¿½ï¿½ÌƒJï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½Eï¿½ÉˆÚ“ï¿½ï¿½ï¿½ï¿½éƒï¿½Wï¿½bï¿½Nï¿½ï¿½ï¿½ï¿½ï¿½
         foreach (var card in FindObjectsOfType<CardMotion>())
         {
             if (card != this)
             {
-                // ƒNƒŠƒbƒN‚³‚ê‚½ƒJ[ƒh‚Ì‰E‘¤‚É‚ ‚éƒJ[ƒh‚Ì‚İˆÚ“®
+                // ï¿½Nï¿½ï¿½ï¿½bï¿½Nï¿½ï¿½ï¿½ê‚½ï¿½Jï¿½[ï¿½hï¿½Ì‰Eï¿½ï¿½ï¿½É‚ï¿½ï¿½ï¿½Jï¿½[ï¿½hï¿½Ì‚İˆÚ“ï¿½
                 if (card.transform.position.x > transform.position.x)
                 {
-                    // ƒJ[ƒh‚ğPanel‚Ì‰E’[‚ÉˆÚ“®
+                    // ï¿½Jï¿½[ï¿½hï¿½ï¿½Panelï¿½Ì‰Eï¿½[ï¿½ÉˆÚ“ï¿½
                     card.rectTransform.DOAnchorPos(new Vector2(panelRightEdge, card.originalPos.y), duration);
 
-                    // ”wŒi‚àƒJ[ƒh–{‘Ì‚É‡‚í‚¹‚ÄˆÚ“®
+                    // ï¿½wï¿½iï¿½ï¿½Jï¿½[ï¿½hï¿½{ï¿½Ì‚Éï¿½ï¿½í‚¹ï¿½ÄˆÚ“ï¿½
                     if (card.background != null)
                     {
                         card.background.DOAnchorPos(new Vector2(panelRightEdge, card.originalPos.y), duration);
@@ -169,7 +169,7 @@ public class CardMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     private void ResetOtherCards()
     {
-        // ‘¼‚ÌƒJ[ƒh‚ğŒ³‚ÌˆÊ’u‚É–ß‚·ƒƒWƒbƒN‚ğÀ‘•
+        // ï¿½ï¿½ï¿½ÌƒJï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½ÌˆÊ’uï¿½É–ß‚ï¿½ï¿½ï¿½ï¿½Wï¿½bï¿½Nï¿½ï¿½ï¿½ï¿½ï¿½
         foreach (var card in FindObjectsOfType<CardMotion>())
         {
             if (card != this)

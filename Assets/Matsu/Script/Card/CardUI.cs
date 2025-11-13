@@ -3,24 +3,24 @@ using UnityEngine.UI;
 using DG.Tweening;
 
 /// <summary>
-/// ƒJ[ƒh‚ğƒNƒŠƒbƒN‚µ‚½‚Æ‚«‚É‰E‘¤‚ªL‚ª‚Á‚Äà–¾‚ªo‚é‰‰o
+/// ï¿½Jï¿½[ï¿½hï¿½ï¿½Nï¿½ï¿½ï¿½bï¿½Nï¿½ï¿½ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½É‰Eï¿½ï¿½ï¿½ï¿½ï¿½Lï¿½ï¿½ï¿½ï¿½ï¿½Äï¿½ï¿½ï¿½ï¿½ï¿½oï¿½é‰‰ï¿½o
 /// </summary>
 public class CardUI : MonoBehaviour
 {
-    [Header("\¬—v‘f")]
-    [SerializeField] private RectTransform background;   // ‰E‘¤‚Ì”wŒiƒpƒlƒ‹
-    [SerializeField] private CanvasGroup textGroup;      // à–¾ƒeƒLƒXƒg‘S‘ÌiCanvasGroup•t‚«j
+    [Header("ï¿½")]
+    [SerializeField] private RectTransform background;   // ï¿½Eï¿½ï¿½ï¿½Ì”wï¿½iï¿½pï¿½lï¿½ï¿½
+    [SerializeField] private CanvasGroup textGroup;      // ï¿½ï¿½ï¿½ï¿½eï¿½Lï¿½Xï¿½gï¿½Sï¿½ÌiCanvasGroupï¿½tï¿½ï¿½ï¿½j
 
-    [Header("ƒAƒjƒ[ƒVƒ‡ƒ“İ’è")]
-    [SerializeField] private float collapsedWidth = 160f;  // ’Êí‚Ì•
-    [SerializeField] private float expandedWidth = 320f;   // ŠJ‚¢‚½‚Ì•
-    [SerializeField] private float duration = 0.3f;        // ƒAƒjƒ[ƒVƒ‡ƒ“ŠÔ
+    [Header("ï¿½Aï¿½jï¿½ï¿½ï¿½[ï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½İ’ï¿½")]
+    [SerializeField] private float collapsedWidth = 160f;  // ï¿½Êíï¿½Ì•ï¿½
+    [SerializeField] private float expandedWidth = 320f;   // ï¿½Jï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì•ï¿½
+    [SerializeField] private float duration = 0.3f;        // ï¿½Aï¿½jï¿½ï¿½ï¿½[ï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     private bool isExpanded = false;
 
     private void Start()
     {
-        // ‰Šúó‘Ô‚ğİ’è
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô‚ï¿½İ’ï¿½
         if (background != null)
         {
             background.sizeDelta = new Vector2(collapsedWidth, background.sizeDelta.y);
@@ -28,12 +28,12 @@ public class CardUI : MonoBehaviour
 
         if (textGroup != null)
         {
-            textGroup.alpha = 0f; // ƒeƒLƒXƒg”ñ•\¦
+            textGroup.alpha = 0f; // ï¿½eï¿½Lï¿½Xï¿½gï¿½ï¿½\ï¿½ï¿½
         }
     }
 
     /// <summary>
-    /// ƒJ[ƒhƒNƒŠƒbƒN‚ÉŒÄ‚Ño‚·
+    /// ï¿½Jï¿½[ï¿½hï¿½Nï¿½ï¿½ï¿½bï¿½Nï¿½ï¿½ï¿½ÉŒÄ‚Ñoï¿½ï¿½
     /// </summary>
     public void OnClickCard()
     {
@@ -41,23 +41,23 @@ public class CardUI : MonoBehaviour
 
         if (isExpanded)
         {
-            // •Â‚¶‚éƒAƒjƒ[ƒVƒ‡ƒ“
+            // ï¿½Â‚ï¿½ï¿½ï¿½Aï¿½jï¿½ï¿½ï¿½[ï¿½Vï¿½ï¿½ï¿½ï¿½
             background.DOSizeDelta(new Vector2(collapsedWidth, background.sizeDelta.y), duration)
                       .SetEase(Ease.InOutSine);
 
             textGroup.DOFade(0f, 0.2f);
 
-            Debug.Log("CardUI:‚Æ‚¶‚½‚æ");
+            Debug.Log("CardUI:ï¿½Æ‚ï¿½ï¿½ï¿½ï¿½ï¿½");
         }
         else
         {
-            // ŠJ‚­ƒAƒjƒ[ƒVƒ‡ƒ“
+            // ï¿½Jï¿½ï¿½ï¿½Aï¿½jï¿½ï¿½ï¿½[ï¿½Vï¿½ï¿½ï¿½ï¿½
             background.DOSizeDelta(new Vector2(expandedWidth, background.sizeDelta.y), duration)
                       .SetEase(Ease.OutBack);
 
             textGroup.DOFade(1f, 0.3f).SetDelay(0.1f);
 
-            Debug.Log("CardUI:ŠJ‚¢‚½‚æ");
+            Debug.Log("CardUI:ï¿½Jï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
         }
 
         isExpanded = !isExpanded;
