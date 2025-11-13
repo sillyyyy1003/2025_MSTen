@@ -80,7 +80,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 双击检测
     // 定义双击的最大时间间隔
-    public float doubleClickTimeThreshold = 0.3f;
+    public float doubleClickTimeThreshold = 0.1f;
     private float lastClickTime;
     private int clickCount = 0;
 
@@ -160,7 +160,7 @@ public class PlayerOperationManager : MonoBehaviour
     #region =====输入处理=====
     private void HandleMouseInput()
     {
-        if (IsPointerOverUIElement())
+        if (GameManage.Instance.IsPointerOverUIElement())
         {
             return;
         }
@@ -208,42 +208,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
-    // 检测鼠标指针是否在可交互的UI元素上（按钮、输入框等）
-    private bool IsPointerOverUIElement()
-    {
-        if (EventSystem.current == null)
-            return false;
-
-        // 创建指针事件数据
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = Input.mousePosition;
-
-        // 射线检测所有UI元素
-        List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-
-        // 只检查可交互的UI组件（按钮、输入框等）
-        foreach (var result in results)
-        {
-            if (result.gameObject.activeInHierarchy)
-            {
-                // 检查是否是按钮或其他可交互组件
-                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
-                    result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
-                    result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
+   
     private void HandleLeftClick(bool isDoubleClick)
     {
         Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
@@ -608,8 +573,17 @@ public class PlayerOperationManager : MonoBehaviour
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + " canDo is " + unit.bCanDoAction);
+            // 若有建筑则增加resource
+            if (unit.UnitType == CardType.Building)
+            {
+                int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
+                res += 5;
+                PlayerDataManager.Instance.SetPlayerResourses(res);
+            }
+            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction+ " Resource is "+ PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
         }
+
+
     }
 
     // 回合结束
@@ -995,7 +969,7 @@ public class PlayerOperationManager : MonoBehaviour
         int2 toPos = PlayerBoardInforDict[targetCellId].Cells2DPos;
 
         PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, fromPos);
-        Debug.Log("now unit AP is " + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+        Debug.Log("now unit " + unitData.Value.UnitID+ "AP is" + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         if (PieceManager.Instance.GetPieceAP(unitData.Value.UnitID) > 0)
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
