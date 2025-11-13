@@ -177,7 +177,7 @@ public class PlayerOperationManager : MonoBehaviour
 			new Vector4(
 				cell.Coordinates.HexX,
 				cell.Coordinates.HexZ,
-				1f,
+				0.5f,
 				HexMetrics.wrapSize
 			)
 		);
@@ -206,6 +206,9 @@ public class PlayerOperationManager : MonoBehaviour
         {
             return;
         }
+
+		// 2025.11.13 GuoNing 清除高亮数据 
+		ClearCellHighlightData();
 
 		// 左键点击 - 选择单位
 		if (Input.GetMouseButtonDown(0) && bCanContinue)
