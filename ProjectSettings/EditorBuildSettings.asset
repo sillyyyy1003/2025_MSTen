@@ -9,20 +9,11 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
-    path: Assets/Matsu/Scene/TITLE.unity
-    guid: 02613ab0e0586b6419ff13dc2e8f0c4f
-  - enabled: 1
-    path: Assets/Matsu/Scene/GAME.unity
-    guid: 577eba7bf739505419b4a18c8ca0cc17
-  - enabled: 1
-    path: Assets/Matsu/Scene/RESULT.unity
-    guid: e7da35b87c1f18f4bbf7e3f92ce7839e
+    path: Assets/Game/Select Scene 2.0.unity
+    guid: 4718542818285174e9e04b656e0c8a65
   - enabled: 1
     path: Assets/Game/MainGame.unity
     guid: ca0bc21d732397049b39968040592f0d
-  - enabled: 1
-    path: Assets/Game/SelectScene.unity
-    guid: d2b6ce0c8e814144d9b338258a457b3e
   - enabled: 0
     path: Assets/UITest/Scenes/UITest_select.unity
     guid: f3eeedad65824f745b64eafd5199010d

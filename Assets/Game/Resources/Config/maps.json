@@ -1,0 +1,16 @@
+{
+    "maps": [
+    {
+      "serialNumber": 1001,
+      "displayName": "初始地图1",
+      "description": "Test01",
+      "fileName":"Example.map"
+    },
+    {
+      "serialNumber": 1002,
+      "displayName": "初始地图2",
+      "description": "Test02",
+      "fileName":"Example1.map"
+    }
+  ]
+}

@@ -1,192 +1,191 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// BGM‚ğŠÇ—‚·‚éƒNƒ‰ƒX
+/// BGMã‚’ç®¡ç†ã™ã‚‹ã‚¯ãƒ©ã‚¹
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class BGMManager : MonoBehaviour
 {
-    //--------------------------------------------------------------------------------
-    // ƒƒ“ƒo•Ï”
-    //--------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------
+	// ãƒ¡ãƒ³ãƒå¤‰æ•°
+	//--------------------------------------------------------------------------------
 
-    private AudioSource bgmSource;
-    private Coroutine fadeCoroutine;
-
-
-
-    //--------------------------------------------------------------------------------
-    // ƒvƒƒpƒeƒB
-    //--------------------------------------------------------------------------------
-
-    /// <summary> Ä¶’†‚ÌBGM‚ÌAudioClip‚ğæ“¾‚·‚é </summary>
-    public AudioClip CurrentBGM => bgmSource.clip;
-
-    public AudioSource AudioSource => bgmSource;
-
-    /// <summary> Ä¶’†‚©‚Ç‚¤‚©‚ğæ“¾‚·‚é </summary>
-    public bool IsPlaying => bgmSource.isPlaying;
+	private AudioSource bgmSource;
+	private Coroutine fadeCoroutine;
 
 
 
-    //--------------------------------------------------------------------------------
-    // ƒƒ\ƒbƒh
-    //--------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------
+	// ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£
+	//--------------------------------------------------------------------------------
 
-    private void Awake()
-    {
-        bgmSource = GetComponent<AudioSource>();
-        bgmSource.loop = true; // ƒfƒtƒHƒ‹ƒg‚Íƒ‹[ƒvÄ¶
-    }
+	/// <summary> å†ç”Ÿä¸­ã®BGMã®AudioClipã‚’å–å¾—ã™ã‚‹ </summary>
+	public AudioClip CurrentBGM => bgmSource.clip;
 
+	public AudioSource AudioSource => bgmSource;
 
-    /// <summary>
-    /// BGM‚ğÄ¶‚·‚é
-    /// </summary>
-    /// <param name="clip">Ä¶‚·‚éBGM‚ÌAudioClip</param>
-    /// <param name="volume">‰¹—Ê</param>
-    /// <param name="loop">ƒ‹[ƒvÄ¶‚·‚é‚©‚Ç‚¤‚©</param>
-    /// <param name="fadeDuration">ƒtƒF[ƒhƒCƒ“‚ÌŠÔ</param>
-    /// <param name="delay">’x‰„ŠÔ</param>
-    /// <param name="easing">ƒC[ƒWƒ“ƒOŠÖ”(EasingFunctions.cs‚ğQÆ)</param>
-    public void PlayBGM(AudioClip clip, float volume = 1.0f, bool loop = true, float fadeDuration = 0.0f, float delay = 0.0f, System.Func<float, float> easing = null)
-    {
-        // Ä¶’†‚ÌBGM‚ª“¯‚¶ê‡‚Í‰½‚à‚µ‚È‚¢
-        if (bgmSource.clip == clip) return;
-
-        // ƒtƒF[ƒhƒCƒ“’†‚ÌƒRƒ‹[ƒ`ƒ“‚ª‚ ‚ê‚Î’â~
-        if (fadeCoroutine != null)
-        {
-            StopCoroutine(fadeCoroutine);
-        }
-
-        // ’l‚ğ0~1‚Ì”ÍˆÍ‚É§ŒÀ
-        volume = Mathf.Clamp01(volume);
-        // ’l‚ÌÅ¬’l‚ğ0‚É§ŒÀ
-        delay = Mathf.Max(0f, delay);
-        fadeDuration = Mathf.Max(0f, fadeDuration);
-
-
-        // ƒtƒF[ƒhƒCƒ“ˆ—‚ğŠJn
-        fadeCoroutine = StartCoroutine(DelayedAction(delay, () =>
-        {
-            bgmSource.clip = clip;
-            bgmSource.loop = loop;
-            bgmSource.volume = 0f;
-            bgmSource.Play();
-            fadeCoroutine = StartCoroutine(FadeVolume(volume, fadeDuration, easing));
-        }));
-    }
-
-    ///// <summary>
-    ///// ƒ‰ƒ“ƒ_ƒ€‚ÈBGM‚ğÄ¶‚·‚é
-    ///// </summary>
-    ///// <param name="clips">Ä¶‚·‚éSE‚ÌAudioClip‚Ì”z—ñ</param>
-    ///// <param name="volume">‰¹—Ê</param>
-    //public void PlayRandomBGM(AudioClip[] clips, float volume = 1.0f, bool loop = true, float fadeDuration = 0.0f, float delay = 0.0f, System.Func<float, float> easing = null)
-    //{
-    //    int randomIndex = Random.Range(0, clips.Length);    // ƒ‰ƒ“ƒ_ƒ€‚ÈƒCƒ“ƒfƒbƒNƒX‚ğæ“¾
-    //    PlayBGM(clips[randomIndex], volume, loop, fadeDuration, delay, easing);
-    //}
+	/// <summary> å†ç”Ÿä¸­ã‹ã©ã†ã‹ã‚’å–å¾—ã™ã‚‹ </summary>
+	public bool IsPlaying => bgmSource.isPlaying;
 
 
 
-    /// <summary>
-    /// BGM‚ğ’â~‚·‚é
-    /// </summary>
-    /// <param name="fadeDuration">ƒtƒF[ƒhƒAƒEƒg‚ÌŠÔ</param>
-    /// <param name="delay">’x‰„ŠÔ</param>
-    /// <param name="easing">ƒC[ƒWƒ“ƒOŠÖ”(EasingFunctions.cs‚ğQÆ)</param>
-    public void StopBGM(float fadeDuration = 0.0f, float delay = 0.0f, System.Func<float, float> easing = null)
-    {
-        // Ä¶’†‚Å‚È‚¢ê‡‚Í‰½‚à‚µ‚È‚¢
-        if (!bgmSource.isPlaying) return;
+	//--------------------------------------------------------------------------------
+	// ãƒ¡ã‚½ãƒƒãƒ‰
+	//--------------------------------------------------------------------------------
 
-        // ƒtƒF[ƒhƒAƒEƒg’†‚ÌƒRƒ‹[ƒ`ƒ“‚ª‚ ‚ê‚Î’â~
-        if (fadeCoroutine != null)
-        {
-            StopCoroutine(fadeCoroutine);
-        }
-
-        // ’l‚ÌÅ¬’l‚ğ0‚É§ŒÀ
-        fadeDuration = Mathf.Max(0f, fadeDuration);
-        delay = Mathf.Max(0f, delay);
-
-        // ƒtƒF[ƒhƒAƒEƒgˆ—‚ğŠJn
-        fadeCoroutine = StartCoroutine(DelayedAction(delay, () =>
-        {
-            fadeCoroutine = StartCoroutine(FadeVolume(0f, fadeDuration, easing, () =>
-            {
-                bgmSource.Stop();
-                bgmSource.clip = null;
-            }));
-        }));
-    }
+	private void Awake()
+	{
+		bgmSource = GetComponent<AudioSource>();
+		bgmSource.loop = true; // ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã¯ãƒ«ãƒ¼ãƒ—å†ç”Ÿ
+	}
 
 
-    /// <summary>
-    /// ‰¹—Ê‚ğƒtƒF[ƒh‚³‚¹‚é
-    /// </summary>
-    /// <param name="targetVolume">–Ú•W‰¹—Ê</param>
-    /// <param name="duration">ƒtƒF[ƒhŠÔ</param>
-    /// <param name="easing">ƒC[ƒWƒ“ƒOŠÖ”</param>
-    /// <param name="onComplete">ƒtƒF[ƒhŠ®—¹‚ÌƒR[ƒ‹ƒoƒbƒN</param>
-    private IEnumerator FadeVolume(float targetVolume, float duration, System.Func<float, float> easing = null, System.Action onComplete = null)
-    {
-        float startVolume = bgmSource.volume;
-        float elapsedTime = 0f;
+	/// <summary>
+	/// BGMã‚’å†ç”Ÿã™ã‚‹
+	/// </summary>
+	/// <param name="clip">å†ç”Ÿã™ã‚‹BGMã®AudioClip</param>
+	/// <param name="volume">éŸ³é‡</param>
+	/// <param name="loop">ãƒ«ãƒ¼ãƒ—å†ç”Ÿã™ã‚‹ã‹ã©ã†ã‹</param>
+	/// <param name="fadeDuration">ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¤ãƒ³ã®æ™‚é–“</param>
+	/// <param name="delay">é…å»¶æ™‚é–“</param>
+	/// <param name="easing">ã‚¤ãƒ¼ã‚¸ãƒ³ã‚°é–¢æ•°(EasingFunctions.csã‚’å‚ç…§)</param>
+	public void PlayBGM(AudioClip clip, float volume = 1.0f, bool loop = true, float fadeDuration = 0.0f, float delay = 0.0f, System.Func<float, float> easing = null)
+	{
+		// å†ç”Ÿä¸­ã®BGMãŒåŒã˜å ´åˆã¯ä½•ã‚‚ã—ãªã„
+		if (bgmSource.clip == clip) return;
 
-        // ƒfƒtƒHƒ‹ƒg‚ÌƒC[ƒWƒ“ƒOŠÖ”iüŒ`•âŠÔj
-        if (easing == null) easing = t => t;
+		// ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¤ãƒ³ä¸­ã®ã‚³ãƒ«ãƒ¼ãƒãƒ³ãŒã‚ã‚Œã°åœæ­¢
+		if (fadeCoroutine != null)
+		{
+			StopCoroutine(fadeCoroutine);
+		}
 
-        while (elapsedTime < duration)
-        {
-            float t = elapsedTime / duration;
-            bgmSource.volume = Mathf.Lerp(startVolume, targetVolume, easing(t));
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-
-        bgmSource.volume = targetVolume;
-        onComplete?.Invoke();
-    }
-
-    /// <summary>
-    /// ’x‰„ˆ—‚ğÀs
-    /// </summary>
-    /// <param name="delay">’x‰„ŠÔ</param>
-    /// <param name="action">’x‰„Œã‚ÉÀs‚·‚éˆ—</param>
-    private IEnumerator DelayedAction(float delay, System.Action action)
-    {
-        if (delay > 0f)
-        {
-            yield return new WaitForSeconds(delay);
-        }
-        action?.Invoke();
-    }
+		// å€¤ã‚’0~1ã®ç¯„å›²ã«åˆ¶é™
+		volume = Mathf.Clamp01(volume);
+		// å€¤ã®æœ€å°å€¤ã‚’0ã«åˆ¶é™
+		delay = Mathf.Max(0f, delay);
+		fadeDuration = Mathf.Max(0f, fadeDuration);
 
 
-    //--------------------------------------------------------------------------------
-    // ƒAƒNƒZƒT
-    //--------------------------------------------------------------------------------
+		// ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¤ãƒ³å‡¦ç†ã‚’é–‹å§‹
+		fadeCoroutine = StartCoroutine(DelayedAction(delay, () =>
+		{
+			bgmSource.clip = clip;
+			bgmSource.loop = loop;
+			bgmSource.volume = 0f;
+			bgmSource.Play();
+			fadeCoroutine = StartCoroutine(FadeVolume(volume, fadeDuration, easing));
+		}));
+	}
 
-    /// <summary>
-    /// BGM‚Ì‰¹—Ê‚ğæ“¾‚·‚é
-    /// </summary>
-    public float GetVolume()
-    {
-        return bgmSource.volume;
-    }
+	///// <summary>
+	///// ãƒ©ãƒ³ãƒ€ãƒ ãªBGMã‚’å†ç”Ÿã™ã‚‹
+	///// </summary>
+	///// <param name="clips">å†ç”Ÿã™ã‚‹SEã®AudioClipã®é…åˆ—</param>
+	///// <param name="volume">éŸ³é‡</param>
+	//public void PlayRandomBGM(AudioClip[] clips, float volume = 1.0f, bool loop = true, float fadeDuration = 0.0f, float delay = 0.0f, System.Func<float, float> easing = null)
+	//{
+	//    int randomIndex = Random.Range(0, clips.Length);    // ãƒ©ãƒ³ãƒ€ãƒ ãªã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å–å¾—
+	//    PlayBGM(clips[randomIndex], volume, loop, fadeDuration, delay, easing);
+	//}
 
-    /// <summary>
-    /// BGM‚Ì‰¹—Ê‚ğİ’è‚·‚é
-    /// </summary>
-    /// <param name="volume">‰¹—Ê</param>
-    public void SetVolume(float volume)
-    {
-        bgmSource.volume = Mathf.Clamp01(volume);
-    }
+
+
+	/// <summary>
+	/// BGMã‚’åœæ­¢ã™ã‚‹
+	/// </summary>
+	/// <param name="fadeDuration">ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆã®æ™‚é–“</param>
+	/// <param name="delay">é…å»¶æ™‚é–“</param>
+	/// <param name="easing">ã‚¤ãƒ¼ã‚¸ãƒ³ã‚°é–¢æ•°(EasingFunctions.csã‚’å‚ç…§)</param>
+	public void StopBGM(float fadeDuration = 0.0f, float delay = 0.0f, System.Func<float, float> easing = null)
+	{
+		// å†ç”Ÿä¸­ã§ãªã„å ´åˆã¯ä½•ã‚‚ã—ãªã„
+		if (!bgmSource.isPlaying) return;
+
+		// ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆä¸­ã®ã‚³ãƒ«ãƒ¼ãƒãƒ³ãŒã‚ã‚Œã°åœæ­¢
+		if (fadeCoroutine != null)
+		{
+			StopCoroutine(fadeCoroutine);
+		}
+
+		// å€¤ã®æœ€å°å€¤ã‚’0ã«åˆ¶é™
+		fadeDuration = Mathf.Max(0f, fadeDuration);
+		delay = Mathf.Max(0f, delay);
+
+		// ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆå‡¦ç†ã‚’é–‹å§‹
+		fadeCoroutine = StartCoroutine(DelayedAction(delay, () =>
+		{
+			fadeCoroutine = StartCoroutine(FadeVolume(0f, fadeDuration, easing, () =>
+			{
+				bgmSource.Stop();
+				bgmSource.clip = null;
+			}));
+		}));
+	}
+
+
+	/// <summary>
+	/// éŸ³é‡ã‚’ãƒ•ã‚§ãƒ¼ãƒ‰ã•ã›ã‚‹
+	/// </summary>
+	/// <param name="targetVolume">ç›®æ¨™éŸ³é‡</param>
+	/// <param name="duration">ãƒ•ã‚§ãƒ¼ãƒ‰æ™‚é–“</param>
+	/// <param name="easing">ã‚¤ãƒ¼ã‚¸ãƒ³ã‚°é–¢æ•°</param>
+	/// <param name="onComplete">ãƒ•ã‚§ãƒ¼ãƒ‰å®Œäº†æ™‚ã®ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯</param>
+	private IEnumerator FadeVolume(float targetVolume, float duration, System.Func<float, float> easing = null, System.Action onComplete = null)
+	{
+		float startVolume = bgmSource.volume;
+		float elapsedTime = 0f;
+
+		// ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®ã‚¤ãƒ¼ã‚¸ãƒ³ã‚°é–¢æ•°ï¼ˆç·šå½¢è£œé–“ï¼‰
+		if (easing == null) easing = t => t;
+
+		while (elapsedTime < duration)
+		{
+			float t = elapsedTime / duration;
+			bgmSource.volume = Mathf.Lerp(startVolume, targetVolume, easing(t));
+			elapsedTime += Time.deltaTime;
+			yield return null;
+		}
+
+		bgmSource.volume = targetVolume;
+		onComplete?.Invoke();
+	}
+
+	/// <summary>
+	/// é…å»¶å‡¦ç†ã‚’å®Ÿè¡Œ
+	/// </summary>
+	/// <param name="delay">é…å»¶æ™‚é–“</param>
+	/// <param name="action">é…å»¶å¾Œã«å®Ÿè¡Œã™ã‚‹å‡¦ç†</param>
+	private IEnumerator DelayedAction(float delay, System.Action action)
+	{
+		if (delay > 0f)
+		{
+			yield return new WaitForSeconds(delay);
+		}
+		action?.Invoke();
+	}
+
+
+	//--------------------------------------------------------------------------------
+	// ã‚¢ã‚¯ã‚»ã‚µ
+	//--------------------------------------------------------------------------------
+
+	/// <summary>
+	/// BGMã®éŸ³é‡ã‚’å–å¾—ã™ã‚‹
+	/// </summary>
+	public float GetVolume()
+	{
+		return bgmSource.volume;
+	}
+
+	/// <summary>
+	/// BGMã®éŸ³é‡ã‚’è¨­å®šã™ã‚‹
+	/// </summary>
+	/// <param name="volume">éŸ³é‡</param>
+	public void SetVolume(float volume)
+	{
+		bgmSource.volume = Mathf.Clamp01(volume);
+	}
 }
-
