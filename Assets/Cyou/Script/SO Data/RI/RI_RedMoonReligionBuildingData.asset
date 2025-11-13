@@ -35,5 +35,5 @@ MonoBehaviour:
   attackRangeUpgradeCost: 080000000a000000
   slotsUpgradeCost: 080000000a000000
   buildCostUpgradeCost: 0600000008000000
-  buildingPrefab: {fileID: 1000010046023388, guid: 1589993158ba34786b54f448bdeb6085,
+  buildingPrefab: {fileID: 2193762852899578588, guid: 90206617e66999a4299a5950b74ca676,
     type: 3}
