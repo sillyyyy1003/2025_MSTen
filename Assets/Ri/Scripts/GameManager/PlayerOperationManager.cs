@@ -805,11 +805,8 @@ public class PlayerOperationManager : MonoBehaviour
     {
         BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(cellId);
         int2 position = cellInfo.Cells2DPos;
-        Vector3 worldPos = new Vector3(
-            cellInfo.Cells3DPos.x,
-           cellInfo.Cells3DPos.y + 2.5f,
-           cellInfo.Cells3DPos.z
-        );
+        Vector3 worldPos = cellInfo.Cells3DPos;
+        
 
 
         // 选择对应的预制体
