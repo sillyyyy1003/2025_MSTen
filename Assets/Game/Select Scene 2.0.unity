@@ -3284,7 +3284,7 @@ MonoBehaviour:
   RightDetailMenu: {fileID: 0}
   Button_CreateGame: {fileID: 631856370}
   Button_AddGame: {fileID: 64319158}
-  Building: {fileID: 0}
+  Building: {fileID: 781660100}
 --- !u!4 &780588724
 Transform:
   m_ObjectHideFlags: 0
