@@ -996,6 +996,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: grass_08
       objectReference: {fileID: 0}
+    - target: {fileID: 7570719296913369280, guid: 3ea8d7aa9d9c63044b77272debb1f9b9,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.1591
+      objectReference: {fileID: 0}
+    - target: {fileID: 7570719296913369280, guid: 3ea8d7aa9d9c63044b77272debb1f9b9,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.1591
+      objectReference: {fileID: 0}
+    - target: {fileID: 7570719296913369280, guid: 3ea8d7aa9d9c63044b77272debb1f9b9,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.1591
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
