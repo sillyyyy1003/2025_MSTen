@@ -198,6 +198,7 @@ public class HexMapEditor : MonoBehaviour
 				HexMetrics.wrapSize
 			)
 		);
+		
 	}
 
 	void ClearCellHighlightData() =>

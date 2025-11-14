@@ -7,6 +7,11 @@ using UnityEngine.UI;
 
 public class TitleUIManager : MonoBehaviour
 {
+
+
+	//--------------------------------------------------------------------------------
+	// プロパティ
+	//--------------------------------------------------------------------------------
 	[Header("Menus")]
 	public RectTransform LeftMenu;
 	public RectTransform RightMenu;
@@ -22,15 +27,23 @@ public class TitleUIManager : MonoBehaviour
 	[Header("Right Menu")]
 	public RectTransform OptionMenu;
 	public RectTransform OnlineMenu;
-
-
+	public RectTransform RightDetailMenu;
 
 	// Screen UI
 	[Header("OnlineButton")]
 	public HexButton Button_CreateGame;
 	public HexButton Button_AddGame;
 
-	public Transform Building;
+	/// <summary>
+	/// 画面に表示する建物モデル
+	/// </summary>
+	public Transform Building;//todo: make it a model manager later
+
+
+	//--------------------------------------------------------------------------------
+	// メソッド
+	//--------------------------------------------------------------------------------
+
 	void Update()
 	{
 		// Right mouse button click
@@ -44,7 +57,7 @@ public class TitleUIManager : MonoBehaviour
 			// Reset button state
 			Button_Setting.ResetHexButton();
 			Button_OnlineGame.ResetHexButton();
-			
+			SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 		}
 
 		//=========Building model update
@@ -67,23 +80,46 @@ public class TitleUIManager : MonoBehaviour
 
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
-
+	
+		//  Close all option menu& online menu for next usage
+		OptionMenu.gameObject.SetActive(false);
+		OnlineMenu.gameObject.SetActive(false);
 		UpdateBackground(false);
+
+		// Reset button state
+		Button_Setting.ResetHexButton();
+		Button_OnlineGame.ResetHexButton();
+
+		SoundManager.Instance.StopBGM();
+		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.TITLE, loop: true);
 	}
 
+	/// <summary>
+	/// End Game button event
+	/// </summary>
 	private void OnClickEndGame()
 	{
 		Debug.Log("EndGame");
 	}
+
+	/// <summary>
+	/// Single play button event
+	/// </summary>
 	private void OnClickSinglePlayer()
 	{
+	
 		SceneStateManager.Instance.bIsSingle = true;
 		SceneManager.LoadScene("MainGame");
 		Debug.Log("SinglePlayer");
 	}
+
+	/// <summary>
+	/// Online game button event
+	/// </summary>
 	private void OnClickOnlineGame()
 	{
-		
+
+
 		//  Set option menu active
 		OnlineMenu.gameObject.SetActive(true);
 
@@ -91,12 +127,15 @@ public class TitleUIManager : MonoBehaviour
 		UpdateBackground(true);
 
 	}
+
+	/// <summary>
+	/// Setting event
+	/// </summary>
 	private void OnClickSetting()
 	{
-
+		
 		//  Set option menu active
 		OptionMenu.gameObject.SetActive(true);
-
 		OnlineMenu.gameObject.SetActive(false);
 
 		// Change material
@@ -104,6 +143,9 @@ public class TitleUIManager : MonoBehaviour
 
 	}
 
+	/// <summary>
+	/// Create online game button
+	/// </summary>
 	private void OnClickCreateGame()
 	{
 		if (SceneStateManager.Instance != null)
@@ -124,8 +166,14 @@ public class TitleUIManager : MonoBehaviour
 
 		SceneManager.LoadScene("MainGame");
 	}
+
+
+	/// <summary>
+	/// Join game button event
+	/// </summary>
 	private void OnClickAddGame()
 	{
+		
 		if (SceneStateManager.Instance != null)
 		{
 			SceneStateManager.Instance.SetAsServer(false);
@@ -138,6 +186,11 @@ public class TitleUIManager : MonoBehaviour
 
 	}
 
+
+	/// <summary>
+	/// Update game background blur effect
+	/// </summary>
+	/// <param name="isOn"></param>
 	private void UpdateBackground(bool isOn)
 	{
 		if (isOn)

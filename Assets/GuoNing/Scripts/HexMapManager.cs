@@ -55,23 +55,6 @@ public class HexMapManager : MonoBehaviour
 
 
 
-	/*
-	/// <summary>
-	/// 测试：按键加载地图或随机地图
-	/// </summary>
-	private void Update()
-	{
-		if (Input.GetKeyDown(KeyCode.L))
-		{
-			LoadMap(1001); // 测试加载地图 通过序列号加载地图
-		}
-
-		if (Input.GetKeyDown(KeyCode.R))
-		{
-			LoadRandomMap(20, 15); // 测试生成随机地图
-		}
-	}*/
-
 	/// <summary>
 	/// 从Resources中加载配置文件
 	/// </summary>
@@ -105,7 +88,9 @@ public class HexMapManager : MonoBehaviour
 		}
 
 		MapConfig config = configList.maps[index];
-		string path = Path.Combine(Application.dataPath, "Maps", config.fileName);
+		//string path = Path.Combine(Application.dataPath, "Maps", config.fileName);
+		// 通过StreamingAssetsPath路径加载地图文件，避免打包后找不到文件的问题
+		string path = Path.Combine(Application.streamingAssetsPath, "Maps", config.fileName);
 
 		if (!File.Exists(path))
 		{

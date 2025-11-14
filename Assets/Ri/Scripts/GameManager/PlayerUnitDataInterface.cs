@@ -7,7 +7,9 @@ using GameData;
 using GameData.UI;
 using Unity.Mathematics;
 using TMPro;
+#if UNITY_EDITOR
 using Mono.Cecil.Cil;
+#endif
 using System.Runtime.Versioning;
 
 

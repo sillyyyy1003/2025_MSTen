@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 using UnityEngine.UIElements;
 using static UnityEngine.Rendering.DebugUI.Table;
@@ -306,7 +307,11 @@ public class GameManage : MonoBehaviour
             StartCoroutine(TrueStartGame());
 
 
-        return true;
+		// 2025.11.14 Guoning 播放音乐
+		SoundManager.Instance.StopBGM();
+		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME);
+
+		return true;
     }
     private IEnumerator TrueStartGame()
     {
@@ -747,5 +752,44 @@ public class GameManage : MonoBehaviour
         //    _NetGameSystem.OnDataReceived -= HandleNetworkData;
         //    _NetGameSystem.OnConnected -= OnConnectedToServer;
         //}
+    }
+
+
+    // *********全局工具**********
+    // 检测鼠标指针是否在可交互的UI元素上（按钮、输入框等）
+    public bool IsPointerOverUIElement()
+    {
+        if (EventSystem.current == null)
+            return false;
+
+        // 创建指针事件数据
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Input.mousePosition;
+
+        // 射线检测所有UI元素
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        // 只检查可交互的UI组件（按钮、输入框等）
+        foreach (var result in results)
+        {
+            if (result.gameObject.activeInHierarchy)
+            {
+                // 检查是否是按钮或其他可交互组件
+                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
+                    result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
+                    result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
