@@ -9,8 +9,10 @@ using System.Dynamic;
 using GameData;
 using GamePieces;
 using UnityEngine.UI;
+#if UNITY_EDITORR
 using static UnityEditor.PlayerSettings;
 using Mono.Cecil;
+#endif
 using UnityEngine.Rendering.Universal;
 
 
@@ -122,13 +124,13 @@ public class PlayerOperationManager : MonoBehaviour
     {
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
-			/*
-             *     2025.11.13 Guoning
+			
+            //2025.11.13 Guoning 修改鼠标移动留痕与点击判断
             if(Input.GetMouseButton(0)|| Input.GetMouseButton(1))
                 HandleMouseInput();
 			else UpdateCellHighlightData(GetCellUnderCursor());
-            */
-			HandleMouseInput();
+            
+			//HandleMouseInput();
 
 		}
         if (Input.GetKeyDown(KeyCode.B)
@@ -151,8 +153,10 @@ public class PlayerOperationManager : MonoBehaviour
                 _HexGrid.GetCell(LastSelectingCellID).Walled = true;
                 PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
                 HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
-
-            }
+				
+                // 2025.11.14 Guoning 音声再生
+				SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+			}
             else
             {
                 Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
@@ -452,8 +456,13 @@ public class PlayerOperationManager : MonoBehaviour
             }
             else
             {
-                // 传教士移动
-                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+                // 教皇无法移动
+                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+                {
+                    return;
+                }
+                    // 传教士移动
+                    if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
                 {
 
                     if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
@@ -2334,6 +2343,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
+
+			// 2025.11.14 Guoning 添加魅惑音效
+			SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 
             Debug.Log($"[ExecuteCharm] 单位GameObject已转移到本地玩家控制");
         }

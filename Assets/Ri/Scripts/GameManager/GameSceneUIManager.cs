@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+#if UNITY_EDITORR
 using static UnityEditor.Progress;
-
+#endif
 public class GameSceneUIManager : MonoBehaviour
 {
     // 单例
@@ -58,8 +59,6 @@ public class GameSceneUIManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
-
 
         // 初始化房间UI
         InitializeRoomUI();
