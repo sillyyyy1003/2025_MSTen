@@ -4,13 +4,15 @@
       "serialNumber": 1001,
       "displayName": "初始地图1",
       "description": "Test01",
-      "fileName":"Example.map"
+      "fileName":"Example.map",
+      "officialMap":true
     },
     {
       "serialNumber": 1002,
       "displayName": "初始地图2",
       "description": "Test02",
-      "fileName":"Example1.map"
+      "fileName":"Example1.map",
+      "officialMap":true
     }
   ]
 }

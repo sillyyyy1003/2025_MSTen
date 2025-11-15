@@ -110,6 +110,7 @@ public class HexMapEditor : MonoBehaviour
 			{
 				// Potential optimization: only do this if camera or cursor has changed.
 				UpdateCellHighlightData(GetCellUnderCursor());
+				hexGrid.UpdateCellFeature(GetCellUnderCursor());
 			}
 
 
