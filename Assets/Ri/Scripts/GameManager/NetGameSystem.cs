@@ -759,7 +759,7 @@ public class NetGameSystem : MonoBehaviour
 
         // 服务器自己也更新
         MainThreadDispatcher.Enqueue(() => {
-            OnRoomStatusUpdated?.Invoke(roomPlayers);
+            //OnRoomStatusUpdated?.Invoke(roomPlayers);
 
             //Debug.Log("SendRoomStatusToAll");
             CheckAllPlayersReady();
@@ -1571,7 +1571,7 @@ public class NetGameSystem : MonoBehaviour
         {
             Debug.Log($"  - 玩家 {player.PlayerId}: {player.PlayerName}, 准备: {player.IsReady}");
         }
-        OnRoomStatusUpdated?.Invoke(roomPlayers);
+        //OnRoomStatusUpdated?.Invoke(roomPlayers);
         CheckAllPlayersReady();
     }
 
