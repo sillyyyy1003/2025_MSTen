@@ -599,8 +599,8 @@ public class GameManage : MonoBehaviour
         return default;
     }
 
-    // 根据格子id返回其周围所有可创建单位的格子id
-    public List<int> GetBoardNineSquareGrid(int id)
+    // 根据格子id返回其周围所有格子的id
+    public List<int> GetBoardNineSquareGrid(int id,bool isStart)
     {
         Debug.Log("pos is " + GetBoardInfor(id).Cells2DPos);
         List<int> startPos = new List<int>();
@@ -608,13 +608,30 @@ public class GameManage : MonoBehaviour
         {
             for (int dy = -1; dy <= 1; dy++)
             {
-
-                int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
-                if (GameBoardInforDict2D.ContainsKey(pos))
+                if(isStart)
                 {
-                    startPos.Add(GameBoardInforDict2D[pos].id);
-                    //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                    int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
+                    if (GameBoardInforDict2D.ContainsKey(pos))
+                    {
+                        startPos.Add(GameBoardInforDict2D[pos].id);
+                        //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                    }
                 }
+                else
+                {
+                    if (dx == 0 && dy == 0)
+                        continue;
+                    else
+                    {
+                        int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
+                        if (GameBoardInforDict2D.ContainsKey(pos))
+                        {
+                            startPos.Add(GameBoardInforDict2D[pos].id);
+                            //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                        }
+                    }
+                }
+                   
             }
         }
         return startPos;

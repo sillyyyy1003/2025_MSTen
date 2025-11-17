@@ -88,7 +88,7 @@ public struct syncPieceData
             Pope => PieceType.Pope,
             _ => PieceType.None
         };
-        Debug.Log("piece religion is "+piece.Data.religion);
+        //Debug.Log("piece religion is "+piece.Data.religion);
         return new syncPieceData
         {
             piecetype = pieceType,
@@ -1232,6 +1232,27 @@ public class PieceManager : MonoBehaviour
         piece.Heal(amount);
         return syncPieceData.CreateFromPiece(piece);
     }
+
+
+    // 25.11.17 RI 添加HP同步管理，处理网络传过来的己方棋子受到伤害后的HP
+    public void SyncPieceHP(syncPieceData data)
+    {
+        if (!allPieces.TryGetValue(data.pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={data.pieceID}");
+        }
+        Debug.Log("this unit HP IS "+data.currentHP);
+        piece.SetHP(data.currentHP);
+
+        if (allPieces.ContainsKey(data.pieceID))
+        {
+            allPiecesSyncData[data.pieceID] = data;
+            
+        }
+
+    }
+
+
 
     #endregion
 
