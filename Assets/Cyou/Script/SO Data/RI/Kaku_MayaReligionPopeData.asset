@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5dd6c7549013a04eaafaa7eb5a8a8b3, type: 3}
+  m_Name: Kaku_MayaReligionPopeData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  originalPID: 0
+  religion: 0
+  pieceName: 
+  populationCost: 1
+  resourceCost: 10
+  initialLevel: 0
+  aPRecoveryRate: 10
+  moveAPCost: 10
+  moveSpeed: 1
+  canAttack: 0
+  attackPower: 0
+  attackRange: 0
+  attackCooldown: 1
+  attackAPCost: 20
+  maxHPByLevel: 00000000000000000000000000000000
+  maxAPByLevel: 00000000000000000000000000000000
+  attackPowerByLevel: 00000000000000000000000000000000
+  hpUpgradeCost: 000000000000000000000000
+  apUpgradeCost: 000000000000000000000000
+  piecePrefab: {fileID: 8868254160552346048, guid: 1724c1e5396873943a03922f74eff83a,
+    type: 3}
+  swapCooldown: 05000000030000000300000003000000
+  hpBuff: 01000000020000000300000003000000
+  atkBuff: 01000000010000000100000001000000
+  convertBuff:
+  - 0.03
+  - 0.05
+  - 0.08
+  - 0.08
+  swapCooldownUpgradeCost: 0000000000000000
+  buffUpgradeCost: 000000000000000000000000

@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,13 +14,17 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Image))]
 public class GameLoadProgressUI : MonoBehaviour
 {
-	[Header("初始进度(%)")]
-	public float startProgress = 30f;
+	[Header("Start progress(%)")]
+	public float startProgress =0f;
 
-	[Header("完成进度(%)")]
+	[Header("Fake progress(%)")]
+	public float fakeProgress = 30f;
+
+	[Header("End progress(%)")]
 	public float endProgress = 100f;
 
-	[Header("加载完成所需时间")]
+	[Header("Time limit")]
+	public float fakeLimit = 1.2f;
 	public float timeLimit = 3f;
 
 	public TextMeshProUGUI text;
@@ -32,37 +37,69 @@ public class GameLoadProgressUI : MonoBehaviour
 	private void Awake()
 	{
 		// 监听房间状态更新
-		NetGameSystem.Instance.OnRoomStatusUpdated += HandleRoomStatusUpdate;
+		if (NetGameSystem.Instance != null)
+		{
+			NetGameSystem.Instance.OnRoomStatusUpdated += HandleRoomStatusUpdate;
+		}
 	}
 
 	private void OnDestroy()
 	{
-		// 记得取消订阅，避免内存泄漏
-		NetGameSystem.Instance.OnRoomStatusUpdated -= HandleRoomStatusUpdate;
+		// 监听房间状态更新
+		if (NetGameSystem.Instance != null)
+		{
+			NetGameSystem.Instance.OnRoomStatusUpdated -= HandleRoomStatusUpdate;
+		}
+	
 		
 	}
 
 	private void Start()
 	{
 		text.text = $"{startProgress:F0}%";
+		GetComponent<Image>().fillAmount =0;
 	}
 
 	private void Update()
 	{
-		if (!isStartLoading) return;
-
-		currentTime += Time.deltaTime;
-
-		float t = Mathf.Clamp01(currentTime / timeLimit);
-		float progress = Mathf.Lerp(startProgress, endProgress, t);
-
-		text.text = $"{progress:F0}%";
-
-		if (t >= 1f)
+		if (Input.GetKeyUp(KeyCode.Space))
 		{
-			isStartLoading = false;
-			OnLoadingEnd?.Invoke(true);
+			currentTime = 0;
+			isStartLoading = true ;
 		}
+
+		if (!isStartLoading){
+
+			currentTime += Time.deltaTime;
+			float t = Mathf.Clamp01(currentTime / fakeLimit);
+			if (t >= 1) return;
+
+			float progress = Mathf.Lerp(0, fakeProgress, t);
+			text.text = $"{progress:F0}%";
+
+			Debug.Log(GetComponent<Image>().fillAmount);
+			GetComponent<Image>().fillAmount = progress / endProgress;
+		}
+		else
+		{
+			currentTime += Time.deltaTime;
+
+			float t = Mathf.Clamp01(currentTime / timeLimit);
+			float progress = Mathf.Lerp(fakeProgress, endProgress, t);
+
+			text.text = $"{progress:F0}%";
+
+			if (t >= 1f)
+			{
+				isStartLoading = false;
+				OnLoadingEnd?.Invoke(true);
+				return;
+			}
+
+			GetComponent<Image>().fillAmount = progress / endProgress;
+		}
+
+		
 	}
 
 	//=========================================
@@ -76,6 +113,7 @@ public class GameLoadProgressUI : MonoBehaviour
 		{
 			Debug.Log("[客户端] 玩家到齐，开始 Loading UI");
 			isStartLoading = true;
+			currentTime = 0;
 		}
 	}
 }

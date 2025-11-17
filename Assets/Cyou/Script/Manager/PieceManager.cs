@@ -192,13 +192,23 @@ public class PieceManager : MonoBehaviour
             return;
         }
         _instance = this;
-        DontDestroyOnLoad(gameObject); // シーン遷移で破棄されない
+        //2025.11.17 Guoning
+        //DontDestroyOnLoad(gameObject); // シーン遷移で破棄されない
     }
 
-    /// <summary>
-    /// このPieceManagerが管理するプレイヤーIDを設定
-    /// </summary>
-    public void SetLocalPlayerID(int playerID)
+	private void OnDestroy()
+	{
+		if (_instance == this)
+		{
+			_instance = null;
+			Debug.Log("PieceManager已销毁");
+		}
+	}
+
+	/// <summary>
+	/// このPieceManagerが管理するプレイヤーIDを設定
+	/// </summary>
+	public void SetLocalPlayerID(int playerID)
     {
         localPlayerID = playerID;
         // プレイヤーIDベースのID範囲を設定（Player 1: 10000~19999, Player 2: 20000~29999, ...）
