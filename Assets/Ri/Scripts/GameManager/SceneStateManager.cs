@@ -83,8 +83,9 @@ public class SceneStateManager : MonoBehaviour
         bIsServer = isServer;
 
 
-		// 2025.11.17 Guoning 随机选择宗教
-		ChooseRandomReligion();
+        // 2025.11.17 Guoning 随机选择宗教
+        // 2025.11.17 RI 现有宗教单位数不足以随机，暂时注释
+        //ChooseRandomReligion();
 
 	}
 
