@@ -58,7 +58,7 @@ public class GameLoadProgressUI : MonoBehaviour
 
 		text.text = $"{progress:F0}%";
 
-		if (t >= 1f)
+		if (progress >= 100f)
 		{
 			isStartLoading = false;
 			OnLoadingEnd?.Invoke(true);
