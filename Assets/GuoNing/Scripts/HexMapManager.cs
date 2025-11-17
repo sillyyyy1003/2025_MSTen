@@ -29,7 +29,8 @@ public class HexMapManager : MonoBehaviour
 	public HexGrid hexGrid;                 // 地图网格
 
 	private MapConfigList configList;       // 配置列表 配置文件地址：Assets\Resources\Config\maps.json
-	public int serialNumber;				 // 当前地图序列号
+	[SerializeField]
+	private int serialNumber;				 // 当前地图序列号
 
 	/// <summary> 提供外部访问配置列表 </summary>
 	public List<MapConfig> MapConfigs => configList.maps;
@@ -47,13 +48,24 @@ public class HexMapManager : MonoBehaviour
 		LoadConfig(); // 加载地图配置
 	}
 
-	void Start()
+	private void Start()
 	{
-		// 初始加载默认地图
+		// 暂时放在Start里 如果有需要 注释掉这里即可
 		LoadMap(serialNumber);
 	}
 
+	//--------------------------------------------------------------------------------
+	// メソッド
+	//--------------------------------------------------------------------------------
 
+
+	/// <summary>
+	/// 地图的初始化
+	/// </summary>
+	public void Initialization(int number)
+	{
+		LoadMap(number);
+	}
 
 	/// <summary>
 	/// 从Resources中加载配置文件
@@ -155,4 +167,6 @@ public class HexMapManager : MonoBehaviour
 		Debug.LogWarning($"Map not found: seed={serialNumber}");
 		return false;
 	}
+
+	
 }

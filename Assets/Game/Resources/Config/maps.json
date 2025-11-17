@@ -2,16 +2,72 @@
     "maps": [
     {
       "serialNumber": 1001,
-      "displayName": "初始地图1",
-      "description": "Test01",
-      "fileName":"Example.map",
+      "displayName": "OfficialMap_01",
+      "description": "OfficialMap_01",
+      "fileName":"OfficialMap_01.map",
       "officialMap":true
     },
     {
       "serialNumber": 1002,
-      "displayName": "初始地图2",
-      "description": "Test02",
-      "fileName":"Example1.map",
+      "displayName": "OfficialMap_02",
+      "description": "TOfficialMap_02",
+      "fileName":"OfficialMap_02.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 1003,
+      "displayName": "OfficialMap_03",
+      "description": "TOfficialMap_03",
+      "fileName":"OfficialMap_03.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 1004,
+      "displayName": "OfficialMap_04",
+      "description": "TOfficialMap_04",
+      "fileName":"OfficialMap_04.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 1005,
+      "displayName": "OfficialMap_05",
+      "description": "TOfficialMap_05",
+      "fileName":"OfficialMap_05.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 1006,
+      "displayName": "OfficialMap_06",
+      "description": "TOfficialMap_06",
+      "fileName":"OfficialMap_06.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 1007,
+      "displayName": "OfficialMap_07",
+      "description": "TOfficialMap_07",
+      "fileName":"OfficialMap_07.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 1008,
+      "displayName": "OfficialMap_08",
+      "description": "TOfficialMap_08",
+      "fileName":"OfficialMap_08.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 1009,
+      "displayName": "OfficialMap_09",
+      "description": "TOfficialMap_09",
+      "fileName":"OfficialMap_09.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 1010,
+      "displayName": "OfficialMap_10",
+      "description": "TOfficialMap_10",
+      "fileName":"OfficialMap_10.map",
       "officialMap":true
     }
   ]

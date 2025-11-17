@@ -30,7 +30,6 @@ public class HexButton : MonoBehaviour
 
 	private bool isHover = false;
 	private bool isPressed = false;
-	//public bool isOn = false;     // 当前是否选中
 
 	void Awake()
 	{

@@ -20,7 +20,6 @@ public class HexFeature : MonoBehaviour
 		{
 			materials.AddRange(r.materials);
 		}
-		Debug.Log(materials.Count);
 	}
 
 	public void SetTransparency(bool transparent)
