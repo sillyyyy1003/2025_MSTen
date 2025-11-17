@@ -99,7 +99,6 @@ public class TitleUIManager : MonoBehaviour
 	private void OnClickMapEditor()
 	{
 		SceneController.Instance.SwitchScene("MapEditor", null);
-		//SceneManager.LoadScene("MapEditor");
 	}
 
 	/// <summary>

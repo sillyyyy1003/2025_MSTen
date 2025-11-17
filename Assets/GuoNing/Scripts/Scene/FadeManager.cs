@@ -50,17 +50,22 @@ public class FadeManager : MonoBehaviour
 	/// <param name="duration">Fade duration</param>
 	/// <param name="onComplete">Events occur when fade complete</param>
 	/// <returns></returns>
+	/// Fade in black
+	/// </summary>
+	/// <param name="duration">Fade duration</param>
+	/// <param name="onComplete">Events occur when fade complete</param>
+	/// <returns></returns>
 	public Tween FadeToBlack(float duration = -1, Action onComplete = null)
 	{
 		if (duration < 0) duration = fadeDuration;
-
-		currentFadeSequence?.Kill();
+		fadeOverlay.color = new Color(0, 0, 0, 0);
 		fadeOverlay.gameObject.SetActive(true);
 
 		return fadeOverlay.DOFade(1f, duration)
 			.SetEase(fadeEase)
 			.OnComplete(() => onComplete?.Invoke());
 	}
+
 
 
 	/// <summary>
@@ -72,8 +77,7 @@ public class FadeManager : MonoBehaviour
 	public Tween FadeFromBlack(float duration = -1, Action onComplete = null)
 	{
 		if (duration < 0) duration = fadeDuration;
-
-		currentFadeSequence?.Kill();
+		fadeOverlay.color = new Color(0, 0, 0, 1);
 		fadeOverlay.gameObject.SetActive(true);
 
 		return fadeOverlay.DOFade(0f, duration)
@@ -85,21 +89,24 @@ public class FadeManager : MonoBehaviour
 	}
 
 
-	/// <summary>
-	/// Transation from one scene to another fade in then fade out
-	/// </summary>
-	/// <param name="onMiddle"></param>
-	/// <param name="onComplete"></param>
+
 	public void TransitionFade(Action onMiddle = null, Action onComplete = null)
 	{
-		currentFadeSequence?.Kill();
+		currentFadeSequence?.Kill(true);
+
 		fadeOverlay.gameObject.SetActive(true);
 
 		currentFadeSequence = DOTween.Sequence();
+
 		currentFadeSequence
 			.Append(FadeToBlack())
 			.AppendCallback(() => onMiddle?.Invoke())
 			.Append(FadeFromBlack())
-			.OnComplete(() => onComplete?.Invoke());
+			.OnComplete(() => {
+				onComplete?.Invoke();
+				currentFadeSequence = null;
+			});
 	}
+
+
 }

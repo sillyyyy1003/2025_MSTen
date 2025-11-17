@@ -1,10 +1,7 @@
-﻿using JetBrains.Annotations;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +12,7 @@ using UnityEngine.UI;
 public class GameLoadProgressUI : MonoBehaviour
 {
 	[Header("Start progress(%)")]
-	public float startProgress =0f;
+	public float startProgress = 0f;
 
 	[Header("Fake progress(%)")]
 	public float fakeProgress = 30f;
@@ -25,14 +22,15 @@ public class GameLoadProgressUI : MonoBehaviour
 
 	[Header("Time limit")]
 	public float fakeLimit = 1.2f;
-	public float timeLimit = 3f;
+	public float timeLimit = 1f;
 
 	public TextMeshProUGUI text;
 
-	private float currentTime = 0f;
-	private bool isStartLoading = false;
+	private bool hasStartedRealLoading = false;
 
 	public event Action<bool> OnLoadingEnd;
+
+	private Coroutine loadRoutine;
 
 	private void Awake()
 	{
@@ -41,79 +39,111 @@ public class GameLoadProgressUI : MonoBehaviour
 		{
 			NetGameSystem.Instance.OnRoomStatusUpdated += HandleRoomStatusUpdate;
 		}
+	
 	}
 
 	private void OnDestroy()
 	{
-		// 监听房间状态更新
 		if (NetGameSystem.Instance != null)
 		{
 			NetGameSystem.Instance.OnRoomStatusUpdated -= HandleRoomStatusUpdate;
 		}
-	
-		
 	}
 
 	private void Start()
 	{
 		text.text = $"{startProgress:F0}%";
-		GetComponent<Image>().fillAmount =0;
+		GetComponent<Image>().fillAmount = 0;
 	}
 
-	private void Update()
+	//===========================================================
+	// 协程
+	//===========================================================
+
+	/// <summary>
+	/// 假加载 (0 → fakeProgress)
+	/// </summary>
+	private IEnumerator FakeLoadingRoutine()
 	{
-		if (Input.GetKeyUp(KeyCode.Space))
+		float timer = 0f;
+
+		while (timer < fakeLimit)
 		{
-			currentTime = 0;
-			isStartLoading = true ;
-		}
-
-		if (!isStartLoading){
-
-			currentTime += Time.deltaTime;
-			float t = Mathf.Clamp01(currentTime / fakeLimit);
-			if (t >= 1) return;
+			timer += Time.deltaTime;
+			float t = Mathf.Clamp01(timer / fakeLimit);
 
 			float progress = Mathf.Lerp(0, fakeProgress, t);
+
 			text.text = $"{progress:F0}%";
-
-			Debug.Log(GetComponent<Image>().fillAmount);
 			GetComponent<Image>().fillAmount = progress / endProgress;
-		}
-		else
-		{
-			currentTime += Time.deltaTime;
 
-			float t = Mathf.Clamp01(currentTime / timeLimit);
+			yield return null;
+
+			// 如果玩家已经到齐，则跳过剩余 fake 加载
+			if (hasStartedRealLoading)
+				yield break;
+		}
+	}
+
+	/// <summary>
+	/// 真加载 (fakeProgress → 100)
+	/// </summary>
+	private IEnumerator RealLoadingRoutine()
+	{
+		float timer = 0f;
+
+		while (timer < timeLimit)
+		{
+			timer += Time.deltaTime;
+			float t = Mathf.Clamp01(timer / timeLimit);
+
 			float progress = Mathf.Lerp(fakeProgress, endProgress, t);
 
 			text.text = $"{progress:F0}%";
-
-			if (t >= 1f)
-			{
-				isStartLoading = false;
-				OnLoadingEnd?.Invoke(true);
-				return;
-			}
-
 			GetComponent<Image>().fillAmount = progress / endProgress;
+
+			yield return null;
 		}
 
-		
+		// 加载完成
+		OnLoadingEnd?.Invoke(true);
+
+		gameObject.SetActive(false);
+
 	}
 
-	//=========================================
-	// メソッド
-	//=========================================
+	//===========================================================
+	// 回调
+	//===========================================================
 
 	private void HandleRoomStatusUpdate(List<PlayerInfo> players)
 	{
-		// 当尚未开始加载且玩家满足数量才会开始调用
-		if (!isStartLoading && players.Count >=2)
+		if (!hasStartedRealLoading && players.Count >= 2)
 		{
-			Debug.Log("[客户端] 玩家到齐，开始 Loading UI");
-			isStartLoading = true;
-			currentTime = 0;
+			Debug.Log("[客户端] 玩家到齐，开始真实 Loading");
+
+			hasStartedRealLoading = true;
+
+			// 停掉 fake 协程
+			if (loadRoutine != null)
+			{
+				StopCoroutine(loadRoutine);
+			}
+
+			// 启动真实加载
+			loadRoutine = StartCoroutine(RealLoadingRoutine());
 		}
+	}
+
+	public void StartRealLoadingRoutine()
+	{
+		// 停掉 fake 协程
+		if (loadRoutine != null)
+		{
+			StopCoroutine(loadRoutine);
+		}
+
+		// 启动真实加载
+		loadRoutine = StartCoroutine(RealLoadingRoutine());
 	}
 }

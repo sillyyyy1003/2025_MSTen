@@ -8518,6 +8518,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: FadeManager
       objectReference: {fileID: 0}
+    - target: {fileID: 5315569406441222583, guid: 3e5b60a25b8056242875cfe987a32eec,
+        type: 3}
+      propertyPath: fadeEase
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

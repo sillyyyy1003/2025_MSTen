@@ -71,19 +71,33 @@ public class GameSceneUIManager : MonoBehaviour
 
         if (SceneStateManager.Instance.bIsSingle)
         {
-            GameUIObject.SetActive(true);
+			//2025.11.17先保持是End 等Fade结束再恢复
+			GameUIObject.SetActive(false);
             NetRoomUIObject.SetActive(false);
+            NetRoomUIObject.SetActive(false);
+			loadUI.gameObject.SetActive(true);
+			loadUI.StartRealLoadingRoutine();
+
+            // 结束时从Fadefromblack并打开UIlayout
+			loadUI.OnLoadingEnd += (isSuccesful) =>
+            {
+                OnStartSingleGame();
+				FadeManager.Instance.FadeFromBlack(1, () => GameManage.Instance.SetIsGamingOrNot(true));
+			};
         }
-        else
+		else
         {
             GameUIObject.SetActive(false);
             NetRoomUIObject.SetActive(true);
             loadUI.gameObject.SetActive(true);
-        }
-
-
-
+			
+		}
 	}
+
+
+
+
+
     void Update()
     {
 
@@ -105,6 +119,13 @@ public class GameSceneUIManager : MonoBehaviour
         }
 
     }
+
+    private void OnStartSingleGame()
+    {
+		GameUIObject.SetActive(true);
+		NetRoomUIObject.SetActive(false);
+		loadUI.gameObject.SetActive(false);
+	}
 
     // 初始化房间UI
     private void InitializeRoomUI()
