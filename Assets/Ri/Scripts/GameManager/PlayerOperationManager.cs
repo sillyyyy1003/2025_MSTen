@@ -9,6 +9,8 @@ using System.Dynamic;
 using GameData;
 using GamePieces;
 using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
+
 #if UNITY_EDITORR
 using static UnityEditor.PlayerSettings;
 using Mono.Cecil;
@@ -45,7 +47,7 @@ public class PlayerOperationManager : MonoBehaviour
     private int RayTestLayerMask = 1 << 6;
 
     // 当前选择的单位
-    private GameObject SelectingUnit;
+    private GameObject SelectingUnit;  
 
     // 上一次选择到的格子的id
     private int LastSelectingCellID;
@@ -122,6 +124,7 @@ public class PlayerOperationManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // 鼠标判定
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
 			
@@ -133,10 +136,21 @@ public class PlayerOperationManager : MonoBehaviour
 			//HandleMouseInput();
 
 		}
-        if (Input.GetKeyDown(KeyCode.B)
-            && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
+
+        //// 建造建筑
+        //if (Input.GetKeyDown(KeyCode.B)
+        //    && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
+        //{
+        //    CreateBuilding();
+        //    //ClickBuildingCellid = ClickCellid;
+
+        //}
+
+        // 农民献祭
+        if (Input.GetKeyDown(KeyCode.T)
+            && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
         {
-            CreateBuilding();
+            FarmerSacrifice();
             //ClickBuildingCellid = ClickCellid;
 
         }
@@ -285,7 +299,6 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
-              
                     foreach (Transform child in SelectingUnit.transform)
                     {
                         // 运行时动态添加组件
@@ -805,11 +818,8 @@ public class PlayerOperationManager : MonoBehaviour
     {
         BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(cellId);
         int2 position = cellInfo.Cells2DPos;
-        Vector3 worldPos = new Vector3(
-            cellInfo.Cells3DPos.x,
-           cellInfo.Cells3DPos.y + 2.5f,
-           cellInfo.Cells3DPos.z
-        );
+        Vector3 worldPos = cellInfo.Cells3DPos;
+        
 
 
         // 选择对应的预制体
@@ -1168,7 +1178,7 @@ public class PlayerOperationManager : MonoBehaviour
 
 
             //var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
-          
+
             //if (changeMaterial != null)
             //{
             //    changeMaterial.Default();
@@ -1184,6 +1194,74 @@ public class PlayerOperationManager : MonoBehaviour
     // *************************
     //      单位动作相关
     // *************************
+    // 献祭
+   public void FarmerSacrifice()
+    {
+        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(selectCellID); 
+        int farmerID = PlayerDataManager.Instance.nowChooseUnitID;
+        int2 farmerPos = PlayerDataManager.Instance.GetUnitDataById(farmerID).Value.Position;
+        foreach (var i in pos)
+        {
+            PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
+         
+            if (data!=null)
+            {
+                PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
+            }
+        }
+
+        {
+        // 若有献祭动画，则将此段代码置于动画结束回调
+        // 数据处理后让农民消失
+        Debug.Log($"[农民献祭] 农民已献祭，开始消失");
+
+        // 1. 从PlayerDataManager移除农民（使用原始位置farmerPos）
+        bool removed = PlayerDataManager.Instance.RemoveUnit(localPlayerId, farmerPos);
+        
+        if (removed)
+        {
+            Debug.Log($"[农民献祭] 已从PlayerDataManager移除农民");
+        }
+        GameObject farmerObj = SelectingUnit;
+        // 2. 销毁农民GameObject（不影响建筑）
+        if (farmerObj != null)
+        {
+            // 播放消失动画（淡出效果）
+            farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
+            {
+                Destroy(farmerObj);
+                Debug.Log($"[农民献祭] 农民GameObject已销毁");
+            });
+
+            // 从本地单位字典中移除农民（使用原始位置）
+            if (localPlayerUnits.ContainsKey(farmerPos))
+            {
+                localPlayerUnits.Remove(farmerPos);
+            }
+        }
+
+        // 3. 从PieceManager移除
+        PieceManager.Instance.RemovePiece(farmerID);
+
+        // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
+        GameManage.Instance.SetCellObject(farmerPos, null);
+
+        // 5. 网络同步农民消失（使用农民的原始位置）
+        SyncFarmerEnterBuilding(farmerID, farmerPos);
+
+        Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已献祭并消失");
+
+        // 重置选择状态
+        ReturnToDefault();
+        SelectingUnit = null;
+        bCanContinue = true;
+        }
+
+    }
+
+
+
+
 
     // 生成建筑
     private void CreateBuilding()

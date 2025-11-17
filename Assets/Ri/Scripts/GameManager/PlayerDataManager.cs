@@ -224,6 +224,17 @@ public struct PlayerData
         return null;
     }
 
+    // 根据格子查找单位
+    public PlayerUnitData? FindUnitAt(int cellID)
+    {
+        foreach (var unit in PlayerUnits)
+        {
+            if (unit.Position.Equals(GameManage.Instance.FindCell(cellID).Cells2DPos))
+                return unit;
+        }
+        return null;
+    }
+
     // 根据ID查找单位
     public PlayerUnitData? FindUnitById(int unitId)
     {
@@ -611,39 +622,6 @@ public class PlayerDataManager : MonoBehaviour
         return -1; // 失败返回-1
     }
 
-    ///// <summary>
-    ///// 添加单位时使用 syncPieceData（重载版本）
-    ///// 这是网络同步版本的 AddUnit
-    ///// </summary>
-    //public void AddUnit(int playerId, CardType type, int2 pos, syncPieceData pieceData, GameObject unitObject)
-    //{
-    //    if (allPlayersData.ContainsKey(playerId))
-    //    {
-    //        PlayerData data = allPlayersData[playerId];
-
-    //        // 使用 syncPieceData 创建单位
-    //        data.AddUnit(nextUnitId, type, pos, pieceData, unitObject);
-
-    //        // 记录ID映射
-    //        unitIdToPlayerIdMap[nextUnitId] = playerId;
-
-    //        allPlayersData[playerId] = data;
-
-    //        // 触发事件
-    //        PlayerUnitData unitData = new PlayerUnitData(nextUnitId, type, pos, pieceData, unitObject);
-    //        OnUnitAdded?.Invoke(playerId, unitData);
-    //        OnPlayerDataChanged?.Invoke(playerId, data);
-
-    //        nextUnitId++;
-
-    //        Debug.Log($"[PlayerDataManager] 玩家 {playerId} 添加单位: {type} at ({pos.x},{pos.y}), UnitID={nextUnitId - 1}, PieceID={pieceData.pieceID}");
-    //    }
-    //    else
-    //    {
-    //        Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
-    //    }
-    //}
-
     // 更新单位的GameObject引用
     public bool UpdateUnitGameObject(int playerId, int unitId, GameObject unitObject)
     {
@@ -806,6 +784,32 @@ public class PlayerDataManager : MonoBehaviour
         return -1;
     }
 
+    // 通过UnitID获取单位所在的格子id
+    public int GetCellIdByUnitId(int unitId)
+    {
+        // 先找到单位所属的玩家
+        if (!unitIdToPlayerIdMap.ContainsKey(unitId))
+        {
+            Debug.LogWarning($"PlayerDataManager: 找不到ID为 {unitId} 的单位");
+            return -1;
+        }
+
+        int playerId = unitIdToPlayerIdMap[unitId];
+
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+
+            // 获取单位位置（用于事件）
+            PlayerUnitData? unitData = data.FindUnitById(unitId);
+
+            
+            return GameManage.Instance.GetCell2D(unitData.Value.Position).id;
+        }
+        return -1;
+
+    }
+
     // 检查UnitID是否存在
     public bool UnitIdExists(int unitId)
     {
@@ -938,6 +942,7 @@ public class PlayerDataManager : MonoBehaviour
         return -1; // 没有单位
     }
 
+    // 设置玩家资源
     public void SetPlayerResourses(int newResources)
     {
         int playerId = GameManage.Instance.LocalPlayerID;
