@@ -43,7 +43,6 @@ public class HexMapManager : MonoBehaviour
 			return;
 		}
 		Instance = this;
-		DontDestroyOnLoad(gameObject);
 
 		LoadConfig(); // 加载地图配置
 	}
@@ -52,6 +51,15 @@ public class HexMapManager : MonoBehaviour
 	{
 		// 暂时放在Start里 如果有需要 注释掉这里即可
 		LoadMap(serialNumber);
+	}
+
+	private void OnDestroy()
+	{
+		if (Instance == this)
+		{
+			Instance = null;
+			Debug.Log("Manager已销毁");
+		}
 	}
 
 	//--------------------------------------------------------------------------------

@@ -23,6 +23,7 @@ public class TitleUIManager : MonoBehaviour
 	public HexButton Button_SinglePlayer;
 	public HexButton Button_OnlineGame;
 	public HexButton Button_Setting;
+	public HexButton Button_MapEditor;
 
 	[Header("Right Menu")]
 	public RectTransform OptionMenu;
@@ -76,7 +77,7 @@ public class TitleUIManager : MonoBehaviour
 		Button_SinglePlayer.onClick.AddListener(() => OnClickSinglePlayer());
 		Button_OnlineGame.onClick.AddListener(() => OnClickOnlineGame());
 		Button_Setting.onClick.AddListener(() => OnClickSetting());
-
+		Button_MapEditor.onClick.AddListener(() => OnClickMapEditor());
 
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
@@ -94,6 +95,13 @@ public class TitleUIManager : MonoBehaviour
 		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.TITLE, loop: true);
 	}
 
+
+	private void OnClickMapEditor()
+	{
+		SceneController.Instance.SwitchScene("MapEditor", null);
+		//SceneManager.LoadScene("MapEditor");
+	}
+
 	/// <summary>
 	/// End Game button event
 	/// </summary>
@@ -107,10 +115,8 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickSinglePlayer()
 	{
-	
 		SceneStateManager.Instance.bIsSingle = true;
-		SceneManager.LoadScene("MainGame");
-		Debug.Log("SinglePlayer");
+		SceneController.Instance.SwitchScene("MainGame", null);
 	}
 
 	/// <summary>
@@ -119,13 +125,11 @@ public class TitleUIManager : MonoBehaviour
 	private void OnClickOnlineGame()
 	{
 
-
 		//  Set option menu active
 		OnlineMenu.gameObject.SetActive(true);
 
 		// Change material
 		UpdateBackground(true);
-
 	}
 
 	/// <summary>
