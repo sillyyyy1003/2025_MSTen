@@ -40,6 +40,7 @@ public class GameStartData
     public int[] PlayerIds;
     public int[] StartPositions;
     public int FirstTurnPlayerId;
+    public Religion PlayerReligion;
 }
 
 // 回合结束数据
@@ -259,7 +260,7 @@ public class GameManage : MonoBehaviour
 
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.RedMoonReligion);
+        _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, data.PlayerReligion);
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
