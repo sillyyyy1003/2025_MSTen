@@ -86,6 +86,14 @@ public class GameSceneUIManager : MonoBehaviour
 	}
     void Update()
     {
+
+        // ESC回到Select scene
+        if (Input.GetKeyUp(KeyCode.Escape)){
+
+            SceneController.Instance?.SwitchScene("SelectScene", null);
+            return;
+        }
+
         if(bIsPlayerTurn)
         {
             GameUIManager.Instance.UpdateTimer();

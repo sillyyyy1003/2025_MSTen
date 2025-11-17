@@ -309,7 +309,8 @@ public class PlayerDataManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+			//2025.11.17 Guoning
+			//DontDestroyOnLoad(gameObject);
         }
         else
         {

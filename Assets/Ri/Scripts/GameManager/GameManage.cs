@@ -155,8 +155,9 @@ public class GameManage : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
-            //Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
+			//2025.11.17 Guoning
+			// DontDestroyOnLoad(gameObject);
+            // Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
         }
         else if (Instance != this)
         {

@@ -394,7 +394,8 @@ public class NetGameSystem : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // 2025.11.17 Guoning 避免跨场景存在
+            //DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -473,7 +474,14 @@ public class NetGameSystem : MonoBehaviour
     private void OnDestroy()
     {
         Shutdown();
-    }
+
+        // 2025.11.17 清理
+		if (Instance == this)
+		{
+			Instance = null;
+			Debug.Log("NetGameManager已销毁");
+		}
+	}
 
     // *************************
     //         初始化
@@ -997,7 +1005,7 @@ public class NetGameSystem : MonoBehaviour
         if (!serverExists)
         {
             Debug.LogWarning("[客户端] 未检测到服务器，连接失败。");
-            SceneManager.LoadScene("SelectScene");
+            SceneController.Instance?.SwitchScene("SelectScene", null); 
             return;
         }
 
@@ -2340,7 +2348,8 @@ public class MainThreadDispatcher : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
+            // 2025.11.17 Guoning
+            // DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -2359,7 +2368,16 @@ public class MainThreadDispatcher : MonoBehaviour
         }
     }
 
-    public static void Enqueue(Action action)
+
+	private void OnDestroy()
+	{
+		if (instance == this)
+		{
+			instance = null;
+			Debug.Log("MainThreadDispatcher已销毁");
+		}
+	}
+	public static void Enqueue(Action action)
     {
         if (action == null) return;
 
