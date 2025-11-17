@@ -1859,9 +1859,20 @@ public class PlayerOperationManager : MonoBehaviour
             targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
         }
 
+        
+
         // 获取双方的 PieceID
         int attackerPieceID = attackerData.Value.PlayerUnitDataSO.pieceID;
         int targetPieceID = targetData.Value.PlayerUnitDataSO.pieceID;
+
+        if(PieceManager.Instance.AttackPieceOrBuilding(attackerPieceID, targetPieceID))
+        {
+
+        }
+        else
+        {
+
+        }
 
         Debug.Log($"[ExecuteAttack] 战斗开始 - 攻击者ID:{attackerPieceID} 攻击 目标ID:{targetPieceID}");
 

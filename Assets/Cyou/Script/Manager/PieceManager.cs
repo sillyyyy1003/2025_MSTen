@@ -890,6 +890,22 @@ public class PieceManager : MonoBehaviour
 
     #region 駒の行動
 
+    // 25.11.17 RI 添加攻击对象种类判定调用AttackEnemy或AttackBuilding
+    // true:piece
+    // false:building
+    /// <summary>
+    /// 軍隊が敵を攻撃
+    /// </summary>
+    public bool AttackPieceOrBuilding(int attackerID, int targetID)
+    {
+        if (!allPieces.TryGetValue(attackerID, out Piece attacker))
+        {
+            Debug.LogError($"攻撃者が見つかりません: ID={attackerID}");
+            return false;
+        }
+        return true;
+    }
+
     /// <summary>
     /// 軍隊が敵を攻撃
     /// </summary>
