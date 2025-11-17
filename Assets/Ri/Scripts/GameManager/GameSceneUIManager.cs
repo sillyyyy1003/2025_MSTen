@@ -21,14 +21,16 @@ public class GameSceneUIManager : MonoBehaviour
     //public Transform PlayerListContainer; // 玩家列表容器
     public GameObject PlayerItemPrefab; // 玩家列表项预制体
     public Button Button_ReadyAndStartGame; // 准备按钮
-    //public Button Button_StartGame; // 开始游戏按钮
-    //public TextMeshProUGUI Text_RoomInfo; // 房间信息文本
-    //public TextMeshProUGUI Text_LocalPlayerInfo; // 本地玩家信息
-                                              
-    //public Toggle Toggle_Ready; // 准备状态Toggle
+	public GameLoadProgressUI loadUI;       // 进度条 2025.11.17 
 
-    // 玩家列表项字典
-    private Dictionary<uint, GameObject> playerListItems = new Dictionary<uint, GameObject>();
+	//public Button Button_StartGame; // 开始游戏按钮
+	//public TextMeshProUGUI Text_RoomInfo; // 房间信息文本
+	//public TextMeshProUGUI Text_LocalPlayerInfo; // 本地玩家信息
+
+	//public Toggle Toggle_Ready; // 准备状态Toggle
+
+	// 玩家列表项字典
+	private Dictionary<uint, GameObject> playerListItems = new Dictionary<uint, GameObject>();
 
     private List<Vector2> PlayerInforListPos=new List<Vector2> { 
         new Vector2(0,50), 
@@ -74,12 +76,12 @@ public class GameSceneUIManager : MonoBehaviour
         {
             GameUIObject.SetActive(false);
             NetRoomUIObject.SetActive(true);
+            loadUI.gameObject.SetActive(true);
         }
 
 
 
-
-    }
+	}
     void Update()
     {
         if(bIsPlayerTurn)
@@ -92,7 +94,6 @@ public class GameSceneUIManager : MonoBehaviour
 
         }
 
-
     }
 
     // 初始化房间UI
@@ -102,6 +103,12 @@ public class GameSceneUIManager : MonoBehaviour
         if (Button_ReadyAndStartGame != null)
         {
             Button_ReadyAndStartGame.onClick.AddListener(OnReadyButtonClicked);
+        }
+
+        // 使用进度条 2025.11.17
+        if(loadUI != null)
+        {
+			loadUI.OnLoadingEnd += OnLocalPlayerLoadComplete;
         }
 
         // 订阅网络事件
@@ -218,7 +225,7 @@ public class GameSceneUIManager : MonoBehaviour
             if (NetGameSystem.Instance.bIsServer && Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text == "StartGame")
             {
                 OnStartGameButtonClicked();
-                return;
+				return;
             }
 
             // 获取当前准备状态
@@ -257,6 +264,8 @@ public class GameSceneUIManager : MonoBehaviour
         // 只有服务器玩家才能看到开始游戏按钮
         if (NetGameSystem.Instance != null && NetGameSystem.Instance.bIsServer)
         {
+		
+			
             //Debug.Log("All Player Ready ? " + allReady);
             if (Button_ReadyAndStartGame != null)
             {
@@ -270,6 +279,16 @@ public class GameSceneUIManager : MonoBehaviour
                     buttonText.text = allReady ? "StartGame" : "WaitForPlayer";
                 }
             }
+
+			//2025.11.17 GuoNing
+			if (loadUI != null)   
+            {
+                if(allReady)
+                {
+					// 如果使用load UI则直接开始游戏
+					NetGameSystem.Instance.StartGame();
+				}
+			}
         }
     }
 
@@ -296,7 +315,13 @@ public class GameSceneUIManager : MonoBehaviour
             GameUIObject.SetActive(true);
         }
 
-        Debug.Log("游戏开始，切换到游戏界面");
+		//2025.11.17 GuoNing
+		if (loadUI != null)
+		{
+			loadUI.gameObject.SetActive(false);
+		}
+
+		Debug.Log("游戏开始，切换到游戏界面");
 
 
     }
@@ -311,6 +336,13 @@ public class GameSceneUIManager : MonoBehaviour
             NetGameSystem.Instance.OnAllPlayersReady -= OnAllPlayersReadyChanged;
             NetGameSystem.Instance.OnGameStarted -= OnGameStarted;
         }
+
+        // 2025.11.17 Guoning
+        if(loadUI != null)
+        {
+            loadUI.OnLoadingEnd -= OnLocalPlayerLoadComplete;
+
+		}
     }
     // *************************
     //         公有函数
@@ -349,6 +381,22 @@ public class GameSceneUIManager : MonoBehaviour
         EndTurn();
         _PlayerOpManager.TurnEnd();
     }
+
+
+    /// <summary>
+    /// 本地玩家是否加载到100%
+    /// </summary>
+    /// <param name="done"></param>
+	private void OnLocalPlayerLoadComplete(bool done)
+	{
+		if (!done) return;
+
+		Debug.Log("本地玩家加载完成 → 通知服务器");
+
+		// 通知服务器：我加载好了
+		NetGameSystem.Instance?.SetReadyStatus(done);
+	}
+
 
 
 }

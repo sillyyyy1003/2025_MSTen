@@ -378,12 +378,17 @@ public class NetGameSystem : MonoBehaviour
     private PlayerDataManager playerDataManager;
 
 
+	// 2025.11.17
+	private bool hasStartedLoading = false;     // 是否开始Loading
+	GameLoadProgressUI gameLoadProgressUI;      // 获得本地加载UI
 
-    // *************************
-    //      Unity生命周期
-    // *************************
 
-    private void Awake()
+
+	// *************************
+	//      Unity生命周期
+	// *************************
+
+	private void Awake()
     {
         // 单例设置
         if (Instance == null)
@@ -731,6 +736,8 @@ public class NetGameSystem : MonoBehaviour
             }
         }
     }
+
+
 
     // 发送房间状态给所有玩家
     private void SendRoomStatusToAll()

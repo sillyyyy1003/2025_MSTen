@@ -54,7 +54,27 @@ namespace GameData
         E, F, G, H              // 将来の拡張用
     }
 
-    public enum Terrain
+
+	/// <summary>
+	/// マップの列挙
+	/// </summary>
+	public enum MAP_TYPE
+	{
+		MAP_A = 0,
+		MAP_B = 1,
+		MAP_C = 2,
+		MAP_D = 3,
+		MAP_E = 4,
+		MAP_F = 5,
+		MAP_G = 6,
+		MAP_H = 7,
+		MAP_I = 8,
+		MAP_J = 9
+	}
+
+
+
+	public enum Terrain
     {
         Normal, Gold
     }

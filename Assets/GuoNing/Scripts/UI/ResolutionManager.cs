@@ -47,7 +47,6 @@ public class ResolutionManager : MonoBehaviour
 
 	private int currentResolutionIndex;
 	private Resolution resolution;
-	public TMP_Dropdown dropdown;
 
 	bool isFullScreen = true;
 
@@ -58,7 +57,7 @@ public class ResolutionManager : MonoBehaviour
 	/// <summary>
 	/// DropDown UI
 	/// </summary>
-	//public Dropdown resolutionDropdown;
+	public TMP_Dropdown dropdown;
 	/// <summary>
 	/// Full screen toggle
 	/// </summary>
@@ -100,7 +99,9 @@ public class ResolutionManager : MonoBehaviour
 		dropdown.value = currentIndex;
 		dropdown.RefreshShownValue();
 
-	
+		// 应用设置 (FULL HD/WINDOW)
+		Screen.SetResolution(resolutionSettings[0].width, resolutionSettings[0].height,false);
+		fullScreenToggle.isOn = false;	// Set toggle false
 
 	}
 

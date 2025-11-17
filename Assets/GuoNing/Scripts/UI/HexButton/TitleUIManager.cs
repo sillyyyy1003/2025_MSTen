@@ -150,12 +150,6 @@ public class TitleUIManager : MonoBehaviour
 	{
 		if (SceneStateManager.Instance != null)
 		{
-			//string playerName = SceneStateManager.Instance.PlayerName;
-
-
-			// SceneStateManager.Instance.PlayerName = playerName;
-
-			// ﾉ靹ﾃﾎｪｷﾎ｣ﾊｽ
 			SceneStateManager.Instance.SetAsServer(true);
 		}
 		else
