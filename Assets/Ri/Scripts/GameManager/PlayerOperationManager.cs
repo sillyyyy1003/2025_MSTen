@@ -803,7 +803,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 获得初始领地
     private void GetStartWall(int cellID)
     {
-        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(cellID);
+        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(cellID,true);
         foreach (var i in pos)
         {
             if (_HexGrid.GetCell(i).enabled)
@@ -1197,7 +1197,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 献祭
    public void FarmerSacrifice()
     {
-        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(selectCellID); 
+        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(selectCellID,false); 
         int farmerID = PlayerDataManager.Instance.nowChooseUnitID;
         int2 farmerPos = PlayerDataManager.Instance.GetUnitDataById(farmerID).Value.Position;
         foreach (var i in pos)
@@ -1206,6 +1206,7 @@ public class PlayerOperationManager : MonoBehaviour
          
             if (data!=null)
             {
+                Debug.Log("unit is "+data.Value.UnitID+" unit name is "+data.Value.UnitType);
                 PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
             }
         }
@@ -1859,9 +1860,20 @@ public class PlayerOperationManager : MonoBehaviour
             targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
         }
 
+        
+
         // 获取双方的 PieceID
         int attackerPieceID = attackerData.Value.PlayerUnitDataSO.pieceID;
         int targetPieceID = targetData.Value.PlayerUnitDataSO.pieceID;
+
+        if(PieceManager.Instance.AttackPieceOrBuilding(attackerPieceID, targetPieceID))
+        {
+
+        }
+        else
+        {
+
+        }
 
         Debug.Log($"[ExecuteAttack] 战斗开始 - 攻击者ID:{attackerPieceID} 攻击 目标ID:{targetPieceID}");
 
@@ -2300,6 +2312,12 @@ public class PlayerOperationManager : MonoBehaviour
                 targetPos,
                 msg.TargetSyncData.Value
             );
+
+            // 同步HP
+            PieceManager.Instance.SyncPieceHP(msg.TargetSyncData.Value);
+
+
+
 
             if (updateSuccess)
             {

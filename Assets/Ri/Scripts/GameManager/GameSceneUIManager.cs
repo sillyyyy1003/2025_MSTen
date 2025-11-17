@@ -16,6 +16,8 @@ public class GameSceneUIManager : MonoBehaviour
     public GameObject GameUIObject;
     public GameObject NetRoomUIObject;
 
+    int time1 = 0;
+
     // 房间UI组件
     [Header("房间UI组件")]
     //public Transform PlayerListContainer; // 玩家列表容器
@@ -397,9 +399,10 @@ public class GameSceneUIManager : MonoBehaviour
     /// <param name="done"></param>
 	private void OnLocalPlayerLoadComplete(bool done)
 	{
-		if (!done) return;
+		if (!done||time1!=0) return;
 
-		Debug.Log("本地玩家加载完成 → 通知服务器");
+		Debug.Log("本地玩家加载完成 → 通知服务器:time "+time1);
+        time1++;
 
 		// 通知服务器：我加载好了
 		NetGameSystem.Instance?.SetReadyStatus(done);

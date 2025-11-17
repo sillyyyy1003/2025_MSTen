@@ -894,7 +894,8 @@ public class NetGameSystem : MonoBehaviour
         {
             PlayerIds = playerIds,
             StartPositions = AssignStartPositions(),
-            FirstTurnPlayerId = (int)connectedPlayers[0]
+            FirstTurnPlayerId = (int)connectedPlayers[0],
+            PlayerReligion=SceneStateManager.Instance.PlayerReligion
         };
 
         NetworkMessage message = new NetworkMessage
