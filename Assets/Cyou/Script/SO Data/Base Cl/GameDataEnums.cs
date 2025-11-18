@@ -49,7 +49,8 @@ namespace GameData
         RedMoonReligion,        // 紅月教
         MayaReligion,           // 瑪雅外星人文明教
         MadScientistReligion,   // 瘋狂科學家教
-        E, F, G, H              // 将来の拡張用
+        MirrorLakeReligion,     // 鏡湖教
+        F, G, H                 // 将来の拡張用
     }
 
     public enum Terrain
