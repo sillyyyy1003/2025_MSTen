@@ -559,6 +559,7 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
                 { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },
+                { NetworkMessageType.BUILDING_ATTACK, HandleBuildingAttack },
                 { NetworkMessageType.UNIT_CHARM, HandleUnitCharm },
                 { NetworkMessageType.CHARM_EXPIRE, HandleCharmExpire },
 
@@ -1319,10 +1320,12 @@ public class NetGameSystem : MonoBehaviour
         if (isServer)
         {
             BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_ATTACK Building消息给所有客户端");
         }
         else
         {
             SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_ATTACK Building消息到服务器");
         }
     }
 

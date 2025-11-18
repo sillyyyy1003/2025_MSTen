@@ -71,7 +71,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 建筑废墟id
     private int RuinID=0;
     // 建筑废墟字典
-    private Dictionary<int, Dictionary<int, GameObject>> BuildingRuins;
+    private Dictionary<int, Dictionary<int, GameObject>> BuildingRuins = new Dictionary<int, Dictionary<int, GameObject>>();
 
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
