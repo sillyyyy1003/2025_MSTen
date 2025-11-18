@@ -908,9 +908,8 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public bool AttackPieceOrBuilding(int attackerID, int targetID)
     {
-        if (!allPieces.TryGetValue(attackerID, out Piece attacker))
+        if (!allPieces.TryGetValue(targetID, out Piece target))
         {
-            Debug.LogError($"攻撃者が見つかりません: ID={attackerID}");
             return false;
         }
         return true;

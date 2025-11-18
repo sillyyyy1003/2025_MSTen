@@ -1406,7 +1406,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1805311232}
   hexGrid: {fileID: 1913528995}
-  serialNumber: 1001
+  serialNumber: 1003
 --- !u!4 &290168467
 Transform:
   m_ObjectHideFlags: 0
