@@ -289,6 +289,8 @@ public class PlayerDataManager : MonoBehaviour
     // 当前选择中的单位类型
     public CardType nowChooseUnitType;
 
+
+
     // 建筑
     [SerializeField] private BuildingRegistry buildingRegistry;
 

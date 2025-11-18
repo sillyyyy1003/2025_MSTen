@@ -10,6 +10,8 @@ using GameData;
 using GamePieces;
 using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
+using GameData.UI;
+
 
 #if UNITY_EDITORR
 using static UnityEditor.PlayerSettings;
@@ -139,6 +141,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         }
 
+
         //// 建造建筑
         //if (Input.GetKeyDown(KeyCode.B)
         //    && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
@@ -180,11 +183,15 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
+
+
     // *************************
     //       追加高亮选择处理
     // *************************
     void UpdateCellHighlightData(HexCell cell)
     {
+
+
         if (cell == null)
         {
             ClearCellHighlightData();
@@ -212,6 +219,31 @@ public class PlayerOperationManager : MonoBehaviour
     // *************************
 
 
+    // 初始化玩家
+    public void InitPlayer(int playerId, int startBoardID)
+    {
+        localPlayerId = playerId;
+        PlayerBoardInforDict = GameManage.Instance.GetPlayerBoardInfor();
+
+        // 从PlayerDataManager获取数据
+        localPlayerData = PlayerDataManager.Instance.GetPlayerData(playerId);
+
+        Debug.Log($"PlayerOperationManager: 初始化玩家 {playerId}");
+
+
+
+        // 创建玩家拥有的单位
+        CreatePlayerPope(startBoardID);
+
+        // 添加数据变化事件
+        if (PlayerDataManager.Instance != null)
+        {
+            PlayerDataManager.Instance.OnUnitAdded += OnUnitAddedHandler;
+            PlayerDataManager.Instance.OnUnitRemoved += OnUnitRemovedHandler;
+            PlayerDataManager.Instance.OnUnitMoved += OnUnitMovedHandler;
+        }
+
+    }
 
 
 
@@ -519,7 +551,6 @@ public class PlayerOperationManager : MonoBehaviour
     //         公有函数
     // *************************
 
-    #region =====创建相关=====
 
 
     // 显示当前农民所在位置，等待点选后消耗行动力创建建筑
@@ -533,107 +564,9 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
-    /// <summary>
-    /// 尝试在当前选中的空格子创建单位
-    /// </summary>
-    /// <param name="unitType">要创建的单位类型</param>
-    /// <returns>是否成功创建</returns>
-    public bool TryCreateUnit(CardType unitType)
-    {
-        // 检查是否选中了空格子或领土内
-        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
-        {
-            Debug.LogWarning("未选中任何空格子");
-            return false;
-        }
-
-        // 获取选中格子的信息
-        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
-        int2 cellPos = cellInfo.Cells2DPos;
-
-        // 再次确认该位置是空的
-        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
-        {
-            Debug.LogWarning("该格子已有单位");
-            SelectedEmptyCellID = -1;
-            return false;
-        }
-
-        // 创建单位
-
-        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
-
-        // 清除选择
-        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
-        SelectedEmptyCellID = -1;
-
-        return true;
-    }
-
-    // 在外部指定的格子创建单位
-    public bool TryCreateUnit(CardType unitType, int cellID)
-    {
-        // 检查是否选中了空格子
-        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
-        {
-            Debug.LogWarning("未选中任何空格子");
-            return false;
-        }
-
-        // 获取选中格子的信息
-        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
-        int2 cellPos = cellInfo.Cells2DPos;
-
-        // 再次确认该位置是空的
-        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
-        {
-            Debug.LogWarning("该格子已有单位");
-            SelectedEmptyCellID = -1;
-            return false;
-        }
-
-        // 在领土内创建单位
-
-        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
-
-        // 清除选择
-        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
-        SelectedEmptyCellID = -1;
-
-        return true;
-    }
-
-    #endregion
-
-    /// <summary>
-    /// 初始化玩家
-    /// </summary>
-    /// <param name="playerId">玩家ID</param>
-    /// <param name="startBoardID">玩家初始位置格子id</param>
-    public void InitPlayer(int playerId, int startBoardID)
-    {
-        localPlayerId = playerId;
-        PlayerBoardInforDict = GameManage.Instance.GetPlayerBoardInfor();
-
-        // 从PlayerDataManager获取数据
-        localPlayerData = PlayerDataManager.Instance.GetPlayerData(playerId);
-
-        Debug.Log($"PlayerOperationManager: 初始化玩家 {playerId}");
 
 
 
-        // 创建玩家拥有的单位
-        CreatePlayerPope(startBoardID);
-
-        // 添加数据变化事件
-        if (PlayerDataManager.Instance != null)
-        {
-            PlayerDataManager.Instance.OnUnitAdded += OnUnitAddedHandler;
-            PlayerDataManager.Instance.OnUnitRemoved += OnUnitRemovedHandler;
-            PlayerDataManager.Instance.OnUnitMoved += OnUnitMovedHandler;
-        }
-
-    }
 
     // *************************
     //        回合相关
@@ -919,6 +852,74 @@ public class PlayerOperationManager : MonoBehaviour
         GameManage.Instance._GameCamera.GetPlayerPosition(GameManage.Instance.FindCell(startBoardID).Cells3DPos);
 
     }
+
+
+
+    // 尝试在当前选中的空格子创建单位
+    public bool TryCreateUnit(CardType unitType)
+    {
+        // 检查是否选中了空格子或领土内
+        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
+        {
+            Debug.LogWarning("未选中任何空格子");
+            return false;
+        }
+
+        // 获取选中格子的信息
+        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
+        int2 cellPos = cellInfo.Cells2DPos;
+
+        // 再次确认该位置是空的
+        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
+        {
+            Debug.LogWarning("该格子已有单位");
+            SelectedEmptyCellID = -1;
+            return false;
+        }
+
+        // 创建单位
+
+        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
+
+        // 清除选择
+        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
+        SelectedEmptyCellID = -1;
+
+        return true;
+    }
+
+    // 在外部指定的格子创建单位
+    public bool TryCreateUnit(CardType unitType, int cellID)
+    {
+        // 检查是否选中了空格子
+        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
+        {
+            Debug.LogWarning("未选中任何空格子");
+            return false;
+        }
+
+        // 获取选中格子的信息
+        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
+        int2 cellPos = cellInfo.Cells2DPos;
+
+        // 再次确认该位置是空的
+        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
+        {
+            Debug.LogWarning("该格子已有单位");
+            SelectedEmptyCellID = -1;
+            return false;
+        }
+
+        // 在领土内创建单位
+
+        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
+
+        // 清除选择
+        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
+        SelectedEmptyCellID = -1;
+
+        return true;
+    }
     // 创建敌方单位
     private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
     {
@@ -1029,7 +1030,83 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
+    // 单位升级
+    public bool UnitUpgrade(TechTree tech,CardType type)
+    {
+        switch (tech)
+        {
+            case TechTree.HP:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.HP, type);
+                return true;
+            case TechTree.AP:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AP, type);
+                return true;
+            case TechTree.Occupy:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Occupy, type);
+                return true;
+            case TechTree.Conversion:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Conversion, type);
+                return true;
+            case TechTree.ATK:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.ATK, type);
+                return true;
+            case TechTree.Sacrifice:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Sacrifice, type);
+                return true;
+            case TechTree.AttackPosition:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AttackPosition, type);
+                return true;
+            case TechTree.AltarCount:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AltarCount, type);
+                return true;
+            case TechTree.ConstructionCost:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.ConstructionCost, type);
+                return true;
+            case TechTree.MovementCD:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.MovementCD, type);
+                return true;
+            case TechTree.Buff:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Buff, type);
+                return true;
+            case TechTree.Heresy:
+                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Heresy, type);
+                return true;
+            default:
+                return false;
+        }
 
+    }
+
+
+    // 取消选择单位的描边
+    private void ReturnToDefault()
+    {
+        if (SelectingUnit != null)
+        {
+            foreach (Transform child in SelectingUnit.transform)
+            {
+
+                child.GetComponent<ChangeMaterial>().Default();
+            }
+
+
+            //var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
+
+            //if (changeMaterial != null)
+            //{
+            //    changeMaterial.Default();
+            //}
+            Debug.Log("unit name: " + SelectingUnit.name);
+        }
+    }
+    private void ChooseEmptyCell(int cell)
+    {
+        _HexGrid.GetCell(cell).EnableHighlight(Color.red);
+    }
+
+    // *************************
+    //      单位动作相关
+    // *************************
 
 
     // 移动到选择的棋盘
@@ -1167,35 +1244,6 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
-    // 取消选择单位的描边
-    private void ReturnToDefault()
-    {
-        if (SelectingUnit != null)
-        {
-            foreach (Transform child in SelectingUnit.transform)
-            {
-
-                child.GetComponent<ChangeMaterial>().Default();
-            }
-
-
-            //var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
-
-            //if (changeMaterial != null)
-            //{
-            //    changeMaterial.Default();
-            //}
-            Debug.Log("unit name: " + SelectingUnit.name);
-        }
-    }
-    private void ChooseEmptyCell(int cell)
-    {
-        _HexGrid.GetCell(cell).EnableHighlight(Color.red);
-    }
-
-    // *************************
-    //      单位动作相关
-    // *************************
     // 献祭
     public void FarmerSacrifice()
     {

@@ -16,7 +16,6 @@ using System.Runtime.Versioning;
 // 玩家单位数据接口，负责被外部调用以获取需要数据
 public class PlayerUnitDataInterface : MonoBehaviour
 {
-    public PlayerOperationManager _PlayerOpManager;
 
     // 单例
     public static PlayerUnitDataInterface Instance { get; private set; }
@@ -41,9 +40,9 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     void Start()
     {
-        if (_PlayerOpManager!=null)
+        if (GameManage.Instance._PlayerOperation != null)
         {
-            _PlayerOpManager.OnUnitChoosed += OnUnitChoosed;
+            GameManage.Instance._PlayerOperation.OnUnitChoosed += OnUnitChoosed;
 
         }
 
@@ -208,7 +207,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         }
 
         // 尝试创建单位
-        if (_PlayerOpManager.TryCreateUnit(type))
+        if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
         {
 
             GameUIManager.Instance.ActivateDeckCardByType(type);
@@ -260,6 +259,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (tech)
         {
             case TechTree.HP:
+
                 return 1;
             case TechTree.AP:
                 return 1;
@@ -298,29 +298,37 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (tech)
         {
             case TechTree.HP:
-                return true;
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.HP, type);
             case TechTree.AP:
-                return true;
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AP, type);
             case TechTree.Occupy:
-                return true;
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Occupy, type);
             case TechTree.Conversion:
-                return true;
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Conversion, type);
             case TechTree.ATK:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.ATK, type);
             case TechTree.Sacrifice:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Sacrifice, type);
             case TechTree.AttackPosition:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AttackPosition, type);
             case TechTree.AltarCount:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AltarCount, type);
             case TechTree.ConstructionCost:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.ConstructionCost, type);
             case TechTree.MovementCD:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.MovementCD, type);
             case TechTree.Buff:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Buff, type);
             case TechTree.Heresy:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Heresy, type);
             default:
                 return false;
         }
@@ -342,7 +350,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         }
 
         // 尝试创建单位
-        if (_PlayerOpManager.TryCreateUnit(type))
+        if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
         {
 
             ResourcesCount -= ResourcesCost;

@@ -11,7 +11,6 @@ public class GameSceneUIManager : MonoBehaviour
     // 单例
     public static GameSceneUIManager Instance { get; private set; }
 
-    public PlayerOperationManager _PlayerOpManager;
 
     public GameObject GameUIObject;
     public GameObject NetRoomUIObject;
@@ -410,7 +409,7 @@ public class GameSceneUIManager : MonoBehaviour
     private void OnEndTurnButtonPressed()
     {
         EndTurn();
-        _PlayerOpManager.TurnEnd();
+        GameManage.Instance._PlayerOperation.TurnEnd();
     }
 
 
