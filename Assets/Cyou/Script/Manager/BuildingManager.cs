@@ -178,6 +178,51 @@ public class BuildingManager : MonoBehaviour
         return CreateCompleteSyncData(pieceID);
     }
 
+
+    //25.11.18 RI add create building by religion
+    /// <summary>
+    /// 建物名から建物を生成（便利メソッド）
+    /// </summary>
+    /// <param name="buildingName">建物名</param>
+    /// <param name="playerID">プレイヤーID</param>
+    /// <param name="position">生成位置</param>
+    /// <returns>生成された建物の同期データ（失敗時はnull）</returns>
+    public syncBuildingData? CreateBuildingByReligion(Religion buildingReligion, int playerID, int pieceID, Vector3 position)
+    {
+        string buildingName="";
+        switch (buildingReligion)
+        {
+            case Religion.RedMoonReligion:
+                buildingName = "紅月教_特殊建築";
+                break;
+            case Religion.SilkReligion:
+                buildingName = "絲織教_特殊建築";
+                break;
+            case Religion.MadScientistReligion:
+                buildingName = "瘋狂科學家教_特殊建築";
+                break;
+            case Religion.MayaReligion:
+                buildingName = "瑪雅外星人文明教_特殊建築";
+                break;
+
+            default:return null;
+        }
+
+
+        //25.11.11 RI add piece ID
+        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
+
+        if (buildingData == null)
+        {
+            Debug.LogError($"建設可能な建物データが見つかりません: {buildingName}");
+            return null;
+        }
+
+        return CreateBuilding(buildingData, playerID, pieceID, position);
+    }
+
+
+
     /// <summary>
     /// 建物名から建物を生成（便利メソッド）
     /// </summary>

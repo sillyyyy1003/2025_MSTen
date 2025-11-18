@@ -43,7 +43,8 @@ public enum NetworkMessageType
     UNIT_MOVE,
     UNIT_ADD,
     UNIT_REMOVE,
-    UNIT_ATTACK,
+    UNIT_ATTACK, 
+    BUILDING_ATTACK,     // 建筑攻击
     UNIT_CHARM,          // 单位魅惑
     CHARM_EXPIRE,        // 魅惑过期（归还控制权）
 
@@ -173,6 +174,25 @@ public class UnitAttackMessage
     public syncPieceData? TargetSyncData;  // 目标的同步数据（如果存活），null表示被击杀
     public bool TargetDestroyed;           // 目标是否被摧毁
 }
+
+// 建筑攻击消息
+[Serializable]
+public class BuildingAttackMessage
+{
+    public int AttackerPlayerId;
+    public int AttackerPosX;
+    public int AttackerPosY;
+
+    public int BuildingOwnerId;
+    public int BuildingPosX;
+    public int BuildingPosY;
+    public int BuildingID;             // 被攻击的建筑ID
+
+    public syncPieceData AttackerSyncData; // 攻击者的同步数据
+    public int BuildingRemainingHP;    // 建筑剩余HP
+    public bool BuildingDestroyed;     // 建筑是否被摧毁
+}
+
 
 // 魅惑消息
 [Serializable]
@@ -1264,6 +1284,48 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
+    /// 发送建筑攻击消息
+    public void SendBuildingAttackMessage(
+        int attackerPlayerId,
+        int2 attackerPos,
+        int buildingOwnerId,
+        int2 buildingPos,
+        int buildingID,
+        syncPieceData attackerData,
+        int buildingRemainingHP,
+        bool buildingDestroyed)
+    {
+        BuildingAttackMessage attackData = new BuildingAttackMessage
+        {
+            AttackerPlayerId = attackerPlayerId,
+            AttackerPosX = attackerPos.x,
+            AttackerPosY = attackerPos.y,
+            BuildingOwnerId = buildingOwnerId,
+            BuildingPosX = buildingPos.x,
+            BuildingPosY = buildingPos.y,
+            BuildingID = buildingID,
+            AttackerSyncData = attackerData,
+            BuildingRemainingHP = buildingRemainingHP,
+            BuildingDestroyed = buildingDestroyed
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.BUILDING_ATTACK,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(attackData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+        }
+        else
+        {
+            SendToServer(msg);
+        }
+    }
+
 
     // 发送单位魅惑消息
     public void SendUnitCharmMessage(
@@ -2160,6 +2222,44 @@ public class NetGameSystem : MonoBehaviour
             }
         }
     }
+
+    // 建筑攻击
+    private void HandleBuildingAttack(NetworkMessage message)
+    {
+        BuildingAttackMessage data = JsonConvert.DeserializeObject<BuildingAttackMessage>(message.JsonData);
+
+        int2 attackerPos = new int2(data.AttackerPosX, data.AttackerPosY);
+        int2 buildingPos = new int2(data.BuildingPosX, data.BuildingPosY);
+
+        // 更新攻击者数据
+        if (playerDataManager != null)
+        {
+            playerDataManager.UpdateUnitSyncDataByPos(
+                data.AttackerPlayerId, attackerPos, data.AttackerSyncData);
+        }
+
+        // 通知PlayerOperationManager处理
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkBuildingAttack(data);
+        }
+
+        // 处理建筑摧毁或更新
+        if (data.BuildingDestroyed)
+        {
+            playerDataManager.RemoveUnit(data.BuildingOwnerId, buildingPos);
+            GameManage.Instance._BuildingManager.RemoveBuilding(data.BuildingID);
+        }
+        else
+        {
+            Buildings.Building building = GameManage.Instance._BuildingManager.GetBuilding(data.BuildingID);
+            if (building != null)
+            {
+                building.SetHP(data.BuildingRemainingHP);
+            }
+        }
+    }
+
 
     // 单位魅惑
     private void HandleUnitCharm(NetworkMessage message)

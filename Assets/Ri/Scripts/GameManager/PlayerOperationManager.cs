@@ -68,8 +68,10 @@ public class PlayerOperationManager : MonoBehaviour
     // 其他玩家的单位GameObject
     private Dictionary<int, Dictionary<int2, GameObject>> otherPlayersUnits = new Dictionary<int, Dictionary<int2, GameObject>>();
 
-    // 玩家数据管理器引用
-    //private PlayerDataManager playerDataManager;
+    // 建筑废墟id
+    private int RuinID=0;
+    // 建筑废墟字典
+    private Dictionary<int, Dictionary<int, GameObject>> BuildingRuins;
 
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
@@ -1071,7 +1073,7 @@ public class PlayerOperationManager : MonoBehaviour
                 // 根据路径坐标找到对应的格子信息
                 Vector3 waypoint = new Vector3(
                    listCellPos[i].Position.x,
-                   listCellPos[i].Position.y + 2.5f,
+                   listCellPos[i].Position.y ,
                     listCellPos[i].Position.z
                     );
 
@@ -1204,7 +1206,7 @@ public class PlayerOperationManager : MonoBehaviour
         {
             PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
          
-            if (data!=null)
+            if (data!=null&&data.Value.UnitType!=CardType.Building)
             {
                 Debug.Log("unit is "+data.Value.UnitID+" unit name is "+data.Value.UnitType);
                 PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
@@ -1267,8 +1269,8 @@ public class PlayerOperationManager : MonoBehaviour
     // 生成建筑
     private void CreateBuilding()
     {
-        syncBuildingData? buildDataNullable = (syncBuildingData)GameManage.Instance._BuildingManager.CreateBuildingByName(
-                      "紅月教_特殊建築", localPlayerId,
+        syncBuildingData? buildDataNullable = (syncBuildingData)GameManage.Instance._BuildingManager.CreateBuildingByReligion(
+                      SceneStateManager.Instance.PlayerReligion, localPlayerId,
                       PlayerDataManager.Instance.GenerateUnitID(),
                       PlayerBoardInforDict[SelectedEmptyCellID].Cells3DPos);
 
@@ -1860,81 +1862,127 @@ public class PlayerOperationManager : MonoBehaviour
             targetUnit = otherPlayersUnits[targetOwnerId][targetPos];
         }
 
-        
-
         // 获取双方的 PieceID
         int attackerPieceID = attackerData.Value.PlayerUnitDataSO.pieceID;
         int targetPieceID = targetData.Value.PlayerUnitDataSO.pieceID;
 
+        // 攻击的是单位
         if(PieceManager.Instance.AttackPieceOrBuilding(attackerPieceID, targetPieceID))
         {
+            Debug.Log($"[ExecuteAttack] 战斗开始 - 攻击者ID:{attackerPieceID} 攻击 目标ID:{targetPieceID}");
 
-        }
-        else
-        {
+            //  在移动完成后才计算战斗结果
+            syncPieceData? targetSyncData = PieceManager.Instance.AttackEnemy(attackerPieceID, targetPieceID);
 
-        }
-
-        Debug.Log($"[ExecuteAttack] 战斗开始 - 攻击者ID:{attackerPieceID} 攻击 目标ID:{targetPieceID}");
-
-        //  在移动完成后才计算战斗结果
-        syncPieceData? targetSyncData = PieceManager.Instance.AttackEnemy(attackerPieceID, targetPieceID);
-
-        if (!targetSyncData.HasValue)
-        {
-            Debug.LogError("[ExecuteAttack] PieceManager.AttackEnemy 调用失败！");
-            bCanContinue = true;
-            return;
-        }
-
-        bool updateSuccess = PlayerDataManager.Instance.UpdateUnitSyncDataByPos(
-                targetOwnerId,
-                targetPos,
-                targetSyncData.Value);
-
-        if (updateSuccess)
-        {
-            Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
-        }
-        else
-        {
-            Debug.LogError($"[ExecuteAttack] ✗ 同步目标HP失败！");
-        }
-
-
-        // 消耗攻击者的AP（攻击消耗1 AP）
-        //PieceManager.Instance.ConsumePieceAP(attackerPieceID, 1);
-
-        // 判断目标是否死亡
-        bool targetDied = targetSyncData.Value.currentHP <= 0;
-        Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
-
-        if (targetDied)
-        {
-            // 目标死亡，攻击者前进到目标位置
-            Debug.Log("[ExecuteAttack] 目标死亡，攻击者前进到目标位置");
-            ExecuteMoveToDeadTargetPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId);
-        }
-        else
-        {
-            // 目标存活，停在当前位置
-            Debug.Log("[ExecuteAttack] 目标存活，攻击者停留在当前位置");
-
-            // 播放受击动画
-            if (targetUnit != null)
+            if (!targetSyncData.HasValue)
             {
-                // 震动效果
-                targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
-
-                // 可选：显示伤害数字
-                // ShowDamageNumber(targetUnit.transform.position, damage);
+                Debug.LogError("[ExecuteAttack] PieceManager.AttackEnemy 调用失败！");
+                bCanContinue = true;
+                return;
             }
 
-            // 网络同步攻击
-            SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, false);
+            bool updateSuccess = PlayerDataManager.Instance.UpdateUnitSyncDataByPos(
+                    targetOwnerId,
+                    targetPos,
+                    targetSyncData.Value);
 
-            bCanContinue = true;
+            if (updateSuccess)
+            {
+                Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
+            }
+            else
+            {
+                Debug.LogError($"[ExecuteAttack] ✗ 同步目标HP失败！");
+            }
+
+
+            // 判断目标是否死亡
+            bool targetDied = targetSyncData.Value.currentHP <= 0;
+            Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
+
+            if (targetDied)
+            {
+                // 目标死亡，攻击者前进到目标位置
+                Debug.Log("[ExecuteAttack] 目标死亡，攻击者前进到目标位置");
+                ExecuteMoveToDeadTargetPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId);
+            }
+            else
+            {
+                // 目标存活，停在当前位置
+                Debug.Log("[ExecuteAttack] 目标存活，攻击者停留在当前位置");
+
+                // 播放受击动画
+                if (targetUnit != null)
+                {
+                    // 震动效果
+                    targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
+
+                    // 可选：显示伤害数字
+                    // ShowDamageNumber(targetUnit.transform.position, damage);
+                }
+
+                // 网络同步攻击
+                SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, false);
+
+                bCanContinue = true;
+            }
         }
+        // 攻击的是建筑
+        else
+        {
+            // ===== 攻击建筑 - 执行新逻辑 =====
+            Debug.Log($"[ExecuteAttack] 攻击建筑 - 攻击者ID:{attackerPieceID} 攻击建筑ID:{targetPieceID}");
+
+            // 从BuildingManager获取建筑实例
+            Buildings.Building targetBuilding =GameManage.Instance._BuildingManager.GetBuilding(targetPieceID);
+            if (targetBuilding == null)
+            {
+                Debug.LogError($"[ExecuteAttack] 找不到建筑ID:{targetPieceID}");
+                bCanContinue = true;
+                return;
+            }
+
+            // 执行攻击建筑逻辑
+            bool attackSuccess = PieceManager.Instance.AttackBuilding(attackerPieceID, targetBuilding);
+            if (!attackSuccess)
+            {
+                Debug.LogError("[ExecuteAttack] 攻击建筑失败！");
+                bCanContinue = true;
+                return;
+            }
+
+            // 判断建筑是否被摧毁
+            bool buildingDestroyed = !targetBuilding.IsAlive || targetBuilding.CurrentHP <= 0;
+            Debug.Log($"[ExecuteAttack] 攻击建筑完成 - 建筑剩余HP: {targetBuilding.CurrentHP}, 是否被摧毁: {buildingDestroyed}");
+
+            // 播放建筑受击动画
+            if (targetUnit != null)
+            {
+                targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
+            }
+
+            if (buildingDestroyed)
+            {
+                // 建筑被摧毁，攻击者前进到建筑位置
+                ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
+                
+                // 创建废墟
+                GameObject ruin= Instantiate(UnitListTable.Instance.Ruins[0], GameManage.Instance.FindCell(targetCellId).Cells3DPos, Quaternion.identity);
+                // 保存废墟引用
+                BuildingRuins[targetOwnerId] = new Dictionary<int, GameObject>();
+                BuildingRuins[targetOwnerId][RuinID] = ruin;
+                RuinID++;
+
+            }
+            else
+            {
+                // 建筑存活，同步攻击建筑消息
+                SyncLocalBuildingAttack(attackerPos, targetPos, targetOwnerId, targetPieceID, targetBuilding.CurrentHP, false);
+                bCanContinue = true;
+            }
+        }
+
+     
     }
 
 
@@ -1942,6 +1990,80 @@ public class PlayerOperationManager : MonoBehaviour
     // 新增方法5：ExecuteMoveToDeadTargetPosition
     // 目标死亡后，攻击者前进到目标位置
     // ============================================
+
+    /// <summary>
+    /// 建筑被摧毁后，攻击者前进一格到建筑位置
+    /// </summary>
+    private void ExecuteMoveToDestroyedBuildingPosition(
+        int2 fromPos,
+        int2 toPos,
+        int targetCellId,
+        GameObject targetUnit,
+        int targetOwnerId,
+        Buildings.Building targetBuilding)
+    {
+        // 计算移动路径（只有一格的距离）
+        Vector3 startPos = SelectingUnit.transform.position;
+        Vector3 targetWorldPos = GameManage.Instance.FindCell(targetCellId).Cells3DPos;
+        targetWorldPos.y += 2.5f;
+
+        // 创建移动动画
+        Sequence moveSequence = DOTween.Sequence();
+
+        // 弧形路径
+        Vector3 midPoint = (startPos + targetWorldPos) / 2f;
+        midPoint.y += 5.0f;
+        Vector3[] path = new Vector3[] { startPos, midPoint, targetWorldPos };
+
+        moveSequence.Append(SelectingUnit.transform.DOPath(path, MoveSpeed, PathType.CatmullRom)
+            .SetEase(Ease.Linear));
+
+        // 同时播放建筑摧毁动画
+        if (targetUnit != null)
+        {
+            moveSequence.Join(targetUnit.transform.DOScale(0f, 0.5f));
+            moveSequence.Join(targetUnit.transform.DORotate(
+                new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+        }
+
+        // 动画完成后的处理
+        moveSequence.OnComplete(() =>
+        {
+            // 1. 发送攻击建筑消息
+            SyncLocalBuildingAttack(fromPos, toPos, targetOwnerId, targetBuilding.BuildingID, 0, true);
+
+            // 2. 销毁建筑GameObject
+            if (targetUnit != null) Destroy(targetUnit);
+
+            // 3. 从BuildingManager移除建筑
+           GameManage.Instance._BuildingManager.RemoveBuilding(targetBuilding.BuildingID);
+
+            // 4. 从PlayerDataManager移除建筑数据
+            PlayerDataManager.Instance.RemoveUnit(targetOwnerId, toPos);
+
+            // 5. 移动攻击者数据
+            PlayerDataManager.Instance.MoveUnit(localPlayerId, fromPos, toPos);
+
+            // 6. 更新本地单位字典
+            localPlayerUnits.Remove(fromPos);
+            localPlayerUnits[toPos] = SelectingUnit;
+
+            // 7. 从目标玩家的单位字典中移除
+            if (otherPlayersUnits.ContainsKey(targetOwnerId))
+            {
+                otherPlayersUnits[targetOwnerId].Remove(toPos);
+            }
+
+            // 8. 更新GameManage的格子对象
+            GameManage.Instance.MoveCellObject(fromPos, toPos);
+
+            // 9. 更新选中的格子ID
+            LastSelectingCellID = targetCellId;
+
+            bCanContinue = true;
+        });
+    }
+
 
     /// <summary>
     /// 目标死亡后，攻击者前进一格到目标位置
@@ -1956,7 +2078,6 @@ public class PlayerOperationManager : MonoBehaviour
         // 计算移动路径（只有一格的距离）
         Vector3 startPos = SelectingUnit.transform.position;
         Vector3 targetWorldPos = GameManage.Instance.FindCell(targetCellId).Cells3DPos;
-        targetWorldPos.y += 2.5f;
 
         // 创建移动动画
         Sequence moveSequence = DOTween.Sequence();
@@ -2046,7 +2167,57 @@ public class PlayerOperationManager : MonoBehaviour
         });
     }
 
+    // 处理网络建筑攻击消息
+    public void HandleNetworkBuildingAttack(BuildingAttackMessage msg)
+    {
+        if (msg.AttackerPlayerId == localPlayerId)
+        {
+            return; // 本地玩家的攻击已处理
+        }
 
+        int2 attackerPos = new int2(msg.AttackerPosX, msg.AttackerPosY);
+        int2 buildingPos = new int2(msg.BuildingPosX, msg.BuildingPosY);
+
+        // 获取攻击者和建筑GameObject
+        GameObject attackerObj = otherPlayersUnits[msg.AttackerPlayerId][attackerPos];
+        GameObject buildingObj = localPlayerUnits[buildingPos];
+
+        if (msg.BuildingDestroyed)
+        {
+            // 播放建筑摧毁动画
+            Sequence destroySequence = DOTween.Sequence();
+            destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
+            destroySequence.Join(buildingObj.transform.DORotate(
+                new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+
+            destroySequence.OnComplete(() =>
+            {
+                Destroy(buildingObj);
+
+
+                // 创建废墟
+                GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0], GameManage.Instance.GetCell2D(buildingPos).Cells3DPos, Quaternion.identity);
+                // 保存废墟引用
+                BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
+                BuildingRuins[localPlayerId][RuinID] = ruin;
+                RuinID++;
+            });
+        }
+        else
+        {
+            // 播放受击动画
+            buildingObj.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
+
+            // 更新建筑HP
+            Buildings.Building building = GameManage.Instance._BuildingManager.GetBuilding(msg.BuildingID);
+            if (building != null)
+            {
+                building.SetHP(msg.BuildingRemainingHP);
+            }
+        }
+    }
+
+    // 处理网络攻击消息
     public void HandleNetworkAttack(UnitAttackMessage msg)
     {
         if (msg.AttackerPlayerId == localPlayerId)
@@ -3001,6 +3172,44 @@ public class PlayerOperationManager : MonoBehaviour
     // 操作同步管理
 
 
+
+    /// <summary>
+    /// 本地玩家攻击建筑后调用此方法进行网络同步
+    /// </summary>
+    private void SyncLocalBuildingAttack(
+        int2 attackerPos,
+        int2 buildingPos,
+        int buildingOwnerId,
+        int buildingID,
+        int remainingHP,
+        bool buildingDestroyed)
+    {
+        // 检查网络连接
+        if (NetGameSystem.Instance == null || !NetGameSystem.Instance.bIsConnected)
+        {
+            return;
+        }
+
+        // 获取攻击者数据
+        PlayerUnitData? attackerData = PlayerDataManager.Instance.FindUnit(localPlayerId, attackerPos);
+        if (!attackerData.HasValue)
+        {
+            Debug.LogWarning($"[SyncLocalBuildingAttack] 找不到攻击者数据 at ({attackerPos.x},{attackerPos.y})");
+            return;
+        }
+
+        // 发送网络消息
+        NetGameSystem.Instance.SendBuildingAttackMessage(
+            localPlayerId,
+            attackerPos,
+            buildingOwnerId,
+            buildingPos,
+            buildingID,
+            attackerData.Value.PlayerUnitDataSO,
+            remainingHP,
+            buildingDestroyed
+        );
+    }
 
     /// <summary>
     /// 本地玩家攻击后调用此方法进行网络同步
