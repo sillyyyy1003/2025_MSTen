@@ -1969,7 +1969,10 @@ public class PlayerOperationManager : MonoBehaviour
                 // 创建废墟
                 GameObject ruin= Instantiate(UnitListTable.Instance.Ruins[0], GameManage.Instance.FindCell(targetCellId).Cells3DPos, Quaternion.identity);
                 // 保存废墟引用
-                BuildingRuins[targetOwnerId] = new Dictionary<int, GameObject>();
+                if (!BuildingRuins.ContainsKey(localPlayerId))
+                {
+                    BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
+                }
                 BuildingRuins[targetOwnerId][RuinID] = ruin;
                 RuinID++;
 
@@ -2213,6 +2216,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 更新建筑HP
             Buildings.Building building = GameManage.Instance._BuildingManager.GetBuilding(msg.BuildingID);
+            Debug.Log("[网络]建筑 "+ building.BuildingID+" 受到攻击 剩余HP: "+building.CurrentHP);
             if (building != null)
             {
                 building.SetHP(msg.BuildingRemainingHP);
