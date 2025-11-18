@@ -2198,7 +2198,10 @@ public class PlayerOperationManager : MonoBehaviour
                 // 创建废墟
                 GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0], GameManage.Instance.GetCell2D(buildingPos).Cells3DPos, Quaternion.identity);
                 // 保存废墟引用
-                BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
+                if (!BuildingRuins.ContainsKey(localPlayerId))
+                {
+                    BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
+                }
                 BuildingRuins[localPlayerId][RuinID] = ruin;
                 RuinID++;
             });
