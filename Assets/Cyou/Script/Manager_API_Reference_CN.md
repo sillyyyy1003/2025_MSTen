@@ -733,11 +733,15 @@ public bool OccupyTerritory(int missionaryID, Vector3 targetPosition)
 ---
 
 #### `SacrificeToPiece()`
-农民回复其他棋子（献祭）。
+农民回复其他棋子（献祭），并返回同步数据。
+
+**阵营动作差异:**
+- **镜湖教**: 回复目标的AP（行动力）
+- **其他阵营**: 回复目标的HP（血量）
 
 **函数签名:**
 ```csharp
-public bool SacrificeToPiece(int farmerID, int targetID)
+public syncPieceData? SacrificeToPiece(int farmerID, int targetID)
 ```
 
 **参数:**
@@ -745,10 +749,15 @@ public bool SacrificeToPiece(int farmerID, int targetID)
 - `targetID`: 回复目标棋子 ID
 
 **返回值:**
-- `true`: 回复成功
-- `false`: 失败
+- 成功: `syncPieceData`（包含目标当前HP/AP）
+- 失败: null
 
-**实现位置:** `PieceManager.cs:412-433`
+**实现细节:**
+- 镜湖教农民：调用 `Farmer.SacrificeAPRecovery()` 回复AP
+- 其他阵营农民：调用 `Farmer.Sacrifice()` 回复HP
+- 回复量根据农民的献祭等级（`sacrificeLevel`）变化
+
+**实现位置:** `PieceManager.cs:1093-1131`
 
 ---
 
