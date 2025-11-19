@@ -11,6 +11,7 @@ using GamePieces;
 using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
 using GameData.UI;
+using Buildings;
 
 
 #if UNITY_EDITORR
@@ -1031,46 +1032,115 @@ public class PlayerOperationManager : MonoBehaviour
     }
 
     // 单位升级
-    public bool UnitUpgrade(TechTree tech,CardType type)
+    public bool UnitUpgrade(TechTree tech, CardType type)
     {
+        List<PlayerUnitData> list = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits;
         switch (tech)
         {
             case TechTree.HP:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.HP, type);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building)
+                    {
+                        if (PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.HP)!= null)
+                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.HP));
+                    }
+                    else
+                    {
+                        //list[i].SetBuildingUnitDataSO((syncBuildingData)GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.HP));
+                    }
+                }
                 return true;
             case TechTree.AP:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AP, type);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building)
+                    {
+                        if (PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP) != null)
+                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP));
+                    }
+                }
+
+                //PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
                 return true;
             case TechTree.Occupy:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Occupy, type);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Missionary)
+                    {
+                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryOccupy) != null)
+                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryOccupy));
+                    }
+                }
+               
                 return true;
             case TechTree.Conversion:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Conversion, type);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Missionary)
+                    {
+                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryConvertEnemy) != null)
+                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryConvertEnemy));
+                    }
+                }
+             
                 return true;
             case TechTree.ATK:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.ATK, type);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Solider)
+                    {
+                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MilitaryAttackPower) != null)
+                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MilitaryAttackPower));
+                    }
+                }
+               
                 return true;
             case TechTree.Sacrifice:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Sacrifice, type);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Farmer)
+                    {
+                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.FarmerSacrifice) != null)
+                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.FarmerSacrifice));
+                    }
+                }
+               
                 return true;
             case TechTree.AttackPosition:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AttackPosition, type);
-                return true;
+                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.AttackRange);
+                return false;
             case TechTree.AltarCount:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AltarCount, type);
+                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.Slots);
                 return true;
             case TechTree.ConstructionCost:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.ConstructionCost, type);
+                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildCost);
                 return true;
             case TechTree.MovementCD:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.MovementCD, type);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Pope)
+                    {
+                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeSwapCooldown) != null)
+                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeSwapCooldown));
+                    }
+                }
+               
                 return true;
             case TechTree.Buff:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Buff, type);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Pope)
+                    {
+                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeBuff) != null)
+                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeBuff));
+                    }
+                }
+               
                 return true;
-            case TechTree.Heresy:
-                GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Heresy, type);
-                return true;
+            //case TechTree.Heresy:
+            //    PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
+          
             default:
                 return false;
         }

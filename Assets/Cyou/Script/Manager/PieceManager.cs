@@ -522,7 +522,9 @@ public class PieceManager : MonoBehaviour
         switch (upgradeType)
         {
             case PieceUpgradeType.HP:
+                Debug.Log("升级HP! 升级前HP: " + piece.HPLevel);
                 piece.UpgradeHP();
+                Debug.Log("升级HP! 升级后HP: "+piece.HPLevel);
                 return syncPieceData.CreateFromPiece(piece);
             case PieceUpgradeType.AP:
                 piece.UpgradeAP();
