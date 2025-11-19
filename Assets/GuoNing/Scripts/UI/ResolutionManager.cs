@@ -59,9 +59,9 @@ public class ResolutionManager : MonoBehaviour
 	/// </summary>
 	public TMP_Dropdown dropdown;
 	/// <summary>
-	/// Full screen toggle
+	/// Full screen dropdown
 	/// </summary>
-	public Toggle fullScreenToggle;
+	public TMP_Dropdown fullscreenModeDropdown;
 
 	//--------------------------------------------------------------------------------
 	// メソッド
@@ -99,9 +99,17 @@ public class ResolutionManager : MonoBehaviour
 		dropdown.value = currentIndex;
 		dropdown.RefreshShownValue();
 
+
+		List<string> fullscreenOptions = new List<string> { "フルスクリーン", "ウィンドウ", "ボーダーレス" };
+		fullscreenModeDropdown.ClearOptions();
+		fullscreenModeDropdown.AddOptions(fullscreenOptions);
+		fullscreenModeDropdown.value = 0; // 默认全屏
+		fullscreenModeDropdown.RefreshShownValue();
+
+
 		// 应用设置 (FULL HD/WINDOW)
-		Screen.SetResolution(resolutionSettings[0].width, resolutionSettings[0].height,false);
-		fullScreenToggle.isOn = false;	// Set toggle false
+		//Screen.SetResolution(resolutionSettings[0].width, resolutionSettings[0].height,false);
+		//fullScreenToggle.isOn = false;	// Set toggle false
 
 	}
 
@@ -118,14 +126,19 @@ public class ResolutionManager : MonoBehaviour
 		Debug.Log("Resolution changed to: " + Screen.width + " x " + Screen.height + ", FullScreen: " + isFullScreen);
 	}
 
-	public void OnChangeFullScreen(bool isFullScreen)
+	public void OnChangeFullScreenMode(int index)
 	{
-		this.isFullScreen = isFullScreen;
-		ResolutionSetting setting = resolutionSettings[currentResolutionIndex];
-		Screen.SetResolution(setting.width, setting.height, Screen.fullScreen = isFullScreen);
+		FullScreenMode mode = FullScreenMode.Windowed;
+		switch (index)
+		{
+			case 0: mode = FullScreenMode.ExclusiveFullScreen; break;
+			case 1: mode = FullScreenMode.Windowed; break;
+			case 2: mode = FullScreenMode.FullScreenWindow; break;
+		}
 
-		Debug.Log("Resolution changed to: " + Screen.width + " x " + Screen.height + ", FullScreen: " + Screen.fullScreen);
+		ResolutionSetting setting = resolutionSettings[currentResolutionIndex];
+		Screen.fullScreenMode = mode;
 	}
-	
+
 
 }

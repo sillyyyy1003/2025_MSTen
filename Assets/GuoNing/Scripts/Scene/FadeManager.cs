@@ -50,11 +50,6 @@ public class FadeManager : MonoBehaviour
 	/// <param name="duration">Fade duration</param>
 	/// <param name="onComplete">Events occur when fade complete</param>
 	/// <returns></returns>
-	/// Fade in black
-	/// </summary>
-	/// <param name="duration">Fade duration</param>
-	/// <param name="onComplete">Events occur when fade complete</param>
-	/// <returns></returns>
 	public Tween FadeToBlack(float duration = -1, Action onComplete = null)
 	{
 		if (duration < 0) duration = fadeDuration;

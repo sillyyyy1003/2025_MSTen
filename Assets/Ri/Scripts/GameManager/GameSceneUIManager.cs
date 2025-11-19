@@ -74,10 +74,9 @@ public class GameSceneUIManager : MonoBehaviour
 			//2025.11.17先保持是End 等Fade结束再恢复
 			GameUIObject.SetActive(false);
             NetRoomUIObject.SetActive(false);
-            NetRoomUIObject.SetActive(false);
 			loadUI.gameObject.SetActive(true);
-			loadUI.StartRealLoadingRoutine();
 
+			loadUI.StartRealLoadingRoutine();
             // 结束时从Fadefromblack并打开UIlayout
 			loadUI.OnLoadingEnd += (isSuccesful) =>
             {

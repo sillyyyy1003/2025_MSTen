@@ -1,6 +1,7 @@
 ﻿using SoundSystem;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.UIElements.Experimental;
 
 public class SoundManager : MonoBehaviour
@@ -102,6 +103,8 @@ public class SoundManager : MonoBehaviour
 	/// シングルトンインスタンス
 	/// </summary>
 	public static SoundManager Instance { get; private set; }
+
+
 
 	//--------------------------------------------------------------------------------
 	// メソッド
