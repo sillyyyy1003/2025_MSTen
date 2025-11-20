@@ -1,4 +1,4 @@
-using DG.Tweening;
+ï»¿using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,13 +12,13 @@ public class SceneController : MonoBehaviour
 {
 
 	//======================================
-	// ¥á¥ó¥Ğ‰äÊı
+	// ãƒ¡ãƒ³ãƒå¤‰æ•°
 	//======================================
 	public static SceneController Instance;
 	[Header("Scene Management")]
-	public float minLoadingTime = 2f; // ×îĞ¡¼ÓÔØÊ±¼ä£¬±ÜÃâ×ª³¡Ì«¿ì
+	public float minLoadingTime = 2f; // æœ€å°åŠ è½½æ—¶é—´ï¼Œé¿å…è½¬åœºå¤ªå¿«
 
-	private string currentSceneName;	
+	private string currentSceneName;
 	private string targetSceneName;
 	private bool isLoading = false;
 
@@ -27,10 +27,10 @@ public class SceneController : MonoBehaviour
 	/// </summary>
 	public static event Action<string> OnSceneLoadStarted;
 	public static event Action<string> OnSceneLoadCompleted;
-	public static event Action<float> OnLoadingProgress; // ¼ÓÔØ½ø¶È
+	public static event Action<float> OnLoadingProgress; // åŠ è½½è¿›åº¦
 
 	//======================================
-	// ¥á¥½¥Ã¥É
+	// ãƒ¡ã‚½ãƒƒãƒ‰
 	//======================================
 	void Awake()
 	{
@@ -53,12 +53,12 @@ public class SceneController : MonoBehaviour
 		targetSceneName = sceneName;
 		isLoading = true;
 
-		Debug.Log($"¿ªÊ¼ÇĞ»»³¡¾°: {currentSceneName} -> {sceneName}");
+		Debug.Log($"å¼€å§‹åˆ‡æ¢åœºæ™¯: {currentSceneName} -> {sceneName}");
 
-		// ´¥·¢³¡¾°¼ÓÔØ¿ªÊ¼ÊÂ¼ş
+		// è§¦å‘åœºæ™¯åŠ è½½å¼€å§‹äº‹ä»¶
 		OnSceneLoadStarted?.Invoke(sceneName);
 
-		// ¿ªÊ¼×ª³¡Á÷³Ì
+		// å¼€å§‹è½¬åœºæµç¨‹
 		StartCoroutine(SceneTransitionRoutine(sceneName, onComplete));
 
 	}
@@ -66,22 +66,22 @@ public class SceneController : MonoBehaviour
 	{
 		float startTime = Time.time;
 
-		// µÚÒ»²½£ºµ­³öĞ§¹û
+		// ç¬¬ä¸€æ­¥ï¼šæ·¡å‡ºæ•ˆæœ
 		yield return FadeManager.Instance.FadeToBlack().WaitForCompletion();
 
-		// µÚ¶ş²½£ºÒì²½¼ÓÔØ³¡¾°
+		// ç¬¬äºŒæ­¥ï¼šå¼‚æ­¥åŠ è½½åœºæ™¯
 		AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
-		asyncLoad.allowSceneActivation = false; // ÏÈ²»¼¤»î³¡¾°
+		asyncLoad.allowSceneActivation = false; // å…ˆä¸æ¿€æ´»åœºæ™¯
 
 		float progress = 0f;
 		while (!asyncLoad.isDone)
 		{
-			progress = Mathf.Clamp01(asyncLoad.progress / 0.9f); // UnityµÄprogress×î´óµ½0.9
+			progress = Mathf.Clamp01(asyncLoad.progress / 0.9f); // Unityçš„progressæœ€å¤§åˆ°0.9
 			OnLoadingProgress?.Invoke(progress);
 
 			if (asyncLoad.progress >= 0.9f)
 			{
-				// È·±£×îĞ¡¼ÓÔØÊ±¼ä
+				// ç¡®ä¿æœ€å°åŠ è½½æ—¶é—´
 				float elapsedTime = Time.time - startTime;
 				if (elapsedTime < minLoadingTime)
 				{
@@ -94,22 +94,22 @@ public class SceneController : MonoBehaviour
 			yield return null;
 		}
 
-		// µÚÈı²½£º³¡¾°¼ÓÔØÍê³É
+		// ç¬¬ä¸‰æ­¥ï¼šåœºæ™¯åŠ è½½å®Œæˆ
 		currentSceneName = sceneName;
 
-		// µÚËÄ²½£ºµ­ÈëĞ§¹û
+		// ç¬¬å››æ­¥ï¼šæ·¡å…¥æ•ˆæœ
 		yield return FadeManager.Instance.FadeFromBlack().WaitForCompletion();
 
-		// Íê³É
+		// å®Œæˆ
 		isLoading = false;
 		OnSceneLoadCompleted?.Invoke(sceneName);
 		onComplete?.Invoke();
 
-		Debug.Log($"³¡¾°ÇĞ»»Íê³É: {sceneName}");
+		Debug.Log($"åœºæ™¯åˆ‡æ¢å®Œæˆ: {sceneName}");
 	}
 
 	/// <summary>
-	///  ÖØĞÂ¼ÓÔØµ±Ç°³¡¾°
+	///  é‡æ–°åŠ è½½å½“å‰åœºæ™¯
 	/// </summary>
 	/// <param name="onComplete"></param>
 	public void ReloadCurrentScene(Action onComplete = null)
@@ -118,7 +118,7 @@ public class SceneController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// »ñÈ¡µ±Ç°³¡¾°Ãû
+	/// è·å–å½“å‰åœºæ™¯å
 	/// </summary>
 	/// <returns></returns>
 	public string GetCurrentScene()
@@ -127,12 +127,16 @@ public class SceneController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// ¼ì²éÊÇ·ñÕıÔÚ¼ÓÔØ
+	/// æ£€æŸ¥æ˜¯å¦æ­£åœ¨åŠ è½½
 	/// </summary>
 	/// <returns></returns>
 	public bool IsLoading()
 	{
 		return isLoading;
 	}
-}
 
+	public void SwitchToTitleScene()
+	{
+		SwitchScene("SelectScene", null);
+	}
+}

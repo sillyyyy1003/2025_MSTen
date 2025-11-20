@@ -46,9 +46,13 @@ public class ResolutionManager : MonoBehaviour
 	};
 
 	private int currentResolutionIndex;
+	private int currentFullScrrenIndex;
 	private Resolution resolution;
 
 	bool isFullScreen = true;
+
+	public int CurrentResolutionIndex=> currentResolutionIndex;
+	public int CurrentFullScreenIndex=> currentFullScrrenIndex;
 
 
 	//--------------------------------------------------------------------------------
@@ -108,22 +112,20 @@ public class ResolutionManager : MonoBehaviour
 
 
 		// 应用设置 (FULL HD/WINDOW)
-		//Screen.SetResolution(resolutionSettings[0].width, resolutionSettings[0].height,false);
+		Screen.SetResolution(resolutionSettings[0].width, resolutionSettings[0].height, false);
+
 		//fullScreenToggle.isOn = false;	// Set toggle false
 
 	}
 
 	public void OnChangeResolution(int index)
 	{
-		Debug.Log(index);
 		// Set resolution
 		currentResolutionIndex = index;
 		ResolutionSetting setting = resolutionSettings[index];
 
 		// set full screen
 		Screen.SetResolution(setting.width, setting.height, Screen.fullScreen = isFullScreen);
-
-		Debug.Log("Resolution changed to: " + Screen.width + " x " + Screen.height + ", FullScreen: " + isFullScreen);
 	}
 
 	public void OnChangeFullScreenMode(int index)
@@ -136,7 +138,7 @@ public class ResolutionManager : MonoBehaviour
 			case 2: mode = FullScreenMode.FullScreenWindow; break;
 		}
 
-		ResolutionSetting setting = resolutionSettings[currentResolutionIndex];
+		currentFullScrrenIndex = index;
 		Screen.fullScreenMode = mode;
 	}
 

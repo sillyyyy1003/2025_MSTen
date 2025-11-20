@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,8 +23,14 @@ public class GameOption : MonoBehaviour
 	public Slider BGMSlider;
 	public Slider SESlider;
 
-	[Header("Surrendor Window")]
+	[Header("Surrender Window")]
+	public Button SurrenderConfirmButton;
 	public RectTransform SurrenderComponent;
+
+	[Header("SynchroMenu")] 
+	public TMP_Dropdown resolutionDropdown;
+	public TMP_Dropdown fullScreenDropDwon;
+	public Toggle gridToggle;
 
 	private bool isOpen = false;
 
@@ -36,6 +43,18 @@ public class GameOption : MonoBehaviour
 		MasterSlider.SetValueWithoutNotify(SoundManager.Instance.MasterVolume);
 		BGMSlider.SetValueWithoutNotify(SoundManager.Instance.BGMVolume);
 		SESlider.SetValueWithoutNotify(SoundManager.Instance.SEVolume);
+
+		// 同步Grid
+		gridToggle.SetIsOnWithoutNotify(DisplayManager.Instance.IsGridOn);
+
+		// 同步resolution drop down
+		resolutionDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentResolutionIndex);
+
+		// 同步full screen drop down
+		fullScreenDropDwon.SetValueWithoutNotify(ResolutionManager.Instance.CurrentFullScreenIndex);
+
+		
+
 	}
 	private void Update()
 	{
