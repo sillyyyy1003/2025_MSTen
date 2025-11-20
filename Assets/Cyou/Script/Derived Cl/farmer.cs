@@ -54,7 +54,7 @@ public class Farmer : Piece
     }
 
     /// <summary>
-    /// AP消費し他駒を回復するスキル
+    /// AP消費し他駒のHPを回復するスキル（通常の獻祭）
     /// </summary>
     public bool Sacrifice(Piece target)
     {
@@ -95,7 +95,61 @@ public class Farmer : Piece
         // ターゲットを回復
         target.Heal(healAmount);
 
-        Debug.Log($"農民が{target.Data.pieceName}を{healAmount}回復しました (HP: {targetOldHP:F1} → {target.CurrentHP:F1})");
+        Debug.Log($"農民が{target.Data.pieceName}のHPを{healAmount}回復しました (HP: {targetOldHP:F1} → {target.CurrentHP:F1})");
+
+        // APを使い切ったら自分は死亡
+        if (currentAP <= 0)
+        {
+            Debug.Log($"農民がSacrificeスキルによりAPを使い切り死亡しました");
+            Die();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// AP消費し他駒のAPを回復するスキル（鏡湖教専用の獻祭）
+    /// </summary>
+    public bool SacrificeAPRecovery(Piece target)
+    {
+        if (currentState != PieceState.Idle)
+        {
+            Debug.LogWarning("農民がIdle状態ではありません");
+            return false;
+        }
+
+        if (!target.IsAlive)
+        {
+            Debug.LogWarning("ターゲットが生存していません");
+            return false;
+        }
+
+        // AP不足チェック
+        if (currentAP < farmerData.devotionAPCost)
+        {
+            Debug.LogWarning($"農民の行動力が不足しています (必要: {farmerData.devotionAPCost}, 現在: {currentAP})");
+            return false;
+        }
+
+        // AP回復量を取得（配列範囲外アクセス防止）
+        int apRecoveryAmount = farmerData.maxAPRecoveryLevel[Mathf.Clamp(sacrificeLevel, 0, farmerData.maxAPRecoveryLevel.Length - 1)];
+
+        if (apRecoveryAmount <= 0)
+        {
+            Debug.LogWarning($"AP回復量が0以下です (Sacrificeレベル: {sacrificeLevel}, AP回復量: {apRecoveryAmount})");
+            return false;
+        }
+
+        // AP消費
+        ConsumeAP(farmerData.devotionAPCost);
+
+        // ターゲットのAP記録
+        float targetOldAP = target.CurrentAP;
+
+        // ターゲットのAPを回復
+        target.RecoverAP(apRecoveryAmount);
+
+        Debug.Log($"鏡湖教農民が{target.Data.pieceName}のAPを{apRecoveryAmount}回復しました (AP: {targetOldAP:F1} → {target.CurrentAP:F1})");
 
         // APを使い切ったら自分は死亡
         if (currentAP <= 0)
@@ -296,6 +350,7 @@ public class Farmer : Piece
 
     /// <summary>
     /// 獻祭回復量をアップグレードする（リソース消費は呼び出し側で行う）
+    /// 鏡湖教の場合はAP回復量、それ以外の陣営はHP回復量をアップグレード
     /// </summary>
     /// <returns>アップグレード成功したらtrue</returns>
     public bool UpgradeSacrifice()
@@ -307,14 +362,25 @@ public class Farmer : Piece
             return false;
         }
 
-        // アップグレードコスト配列の境界チェック
-        if (farmerData.sacrificeUpgradeCost == null || sacrificeLevel >= farmerData.sacrificeUpgradeCost.Length)
+        // 鏡湖教の場合とそれ以外で異なるコスト配列を使用
+        int[] upgradeCostArray;
+        if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
         {
-            Debug.LogError($"{farmerData.pieceName} のsacrificeUpgradeCostが正しく設定されていません");
+            upgradeCostArray = farmerData.apRecoveryUpgradeCost;
+        }
+        else
+        {
+            upgradeCostArray = farmerData.sacrificeUpgradeCost;
+        }
+
+        // アップグレードコスト配列の境界チェック
+        if (upgradeCostArray == null || sacrificeLevel >= upgradeCostArray.Length)
+        {
+            Debug.LogError($"{farmerData.pieceName} のアップグレードコストが正しく設定されていません");
             return false;
         }
 
-        int cost = farmerData.sacrificeUpgradeCost[sacrificeLevel];
+        int cost = upgradeCostArray[sacrificeLevel];
 
         // コストが0の場合はアップグレード不可
         if (cost <= 0)
@@ -325,23 +391,49 @@ public class Farmer : Piece
 
         // レベルアップ実行
         sacrificeLevel++;
-        int newSacrificeAmount = farmerData.maxSacrificeLevel[sacrificeLevel];
 
-        Debug.Log($"{farmerData.pieceName} の獲祭回復量がレベル{sacrificeLevel}にアップグレードしました（回復量: {newSacrificeAmount}）");
+        // 鏡湖教の場合とそれ以外で異なるログを出力
+        if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
+        {
+            int newAPRecoveryAmount = farmerData.maxAPRecoveryLevel[sacrificeLevel];
+            Debug.Log($"{farmerData.pieceName} の獲祭AP回復量がレベル{sacrificeLevel}にアップグレードしました（AP回復量: {newAPRecoveryAmount}）");
+        }
+        else
+        {
+            int newSacrificeAmount = farmerData.maxSacrificeLevel[sacrificeLevel];
+            Debug.Log($"{farmerData.pieceName} の獲祭HP回復量がレベル{sacrificeLevel}にアップグレードしました（HP回復量: {newSacrificeAmount}）");
+        }
+
         return true;
     }
 
     /// <summary>
     /// 指定項目のアップグレードコストを取得
+    /// 鏡湖教の場合はAP回復コスト、それ以外の陣営はHP回復コストを返す
     /// </summary>
     public int GetFarmerUpgradeCost(FarmerUpgradeType type)
     {
         switch (type)
         {
             case FarmerUpgradeType.Sacrifice:
-                if (sacrificeLevel >= 2 || farmerData.sacrificeUpgradeCost == null || sacrificeLevel >= farmerData.sacrificeUpgradeCost.Length)
+                if (sacrificeLevel >= 2)
                     return -1;
-                return farmerData.sacrificeUpgradeCost[sacrificeLevel];
+
+                // 鏡湖教の場合とそれ以外で異なるコスト配列を使用
+                int[] upgradeCostArray;
+                if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
+                {
+                    upgradeCostArray = farmerData.apRecoveryUpgradeCost;
+                }
+                else
+                {
+                    upgradeCostArray = farmerData.sacrificeUpgradeCost;
+                }
+
+                if (upgradeCostArray == null || sacrificeLevel >= upgradeCostArray.Length)
+                    return -1;
+
+                return upgradeCostArray[sacrificeLevel];
             default:
                 return -1;
         }

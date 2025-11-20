@@ -39,6 +39,10 @@ namespace GameData
         public int[] maxSlotsByLevel = new int[3] { 3, 5, 5 }; // 投入信徒数量（Excel基礎数値: 3, 5, 升級2未記載なので5を踏襲）
         public int[] buildingAPCostByLevel = new int[3] { 9, 6, 3 }; // 建造所需花費（Excel基礎数値: 9, 6, 3）
 
+        [Header("反撃機能（鏡湖教用）")]
+        public bool[] hasCounterAttack = new bool[3] { false, false, false }; // 反撃可能か（無、受到攻擊反擊、受到攻擊反擊）
+        public int[] counterAttackDamage = new int[3] { 0, 0, 0 }; // 反撃ダメージ（0、基礎ダメージ、基礎ダメージ+1）
+
         [Header("各項目のアップグレードコスト")]
         public int[] hpUpgradeCost = new int[2]; // 血量アップグレード資源コスト（0→1, 1→2）。0=アップグレード不可
         public int[] attackRangeUpgradeCost = new int[2]; // 攻撃範囲アップグレード資源コスト（0→1, 1→2）

@@ -1125,6 +1125,7 @@ public class PieceManager : MonoBehaviour
 
     /// <summary>
     /// 農民が他の駒を回復（獻祭）
+    /// 鏡湖教の場合はAP回復、それ以外の陣営はHP回復
     /// </summary>
     /// <param name="farmerID">農民の駒ID</param>
     /// <param name="targetID">回復対象の駒ID</param>
@@ -1149,7 +1150,20 @@ public class PieceManager : MonoBehaviour
             return null;
         }
 
-        if (farmer.Sacrifice(target))
+        // 農民の所属宗教を確認
+        bool success = false;
+        if (farmer.Data.religion == GameData.Religion.MirrorLakeReligion)
+        {
+            // 鏡湖教の場合はAP回復
+            success = farmer.SacrificeAPRecovery(target);
+        }
+        else
+        {
+            // それ以外の陣営はHP回復
+            success = farmer.Sacrifice(target);
+        }
+
+        if (success)
         {
             return syncPieceData.CreateFromPiece(target);
         }
