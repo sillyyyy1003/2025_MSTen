@@ -522,7 +522,9 @@ public class PieceManager : MonoBehaviour
         switch (upgradeType)
         {
             case PieceUpgradeType.HP:
+                Debug.Log("升级HP! 升级前HP: " + piece.HPLevel);
                 piece.UpgradeHP();
+                Debug.Log("升级HP! 升级后HP: "+piece.HPLevel);
                 return syncPieceData.CreateFromPiece(piece);
             case PieceUpgradeType.AP:
                 piece.UpgradeAP();
@@ -908,9 +910,8 @@ public class PieceManager : MonoBehaviour
     /// </summary>
     public bool AttackPieceOrBuilding(int attackerID, int targetID)
     {
-        if (!allPieces.TryGetValue(attackerID, out Piece attacker))
+        if (!allPieces.TryGetValue(targetID, out Piece target))
         {
-            Debug.LogError($"攻撃者が見つかりません: ID={attackerID}");
             return false;
         }
         return true;

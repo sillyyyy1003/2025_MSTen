@@ -59,9 +59,13 @@ public struct PlayerUnitData
         originalOwnerID = originalOwner;
         BuildingData = buildingData;
     }
-    public void ChangeUnitDataSO(syncPieceData unitData)
+    public void SetUnitDataSO(syncPieceData unitData)
     {
         PlayerUnitDataSO = unitData;
+    }
+    public void SetBuildingUnitDataSO(syncBuildingData unitData)
+    {
+        BuildingData = unitData;
     }
     public void SetCanDoAction(bool canDo)
     {
@@ -110,6 +114,8 @@ public struct PlayerData
         PlayerReligion = SceneStateManager.Instance.PlayerReligion;
         PlayerOwnedCells = new List<int>();
     }
+
+    //
     public bool UpdateUnitSyncDataByPos(int2 position, syncPieceData newData)
     {
         for (int i = 0; i < PlayerUnits.Count; i++)
@@ -124,6 +130,8 @@ public struct PlayerData
         }
         return false;
     }
+
+
     public void AddOwnedCell(int id)
     {
         PlayerOwnedCells.Add(id);
@@ -288,6 +296,8 @@ public class PlayerDataManager : MonoBehaviour
 
     // 当前选择中的单位类型
     public CardType nowChooseUnitType;
+
+
 
     // 建筑
     [SerializeField] private BuildingRegistry buildingRegistry;
