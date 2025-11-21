@@ -19,10 +19,12 @@ namespace GameData
         public int devotionAPCost = 1;//行動力を消費して他駒を回復するスキル
 
         [Header("アップグレードレベルごとのデータ（升級1,2）")]
-        public int[] maxSacrificeLevel = new int[3] { 1, 2, 2 }; // 自分を生贄にして他駒を回復するスキル
+        public int[] maxSacrificeLevel = new int[3] { 1, 2, 2 }; // 自分を生贄にして他駒のHPを回復するスキル
+        public int[] maxAPRecoveryLevel = new int[3] { 0, 0, 0 }; // 他駒のAPを回復するスキル（鏡湖教用: 1→2→3）
 
         [Header("農民専用アップグレードコスト")]
         public int[] sacrificeUpgradeCost = new int[2]; // 獻祭アップグレード資源コスト（0→1, 1→2）
+        public int[] apRecoveryUpgradeCost = new int[2]; // AP回復アップグレード資源コスト（0→1, 1→2）（鏡湖教用）
 
         // コンストラクタ的な初期化
         private void Reset()

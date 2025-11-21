@@ -207,64 +207,6 @@ if (PieceManager.Instance.SyncEnemyPieceState(updateData))
 
 ---
 
-#### 各種同期データ生成関数
-
-以下の関数は、各種操作後に同期データを生成してネットワークに送信するために使用します。
-
-##### `ChangeHPData()`
-```csharp
-public syncPieceData ChangeHPData(int pieceID, int hp)
-```
-
-##### `ChangeHPLevelData()`
-```csharp
-public syncPieceData ChangeHPLevelData(int pieceID, int hplevel)
-```
-
-##### `ChangeFarmerLevelData()`
-```csharp
-public syncPieceData ChangeFarmerLevelData(int pieceID, int sacrificelevel)
-```
-
-##### `ChangeMilitaryAtkLevelData()`
-```csharp
-public syncPieceData ChangeMilitaryAtkLevelData(int pieceID, int atklevel)
-```
-
-##### `ChangePopeSwapCDLevelData()`
-```csharp
-public syncPieceData ChangePopeSwapCDLevelData(int pieceID, int cdlevel)
-```
-
-##### `ChangePopeBuffLevelData()`
-```csharp
-public syncPieceData ChangePopeBuffLevelData(int pieceID, int bufflevel)
-```
-
-##### `ChangeMissionaryConvertLevelData()`
-```csharp
-public syncPieceData ChangeMissionaryConvertLevelData(int pieceID, int convertlevel)
-```
-
-##### `ChangeMissionaryOccupyLevelData()`
-```csharp
-public syncPieceData ChangeMissionaryOccupyLevelData(int pieceID, int occupylevel)
-```
-
-##### `ChangePieceCurrentPID()`
-```csharp
-public syncPieceData ChangePieceCurrentPID(int pieceID, int currentpid)
-```
-
-##### `ChangePiecePosData()`
-```csharp
-public syncPieceData ChangePiecePosData(int pieceID, Vector3 position)
-```
-
-**実装箇所:** `PieceManager.cs:110-203`
-
----
-
 ### アップグレード管理
 
 #### `UpgradePiece()`
@@ -585,6 +527,10 @@ public bool OccupyTerritory(int missionaryID, Vector3 targetPosition)
 #### `SacrificeToPiece()`
 農民が他の駒を回復（獻祭）し、同期データを返します。
 
+**陣営による動作の違い:**
+- **鏡湖教**: ターゲットのAPを回復
+- **その他の陣営**: ターゲットのHPを回復
+
 **シグネチャ:**
 ```csharp
 public syncPieceData? SacrificeToPiece(int farmerID, int targetID)
@@ -595,10 +541,15 @@ public syncPieceData? SacrificeToPiece(int farmerID, int targetID)
 - `targetID`: 回復対象の駒ID
 
 **戻り値:**
-- 成功: `syncPieceData`（ターゲットの現在HPを含む）
+- 成功: `syncPieceData`（ターゲットの現在HP/APを含む）
 - 失敗: null
 
-**実装箇所:** `PieceManager.cs:880-901`
+**実装詳細:**
+- 鏡湖教の農民: `Farmer.SacrificeAPRecovery()`を呼び出してAPを回復
+- 他の陣営の農民: `Farmer.Sacrifice()`を呼び出してHPを回復
+- 回復量は農民の獻祭レベル（`sacrificeLevel`）に応じて変化
+
+**実装箇所:** `PieceManager.cs:1093-1131`
 
 ---
 

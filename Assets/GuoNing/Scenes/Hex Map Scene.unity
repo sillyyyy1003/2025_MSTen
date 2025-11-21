@@ -6823,7 +6823,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 2056945512}
   hexGrid: {fileID: 1571186511}
-  serialNumber: 1001
+  serialNumber: 1003
 --- !u!1 &615450961
 GameObject:
   m_ObjectHideFlags: 0

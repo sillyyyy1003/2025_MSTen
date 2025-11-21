@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ea3963a7c1474c44b48528f5ced387b, type: 3}
+  m_Name: Kaku_MadScientistMissionaryData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  originalPID: 0
+  religion: 0
+  pieceName: "\u760B\u72C2\u79D1\u5B78\u5BB6\u6559_\u5BA3\u6559\u5E2B"
+  populationCost: 3
+  resourceCost: 3
+  initialLevel: 0
+  aPRecoveryRate: 10
+  moveAPCost: 1
+  moveSpeed: 1
+  canAttack: 1
+  attackPower: 0
+  attackRange: 0
+  attackCooldown: 1
+  attackAPCost: 20
+  maxHPByLevel: 07000000090000000c0000000c000000
+  maxAPByLevel: 05000000070000000800000008000000
+  attackPowerByLevel: 00000000000000000000000000000000
+  hpUpgradeCost: 050000000600000000000000
+  apUpgradeCost: 060000000700000000000000
+  piecePrefab: {fileID: 0}
+  occupyAPCost: 2
+  convertAPCost: 3
+  conversionTurnDuration: 02000000030000000400000005000000
+  baseConversionDefenseChance: 0.2
+  occupyEmptySuccessRateByLevel:
+  - 0.8
+  - 0.9
+  - 1
+  - 1
+  occupyEnemySuccessRateByLevel:
+  - 0.5
+  - 0.6
+  - 0.7
+  - 0.7
+  convertMissionaryChanceByLevel:
+  - 0
+  - 0.5
+  - 0.55
+  - 0.65
+  convertFarmerChanceByLevel:
+  - 0
+  - 0.1
+  - 0.2
+  - 0.3
+  convertMilitaryChanceByLevel:
+  - 0
+  - 0.45
+  - 0.5
+  - 0.6
+  hasAntiConversionSkill: 00010101
+  occupyUpgradeCost: 040000000500000000000000
+  convertEnemyUpgradeCost: 050000000600000007000000
