@@ -153,6 +153,7 @@ public class PieceManager : MonoBehaviour
     private Dictionary<PieceUpgradeType,int> baseUpgradeData = new Dictionary<PieceUpgradeType, int>();//HP&APのアップグレードレベル
     private Dictionary<SpecialUpgradeType, int> specialUpgradeData = new Dictionary<SpecialUpgradeType, int>();//駒の独自の各項目のアップグレードレベル
 
+    private bool isUpgraded=false;
 
     private int nextPieceID = 0;
     private int localPlayerID = -1; // このPieceManagerが管理するプレイヤーのID
@@ -291,6 +292,18 @@ public class PieceManager : MonoBehaviour
         Debug.Log($"駒を生成しました: ID={pieceID}, Type={pieceType}, Religion={religion}, PlayerID={playerID}");
         OnPieceCreated?.Invoke(pieceID);
 
+        if (isUpgraded)
+        {
+            if (ApplyUpgradeLevelToNew(piece))
+            {
+                Debug.Log("新たに生成された駒に現存のアップグレードレベルを適用しました。");
+            }
+            else
+            {
+                Debug.LogError("現存のアップグレードレベルの適用に問題が発生しました。");
+            }
+        }
+        
 
         // 25.11.12 RI change return data
         syncPieceData pieceData=syncPieceData.CreateFromPiece(piece);
@@ -497,6 +510,7 @@ public class PieceManager : MonoBehaviour
 
     /// <summary>
     /// 駒の共通項目（HP/AP）をアップグレード
+    /// 指定された駒と同じ職業のすべての自分の駒にアップグレードを適用
     /// </summary>
     /// <param name="pieceID">駒ID</param>
     /// <param name="upgradeType">アップグレード項目</param>
@@ -509,31 +523,59 @@ public class PieceManager : MonoBehaviour
             return null;
         }
 
-        bool success = false;
-        switch (upgradeType)
+        // 指定された駒の職業を取得
+        PieceType targetPieceType = GetPieceType(pieceID);
+        if (targetPieceType == PieceType.None)
         {
-            case PieceUpgradeType.HP:
-                success = piece.UpgradeHP();
-                break;
-            case PieceUpgradeType.AP:
-                success = piece.UpgradeAP();
-                break;
-            default:
-                Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
-                return null;
+            Debug.LogError($"駒の職業が不明です: ID={pieceID}");
+            return null;
         }
 
-        if (success)
+        // 同じ職業のすべての自分の駒を取得
+        var sameProfessionPieces = GetPlayerPiecesByType(piece.CurrentPID, targetPieceType);
+
+        bool anySuccess = false;
+        Piece firstSuccessPiece = null;
+
+        foreach (int targetID in sameProfessionPieces)
+        {
+            if (!allPieces.TryGetValue(targetID, out Piece targetPiece)) continue;
+
+            bool success = false;
+            switch (upgradeType)
+            {
+                case PieceUpgradeType.HP:
+                    success = targetPiece.UpgradeHP();
+                    break;
+                case PieceUpgradeType.AP:
+                    success = targetPiece.UpgradeAP();
+                    break;
+                default:
+                    Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+                    return null;
+            }
+
+            if (success)
+            {
+                anySuccess = true;
+                if (firstSuccessPiece == null) firstSuccessPiece = targetPiece;
+                Debug.Log($"駒ID={targetID}の{upgradeType}をアップグレードしました");
+            }
+        }
+
+        if (anySuccess)
         {
             if (!baseUpgradeData.ContainsKey(upgradeType)) baseUpgradeData[upgradeType] = 0;
             baseUpgradeData[upgradeType]++;
-            return syncPieceData.CreateFromPiece(piece);
+            isUpgraded = true;
+            return syncPieceData.CreateFromPiece(firstSuccessPiece);
         }
         return null;
     }
 
     /// <summary>
     /// 駒の職業別専用項目をアップグレード
+    /// 指定された駒と同じ職業のすべての自分の駒にアップグレードを適用
     /// </summary>
     /// <param name="pieceID">駒ID</param>
     /// <param name="specialUpgradeType">職業別アップグレード項目</param>
@@ -546,66 +588,146 @@ public class PieceManager : MonoBehaviour
             return null;
         }
 
-        // 型に応じて適切なアップグレードを実行
-        int level = specialUpgradeData.ContainsKey(specialUpgradeType) ? specialUpgradeData[specialUpgradeType] : 0;
-
-        switch (piece)
+        // 指定された駒の職業を取得
+        PieceType targetPieceType = GetPieceType(pieceID);
+        if (targetPieceType == PieceType.None)
         {
-            case Farmer farmer:
-                    if (farmer.UpgradeSacrifice())
-                    {
-                        if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
-                        specialUpgradeData[specialUpgradeType]++;
-                        return syncPieceData.CreateFromPiece(piece);
-                    }
-                    else
-                        return null;
-                break;
+            Debug.LogError($"駒の職業が不明です: ID={pieceID}");
+            return null;
+        }
 
-            case MilitaryUnit military:
-                    if (military.UpgradeAttackPower())
-                    {
-                        if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
-                        specialUpgradeData[specialUpgradeType]++;
-                        return syncPieceData.CreateFromPiece(piece);
-                    }
-                break;
+        // 同じ職業のすべての自分の駒を取得
+        var sameProfessionPieces = GetPlayerPiecesByType(piece.CurrentPID, targetPieceType);
 
-            case Missionary missionary:
-                    if (missionary.UpgradeOccupy())
-                    {
-                        if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
-                        specialUpgradeData[specialUpgradeType]++;
-                        return syncPieceData.CreateFromPiece(piece);
-                    }
+        bool anySuccess = false;
+        Piece firstSuccessPiece = null;
+
+        foreach (int targetID in sameProfessionPieces)
+        {
+            if (!allPieces.TryGetValue(targetID, out Piece targetPiece)) continue;
+
+            bool success = false;
+            switch (targetPiece)
+            {
+                case Farmer farmer:
+                    if (specialUpgradeType == SpecialUpgradeType.FarmerSacrifice)
+                        success = farmer.UpgradeSacrifice();
+                    break;
+
+                case MilitaryUnit military:
+                    if (specialUpgradeType == SpecialUpgradeType.MilitaryAttackPower)
+                        success = military.UpgradeAttackPower();
+                    break;
+
+                case Missionary missionary:
+                    if (specialUpgradeType == SpecialUpgradeType.MissionaryOccupy)
+                        success = missionary.UpgradeOccupy();
                     else if (specialUpgradeType == SpecialUpgradeType.MissionaryConvertEnemy)
-                        if (missionary.UpgradeConvertEnemy())
-                        {
-                            if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
-                            specialUpgradeData[specialUpgradeType]++;
-                            return syncPieceData.CreateFromPiece(piece);
-                        }
-                break;
+                        success = missionary.UpgradeConvertEnemy();
+                    break;
 
-            case Pope pope:
-                    if (pope.UpgradeSwapCooldown())
-                    {
-                        if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
-                        specialUpgradeData[specialUpgradeType]++;
-                        return syncPieceData.CreateFromPiece(piece);
-                    }
+                case Pope pope:
+                    if (specialUpgradeType == SpecialUpgradeType.PopeSwapCooldown)
+                        success = pope.UpgradeSwapCooldown();
                     else if (specialUpgradeType == SpecialUpgradeType.PopeBuff)
-                        if (pope.UpgradeBuff())
-                        {
-                            if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
-                            specialUpgradeData[specialUpgradeType]++;
-                            return syncPieceData.CreateFromPiece(piece);
-                        }
-                break;
+                        success = pope.UpgradeBuff();
+                    break;
+            }
+
+            if (success)
+            {
+                anySuccess = true;
+                if (firstSuccessPiece == null) firstSuccessPiece = targetPiece;
+                Debug.Log($"駒ID={targetID}の{specialUpgradeType}をアップグレードしました");
+            }
+        }
+
+        if (anySuccess)
+        {
+            if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
+            specialUpgradeData[specialUpgradeType]++;
+            isUpgraded = true;
+            return syncPieceData.CreateFromPiece(firstSuccessPiece);
         }
 
         Debug.LogError($"駒ID={pieceID}は指定されたアップグレードタイプ={specialUpgradeType}をサポートしていません");
         return null;
+    }
+
+    /// <summary>
+    /// 新しく作られた駒に現在のアップグレードレベルを適用する
+    /// </summary>
+    public bool ApplyUpgradeLevelToNew(Piece piece)
+    {
+        if (piece == null) return false;
+
+        bool anyApplied = false;
+
+        // 共通アップグレード（HP/AP）を適用
+        int hpLevel = baseUpgradeData.ContainsKey(PieceUpgradeType.HP) ? baseUpgradeData[PieceUpgradeType.HP] : 0;
+        int apLevel = baseUpgradeData.ContainsKey(PieceUpgradeType.AP) ? baseUpgradeData[PieceUpgradeType.AP] : 0;
+
+        for (int i = 0; i < hpLevel; i++)
+        {
+            if (piece.UpgradeHP()) anyApplied = true;
+        }
+        for (int i = 0; i < apLevel; i++)
+        {
+            if (piece.UpgradeAP()) anyApplied = true;
+        }
+
+        // 職業別専用アップグレードを適用
+        switch (piece)
+        {
+            case Farmer farmer:
+                int sacrificeLevel = specialUpgradeData.ContainsKey(SpecialUpgradeType.FarmerSacrifice) ? specialUpgradeData[SpecialUpgradeType.FarmerSacrifice] : 0;
+                for (int i = 0; i < sacrificeLevel; i++)
+                {
+                    if (farmer.UpgradeSacrifice()) anyApplied = true;
+                }
+                break;
+
+            case MilitaryUnit military:
+                int attackLevel = specialUpgradeData.ContainsKey(SpecialUpgradeType.MilitaryAttackPower) ? specialUpgradeData[SpecialUpgradeType.MilitaryAttackPower] : 0;
+                for (int i = 0; i < attackLevel; i++)
+                {
+                    if (military.UpgradeAttackPower()) anyApplied = true;
+                }
+                break;
+
+            case Missionary missionary:
+                int occupyLevel = specialUpgradeData.ContainsKey(SpecialUpgradeType.MissionaryOccupy) ? specialUpgradeData[SpecialUpgradeType.MissionaryOccupy] : 0;
+                int convertLevel = specialUpgradeData.ContainsKey(SpecialUpgradeType.MissionaryConvertEnemy) ? specialUpgradeData[SpecialUpgradeType.MissionaryConvertEnemy] : 0;
+                for (int i = 0; i < occupyLevel; i++)
+                {
+                    if (missionary.UpgradeOccupy()) anyApplied = true;
+                }
+                for (int i = 0; i < convertLevel; i++)
+                {
+                    if (missionary.UpgradeConvertEnemy()) anyApplied = true;
+                }
+                break;
+
+            case Pope pope:
+                int swapLevel = specialUpgradeData.ContainsKey(SpecialUpgradeType.PopeSwapCooldown) ? specialUpgradeData[SpecialUpgradeType.PopeSwapCooldown] : 0;
+                int buffLevel = specialUpgradeData.ContainsKey(SpecialUpgradeType.PopeBuff) ? specialUpgradeData[SpecialUpgradeType.PopeBuff] : 0;
+                for (int i = 0; i < swapLevel; i++)
+                {
+                    if (pope.UpgradeSwapCooldown()) anyApplied = true;
+                }
+                for (int i = 0; i < buffLevel; i++)
+                {
+                    if (pope.UpgradeBuff()) anyApplied = true;
+                }
+                break;
+        }
+
+        if (anyApplied)
+        {
+            Debug.Log($"新しい駒ID={piece.PieceID}に現在のアップグレードレベルを適用しました");
+        }
+
+        return anyApplied;
     }
 
     /// <summary>
@@ -660,8 +782,6 @@ public class PieceManager : MonoBehaviour
     
     }
 
-
-    ///修正必須↓
     /// <summary>
     /// アップグレード可能かチェック
     /// </summary>
@@ -1207,39 +1327,53 @@ public class PieceManager : MonoBehaviour
     /// <param name="popeID">教皇の駒ID</param>
     /// <param name="targetID">交換対象の駒ID</param>
     /// <returns>交換成功したら両方の棋子の同期データを返す</returns>
-    public swapPieceData? SwapPositions(int popeID, int targetID)
+    public bool CanSwapPositions(int popeID, int targetID)
     {
         if (!allPieces.TryGetValue(popeID, out Piece popePiece))
         {
             Debug.LogError($"教皇が見つかりません: ID={popeID}");
-            return null;
+            return false;
         }
 
         if (!allPieces.TryGetValue(targetID, out Piece target))
         {
             Debug.LogError($"ターゲットが見つかりません: ID={targetID}");
-            return null;
+            return false;
         }
 
         if (popePiece is not Pope pope)
         {
             Debug.LogError($"駒ID={popeID}は教皇ではありません");
-            return null;
+            return false;
         }
 
-        if (pope.SwapPositionWith(target))
+        if (pope.PopeSwapPosRemaining > 0)
         {
-            var piece1Data = syncPieceData.CreateFromPiece(popePiece);
-            var piece2Data = syncPieceData.CreateFromPiece(target);
-
-            swapPieceData swapData = new swapPieceData
-            {
-                piece1 = piece1Data,
-                piece2 = piece2Data
-            };
-            return swapData;
+            Debug.LogError($"駒ID={popeID}の位置交換スキルはクールダウン中です。");
+            return false;
         }
-        return null;
+        
+        return true;
+    }
+
+    public void SetPopeSwapCD(int popeID)
+    {
+        if (!allPieces.TryGetValue(popeID, out Piece popePiece))
+        {
+            Debug.LogError($"教皇が見つかりません: ID={popeID}");
+            return;
+        }
+
+        if (popePiece is not Pope pope)
+        {
+            Debug.LogError($"駒ID={popeID}は教皇ではありません");
+            return;
+        }
+
+        //ここで位置交換完了後にクールダウンに入る
+        PopeDataSO popeData = (PopeDataSO)pope.GetUnitDataSO();
+        popePiece.SetPopeSwap(popeData.swapCooldown[specialUpgradeData[SpecialUpgradeType.PopeSwapCooldown]]);
+
     }
 
     /// <summary>
@@ -1382,6 +1516,11 @@ public class PieceManager : MonoBehaviour
 
                     // GameManagerに通知（必要なら）
                     // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
+                }
+
+                if(piece is Pope && piece.ProcessPopeSwapCD())
+                {
+                    Debug.Log($"今の教皇駒ID={pieceID}のスキル発動残りCDは{piece.PopeSwapPosRemaining}です。");
                 }
             }
         }

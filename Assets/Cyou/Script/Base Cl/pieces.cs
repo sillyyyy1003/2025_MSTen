@@ -9,7 +9,7 @@ namespace GamePieces
     /// <summary>
     /// 駒の基底クラス - ScriptableObjectからデータを参照
     /// </summary>
-    public abstract class Piece : VisualGameObject
+    public abstract class Piece : MonoBehaviour
     {
         [SerializeField] protected PieceDataSO pieceData;
 
@@ -33,6 +33,10 @@ namespace GamePieces
         public int CharmedTurnsRemaining => charmedTurnsRemaining;
         public bool IsCharmed => charmedTurnsRemaining > 0;
 
+        // ==== 教皇の位置交換スキルCD関連 ===
+        private int popeSwapPosRemaining = 0;
+        public int PopeSwapPosRemaining => popeSwapPosRemaining;
+        public bool canPopeSwapPos => popeSwapPosRemaining <= 0;
 
 
         // ===== イベント =====
@@ -124,21 +128,13 @@ namespace GamePieces
         }
 
 
-        private IEnumerator RevertCharmAfterTurns(int charmTurns,int originalPID)
+        ///クールダウンに必要なターン数を設定
+        public void SetPopeSwap(int turns)
         {
-            int remainingTurns=charmTurns;
-            //int endTurn = remainingTurns + DemoUITest.GetTurn();//魅惑が解除されるターンの数字
-
-            while (remainingTurns > 0)
-            {
-                yield return new WaitUntil(() =>1 >= 0);//GameManagerからターンの終了宣告を貰う
-                    remainingTurns--;
-            }
-
-            currentPID = originalPID;
-            OnUncharmed?.Invoke(this);
-            Debug.Log($"{OriginalPID}の駒{this.pieceData.pieceName}の魅惑が解けました");
+            popeSwapPosRemaining = turns;
+            Debug.Log($"教皇駒ID={this.PieceID}は位置交換スキルを発動し、スキルは{popeSwapPosRemaining}ターンのクールダウン期間に入りました");
         }
+
 
         /// <summary>
         /// 魅惑状態にする（PieceManagerから呼び出し）
@@ -175,9 +171,21 @@ namespace GamePieces
             return false;
         }
 
+        public bool ProcessPopeSwapCD()
+        {
+            if (popeSwapPosRemaining > 0)
+            {
+                popeSwapPosRemaining--;
+                Debug.Log($"教皇駒ID={PieceID}の位置交換スキル発動可能までの残りターン: {popeSwapPosRemaining}");
+                return true;
+            }
+
+            Debug.Log($"教皇駒ID={PieceID}は今位置交換スキル発動可能です。");
+            return true;
+        }
+
         protected virtual void SetupComponents()
         {
-            // SetupVisualComponents(); // Prefabの外見をそのまま使用するため不要
             // Prefabの外見をそのまま使用するため、動的な適用は不要
         }
 
@@ -460,21 +468,16 @@ namespace GamePieces
         
         protected virtual IEnumerator DeathAnimation()
         {
-            float fadeTime = 1f;
-            float elapsedTime = 0;
-            
-            if (spriteRenderer != null)
+            // 死亡アニメーションはプレハブ側のAnimatorに任せる
+            // 必要に応じてAnimatorのトリガーを呼び出す
+            Animator animator = GetComponent<Animator>();
+            if (animator != null)
             {
-                Color originalColor = spriteRenderer.color;
-                while (elapsedTime < fadeTime)
-                {
-                    float alpha = Mathf.Lerp(1, 0, elapsedTime / fadeTime);
-                    spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
-                    elapsedTime += Time.deltaTime;
-                    yield return null;
-                }
+                animator.SetTrigger("Death");
+                // アニメーション完了を待つ（アニメーションの長さに応じて調整）
+                yield return new WaitForSeconds(1f);
             }
-            
+
             Destroy(gameObject);
         }
         

@@ -11,7 +11,7 @@ namespace Buildings
     /// 建物の実行時インスタンス
     /// ScriptableObjectのデータを参照し、状態管理に専念
     /// </summary>
-    public class Building : VisualGameObject
+    public class Building : MonoBehaviour
     {
         [SerializeField] private BuildingDataSO buildingData;
 
@@ -97,7 +97,7 @@ namespace Buildings
 
         protected virtual void SetupComponents()
         {
-            // SetupVisualComponents(); // Prefabの外見をそのまま使用するため不要
+            // Prefabの外見をそのまま使用するため、動的な適用は不要
         }
 
         #endregion
@@ -193,12 +193,12 @@ namespace Buildings
         /// <summary>
         /// ターン処理で資源を生成
         /// </summary>
-        public void ProcessTurn(int currentTurn)
+        public int ProcessTurn()
         {
             if (!IsOperational)
             {
                 Debug.Log($"建物 {buildingData.buildingName} は稼働可能な状態ではありません (状態: {currentState}, スロット: {currentSkillUses})");
-                return;
+                return 0;
             }
 
             // APがある農民がいるかチェック
@@ -206,7 +206,7 @@ namespace Buildings
             if (!hasActiveFarmer)
             {
                 Debug.Log($"建物 {buildingData.buildingName} にAPを持つ農民がいません");
-                return;
+                return 0;
             }
 
             // APがある農民がいる場合のみActiveに変更
@@ -216,27 +216,27 @@ namespace Buildings
                 Debug.Log($"建物 {buildingData.buildingName} がActiveに変更されました");
             }
 
-            // 資源生成間隔チェック
-            int turnsSinceLastGen = currentTurn - lastResourceGenTurn;
-            if (turnsSinceLastGen >= buildingData.resourceGenInterval)
-            {
-                GenerateResources();
-                lastResourceGenTurn = currentTurn;
+            // 資源生成間隔チェック(廃止済み)
+            //int turnsSinceLastGen = currentTurn - lastResourceGenTurn;
+            //if (turnsSinceLastGen >= buildingData.resourceGenInterval)
 
+
+            int generatedResources = GenerateResources();
+                
                 // 農民の行動力を消費
                 ProcessFarmerAP();
-            }
-            else
-            {
-                Debug.Log($"建物 {buildingData.buildingName} は資源生成間隔待ち中 ({turnsSinceLastGen}/{buildingData.resourceGenInterval}ターン)");
-            }
+            
+                Debug.Log($"建物 {buildingData.buildingName} はターン)");
+
+            return generatedResources;
         }
 
-        private void GenerateResources()
+        private int GenerateResources()
         {
             int totalProduction = CalculateProduction();
             Debug.Log($"建物 {buildingData.buildingName} が資源 {totalProduction} を生成しました！");
             OnResourceGenerated?.Invoke(totalProduction);
+            return totalProduction;
         }
 
         private int CalculateProduction()

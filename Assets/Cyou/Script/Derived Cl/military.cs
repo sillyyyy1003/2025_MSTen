@@ -48,14 +48,14 @@ public class MilitaryUnit : Piece
         if (!militaryData.canAttack || target == null || !target.IsAlive)
             return false;
 
-        if (Time.time - lastAttackTime < militaryData.attackCooldown)
-            return false;
+        //if (Time.time - lastAttackTime < militaryData.attackCooldown)
+        //    return false;
 
         if (!ConsumeAP(militaryData.attackAPCost))
             return false;
 
         PerformAttack(target);
-        lastAttackTime = Time.time;
+        //lastAttackTime = Time.time;
         return true;
     }
 
@@ -67,14 +67,14 @@ public class MilitaryUnit : Piece
         if (!militaryData.canAttack || target == null || !target.IsAlive)
             return false;
 
-        if (Time.time - lastAttackTime < militaryData.attackCooldown)
-            return false;
+        //if (Time.time - lastAttackTime < militaryData.attackCooldown)
+        //    return false;
 
         if (!ConsumeAP(militaryData.attackAPCost))
             return false;
 
         PerformAttackOnBuilding(target);
-        lastAttackTime = Time.time;
+        //lastAttackTime = Time.time;
         return true;
     }
 
@@ -85,11 +85,11 @@ public class MilitaryUnit : Piece
         target.TakeDamage(finalDamage, this);
         Debug.Log("目标为 "+target.GetType()+" 目标HP "+target.CurrentHP);
         // クリティカル判定
-        if (UnityEngine.Random.value < militaryData.criticalChance)
-        {
-            finalDamage *= 2;
-            // クリティカルエフェクト表示
-        }
+        //if (UnityEngine.Random.value < militaryData.criticalChance)
+        //{
+        //    finalDamage *= 2;
+        //    // クリティカルエフェクト表示
+        //}
     }
 
     protected virtual void PerformAttackOnBuilding(Buildings.Building target)
@@ -100,17 +100,17 @@ public class MilitaryUnit : Piece
         Debug.Log($"攻撃後の建物HP: {target.CurrentHP}");
 
         // クリティカル判定
-        if (UnityEngine.Random.value < militaryData.criticalChance)
-        {
-            finalDamage *= 2;
-            Debug.Log($"クリティカルヒット！ダメージ: {finalDamage}");
-            // クリティカルエフェクト表示
-        }
+        //if (UnityEngine.Random.value < militaryData.criticalChance)
+        //{
+        //    finalDamage *= 2;
+        //    Debug.Log($"クリティカルヒット！ダメージ: {finalDamage}");
+        //    // クリティカルエフェクト表示
+        //}
     }
 
     private int CalculateDamage()
     {
-        return militaryData.attackPower;
+        return (int)militaryData.attackPowerByLevel[attackPowerLevel];
     }
 
     /// <summary>

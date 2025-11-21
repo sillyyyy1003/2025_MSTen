@@ -35,12 +35,14 @@ public class Pope : Piece
         base.Initialize(data, playerID);
     }
 
+    ///この関数は廃止されました
     /// <summary>
     /// 味方駒と位置を交換する
     /// 行動力を消費せず、クールタイムのみ
     /// </summary>
     public bool SwapPositionWith(Piece targetPiece)
     {
+
         if (targetPiece == null || !targetPiece.IsAlive)
         {
             Debug.LogWarning("交換対象が無効です");
@@ -59,42 +61,16 @@ public class Pope : Piece
             return false;
         }
 
-        ///今後ターン数を使って計算へ移行
-        // クールタイムチェック
-        if (Time.time - lastSwapTime < popeData.swapCooldown[UpgradeLevel])
-        {
-            Debug.LogWarning($"クールタイム中です。残り: {popeData.swapCooldown[UpgradeLevel] - (Time.time - lastSwapTime):F1}秒");
-            return false;
-        }
-
         // 位置を交換
         Vector3 tempPosition = transform.position;
         transform.position = targetPiece.transform.position;
         targetPiece.transform.position = tempPosition;
 
-        lastSwapTime = Time.time;
 
         Debug.Log($"教皇が{targetPiece.Data.pieceName}と位置を交換しました");
         return true;
     }
 
-    /// <summary>
-    /// 残りクールタイムを取得
-    /// ここもターン数へ移行待ち
-    /// </summary>
-    public float GetRemainingCooldown()
-    {
-        float elapsed = Time.time - lastSwapTime;
-        return Mathf.Max(0, popeData.swapCooldown[UpgradeLevel] - elapsed);
-    }
-
-    /// <summary>
-    /// 位置交換が可能かチェック
-    /// </summary>
-    public bool CanSwap()
-    {
-        return GetRemainingCooldown() <= 0;
-    }
 
     #region アップグレード管理
 

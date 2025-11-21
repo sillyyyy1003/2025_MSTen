@@ -30,6 +30,8 @@ public class BuildingManager : MonoBehaviour
 
     private Dictionary<BuildingUpgradeType, int> buildingUpgradeData = new Dictionary<BuildingUpgradeType, int>();//建物の各項目のアップグレードレベル
 
+    private bool isUpgraded = false;
+
     // ===== イベント（内部使用・GameManagerには通知しない） =====
     public event Action<int> OnBuildingCreated;       // 建物ID
     public event Action<int> OnBuildingCompleted;     // 建物ID（建築完了時）
@@ -151,6 +153,14 @@ public class BuildingManager : MonoBehaviour
 
         Debug.Log($"建物を生成しました: ID={buildingID}, Name={buildingData.buildingName}, PlayerID={playerID}");
         OnBuildingCreated?.Invoke(buildingID);
+
+        if (isUpgraded)
+        {
+            if (ApplyUpgradeLevelToNew(building))
+            {
+                Debug.Log("新たに生成された建物に現存のアップグレードレベルを適用しました。");
+            }
+        }
 
         // 同期データを作成して返す
         return CreateCompleteSyncData(buildingID);
@@ -492,6 +502,7 @@ public class BuildingManager : MonoBehaviour
 
     /// <summary>
     /// 建物の項目をアップグレード
+    /// すべての自分の建物にアップグレードを適用
     /// </summary>
     /// <param name="buildingID">建物ID</param>
     /// <param name="upgradeType">アップグレード項目</param>
@@ -504,31 +515,78 @@ public class BuildingManager : MonoBehaviour
             return false;
         }
 
-        bool success = false;
-        switch (upgradeType)
+        bool anySuccess = false;
+
+        // すべての自分の建物にアップグレードを適用
+        foreach (var kvp in buildings)
         {
-            case BuildingUpgradeType.BuildingHP:
-                success = building.UpgradeHP();
-                break;
-            case BuildingUpgradeType.attackRange:
-                success = building.UpgradeAttackRange();
-                break;
-            case BuildingUpgradeType.slotsLevel:
-                success = building.UpgradeSlots();
-                break;
-            //case BuildingUpgradeType.BuildCost:
-            //    return building.UpgradeBuildCost();
-            default:
-                Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
-                return false;
+            Building targetBuilding = kvp.Value;
+            bool success = false;
+
+            switch (upgradeType)
+            {
+                case BuildingUpgradeType.BuildingHP:
+                    success = targetBuilding.UpgradeHP();
+                    break;
+                case BuildingUpgradeType.attackRange:
+                    success = targetBuilding.UpgradeAttackRange();
+                    break;
+                case BuildingUpgradeType.slotsLevel:
+                    success = targetBuilding.UpgradeSlots();
+                    break;
+                default:
+                    Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+                    return false;
+            }
+
+            if (success)
+            {
+                anySuccess = true;
+                Debug.Log($"建物ID={kvp.Key}の{upgradeType}をアップグレードしました");
+            }
         }
 
-        if (success)
+        if (anySuccess)
         {
             if (!buildingUpgradeData.ContainsKey(upgradeType)) buildingUpgradeData[upgradeType] = 0;
             buildingUpgradeData[upgradeType]++;
+            isUpgraded = true;
         }
-        return success;
+        return anySuccess;
+    }
+
+    /// <summary>
+    /// 新しく作られた建物に現在のアップグレードレベルを適用する
+    /// </summary>
+    public bool ApplyUpgradeLevelToNew(Building building)
+    {
+        if (building == null) return false;
+
+        bool anyApplied = false;
+
+        int hpLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.BuildingHP) ? buildingUpgradeData[BuildingUpgradeType.BuildingHP] : 0;
+        int attackRangeLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.attackRange) ? buildingUpgradeData[BuildingUpgradeType.attackRange] : 0;
+        int slotsLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.slotsLevel) ? buildingUpgradeData[BuildingUpgradeType.slotsLevel] : 0;
+
+        for (int i = 0; i < hpLevel; i++)
+        {
+            if (building.UpgradeHP()) anyApplied = true;
+        }
+        for (int i = 0; i < attackRangeLevel; i++)
+        {
+            if (building.UpgradeAttackRange()) anyApplied = true;
+        }
+        for (int i = 0; i < slotsLevel; i++)
+        {
+            if (building.UpgradeSlots()) anyApplied = true;
+        }
+
+        if (anyApplied)
+        {
+            Debug.Log($"新しい建物ID={building.BuildingID}に現在のアップグレードレベルを適用しました");
+        }
+
+        return anyApplied;
     }
 
     /// <summary>
@@ -846,19 +904,21 @@ public class BuildingManager : MonoBehaviour
     /// すべての建物のターン処理（資源生成など）
     /// </summary>
     /// <param name="currentTurn">現在のターン数</param>
-    public void ProcessTurnStart(int currentTurn)
+    public int ProcessTurnStart()
     {
         var operationalBuildings = GetOperationalBuildings();
+        int lastTurnResourceTotal = 0;
 
         foreach (int buildingID in operationalBuildings)
         {
             if (buildings.TryGetValue(buildingID, out Building building))
             {
-                building.ProcessTurn(currentTurn);
+                lastTurnResourceTotal+=building.ProcessTurn();
             }
         }
 
-        Debug.Log($"ターン{currentTurn}: {operationalBuildings.Count}個の建物が処理されました");
+        Debug.Log($"前ターンにて{lastTurnResourceTotal}の資源が生成されました。");
+        return lastTurnResourceTotal;
     }
 
     #endregion
