@@ -966,6 +966,15 @@ public class PlayerDataManager : MonoBehaviour
         return -1; // 没有单位
     }
 
+    // 获取某个格子id返回所属玩家ID
+    public int GetCellOwner(int cellID)
+    {
+        if (allPlayersData[GameManage.Instance.LocalPlayerID].PlayerOwnedCells.Contains(cellID))
+            return GameManage.Instance.LocalPlayerID;
+        else
+            return GameManage.Instance.OtherPlayerID; // 没有单位
+    }
+
     // 设置玩家资源
     public void SetPlayerResourses(int newResources)
     {

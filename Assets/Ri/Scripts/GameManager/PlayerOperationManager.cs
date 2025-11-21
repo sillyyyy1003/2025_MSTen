@@ -2801,7 +2801,6 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 攻击者前进到目标位置
         Vector3 targetWorldPos = GameManage.Instance.GetCell2D(targetPos).Cells3DPos;
-        targetWorldPos.y += 2.5f;
 
         // 更新字典
         if (attackerPlayerId == localPlayerId)
