@@ -863,6 +863,40 @@ public class PieceManager : MonoBehaviour
     #region 駒の情報取得
 
     /// <summary>
+    /// 駒購入に必要な資源コストを取得
+    /// </summary>
+    public int GetPieceResourceCost(PieceType pieceType, Religion religion)
+    {
+        var pieceDetail = new UnitListTable.PieceDetail(pieceType, religion);
+        PieceDataSO data = unitListTable.GetPieceDataSO(pieceDetail);
+
+        if (data == null)
+        {
+            Debug.LogError($"駒データが見つかりません: {pieceType}, {religion}");
+            return -1;
+        }
+
+        return data.resourceCost;
+    }
+
+    /// <summary>
+    /// 駒がどれくらいの人口を使うか
+    /// </summary>
+    public int GetPiecePopulationCost(PieceType pieceType, Religion religion)
+    {
+        var pieceDetail = new UnitListTable.PieceDetail(pieceType, religion);
+        PieceDataSO data = unitListTable.GetPieceDataSO(pieceDetail);
+
+        if (data == null)
+        {
+            Debug.LogError($"駒データが見つかりません: {pieceType}, {religion}");
+            return -1;
+        }
+
+        return data.populationCost;
+    }
+
+    /// <summary>
     /// 駒の現在HPを取得
     /// </summary>
     public float GetPieceHP(int pieceID)
