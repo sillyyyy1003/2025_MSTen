@@ -2088,7 +2088,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1805311232}
   hexGrid: {fileID: 1913528995}
-  serialNumber: 1001
+  serialNumber: 1003
 --- !u!4 &290168467
 Transform:
   m_ObjectHideFlags: 0
@@ -2137,7 +2137,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _HexGrid: {fileID: 1913528995}
   doubleClickTimeThreshold: 0.3
-  MoveSpeed: 1
+  MoveSpeed: 0.5
 --- !u!4 &291931289
 Transform:
   m_ObjectHideFlags: 0

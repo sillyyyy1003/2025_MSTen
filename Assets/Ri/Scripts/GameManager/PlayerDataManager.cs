@@ -59,9 +59,15 @@ public struct PlayerUnitData
         originalOwnerID = originalOwner;
         BuildingData = buildingData;
     }
-    public void ChangeUnitDataSO(syncPieceData unitData)
+    public void SetUnitDataSO(syncPieceData unitData)
     {
+        Debug.Log("Set unitID is "+ PlayerUnitDataSO.pieceID+" HP is "+ PlayerUnitDataSO.currentHPLevel);
         PlayerUnitDataSO = unitData;
+        Debug.Log("Set unitID is " + PlayerUnitDataSO.pieceID + " HP is " + PlayerUnitDataSO.currentHPLevel);
+    }
+    public void SetBuildingUnitDataSO(syncBuildingData unitData)
+    {
+        BuildingData = unitData;
     }
     public void SetCanDoAction(bool canDo)
     {
@@ -110,6 +116,8 @@ public struct PlayerData
         PlayerReligion = SceneStateManager.Instance.PlayerReligion;
         PlayerOwnedCells = new List<int>();
     }
+
+    //
     public bool UpdateUnitSyncDataByPos(int2 position, syncPieceData newData)
     {
         for (int i = 0; i < PlayerUnits.Count; i++)
@@ -124,6 +132,8 @@ public struct PlayerData
         }
         return false;
     }
+
+
     public void AddOwnedCell(int id)
     {
         PlayerOwnedCells.Add(id);
@@ -288,6 +298,8 @@ public class PlayerDataManager : MonoBehaviour
 
     // 当前选择中的单位类型
     public CardType nowChooseUnitType;
+
+
 
     // 建筑
     [SerializeField] private BuildingRegistry buildingRegistry;
@@ -938,6 +950,17 @@ public class PlayerDataManager : MonoBehaviour
         foreach (var kvp in allPlayersData)
         {
             if (kvp.Value.FindUnitAt(pos) != null)
+                return kvp.Key;
+        }
+        return -1; // 没有单位
+    }
+
+    // 获取某个格子id返回所属玩家ID
+    public int GetUnitOwner(int cellID)
+    {
+        foreach (var kvp in allPlayersData)
+        {
+            if (kvp.Value.FindUnitAt(cellID) != null)
                 return kvp.Key;
         }
         return -1; // 没有单位

@@ -411,12 +411,12 @@ public class Farmer : Piece
     /// 指定項目のアップグレードコストを取得
     /// 鏡湖教の場合はAP回復コスト、それ以外の陣営はHP回復コストを返す
     /// </summary>
-    public int GetFarmerUpgradeCost(FarmerUpgradeType type)
+    public int GetFarmerUpgradeCost(int level, SpecialUpgradeType type)
     {
         switch (type)
         {
-            case FarmerUpgradeType.Sacrifice:
-                if (sacrificeLevel >= 2)
+            case SpecialUpgradeType.FarmerSacrifice:
+                if (level >= 2)
                     return -1;
 
                 // 鏡湖教の場合とそれ以外で異なるコスト配列を使用
@@ -433,7 +433,7 @@ public class Farmer : Piece
                 if (upgradeCostArray == null || sacrificeLevel >= upgradeCostArray.Length)
                     return -1;
 
-                return upgradeCostArray[sacrificeLevel];
+                return upgradeCostArray[level];
             default:
                 return -1;
         }
@@ -442,9 +442,9 @@ public class Farmer : Piece
     /// <summary>
     /// 指定項目がアップグレード可能かチェック
     /// </summary>
-    public bool CanUpgradeFarmer(FarmerUpgradeType type)
+    public bool CanUpgradeFarmer(int level, SpecialUpgradeType type)
     {
-        int cost = GetFarmerUpgradeCost(type);
+        int cost = GetFarmerUpgradeCost(level, type);
         return cost > 0;
     }
 
@@ -461,12 +461,4 @@ public class Farmer : Piece
     }
 
     #endregion
-}
-
-/// <summary>
-/// 農民のアップグレード項目タイプ
-/// </summary>
-public enum FarmerUpgradeType
-{
-    Sacrifice  // 獲祭回復量
 }
