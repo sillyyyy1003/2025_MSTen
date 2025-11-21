@@ -6,6 +6,7 @@ using GameData;
 using GamePieces;
 using DG.Tweening.Core.Easing;
 using UnityEngine.UIElements;
+using DG.Tweening;
 
 //25.11.4 RI 添加序列化Vector3 变量
 
@@ -59,17 +60,17 @@ public struct syncPieceData
     public SerializableVector3 piecePos;
     public int pieceID;
     public int currentHP;
-    public int currentHPLevel;
+    public int currentHPLevel;//HPレベル
     public int currentAP;
-    public int currentAPLevel;
-    public int currentPID;
-    public int swapCooldownLevel;
-    public int buffLevel;
-    public int occupyLevel;
-    public int convertEnemyLevel;
-    public int sacrificeLevel;
-    public int attackPowerLevel;
-    public int charmedTurnsRemaining; // 魅惑残りターン数（ネットワーク同期用）
+    public int currentAPLevel;//行動力レベル
+    public int currentPID;//今現在どのプレイヤーの元にあるか
+    public int swapCooldownLevel;//教皇の位置交換スキルのクールダウン
+    public int buffLevel;//教皇が周囲の駒へ与えるバフのレベル
+    public int occupyLevel;//宣教師の領地占領成功率レベル
+    public int convertEnemyLevel;//宣教師の魅惑レベル
+    public int sacrificeLevel;//農民の自己犠牲スキルレベル
+    public int attackPowerLevel;//軍隊の攻撃力レベル
+    public int charmedTurnsRemaining; // 魅惑された駒の魅惑状態残りターン数（ネットワーク同期用）
 
     // ヘルパープロパティ：pieceIDから元の所有者を計算
     public int OriginalPlayerID => pieceID / 10000;
@@ -149,6 +150,10 @@ public class PieceManager : MonoBehaviour
 
     // ===== 駒の管理 =====
     private Dictionary<int, Piece> allPieces = new Dictionary<int, Piece>(); // 全ての駒（自駒と敵駒を統合）
+    private Dictionary<PieceUpgradeType,int> baseUpgradeData = new Dictionary<PieceUpgradeType, int>();//HP&APのアップグレードレベル
+    private Dictionary<SpecialUpgradeType, int> specialUpgradeData = new Dictionary<SpecialUpgradeType, int>();//駒の独自の各項目のアップグレードレベル
+
+
     private int nextPieceID = 0;
     private int localPlayerID = -1; // このPieceManagerが管理するプレイヤーのID
 
@@ -188,6 +193,18 @@ public class PieceManager : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject); // シーン遷移で破棄されない
+
+        ///各アップグレードレベルを初期化
+        foreach (PieceUpgradeType parameter in Enum.GetValues(typeof(PieceUpgradeType)))
+        {
+            baseUpgradeData[parameter] = 0;
+        }
+
+        foreach (SpecialUpgradeType parameter in Enum.GetValues(typeof(SpecialUpgradeType)))
+        {
+            specialUpgradeData[parameter] = 0;
+        }
+
     }
 
     /// <summary>
@@ -224,6 +241,7 @@ public class PieceManager : MonoBehaviour
     {
         return allPiecesSyncData[unitID];
     }
+   
 
     /// <summary>
     /// 駒を生成（GameManagerから呼び出し）
@@ -360,32 +378,30 @@ public class PieceManager : MonoBehaviour
             }
 
             // 職業別の専用レベルを同期
-            switch (piece)
-            {
-                case Pope pope:
-                    if (spd.swapCooldownLevel > 0)
-                        pope.SetSwapCooldownLevel(spd.swapCooldownLevel);
-                    if (spd.buffLevel > 0)
-                        pope.SetBuffLevel(spd.buffLevel);
-                    break;
+        //int level = specialUpgradeData.ContainsKey(SpecialUpgradeType) ? specialUpgradeData[SpecialUpgradeType] : 0;
 
-                case Missionary missionary:
-                    if (spd.occupyLevel > 0)
-                        missionary.SetOccupyLevel(spd.occupyLevel);
-                    if (spd.convertEnemyLevel > 0)
-                        missionary.SetConvertEnemyLevel(spd.convertEnemyLevel);
-                    break;
+        //    switch (piece)
+        //    {
+        //        case Pope pope:
+        //                pope.SetSwapCooldownLevel(spd.swapCooldownLevel);
+        //            if (spd.buffLevel > 0)
+        //                pope.SetBuffLevel(spd.buffLevel);
+        //            break;
 
-                case Farmer farmer:
-                    if (spd.sacrificeLevel > 0)
-                        farmer.SetSacrificeLevel(spd.sacrificeLevel);
-                    break;
+        //        case Missionary missionary:
+        //                missionary.SetOccupyLevel(spd.occupyLevel);
+        //            if (spd.convertEnemyLevel > 0)
+        //                missionary.SetConvertEnemyLevel(spd.convertEnemyLevel);
+        //            break;
 
-                case MilitaryUnit military:
-                    if (spd.attackPowerLevel > 0)
-                        military.SetAttackPowerLevel(spd.attackPowerLevel);
-                    break;
-            }
+        //        case Farmer farmer:
+        //                farmer.SetSacrificeLevel(spd.sacrificeLevel);
+        //            break;
+
+        //        case MilitaryUnit military:
+        //                military.SetAttackPowerLevel(spd.attackPowerLevel);
+        //            break;
+        //    }
 
             Debug.Log($"敵駒を生成しました: ID={spd.pieceID}, Type={spd.piecetype}, Religion={spd.religion}, OriginalPlayerID={originalPlayerID}");
             OnEnemyPieceCreated?.Invoke(spd.pieceID);
@@ -440,32 +456,30 @@ public class PieceManager : MonoBehaviour
             }
 
             // 職業別の専用レベルを同期
-            switch (piece)
-            {
-                case Pope pope:
-                    if (spd.swapCooldownLevel > 0)
-                        pope.SetSwapCooldownLevel(spd.swapCooldownLevel);
-                    if (spd.buffLevel > 0)
-                        pope.SetBuffLevel(spd.buffLevel);
-                    break;
+        //int level = specialUpgradeData.ContainsKey(specialUpgradeType) ? specialUpgradeData[specialUpgradeType] : 0;
 
-                case Missionary missionary:
-                    if (spd.occupyLevel > 0)
-                        missionary.SetOccupyLevel(spd.occupyLevel);
-                    if (spd.convertEnemyLevel > 0)
-                        missionary.SetConvertEnemyLevel(spd.convertEnemyLevel);
-                    break;
+        //    switch (piece)
+        //    {
+        //        case Pope pope:
+        //                pope.SetSwapCooldownLevel(spd.swapCooldownLevel);
+        //            if (spd.buffLevel > 0)
+        //                pope.SetBuffLevel(spd.buffLevel);
+        //            break;
 
-                case Farmer farmer:
-                    if (spd.sacrificeLevel > 0)
-                        farmer.SetSacrificeLevel(spd.sacrificeLevel);
-                    break;
+        //        case Missionary missionary:
+        //                missionary.SetOccupyLevel(spd.occupyLevel);
+        //            if (spd.convertEnemyLevel > 0)
+        //                missionary.SetConvertEnemyLevel(spd.convertEnemyLevel);
+        //            break;
 
-                case MilitaryUnit military:
-                    if (spd.attackPowerLevel > 0)
-                        military.SetAttackPowerLevel(spd.attackPowerLevel);
-                    break;
-            }
+        //        case Farmer farmer:
+        //                farmer.SetSacrificeLevel(spd.sacrificeLevel);
+        //            break;
+
+        //        case MilitaryUnit military:
+        //                military.SetAttackPowerLevel(spd.attackPowerLevel);
+        //            break;
+        //    }
 
             Debug.Log($"敵駒の状態を同期しました: ID={spd.pieceID}");
             return true;
@@ -495,18 +509,27 @@ public class PieceManager : MonoBehaviour
             return null;
         }
 
+        bool success = false;
         switch (upgradeType)
         {
             case PieceUpgradeType.HP:
-                piece.UpgradeHP();
-                return syncPieceData.CreateFromPiece(piece);
+                success = piece.UpgradeHP();
+                break;
             case PieceUpgradeType.AP:
-                piece.UpgradeAP();
-                return syncPieceData.CreateFromPiece(piece);
+                success = piece.UpgradeAP();
+                break;
             default:
                 Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
                 return null;
         }
+
+        if (success)
+        {
+            if (!baseUpgradeData.ContainsKey(upgradeType)) baseUpgradeData[upgradeType] = 0;
+            baseUpgradeData[upgradeType]++;
+            return syncPieceData.CreateFromPiece(piece);
+        }
+        return null;
     }
 
     /// <summary>
@@ -524,12 +547,15 @@ public class PieceManager : MonoBehaviour
         }
 
         // 型に応じて適切なアップグレードを実行
+        int level = specialUpgradeData.ContainsKey(specialUpgradeType) ? specialUpgradeData[specialUpgradeType] : 0;
+
         switch (piece)
         {
             case Farmer farmer:
-                if (specialUpgradeType == SpecialUpgradeType.FarmerSacrifice)
                     if (farmer.UpgradeSacrifice())
                     {
+                        if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
+                        specialUpgradeData[specialUpgradeType]++;
                         return syncPieceData.CreateFromPiece(piece);
                     }
                     else
@@ -537,35 +563,42 @@ public class PieceManager : MonoBehaviour
                 break;
 
             case MilitaryUnit military:
-                if (specialUpgradeType == SpecialUpgradeType.MilitaryAttackPower)
                     if (military.UpgradeAttackPower())
                     {
+                        if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
+                        specialUpgradeData[specialUpgradeType]++;
                         return syncPieceData.CreateFromPiece(piece);
                     }
                 break;
 
             case Missionary missionary:
-                if (specialUpgradeType == SpecialUpgradeType.MissionaryOccupy)
                     if (missionary.UpgradeOccupy())
                     {
+                        if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
+                        specialUpgradeData[specialUpgradeType]++;
                         return syncPieceData.CreateFromPiece(piece);
                     }
                     else if (specialUpgradeType == SpecialUpgradeType.MissionaryConvertEnemy)
                         if (missionary.UpgradeConvertEnemy())
                         {
+                            if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
+                            specialUpgradeData[specialUpgradeType]++;
                             return syncPieceData.CreateFromPiece(piece);
                         }
                 break;
 
             case Pope pope:
-                if (specialUpgradeType == SpecialUpgradeType.PopeSwapCooldown)
                     if (pope.UpgradeSwapCooldown())
                     {
+                        if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
+                        specialUpgradeData[specialUpgradeType]++;
                         return syncPieceData.CreateFromPiece(piece);
                     }
                     else if (specialUpgradeType == SpecialUpgradeType.PopeBuff)
                         if (pope.UpgradeBuff())
                         {
+                            if (!specialUpgradeData.ContainsKey(specialUpgradeType)) specialUpgradeData[specialUpgradeType] = 0;
+                            specialUpgradeData[specialUpgradeType]++;
                             return syncPieceData.CreateFromPiece(piece);
                         }
                 break;
@@ -576,7 +609,7 @@ public class PieceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// アップグレードコストを取得
+    /// HP及びAPのアップグレードコストを取得
     /// </summary>
     /// <param name="pieceID">駒ID</param>
     /// <param name="upgradeType">アップグレード項目</param>
@@ -589,9 +622,46 @@ public class PieceManager : MonoBehaviour
             return -1;
         }
 
-        return piece.GetUpgradeCost(upgradeType);
+        int level = baseUpgradeData.ContainsKey(upgradeType) ? baseUpgradeData[upgradeType] : 0;
+        return piece.GetUpgradeCost(level, upgradeType);
     }
 
+    /// <summary>
+    /// 駒の具体的な各項目のアップグレードコストを取得
+    /// </summary>
+    /// <param name="pieceID">駒ID</param>
+    /// <param name="specialUpgradeType">アップグレード項目</param>
+    /// <returns>コスト（取得失敗時は-1）</returns>
+    public int GetSpecialUpgradeCost(int pieceID,SpecialUpgradeType specialUpgradeType)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+
+        int level = specialUpgradeData.ContainsKey(specialUpgradeType) ? specialUpgradeData[specialUpgradeType] : 0;
+
+        switch (piece)
+        {
+            case MilitaryUnit military:
+                return military.GetMilitaryUpgradeCost(level, specialUpgradeType);
+            case Farmer farmer:
+                return farmer.GetFarmerUpgradeCost(level, specialUpgradeType);
+            case Missionary missionary:
+                return missionary.GetMissionaryUpgradeCost(level, specialUpgradeType);
+            case Pope pope:
+                return pope.GetPopeUpgradeCost(level, specialUpgradeType);
+
+            default:
+                Debug.LogError($"駒の職業が明確になっていません:ID={pieceID}");
+                return -1;
+        }    
+    
+    }
+
+
+    ///修正必須↓
     /// <summary>
     /// アップグレード可能かチェック
     /// </summary>
@@ -605,7 +675,8 @@ public class PieceManager : MonoBehaviour
             return false;
         }
 
-        return piece.CanUpgrade(upgradeType);
+        int level = baseUpgradeData.ContainsKey(upgradeType) ? baseUpgradeData[upgradeType] : 0;
+        return piece.CanUpgrade(level, upgradeType);
     }
 
     #endregion

@@ -37,6 +37,8 @@ namespace GameData
         Neutral
     }
 
+ 
+
     public enum PieceType
     {
         None, Military, Farmer, Missionary, Pope

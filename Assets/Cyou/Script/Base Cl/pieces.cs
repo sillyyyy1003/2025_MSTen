@@ -378,21 +378,21 @@ namespace GamePieces
         }
 
         /// <summary>
-        /// 指定項目のアップグレードコストを取得
+        /// HP&AP項目のアップグレードコストを取得
         /// </summary>
-        public int GetUpgradeCost(PieceUpgradeType type)
+        public int GetUpgradeCost(int level,PieceUpgradeType type)
         {
             switch (type)
             {
                 case PieceUpgradeType.HP:
-                    if (hpLevel >= 3 || pieceData.hpUpgradeCost == null || hpLevel >= pieceData.hpUpgradeCost.Length)
+                    if (level >= 3 || pieceData.hpUpgradeCost == null || level >= pieceData.hpUpgradeCost.Length)
                         return -1; // アップグレード不可
-                    return pieceData.hpUpgradeCost[hpLevel];
+                    return pieceData.hpUpgradeCost[level+1];
 
                 case PieceUpgradeType.AP:
-                    if (apLevel >= 3 || pieceData.apUpgradeCost == null || apLevel >= pieceData.apUpgradeCost.Length)
+                    if (level >= 3 || pieceData.apUpgradeCost == null || level >= pieceData.apUpgradeCost.Length)
                         return -1; // アップグレード不可
-                    return pieceData.apUpgradeCost[apLevel];
+                    return pieceData.apUpgradeCost[level+1];
 
                 default:
                     return -1;
@@ -400,11 +400,11 @@ namespace GamePieces
         }
 
         /// <summary>
-        /// 指定項目がアップグレード可能かチェック
+        /// HP&AP項目がアップグレード可能かチェック
         /// </summary>
-        public bool CanUpgrade(PieceUpgradeType type)
+        public bool CanUpgrade(int level,PieceUpgradeType type)
         {
-            int cost = GetUpgradeCost(type);
+            int cost = GetUpgradeCost(level,type);
             return cost > 0;
         }
 
@@ -495,9 +495,6 @@ namespace GamePieces
         Dead        // 死亡
     }
 
-    /// <summary>
-    /// アップグレード項目タイプ
-    /// </summary>
 
 
 }

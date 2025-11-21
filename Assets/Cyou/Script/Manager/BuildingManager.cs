@@ -28,6 +28,8 @@ public class BuildingManager : MonoBehaviour
     private List<BuildingDataSO> allBuildingTypes = new List<BuildingDataSO>(); // 全建物（自分+相手、検索用）
     private List<BuildingDataSO> buildableBuildingTypes = new List<BuildingDataSO>(); // 自分が建設可能な建物のみ
 
+    private Dictionary<BuildingUpgradeType, int> buildingUpgradeData = new Dictionary<BuildingUpgradeType, int>();//建物の各項目のアップグレードレベル
+
     // ===== イベント（内部使用・GameManagerには通知しない） =====
     public event Action<int> OnBuildingCreated;       // 建物ID
     public event Action<int> OnBuildingCompleted;     // 建物ID（建築完了時）
@@ -35,6 +37,14 @@ public class BuildingManager : MonoBehaviour
     public event Action<int, int> OnResourceGenerated; // (建物ID, 資源量)
 
     #region 初期化
+
+    private void Awake()
+    {
+        foreach (BuildingUpgradeType parameter in Enum.GetValues(typeof(BuildingUpgradeType)))
+        {
+            buildingUpgradeData[parameter] = 0;
+        }
+    }
 
     /// <summary>
     /// ローカルプレイヤーIDを設定（己方/敵方を区別するため）
@@ -494,20 +504,31 @@ public class BuildingManager : MonoBehaviour
             return false;
         }
 
+        bool success = false;
         switch (upgradeType)
         {
-            case BuildingUpgradeType.HP:
-                return building.UpgradeHP();
-            case BuildingUpgradeType.AttackRange:
-                return building.UpgradeAttackRange();
-            case BuildingUpgradeType.Slots:
-                return building.UpgradeSlots();
-            case BuildingUpgradeType.BuildCost:
-                return building.UpgradeBuildCost();
+            case BuildingUpgradeType.BuildingHP:
+                success = building.UpgradeHP();
+                break;
+            case BuildingUpgradeType.attackRange:
+                success = building.UpgradeAttackRange();
+                break;
+            case BuildingUpgradeType.slotsLevel:
+                success = building.UpgradeSlots();
+                break;
+            //case BuildingUpgradeType.BuildCost:
+            //    return building.UpgradeBuildCost();
             default:
                 Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
                 return false;
         }
+
+        if (success)
+        {
+            if (!buildingUpgradeData.ContainsKey(upgradeType)) buildingUpgradeData[upgradeType] = 0;
+            buildingUpgradeData[upgradeType]++;
+        }
+        return success;
     }
 
     /// <summary>
@@ -524,7 +545,8 @@ public class BuildingManager : MonoBehaviour
             return -1;
         }
 
-        return building.GetUpgradeCost(upgradeType);
+        int level = buildingUpgradeData.ContainsKey(upgradeType) ? buildingUpgradeData[upgradeType] : 0;
+        return building.GetUpgradeCost(level, upgradeType);
     }
 
     /// <summary>
@@ -540,7 +562,8 @@ public class BuildingManager : MonoBehaviour
             return false;
         }
 
-        return building.CanUpgrade(upgradeType);
+        int level = buildingUpgradeData.ContainsKey(upgradeType) ? buildingUpgradeData[upgradeType] : 0;
+        return building.CanUpgrade(level, upgradeType);
     }
 
     #endregion
@@ -887,4 +910,11 @@ public struct syncBuildingData
             buildCostLevel = building.BuildCostLevel
         };
     }
+}
+
+public enum BuildingUpgradeType
+{
+    BuildingHP,//建物のHP
+    attackRange,//建物の攻撃範囲
+    slotsLevel//建物が持っているスロット数
 }

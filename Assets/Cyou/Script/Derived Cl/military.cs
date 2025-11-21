@@ -240,14 +240,14 @@ public class MilitaryUnit : Piece
     /// <summary>
     /// 指定項目のアップグレードコストを取得
     /// </summary>
-    public int GetMilitaryUpgradeCost(MilitaryUpgradeType type)
+    public int GetMilitaryUpgradeCost(int level, SpecialUpgradeType type)
     {
         switch (type)
         {
-            case MilitaryUpgradeType.AttackPower:
-                if (attackPowerLevel >= 3 || militaryData.attackPowerUpgradeCost == null || attackPowerLevel >= militaryData.attackPowerUpgradeCost.Length)
+            case SpecialUpgradeType.MilitaryAttackPower:
+                if (level >= 3 || militaryData.attackPowerUpgradeCost == null || level >= militaryData.attackPowerUpgradeCost.Length)
                     return -1;
-                return militaryData.attackPowerUpgradeCost[attackPowerLevel];
+                return militaryData.attackPowerUpgradeCost[level];
             default:
                 return -1;
         }
@@ -256,9 +256,9 @@ public class MilitaryUnit : Piece
     /// <summary>
     /// 指定項目がアップグレード可能かチェック
     /// </summary>
-    public bool CanUpgradeMilitary(MilitaryUpgradeType type)
+    public bool CanUpgradeMilitary(int level, SpecialUpgradeType type)
     {
-        int cost = GetMilitaryUpgradeCost(type);
+        int cost = GetMilitaryUpgradeCost(level, type);
         return cost > 0;
     }
 
@@ -277,10 +277,3 @@ public class MilitaryUnit : Piece
     #endregion
 }
 
-/// <summary>
-/// 軍隊のアップグレード項目タイプ
-/// </summary>
-public enum MilitaryUpgradeType
-{
-    AttackPower  // 攻撃力
-}

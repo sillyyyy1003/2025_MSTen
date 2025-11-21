@@ -462,19 +462,19 @@ public class Missionary : Piece
     /// <summary>
     /// 指定項目のアップグレードコストを取得
     /// </summary>
-    public int GetMissionaryUpgradeCost(MissionaryUpgradeType type)
+    public int GetMissionaryUpgradeCost(int level, SpecialUpgradeType type)
     {
         switch (type)
         {
-            case MissionaryUpgradeType.Occupy:
-                if (occupyLevel >= 3 || missionaryData.occupyUpgradeCost == null || occupyLevel >= missionaryData.occupyUpgradeCost.Length)
+            case SpecialUpgradeType.MissionaryOccupy:
+                if (level >= 3 || missionaryData.occupyUpgradeCost == null || level >= missionaryData.occupyUpgradeCost.Length)
                     return -1;
-                return missionaryData.occupyUpgradeCost[occupyLevel];
+                return missionaryData.occupyUpgradeCost[level];
 
-            case MissionaryUpgradeType.ConvertEnemy:
-                if (convertEnemyLevel >= 3 || missionaryData.convertEnemyUpgradeCost == null || convertEnemyLevel >= missionaryData.convertEnemyUpgradeCost.Length)
+            case SpecialUpgradeType.MissionaryConvertEnemy:
+                if (level >= 3 || missionaryData.convertEnemyUpgradeCost == null || level >= missionaryData.convertEnemyUpgradeCost.Length)
                     return -1;
-                return missionaryData.convertEnemyUpgradeCost[convertEnemyLevel];
+                return missionaryData.convertEnemyUpgradeCost[level];
 
             default:
                 return -1;
@@ -484,9 +484,9 @@ public class Missionary : Piece
     /// <summary>
     /// 指定項目がアップグレード可能かチェック
     /// </summary>
-    public bool CanUpgradeMissionary(MissionaryUpgradeType type)
+    public bool CanUpgradeMissionary(int level, SpecialUpgradeType type)
     {
-        int cost = GetMissionaryUpgradeCost(type);
+        int cost = GetMissionaryUpgradeCost(level, type);
         return cost > 0;
     }
 

@@ -584,29 +584,30 @@ namespace Buildings
         /// <summary>
         /// 指定項目のアップグレードコストを取得
         /// </summary>
-        public int GetUpgradeCost(BuildingUpgradeType type)
+        public int GetUpgradeCost(int level, BuildingUpgradeType type)
         {
             switch (type)
             {
-                case BuildingUpgradeType.HP:
-                    if (hpLevel >= 2 || buildingData.hpUpgradeCost == null || hpLevel >= buildingData.hpUpgradeCost.Length)
+                case BuildingUpgradeType.BuildingHP:
+                    if (level >= 2 || buildingData.hpUpgradeCost == null || level >= buildingData.hpUpgradeCost.Length)
                         return -1;
-                    return buildingData.hpUpgradeCost[hpLevel];
+                    return buildingData.hpUpgradeCost[level];
 
-                case BuildingUpgradeType.AttackRange:
-                    if (attackRangeLevel >= 2 || buildingData.attackRangeUpgradeCost == null || attackRangeLevel >= buildingData.attackRangeUpgradeCost.Length)
+                case BuildingUpgradeType.attackRange:
+                    if (level >= 2 || buildingData.attackRangeUpgradeCost == null || level >= buildingData.attackRangeUpgradeCost.Length)
                         return -1;
-                    return buildingData.attackRangeUpgradeCost[attackRangeLevel];
+                    return buildingData.attackRangeUpgradeCost[level];
 
-                case BuildingUpgradeType.Slots:
-                    if (slotsLevel >= 2 || buildingData.slotsUpgradeCost == null || slotsLevel >= buildingData.slotsUpgradeCost.Length)
+                case BuildingUpgradeType.slotsLevel:
+                    if (level >= 2 || buildingData.slotsUpgradeCost == null || level >= buildingData.slotsUpgradeCost.Length)
                         return -1;
-                    return buildingData.slotsUpgradeCost[slotsLevel];
+                    return buildingData.slotsUpgradeCost[level];
 
-                case BuildingUpgradeType.BuildCost:
-                    if (buildCostLevel >= 2 || buildingData.buildCostUpgradeCost == null || buildCostLevel >= buildingData.buildCostUpgradeCost.Length)
-                        return -1;
-                    return buildingData.buildCostUpgradeCost[buildCostLevel];
+
+                //case BuildingUpgradeType.BuildCost:
+                //    if (buildCostLevel >= 2 || buildingData.buildCostUpgradeCost == null || buildCostLevel >= buildingData.buildCostUpgradeCost.Length)
+                //        return -1;
+                //    return buildingData.buildCostUpgradeCost[buildCostLevel];
 
                 default:
                     return -1;
@@ -616,12 +617,12 @@ namespace Buildings
         /// <summary>
         /// 指定項目がアップグレード可能かチェック
         /// </summary>
-        public bool CanUpgrade(BuildingUpgradeType type)
+        public bool CanUpgrade(int level, BuildingUpgradeType type)
         {
             if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
                 return false;
 
-            int cost = GetUpgradeCost(type);
+            int cost = GetUpgradeCost(level, type);
             return cost > 0;
         }
 
@@ -761,16 +762,6 @@ namespace Buildings
         Ruined            // 廃墟
     }
 
-    /// <summary>
-    /// 建物のアップグレード項目タイプ
-    /// </summary>
-    public enum BuildingUpgradeType
-    {
-        HP,             // 最大HP
-        AttackRange,    // 攻撃範囲
-        Slots,          // スロット数
-        BuildCost       // 建築コスト
-    }
 
 }
    
