@@ -94,7 +94,6 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // 拿到一个棋子的数据
     public Piece GetUnitData(int id)
     {
-
         //PlayerDataManager.Instance.GetUnitDataById(id).Value.PlayerUnitDataSO
 
         return PieceManager.Instance.GetPiece(id);

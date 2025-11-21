@@ -100,9 +100,6 @@ public class GameManage : MonoBehaviour
     // *************************
 
 
-    // 网络系统引用 (在Inspector中赋值或通过代码获取)
-    //public NetGameSystem _NetGameSystem;
-
     // 玩家相机引用
     public GameCamera _GameCamera;
     // 玩家操作管理器
