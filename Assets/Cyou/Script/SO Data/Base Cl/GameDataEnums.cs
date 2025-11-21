@@ -75,6 +75,16 @@ namespace GameData
 		MAP_J = 9
 	}
 
+	public enum OperationType
+	{
+		Move,       // 移动
+		Attack,     // 士兵攻击
+		Cure,       // 农民治疗
+		Work,       // 农民进入建筑
+		Switch,     // 教皇交换位置
+		Charm,      // 魅惑
+		Occupy      // 占地
+	}
 
 
 	public enum Terrain
