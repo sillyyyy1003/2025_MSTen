@@ -54,16 +54,16 @@ public class GameOperationPanel : MonoBehaviour
 
 	void Update()
 	{
-		//if (!EventSystem.current.IsPointerOverGameObject())
-		//{
-		//	if (Input.GetMouseButton(0))
-		//	{
-		//		HexCell cell =hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-		//		ShowBuyCardInfo(cell.Index);
-		//		return;
-		//	}
+		if (!EventSystem.current.IsPointerOverGameObject())
+		{
+			if (Input.GetMouseButton(0))
+			{
+				HexCell cell = hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
+				ShowBuyCardInfo(cell.Index);
+				return;
+			}
 
-		//}
+		}
 
 	}
 
