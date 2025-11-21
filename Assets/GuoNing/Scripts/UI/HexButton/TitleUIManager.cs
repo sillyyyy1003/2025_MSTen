@@ -35,11 +35,12 @@ public class TitleUIManager : MonoBehaviour
 	public HexButton Button_CreateGame;
 	public HexButton Button_AddGame;
 
+	[Header("Building")]
 	/// <summary>
 	/// 画面に表示する建物モデル
 	/// </summary>
-	public Transform Building;//todo: make it a model manager later
-
+	public Transform Building;
+	public Transform Lighting;
 
 	//--------------------------------------------------------------------------------
 	// メソッド
@@ -65,6 +66,11 @@ public class TitleUIManager : MonoBehaviour
 		if (Building)
 		{
 			Building.Rotate(Vector3.up, 20f * Time.deltaTime);
+		}
+
+		if (Lighting)
+		{
+			Lighting.RotateAround(Building.position, Vector3.up, 40f * Time.deltaTime);
 		}
 
 		
