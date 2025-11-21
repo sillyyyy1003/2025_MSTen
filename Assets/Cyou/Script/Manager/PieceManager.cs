@@ -259,7 +259,7 @@ public class PieceManager : MonoBehaviour
         switch (piece)
         {
             case Pope pope:
-                return pope.CanSwap();
+                return true;
         }
          return false;
     }
@@ -568,28 +568,26 @@ public class PieceManager : MonoBehaviour
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return null;
         }
-        Debug.Log("piece HP level is "+piece.HPLevel);
-      
 
-        // 指定された駒の職業を取得
+        //// 指定された駒の職業を取得
         PieceType targetPieceType = GetPieceType(pieceID);
         if (targetPieceType == PieceType.None)
         {
             Debug.LogError($"駒の職業が不明です: ID={pieceID}");
-            return null;   }
-              switch (upgradeType)
-              {
-              
-            case PieceUpgradeType.HP:
-                piece.UpgradeHP();
-                return syncPieceData.CreateFromPiece(piece);
-            case PieceUpgradeType.AP:
-                piece.UpgradeAP();
-                return syncPieceData.CreateFromPiece(piece);
-            default:
-                Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
-                return null;
-                }
+            return null;   
+        }
+        //switch (upgradeType)
+        // {
+        //    case PieceUpgradeType.HP:
+        //        piece.UpgradeHP();
+        //        return syncPieceData.CreateFromPiece(piece);
+        //    case PieceUpgradeType.AP:
+        //        piece.UpgradeAP();
+        //        return syncPieceData.CreateFromPiece(piece);
+        //    default:
+        //        Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+        //        return null;
+        // }
      
 
         // 同じ職業のすべての自分の駒を取得

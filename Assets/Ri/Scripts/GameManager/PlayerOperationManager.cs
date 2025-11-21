@@ -1204,13 +1204,13 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 return true;
             case TechTree.AttackPosition:
-                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.AttackRange);
+                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.attackRange);
                 return false;
             case TechTree.AltarCount:
-                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.Slots);
+                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.slotsLevel);
                 return true;
             case TechTree.ConstructionCost:
-                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildCost);
+                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildingHP);
                 return true;
             case TechTree.MovementCD:
                 for (int i = 0; i < list.Count; i++)
