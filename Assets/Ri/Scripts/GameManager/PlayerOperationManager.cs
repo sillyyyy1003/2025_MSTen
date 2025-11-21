@@ -1039,6 +1039,11 @@ public class PlayerOperationManager : MonoBehaviour
         Debug.Log("进行升级: 科技树: " + tech + " 单位种类: " + type);
         List<PlayerUnitData> list = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits;
         syncPieceData newData = new syncPieceData();
+        List<int> ID = new List<int>();
+        for (int i=0;i<list.Count;i++)
+        {
+            ID.Add(list[i].UnitID);
+        }
         switch (tech)
         {
             case TechTree.HP:
@@ -1057,15 +1062,16 @@ public class PlayerOperationManager : MonoBehaviour
                     }
                 }
 
-                for (int i = 0; i < list.Count; i++)
+                for (int j = 0; j < list.Count; j++)
                 {
-                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
+                    if (list[j].UnitType != CardType.Building && list[j].UnitType == type)
                     {
-                        PlayerUnitData unit = list[i];
+                        PlayerUnitData unit = list[j];
                         unit.PlayerUnitDataSO = newData;
-                        list[i] = unit;
-                        Debug.Log("Upgrade after Unit ID is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.pieceID +
-                            " dataSO HP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHPLevel);
+                        unit.PlayerUnitDataSO.pieceID = ID[j];
+                        list[j] = unit;
+                        Debug.Log("j= "+j+"Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
+                            " dataSO HP is " + list[j].PlayerUnitDataSO.currentHPLevel);
                     }
                     else
                     {
@@ -1097,8 +1103,11 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         PlayerUnitData unit = list[i];
                         unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
-                      
+                        Debug.Log("j= " + i + " Upgrade after Unit ID is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.pieceID +
+                        " dataSO AP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHPLevel);
+
                     }
                     else
                     {
@@ -1126,6 +1135,7 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         PlayerUnitData unit = list[i];
                         unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
                       
                     }
@@ -1153,6 +1163,7 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         PlayerUnitData unit = list[i];
                         unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
                     }
                  
@@ -1176,6 +1187,7 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         PlayerUnitData unit = list[i];
                         unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
                     }
 
@@ -1198,6 +1210,7 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         PlayerUnitData unit = list[i];
                         unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
                     }
 
@@ -1228,6 +1241,7 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         PlayerUnitData unit = list[i];
                         unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
                     }
 
@@ -1250,6 +1264,7 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         PlayerUnitData unit = list[i];
                         unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
                     }
 
