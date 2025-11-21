@@ -79,7 +79,7 @@ public struct syncPieceData
     /// Pieceインスタンスから完全なsyncPieceDataを生成
     /// </summary>
     public static syncPieceData CreateFromPiece(Piece piece)
-    {
+    {                                                    //25.11.12 ri ADD Religion para
         // 駒の種類を取得
         PieceType pieceType = piece switch
         {
@@ -89,11 +89,12 @@ public struct syncPieceData
             Pope => PieceType.Pope,
             _ => PieceType.None
         };
-
+        //Debug.Log("piece religion is "+piece.Data.religion);
         return new syncPieceData
         {
             piecetype = pieceType,
-            religion = piece.Data.religion,
+            //25.11.12 ri C Religion para
+            religion = PieceManager.Instance.pieceReligion,
             piecePos = piece.transform.position,
             pieceID = piece.PieceID,
             currentHP = piece.CurrentHP,
@@ -161,6 +162,10 @@ public class PieceManager : MonoBehaviour
     //25.11.1 RI add GameObject
     private GameObject pieceObject;
 
+
+    //25.11.1 RI add Player religion
+    public Religion pieceReligion;
+
     //25.11.9 RI add syncPieceData List
     private Dictionary<int, syncPieceData> allPiecesSyncData = new Dictionary<int, syncPieceData>();
     // ===== 依存関係 =====
@@ -193,7 +198,7 @@ public class PieceManager : MonoBehaviour
             return;
         }
         _instance = this;
-        DontDestroyOnLoad(gameObject); // シーン遷移で破棄されない
+       // DontDestroyOnLoad(gameObject); // シーン遷移で破棄されない
 
         ///各アップグレードレベルを初期化
         foreach (PieceUpgradeType parameter in Enum.GetValues(typeof(PieceUpgradeType)))
@@ -206,12 +211,23 @@ public class PieceManager : MonoBehaviour
             specialUpgradeData[parameter] = 0;
         }
 
+        //2025.11.17 Guoning
+        //DontDestroyOnLoad(gameObject); // シーン遷移で破棄されない
     }
 
-    /// <summary>
-    /// このPieceManagerが管理するプレイヤーIDを設定
-    /// </summary>
-    public void SetLocalPlayerID(int playerID)
+	private void OnDestroy()
+	{
+		if (_instance == this)
+		{
+			_instance = null;
+			Debug.Log("PieceManager已销毁");
+		}
+	}
+
+	/// <summary>
+	/// このPieceManagerが管理するプレイヤーIDを設定
+	/// </summary>
+	public void SetLocalPlayerID(int playerID)
     {
         localPlayerID = playerID;
         // プレイヤーIDベースのID範囲を設定（Player 1: 10000~19999, Player 2: 20000~29999, ...）
@@ -244,6 +260,13 @@ public class PieceManager : MonoBehaviour
     }
    
 
+    // 25.11.12 RI add set piece religion
+    public void SetPieceRligion(Religion re)
+    {
+        pieceReligion = re;
+    }
+
+
     /// <summary>
     /// 駒を生成（GameManagerから呼び出し）
     /// </summary>
@@ -252,8 +275,8 @@ public class PieceManager : MonoBehaviour
     /// <param name="playerID">プレイヤーID</param>
     /// <param name="position">生成位置</param>
     /// <returns>生成された駒の同期データ（失敗時はnull）</returns>
-    public syncPieceData? CreatePiece(PieceType pieceType, Religion religion, int playerID, Vector3 position)
-    {
+    public syncPieceData? CreatePiece(PieceType pieceType, Religion religion, int playerID,int pieceID, Vector3 position)
+    {                                                                                     // 25.11.11 RI add pieceID 
         // UnitListTableからSOデータを取得
         var pieceDetail = new UnitListTable.PieceDetail(pieceType, religion);
         PieceDataSO data = unitListTable.GetPieceDataSO(pieceDetail);
@@ -281,7 +304,8 @@ public class PieceManager : MonoBehaviour
         // IDを割り当てて登録
         int baseId = playerID * 10000;
 
-        int pieceID = baseId + nextPieceID;
+        //25.11.11 RI change ID 
+        //int pieceID = baseId + nextPieceID;
         piece.SetPieceID(pieceID);
         allPieces[pieceID] = piece;
         nextPieceID++;
@@ -307,6 +331,7 @@ public class PieceManager : MonoBehaviour
 
         // 25.11.12 RI change return data
         syncPieceData pieceData=syncPieceData.CreateFromPiece(piece);
+        Debug.Log("piece re is " + pieceData.religion);
         allPiecesSyncData.Add(pieceID, pieceData);
         
         // 只需要返回基本信息的同步数据
@@ -529,6 +554,17 @@ public class PieceManager : MonoBehaviour
         {
             Debug.LogError($"駒の職業が不明です: ID={pieceID}");
             return null;
+            case PieceUpgradeType.HP:
+                Debug.Log("升级HP! 升级前HP: " + piece.HPLevel);
+                piece.UpgradeHP();
+                Debug.Log("升级HP! 升级后HP: "+piece.HPLevel);
+                return syncPieceData.CreateFromPiece(piece);
+            case PieceUpgradeType.AP:
+                piece.UpgradeAP();
+                return syncPieceData.CreateFromPiece(piece);
+            default:
+                Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+                return null;
         }
 
         // 同じ職業のすべての自分の駒を取得
@@ -1067,6 +1103,21 @@ public class PieceManager : MonoBehaviour
 
     #region 駒の行動
 
+    // 25.11.17 RI 添加攻击对象种类判定调用AttackEnemy或AttackBuilding
+    // true:piece
+    // false:building
+    /// <summary>
+    /// 軍隊が敵を攻撃
+    /// </summary>
+    public bool AttackPieceOrBuilding(int attackerID, int targetID)
+    {
+        if (!allPieces.TryGetValue(targetID, out Piece target))
+        {
+            return false;
+        }
+        return true;
+    }
+
     /// <summary>
     /// 軍隊が敵を攻撃
     /// </summary>
@@ -1421,6 +1472,27 @@ public class PieceManager : MonoBehaviour
         piece.Heal(amount);
         return syncPieceData.CreateFromPiece(piece);
     }
+
+
+    // 25.11.17 RI 添加HP同步管理，处理网络传过来的己方棋子受到伤害后的HP
+    public void SyncPieceHP(syncPieceData data)
+    {
+        if (!allPieces.TryGetValue(data.pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={data.pieceID}");
+        }
+        Debug.Log("this unit HP IS "+data.currentHP);
+        piece.SetHP(data.currentHP);
+
+        if (allPieces.ContainsKey(data.pieceID))
+        {
+            allPiecesSyncData[data.pieceID] = data;
+            
+        }
+
+    }
+
+
 
     #endregion
 

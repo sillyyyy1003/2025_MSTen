@@ -5,6 +5,7 @@ using System.Net;
 using UnityEngine;
 using GameData;
 
+
 // 场景状态管理，需要切换场景保存参数时使用
 public class SceneStateManager : MonoBehaviour
 {
@@ -30,8 +31,15 @@ public class SceneStateManager : MonoBehaviour
     // 是否为单机模式
     public bool bIsSingle=false;
 
-    // 设置本地保存玩家名数据
-    private const string PLAYER_NAME_KEY = "PlayerName";
+    // 是否为单机模式
+    public bool bIsDirectConnect = false;
+
+    // 随机生成的地图编号
+    private int mapSerialNumber = -1;  // 如果不是服务器则地图编码为-1
+	public int MapSerialNumber => mapSerialNumber;
+
+	// 设置本地保存玩家名数据
+	private const string PLAYER_NAME_KEY = "PlayerName";
     private const string DEFAULT_NAME = "玩家1";
     private const string SERVER_IP_KEY = "ServerIP";
     private const string CLIENT_IP_KEY = "ClientIP";
@@ -63,6 +71,9 @@ public class SceneStateManager : MonoBehaviour
             SavePlayerName(PlayerName);
             PlayerIP = GetLocalIPv4();
 
+            // 2025.11.17 Guoning 如果是服务器 则生成地图序列编号
+            ChosseRandomMap();
+
         }
         else
         {
@@ -70,9 +81,15 @@ public class SceneStateManager : MonoBehaviour
             PlayerIP = GetLocalIPv4();
         }
         bIsServer = isServer;
-    }
-    
-    public bool GetIsServer()
+
+
+        // 2025.11.17 Guoning 随机选择宗教
+        // 2025.11.17 RI 现有宗教单位数不足以随机，暂时注释
+        //ChooseRandomReligion();
+
+	}
+
+	public bool GetIsServer()
     {
         return bIsServer;
     }
@@ -123,5 +140,25 @@ public class SceneStateManager : MonoBehaviour
         }
         return string.IsNullOrEmpty(localIP) ? "未找到局域网 IPv4 地址" : localIP;
     }
+
+    /// <summary>
+    /// 随机选择宗教
+    /// </summary>
+    private void ChooseRandomReligion()
+    {
+        // 生成一个随机值（目前为1~4 之后扩展到1~8）
+        int religion = Random.Range(1, 4);
+        PlayerReligion = (Religion)religion;
+
+    }
+
+    /// <summary>
+    /// 随机选择地图
+    /// </summary>
+    private void ChosseRandomMap()
+    {
+		// map 1001~1010
+		mapSerialNumber = Random.Range(1001, 1010);
+	}
 
 }

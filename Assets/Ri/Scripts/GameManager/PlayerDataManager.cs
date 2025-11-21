@@ -28,7 +28,10 @@ public struct PlayerUnitData
     //public GameObject PlayerUnitObject;
 
     // 单位的数据
-    public syncPieceData PlayerUnitDataSO;
+    public syncPieceData PlayerUnitDataSO;  
+    
+    // 建筑的数据（如果这是一个建筑单位）
+    public syncBuildingData? BuildingData;  // nullable，只有建筑单位才有值
 
 
     // 该单位是否已经上场
@@ -43,7 +46,7 @@ public struct PlayerUnitData
     public int originalOwnerID;          // 原始所有者ID（用于归还控制权）
 
 
-    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1)
+    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1, syncBuildingData? buildingData = null)
     {
         UnitID = unitId;
         UnitType = type;
@@ -54,14 +57,31 @@ public struct PlayerUnitData
         bIsCharmed = isCharmed;
         charmedRemainingTurns = charmedTurns;
         originalOwnerID = originalOwner;
+        BuildingData = buildingData;
     }
-    public void ChangeUnitDataSO(syncPieceData unitData)
+    public void SetUnitDataSO(syncPieceData unitData)
     {
         PlayerUnitDataSO = unitData;
+    }
+    public void SetBuildingUnitDataSO(syncBuildingData unitData)
+    {
+        BuildingData = unitData;
     }
     public void SetCanDoAction(bool canDo)
     {
         bCanDoAction = canDo;
+    }
+
+    // 判断是否为建筑单位
+    public bool IsBuilding()
+    {
+        return BuildingData.HasValue;
+    }
+
+    // 获取建筑数据
+    public syncBuildingData? GetBuildingData()
+    {
+        return BuildingData;
     }
 }
 
@@ -90,10 +110,12 @@ public struct PlayerData
     {
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
-        Resources = 0;
-        PlayerReligion = Religion.SilkReligion;
+        Resources = 100;
+        PlayerReligion = SceneStateManager.Instance.PlayerReligion;
         PlayerOwnedCells = new List<int>();
     }
+
+    //
     public bool UpdateUnitSyncDataByPos(int2 position, syncPieceData newData)
     {
         for (int i = 0; i < PlayerUnits.Count; i++)
@@ -108,6 +130,8 @@ public struct PlayerData
         }
         return false;
     }
+
+
     public void AddOwnedCell(int id)
     {
         PlayerOwnedCells.Add(id);
@@ -208,6 +232,17 @@ public struct PlayerData
         return null;
     }
 
+    // 根据格子查找单位
+    public PlayerUnitData? FindUnitAt(int cellID)
+    {
+        foreach (var unit in PlayerUnits)
+        {
+            if (unit.Position.Equals(GameManage.Instance.FindCell(cellID).Cells2DPos))
+                return unit;
+        }
+        return null;
+    }
+
     // 根据ID查找单位
     public PlayerUnitData? FindUnitById(int unitId)
     {
@@ -235,7 +270,11 @@ public struct PlayerData
     {
         return PlayerUnits.Count;
     }
-
+    public void SetReligion()
+    {
+        PlayerReligion = SceneStateManager.Instance.PlayerReligion;
+    }
+  
 }
 
 public class PlayerDataManager : MonoBehaviour
@@ -258,6 +297,8 @@ public class PlayerDataManager : MonoBehaviour
     // 当前选择中的单位类型
     public CardType nowChooseUnitType;
 
+
+
     // 建筑
     [SerializeField] private BuildingRegistry buildingRegistry;
 
@@ -278,7 +319,8 @@ public class PlayerDataManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+			//2025.11.17 Guoning
+			//DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -291,11 +333,12 @@ public class PlayerDataManager : MonoBehaviour
     // *************************
 
     // 生成新的单位ID
-    private int GenerateUnitID()
+    public int GenerateUnitID()
     {
-        int baseId = GameManage.Instance.LocalPlayerID * 10000;
-        Debug.Log("new generatr unit ID is " + baseId);
-        return baseId + (unitIdCounter++);
+        int baseId = GameManage.Instance.LocalPlayerID * 10000 + unitIdCounter;
+        Debug.Log("new generate unit ID is " + baseId);
+        unitIdCounter++;
+        return baseId;
     }
 
     // 重置ID计数器（用于新游戏开始时）
@@ -316,12 +359,15 @@ public class PlayerDataManager : MonoBehaviour
         if (!allPlayersData.ContainsKey(playerId))
         {
             allPlayersData[playerId] = new PlayerData(playerId);
-            Debug.Log($"PlayerDataManager: 创建玩家 {playerId}");
+            //allPlayersData[playerId].SetReligion();
+            Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }
         else
         {
             Debug.LogWarning($"PlayerDataManager: 玩家 {playerId} 已存在");
         }
+        PieceManager.Instance.SetPieceRligion(allPlayersData[playerId].PlayerReligion);
+    
     }
 
     // 获取玩家数据
@@ -363,7 +409,7 @@ public class PlayerDataManager : MonoBehaviour
                 // 触发数据变更事件
                 OnPlayerDataChanged?.Invoke(playerId, data);
 
-                Debug.Log($"[PlayerDataManager] 玩家 {playerId} 位置 ({pos.x},{pos.y}) 的单位同步数据已更新");
+                Debug.Log($"[PlayerDataManager] 玩家 {playerId} 位置 ({pos.x},{pos.y}) 的{newData.pieceID}同步数据已更新");
                 return true;
             }
             else
@@ -567,7 +613,7 @@ public class PlayerDataManager : MonoBehaviour
     {
         if (allPlayersData.ContainsKey(playerId))
         {
-            int newUnitId = GenerateUnitID();
+            //int newUnitId = GenerateUnitID();
 
             PlayerData data = allPlayersData[playerId];
             data.AddUnit(unitData.pieceID, type, pos, unitObject, unitData);
@@ -576,49 +622,16 @@ public class PlayerDataManager : MonoBehaviour
 
 
             // 添加ID映射
-            unitIdToPlayerIdMap[newUnitId] = playerId;
+            unitIdToPlayerIdMap[unitData.pieceID] = playerId;
 
             // 触发事件
-            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(newUnitId, type, pos, unitData));
+            OnUnitAdded?.Invoke(playerId, new PlayerUnitData(unitData.pieceID, type, pos, unitData));
             OnPlayerDataChanged?.Invoke(playerId, data);
 
-            return newUnitId;
+            return unitData.pieceID;
         }
         return -1; // 失败返回-1
     }
-
-    ///// <summary>
-    ///// 添加单位时使用 syncPieceData（重载版本）
-    ///// 这是网络同步版本的 AddUnit
-    ///// </summary>
-    //public void AddUnit(int playerId, CardType type, int2 pos, syncPieceData pieceData, GameObject unitObject)
-    //{
-    //    if (allPlayersData.ContainsKey(playerId))
-    //    {
-    //        PlayerData data = allPlayersData[playerId];
-
-    //        // 使用 syncPieceData 创建单位
-    //        data.AddUnit(nextUnitId, type, pos, pieceData, unitObject);
-
-    //        // 记录ID映射
-    //        unitIdToPlayerIdMap[nextUnitId] = playerId;
-
-    //        allPlayersData[playerId] = data;
-
-    //        // 触发事件
-    //        PlayerUnitData unitData = new PlayerUnitData(nextUnitId, type, pos, pieceData, unitObject);
-    //        OnUnitAdded?.Invoke(playerId, unitData);
-    //        OnPlayerDataChanged?.Invoke(playerId, data);
-
-    //        nextUnitId++;
-
-    //        Debug.Log($"[PlayerDataManager] 玩家 {playerId} 添加单位: {type} at ({pos.x},{pos.y}), UnitID={nextUnitId - 1}, PieceID={pieceData.pieceID}");
-    //    }
-    //    else
-    //    {
-    //        Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
-    //    }
-    //}
 
     // 更新单位的GameObject引用
     public bool UpdateUnitGameObject(int playerId, int unitId, GameObject unitObject)
@@ -782,6 +795,32 @@ public class PlayerDataManager : MonoBehaviour
         return -1;
     }
 
+    // 通过UnitID获取单位所在的格子id
+    public int GetCellIdByUnitId(int unitId)
+    {
+        // 先找到单位所属的玩家
+        if (!unitIdToPlayerIdMap.ContainsKey(unitId))
+        {
+            Debug.LogWarning($"PlayerDataManager: 找不到ID为 {unitId} 的单位");
+            return -1;
+        }
+
+        int playerId = unitIdToPlayerIdMap[unitId];
+
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+
+            // 获取单位位置（用于事件）
+            PlayerUnitData? unitData = data.FindUnitById(unitId);
+
+            
+            return GameManage.Instance.GetCell2D(unitData.Value.Position).id;
+        }
+        return -1;
+
+    }
+
     // 检查UnitID是否存在
     public bool UnitIdExists(int unitId)
     {
@@ -914,6 +953,7 @@ public class PlayerDataManager : MonoBehaviour
         return -1; // 没有单位
     }
 
+    // 设置玩家资源
     public void SetPlayerResourses(int newResources)
     {
         int playerId = GameManage.Instance.LocalPlayerID;

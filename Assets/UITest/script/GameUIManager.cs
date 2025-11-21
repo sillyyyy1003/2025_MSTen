@@ -496,53 +496,56 @@ public class GameUIManager : MonoBehaviour
 
     private void UpdateUIUnitDataListFromInterface(CardType type)
     {
-        ClearUIUnitDataList(type);
-
-        List<int> UnitIDs = PlayerUnitDataInterface.Instance.GetUnitIDListByType(type);
-        List<UIUnitData> uiList = new List<UIUnitData>();
-
-        foreach (int id in UnitIDs)
+        //25.11.11 RI change for  building bug
+        if (type != CardType.Building)
         {
-            Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
+            ClearUIUnitDataList(type);
 
-            uiList.Add(new UIUnitData
+            List<int> UnitIDs = PlayerUnitDataInterface.Instance.GetUnitIDListByType(type);
+            List<UIUnitData> uiList = new List<UIUnitData>();
+
+            foreach (int id in UnitIDs)
             {
-                UnitId = id,
-                UnitType = type,
-                HP = (int)unitData.CurrentHP,
-                AP = (int)unitData.CurrentAP,
-            });
+                Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
+
+                uiList.Add(new UIUnitData
+                {
+                    UnitId = id,
+                    UnitType = type,
+                    HP = (int)unitData.CurrentHP,
+                    AP = (int)unitData.CurrentAP,
+                });
+            }
+
+            UpdateActivateUnitCount(type, uiList.Count);
+            //Debug.Log($"[GameUIManager] UnitType = {type} UnitIDs.Count = {UnitIDs.Count}");
+
+            switch (type)
+            {
+                case CardType.Missionary:
+
+                    MissionaryUnits = uiList;
+                    return;
+                case CardType.Solider:
+                    SoliderUnits = uiList;
+
+                    return;
+                case CardType.Farmer:
+                    FarmerUnits = uiList;
+
+                    return;
+                case CardType.Building:
+
+                    BuildingUnits = uiList;
+                    return;
+                case CardType.Pope:
+                    PopeUnitData = uiList[0];
+                    return;
+                default:
+                    return;
+
+            }
         }
-
-        UpdateActivateUnitCount(type, uiList.Count);
-        //Debug.Log($"[GameUIManager] UnitType = {type} UnitIDs.Count = {UnitIDs.Count}");
-
-        switch (type)
-        {
-            case CardType.Missionary:
-
-                MissionaryUnits = uiList;
-                return;
-            case CardType.Solider:
-                SoliderUnits = uiList;
-
-                return;
-            case CardType.Farmer:
-                FarmerUnits = uiList;
-
-                return;
-            case CardType.Building:
-
-                BuildingUnits = uiList;
-                return;
-            case CardType.Pope:
-                PopeUnitData = uiList[0];
-                return;
-            default:
-                return;
-
-        }
-
     }
 
     private void UpdateActivateUnitCount(CardType type, int count)
@@ -672,8 +675,10 @@ public class GameUIManager : MonoBehaviour
     {
         Debug.Log($"购买卡进仓库: {type}");
         UpdateResourcesData();
-
-    }
+		
+        // 2025.11.14 Guoning 音声再生
+		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.BUYCARD);
+	}
 
     private void HandleCardPurchasedIntoMap(CardType type)
     {
@@ -681,6 +686,9 @@ public class GameUIManager : MonoBehaviour
         UpdateUIUnitDataListFromInterface(type);
         UpdateResourcesData();
         UpdateAllUnitCountData();
+
+		// 2025.11.14 Guoning 音声再生
+		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
 
     }
 
@@ -690,7 +698,9 @@ public class GameUIManager : MonoBehaviour
         UpdateResourcesData();
         UpdateAllUnitCountData();
 
-    }
+		// 2025.11.14 Guoning 音声再生
+		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
+	}
 
 
     private void HandleTimeIsOut()
@@ -717,7 +727,10 @@ public class GameUIManager : MonoBehaviour
 
         UpdateUIUnitDataListFromInterface(card);
 
-    }
+		// 2025.11.14 Guoning
+		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.UPGRADE);
+
+	}
 
     private void HandleInactiveUnitButtonPressed()
     {

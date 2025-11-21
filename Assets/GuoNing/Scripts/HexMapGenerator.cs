@@ -142,28 +142,28 @@ public class HexMapGenerator : MonoBehaviour
 	//};
 	static Biome[] biomes = {
 		// t0
-		new Biome((int)TerrainTextureType.Snow, 0,3), 
-		new Biome((int)TerrainTextureType.Snow, 1,3), 
-		new Biome((int)TerrainTextureType.Snow, 2,1),
-		new Biome((int)TerrainTextureType.FallingForest,3,2),
+		new Biome((int)TerrainTextureType.Snow, 0,1),			//t0m0 0
+		new Biome((int)TerrainTextureType.Snow, 1,1),			//t0m1 1
+		new Biome((int)TerrainTextureType.Snow, 2,1),			//t0m2 2 
+		new Biome((int)TerrainTextureType.FallingForest,3,2),	//t0m3 3
 
 		// t1
-		new Biome((int)TerrainTextureType.FallingForest, 4,2), 
-		new Biome((int)TerrainTextureType.FallingForest, 5,1), 
-		new Biome((int)TerrainTextureType.Forest,6,2), 
-		new Biome((int)TerrainTextureType.RainForest,7,2),
+		new Biome((int)TerrainTextureType.FallingForest, 4,1),	//t1m0 4
+		new Biome((int)TerrainTextureType.FallingForest, 5,1),	//t1m1 5
+		new Biome((int)TerrainTextureType.Forest,6,2),			//t1m2 6
+		new Biome((int)TerrainTextureType.RainForest,7,2),		//t1m3 7
 
 		// t2
-		new Biome((int)TerrainTextureType.Desert,8 ,2),
-		new Biome((int)TerrainTextureType.Forest, 9,1), 
-		new Biome((int)TerrainTextureType.Forest, 10,2), 
+		new Biome((int)TerrainTextureType.Desert,8 ,2),			//t2m0 8
+		new Biome((int)TerrainTextureType.Forest, 9,1),			//t2m1 9
+		new Biome((int)TerrainTextureType.Forest, 10,2),		//t2m2 10
 		new Biome((int)TerrainTextureType.RainForest, 11,2),
 
 		// t3
-		new Biome((int)TerrainTextureType.Desert,12,1), 
-		new Biome((int)TerrainTextureType.Sand, 13,2),
-		new Biome((int)TerrainTextureType.Forest,14,3), 
-		new Biome((int)TerrainTextureType.RainForest, 15,3)
+		new Biome((int)TerrainTextureType.Desert,12,1),			//t3m0 12
+		new Biome((int)TerrainTextureType.Sand, 13,1),			//t3m1 13
+		new Biome((int)TerrainTextureType.Forest,14,3),			//t3m2 14
+		new Biome((int)TerrainTextureType.RainForest, 15,3)		//t3m3 15
 	};
 
 	//湿度 ↑

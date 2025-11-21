@@ -50,7 +50,7 @@ float4 GetTerrainColor(
 {
 	// 构建三维纹理采样坐标（xz为地表坐标，y层为地形类型索引）
 	//float3 uvw = float3(WorldPosition.xz * (2 * TILING_SCALE), Terrain[index]);
-	float TilingFactor = 1.0; // 缩小采样密度一半
+	float TilingFactor = 2.0; // 缩小采样密度一半
 	float3 uvw = float3(WorldPosition.xz * (2 * TILING_SCALE * TilingFactor), Terrain[index]);
 
 	// 从2DArray中采样指定层的纹理

@@ -44,6 +44,7 @@ public enum NetworkMessageType
     UNIT_ADD,
     UNIT_REMOVE,
     UNIT_ATTACK,
+    BUILDING_ATTACK,     // 建筑攻击
     UNIT_CHARM,          // 单位魅惑
     CHARM_EXPIRE,        // 魅惑过期（归还控制权）
 
@@ -140,6 +141,7 @@ public class UnitAddMessage
     public int PosX;
     public int PosY;
     public syncPieceData NewUnitSyncData; // PieceDataSO序列化为JSON字符串
+    public syncBuildingData? BuildingData;  // 新增
     public bool IsUsed; // 单位是否已使用
 }
 
@@ -171,6 +173,24 @@ public class UnitAttackMessage
     public syncPieceData AttackerSyncData; // 攻击者的同步数据（HP可能变化）
     public syncPieceData? TargetSyncData;  // 目标的同步数据（如果存活），null表示被击杀
     public bool TargetDestroyed;           // 目标是否被摧毁
+}
+
+// 建筑攻击消息
+[Serializable]
+public class BuildingAttackMessage
+{
+    public int AttackerPlayerId;
+    public int AttackerPosX;
+    public int AttackerPosY;
+
+    public int BuildingOwnerId;
+    public int BuildingPosX;
+    public int BuildingPosY;
+    public int BuildingID;             // 被攻击的建筑ID
+
+    public syncPieceData AttackerSyncData; // 攻击者的同步数据
+    public int BuildingRemainingHP;    // 建筑剩余HP
+    public bool BuildingDestroyed;     // 建筑是否被摧毁
 }
 
 // 魅惑消息
@@ -377,6 +397,11 @@ public class NetGameSystem : MonoBehaviour
     private PlayerDataManager playerDataManager;
 
 
+    // 2025.11.17
+    private bool hasStartedLoading = false;     // 是否开始Loading
+    GameLoadProgressUI gameLoadProgressUI;      // 获得本地加载UI
+
+
 
     // *************************
     //      Unity生命周期
@@ -388,7 +413,8 @@ public class NetGameSystem : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // 2025.11.17 Guoning 避免跨场景存在
+            //DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -421,14 +447,18 @@ public class NetGameSystem : MonoBehaviour
             playerName = SceneStateManager.Instance.PlayerName;
             playerIP = SceneStateManager.Instance.PlayerIP; // 获取本地IP
 
-
-            // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
-            if (!isServer)
+            if (SceneStateManager.Instance.bIsDirectConnect)
             {
-
                 // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
-                //serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+                if (!isServer)
+                {
+                    //互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                    serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+                }
+
             }
+
+
             // 延迟启动网络,确保所有单例初始化完成
             StartCoroutine(DelayedNetworkStart());
         }
@@ -463,6 +493,13 @@ public class NetGameSystem : MonoBehaviour
     private void OnDestroy()
     {
         Shutdown();
+
+        // 2025.11.17 清理
+        if (Instance == this)
+        {
+            Instance = null;
+            Debug.Log("NetGameManager已销毁");
+        }
     }
 
     // *************************
@@ -521,6 +558,7 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
                 { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },
+                { NetworkMessageType.BUILDING_ATTACK, HandleBuildingAttack },
                 { NetworkMessageType.UNIT_CHARM, HandleUnitCharm },
                 { NetworkMessageType.CHARM_EXPIRE, HandleCharmExpire },
 
@@ -727,6 +765,8 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
+
+
     // 发送房间状态给所有玩家
     private void SendRoomStatusToAll()
     {
@@ -874,7 +914,8 @@ public class NetGameSystem : MonoBehaviour
         {
             PlayerIds = playerIds,
             StartPositions = AssignStartPositions(),
-            FirstTurnPlayerId = (int)connectedPlayers[0]
+            FirstTurnPlayerId = (int)connectedPlayers[0],
+            PlayerReligion = SceneStateManager.Instance.PlayerReligion
         };
 
         NetworkMessage message = new NetworkMessage
@@ -894,6 +935,10 @@ public class NetGameSystem : MonoBehaviour
             OnGameStarted?.Invoke();
             HandleGameStart(message);
         });
+
+        // 2025.11.14 Guoning 开始播放音乐
+        SoundManager.Instance.StopBGM();
+        SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.REDMOON_THEME);
     }
 
     private int[] AssignStartPositions()
@@ -980,7 +1025,7 @@ public class NetGameSystem : MonoBehaviour
         if (!serverExists)
         {
             Debug.LogWarning("[客户端] 未检测到服务器，连接失败。");
-            SceneManager.LoadScene("SelectScene");
+            SceneController.Instance?.SwitchScene("SelectScene", null);
             return;
         }
 
@@ -1084,7 +1129,8 @@ public class NetGameSystem : MonoBehaviour
     /// 发送单位添加消息
     /// </summary>
     public void SendUnitAddMessage(int playerId, CardType unitType, int2 pos,
-        syncPieceData newUnitData, bool isUsed = false)
+        syncPieceData newUnitData, bool isUsed = false,
+        syncBuildingData? buildingData = null)
     {
         UnitAddMessage addData = new UnitAddMessage
         {
@@ -1092,7 +1138,8 @@ public class NetGameSystem : MonoBehaviour
             UnitType = (int)unitType,
             PosX = pos.x,
             PosY = pos.y,
-            NewUnitSyncData = newUnitData
+            NewUnitSyncData = newUnitData,
+            BuildingData = buildingData  // 添加建筑数据
         };
 
         NetworkMessage msg = new NetworkMessage
@@ -1113,7 +1160,6 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log($"[网络-客户端] 发送 UNIT_ADD 消息到服务器");
         }
     }
-
 
     /// <summary>
     /// 发送单位移动消息
@@ -1237,6 +1283,55 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log($"[网络-客户端] 发送 UNIT_ATTACK 消息到服务器");
         }
     }
+
+    /// <summary>
+    /// 发送建筑攻击消息
+    /// </summary>
+    public void SendBuildingAttackMessage(
+        int attackerPlayerId,
+        int2 attackerPos,
+        int buildingOwnerId,
+        int2 buildingPos,
+        int buildingID,
+        syncPieceData attackerData,
+        int buildingRemainingHP,
+        bool buildingDestroyed)
+    {
+        BuildingAttackMessage attackData = new BuildingAttackMessage
+        {
+            AttackerPlayerId = attackerPlayerId,
+            AttackerPosX = attackerPos.x,
+            AttackerPosY = attackerPos.y,
+
+            BuildingOwnerId = buildingOwnerId,
+            BuildingPosX = buildingPos.x,
+            BuildingPosY = buildingPos.y,
+            BuildingID = buildingID,
+
+            AttackerSyncData = attackerData,
+            BuildingRemainingHP = buildingRemainingHP,
+            BuildingDestroyed = buildingDestroyed
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.BUILDING_ATTACK,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(attackData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 BUILDING_ATTACK 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 BUILDING_ATTACK 消息到服务器");
+        }
+    }
+
 
 
     // 发送单位魅惑消息
@@ -1934,21 +2029,69 @@ public class NetGameSystem : MonoBehaviour
             playerDataManager = PlayerDataManager.Instance;
         }
 
-        // 更新 PlayerDataManager
+        // ===== 修复：不再使用MoveUnit，直接更新数据 =====
         if (playerDataManager != null)
         {
-            // 移动单位
+            // 方法1：尝试使用MoveUnit
             bool moveSuccess = playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
 
             if (moveSuccess)
             {
-                // 更新同步数据
+                // 移动成功，更新同步数据
                 playerDataManager.UpdateUnitSyncDataByPos(data.PlayerId, toPos, data.MovedUnitSyncData);
-
                 Debug.Log($"[网络] PlayerDataManager 已更新单位移动数据");
+            }
+            else
+            {
+                // ===== 关键修复：MoveUnit失败时，直接修改单位数据 =====
+                Debug.LogWarning($"[网络] MoveUnit失败，尝试直接更新数据（可能是交换操作）");
+
+                // 获取PlayerData
+                PlayerData playerData = playerDataManager.GetPlayerData(data.PlayerId);
+
+                // 查找目标位置是否已经有单位（从消息中的syncData判断）
+                bool found = false;
+
+                for (int i = 0; i < playerData.PlayerUnits.Count; i++)
+                {
+                    PlayerUnitData unit = playerData.PlayerUnits[i];
+
+                    // 通过UnitID匹配（syncData中的pieceID）
+                    if (unit.PlayerUnitDataSO.pieceID == data.MovedUnitSyncData.pieceID)
+                    {
+                        Debug.Log($"[网络] 通过UnitID找到单位: {unit.PlayerUnitDataSO.pieceID}，当前位置({unit.Position.x},{unit.Position.y})");
+
+                        // 创建更新后的单位数据
+                        PlayerUnitData updatedUnit = new PlayerUnitData(
+                            unit.UnitID,
+                            unit.UnitType,
+                            toPos,  // 新位置
+                            data.MovedUnitSyncData,  // 新的同步数据
+                            unit.bUnitIsActivated,
+                            unit.bCanDoAction,
+                            unit.bIsCharmed,
+                            unit.charmedRemainingTurns,
+                            unit.originalOwnerID,
+                            unit.BuildingData
+                        );
+
+                        // 直接更新
+                        playerData.PlayerUnits[i] = updatedUnit;
+                        found = true;
+
+                        Debug.Log($"[网络] 成功通过直接更新方式移动单位到({toPos.x},{toPos.y}) {updatedUnit.UnitID}");
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    Debug.LogError($"[网络] 无法找到要移动的单位: pieceID={data.MovedUnitSyncData.pieceID}");
+                }
             }
         }
 
+        // ===== 关键！！！必须调用这个方法来更新视觉效果 =====
         // 通知 PlayerOperationManager 处理视觉效果
         if (gameManage != null && gameManage._PlayerOperation != null)
         {
@@ -2003,6 +2146,12 @@ public class NetGameSystem : MonoBehaviour
         if (playerDataManager != null)
         {
             playerDataManager.RemoveUnit(data.PlayerId, pos);
+        }
+
+        // 先通知 PlayerOperationManager 处理 GameObject
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkRemove(data);
         }
 
         // 从 PlayerDataManager 移除
@@ -2081,6 +2230,78 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
+    // 建筑攻击
+    private void HandleBuildingAttack(NetworkMessage message)
+    {
+        BuildingAttackMessage data = JsonConvert.DeserializeObject<BuildingAttackMessage>(message.JsonData);
+
+        int2 attackerPos = new int2(data.AttackerPosX, data.AttackerPosY);
+        int2 buildingPos = new int2(data.BuildingPosX, data.BuildingPosY);
+
+        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击建筑 ID={data.BuildingID} at ({buildingPos.x},{buildingPos.y})");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // 更新 PlayerDataManager 中的攻击者数据
+        if (playerDataManager != null)
+        {
+            // 更新攻击者的同步数据
+            bool attackerUpdated = playerDataManager.UpdateUnitSyncDataByPos(
+                data.AttackerPlayerId, attackerPos, data.AttackerSyncData);
+
+            if (attackerUpdated)
+            {
+                Debug.Log($"[网络] 攻击者数据已更新");
+            }
+
+            // 通知 PlayerOperationManager 处理建筑攻击
+            if (gameManage != null && gameManage._PlayerOperation != null)
+            {
+                gameManage._PlayerOperation.HandleNetworkBuildingAttack(data);
+            }
+
+            // 如果建筑被摧毁，从 PlayerDataManager 和 BuildingManager 移除
+            if (data.BuildingDestroyed)
+            {
+                // 从 PlayerDataManager 移除建筑数据
+                bool buildingRemoved = playerDataManager.RemoveUnit(data.BuildingOwnerId, buildingPos);
+
+                if (buildingRemoved)
+                {
+                    Debug.Log($"[网络] 建筑已从PlayerDataManager移除");
+                }
+                else
+                {
+                    Debug.LogWarning($"[网络] ✗ 从PlayerDataManager移除建筑失败");
+                }
+
+                // 从 BuildingManager 移除建筑
+                if (GameManage.Instance._BuildingManager != null)
+                {
+                    GameManage.Instance._BuildingManager.RemoveBuilding(data.BuildingID);
+                    Debug.Log($"[网络] 建筑ID={data.BuildingID}已从BuildingManager移除");
+                }
+            }
+            else
+            {
+                // 建筑存活，更新建筑HP
+                if (GameManage.Instance._BuildingManager != null)
+                {
+                    Buildings.Building building = GameManage.Instance._BuildingManager.GetBuilding(data.BuildingID);
+                    if (building != null)
+                    {
+                        building.SetHP(data.BuildingRemainingHP);
+                        Debug.Log($"[网络] 建筑HP已更新为 {data.BuildingRemainingHP}");
+                    }
+                }
+            }
+        }
+    }
+
     // 单位魅惑
     private void HandleUnitCharm(NetworkMessage message)
     {
@@ -2110,7 +2331,7 @@ public class NetGameSystem : MonoBehaviour
                 // 如果目标单位不存在，可能需要先从NewUnitSyncData创建
                 // 注意：这种情况通常不应该发生，说明同步顺序有问题
                 // 但为了健壮性，我们可以尝试添加单位
-                CardType unitType=CardType.None;
+                CardType unitType = CardType.None;
                 // 根据syncPieceData推断单位类型
                 switch (data.NewUnitSyncData.piecetype)
                 {
@@ -2235,19 +2456,19 @@ public class NetGameSystem : MonoBehaviour
     //      运行时配置
     // *************************
 
-    public void SetConfig(bool asServer, string ip, int networkPort, int maxPlayerCount = 2)
-    {
-        if (isRunning)
-        {
-            Debug.LogWarning("请在启动前设置配置!");
-            return;
-        }
+    //public void SetConfig(bool asServer, string ip, int networkPort, int maxPlayerCount = 2)
+    //{
+    //    if (isRunning)
+    //    {
+    //        Debug.LogWarning("请在启动前设置配置!");
+    //        return;
+    //    }
 
-        isServer = asServer;
-        serverIP = ip;
-        port = networkPort;
-        maxPlayers = maxPlayerCount;
-    }
+    //    isServer = asServer;
+    //    serverIP = ip;
+    //    port = networkPort;
+    //    maxPlayers = maxPlayerCount;
+    //}
 
     //public void SetPlayerName(string name)
     //{
@@ -2268,7 +2489,8 @@ public class MainThreadDispatcher : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
+            // 2025.11.17 Guoning
+            // DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -2287,6 +2509,15 @@ public class MainThreadDispatcher : MonoBehaviour
         }
     }
 
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
+            Debug.Log("MainThreadDispatcher已销毁");
+        }
+    }
     public static void Enqueue(Action action)
     {
         if (action == null) return;

@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 using UnityEngine.UIElements;
 using static UnityEngine.Rendering.DebugUI.Table;
@@ -39,6 +40,7 @@ public class GameStartData
     public int[] PlayerIds;
     public int[] StartPositions;
     public int FirstTurnPlayerId;
+    public Religion PlayerReligion;
 }
 
 // 回合结束数据
@@ -99,7 +101,7 @@ public class GameManage : MonoBehaviour
 
 
     // 网络系统引用 (在Inspector中赋值或通过代码获取)
-    public NetGameSystem _NetGameSystem;
+    //public NetGameSystem _NetGameSystem;
 
     // 玩家相机引用
     public GameCamera _GameCamera;
@@ -153,8 +155,9 @@ public class GameManage : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
-            //Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
+			//2025.11.17 Guoning
+			// DontDestroyOnLoad(gameObject);
+            // Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
         }
         else if (Instance != this)
         {
@@ -239,9 +242,9 @@ public class GameManage : MonoBehaviour
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
-        if (_NetGameSystem != null && !_NetGameSystem.bIsServer)
+        if (NetGameSystem.Instance!= null && !NetGameSystem.Instance.bIsServer)
         {
-            _LocalPlayerID = (int)_NetGameSystem.bLocalClientId;
+            _LocalPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
             // 这里需要NetGameSystem提供本地客户端ID
             // localPlayerID = netGameSystem.GetLocalClientId();
@@ -258,7 +261,7 @@ public class GameManage : MonoBehaviour
 
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-        _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
+        _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, data.PlayerReligion);
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
@@ -282,7 +285,7 @@ public class GameManage : MonoBehaviour
             }
         }
 
-        _NetGameSystem.GetGameManage();
+        NetGameSystem.Instance.GetGameManage();
 
         _GameCamera.SetCanUseCamera(true);
         // 触发游戏开始事件
@@ -306,7 +309,11 @@ public class GameManage : MonoBehaviour
             StartCoroutine(TrueStartGame());
 
 
-        return true;
+		// 2025.11.14 Guoning 播放音乐
+		SoundManager.Instance.StopBGM();
+		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME);
+
+		return true;
     }
     private IEnumerator TrueStartGame()
     {
@@ -458,9 +465,9 @@ public class GameManage : MonoBehaviour
         };
 
         // 发送到网络
-        if (_NetGameSystem != null)
+        if (NetGameSystem.Instance != null)
         {
-            _NetGameSystem.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
+            NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             Debug.Log($" 已发送回合结束消息");
 
 
@@ -486,14 +493,14 @@ public class GameManage : MonoBehaviour
         Debug.Log($"[服务器] 切换到玩家 {nextPlayerId}");
 
         // 如果是服务器，广播 TURN_START
-        if (_NetGameSystem != null && _NetGameSystem.bIsServer)
+        if (NetGameSystem.Instance != null && NetGameSystem.Instance.bIsServer)
         {
             TurnStartMessage turnStartData = new TurnStartMessage
             {
                 PlayerId = nextPlayerId
             };
 
-            _NetGameSystem.SendMessage(NetworkMessageType.TURN_START, turnStartData);
+            NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_START, turnStartData);
             Debug.Log($"[服务器] 已广播 TURN_START 消息");
         }
 
@@ -593,8 +600,8 @@ public class GameManage : MonoBehaviour
         return default;
     }
 
-    // 根据格子id返回其周围所有可创建单位的格子id
-    public List<int> GetBoardNineSquareGrid(int id)
+    // 根据格子id返回其周围所有格子的id
+    public List<int> GetBoardNineSquareGrid(int id,bool isStart)
     {
         Debug.Log("pos is " + GetBoardInfor(id).Cells2DPos);
         List<int> startPos = new List<int>();
@@ -602,13 +609,30 @@ public class GameManage : MonoBehaviour
         {
             for (int dy = -1; dy <= 1; dy++)
             {
-
-                int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
-                if (GameBoardInforDict2D.ContainsKey(pos))
+                if(isStart)
                 {
-                    startPos.Add(GameBoardInforDict2D[pos].id);
-                    //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                    int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
+                    if (GameBoardInforDict2D.ContainsKey(pos))
+                    {
+                        startPos.Add(GameBoardInforDict2D[pos].id);
+                        //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                    }
                 }
+                else
+                {
+                    if (dx == 0 && dy == 0)
+                        continue;
+                    else
+                    {
+                        int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
+                        if (GameBoardInforDict2D.ContainsKey(pos))
+                        {
+                            startPos.Add(GameBoardInforDict2D[pos].id);
+                            //Debug.Log("pos is " + GetBoardInfor(GameBoardInforDict2D[pos].id).Cells2DPos);
+                        }
+                    }
+                }
+                   
             }
         }
         return startPos;
@@ -747,5 +771,44 @@ public class GameManage : MonoBehaviour
         //    _NetGameSystem.OnDataReceived -= HandleNetworkData;
         //    _NetGameSystem.OnConnected -= OnConnectedToServer;
         //}
+    }
+
+
+    // *********全局工具**********
+    // 检测鼠标指针是否在可交互的UI元素上（按钮、输入框等）
+    public bool IsPointerOverUIElement()
+    {
+        if (EventSystem.current == null)
+            return false;
+
+        // 创建指针事件数据
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Input.mousePosition;
+
+        // 射线检测所有UI元素
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        // 只检查可交互的UI组件（按钮、输入框等）
+        foreach (var result in results)
+        {
+            if (result.gameObject.activeInHierarchy)
+            {
+                // 检查是否是按钮或其他可交互组件
+                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
+                    result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
+                    result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

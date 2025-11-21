@@ -1,15 +1,21 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class TitleUIManager : MonoBehaviour
 {
+
+
+	//--------------------------------------------------------------------------------
+	// ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£
+	//--------------------------------------------------------------------------------
 	[Header("Menus")]
 	public RectTransform LeftMenu;
 	public RectTransform RightMenu;
-
+	public Material mat;
 	// World UI
 	[Header("Left Menu")]
 	public HexButton Button_EndGame;
@@ -17,40 +23,52 @@ public class TitleUIManager : MonoBehaviour
 	public HexButton Button_SinglePlayer;
 	public HexButton Button_OnlineGame;
 	public HexButton Button_Setting;
+	public HexButton Button_MapEditor;
 
 	[Header("Right Menu")]
-	public HexButton Button_Matching;
+	public RectTransform OptionMenu;
+	public RectTransform OnlineMenu;
+	public RectTransform RightDetailMenu;
 
 	// Screen UI
 	[Header("OnlineButton")]
-	public GameObject Image_OnlineGame;
-	public Button Button_ExitOnlineGame;
-	public Button Button_CreateGame;
-	public Button Button_AddGame;
+	public HexButton Button_CreateGame;
+	public HexButton Button_AddGame;
 
-	public Transform Building;
+	/// <summary>
+	/// ç”»é¢ã«è¡¨ç¤ºã™ã‚‹å»ºç‰©ãƒ¢ãƒ‡ãƒ«
+	/// </summary>
+	public Transform Building;//todo: make it a model manager later
+
+
+	//--------------------------------------------------------------------------------
+	// ãƒ¡ã‚½ãƒƒãƒ‰
+	//--------------------------------------------------------------------------------
+
 	void Update()
 	{
 		// Right mouse button click
 		if (Input.GetMouseButton(1))
 		{
-			// Close right menu
-			RightMenu.gameObject.SetActive(false);
-			// Èç¹ûÓĞÈÎÒâ²Ëµ¥ÊÇ´ò¿ªµÄ£¬Ôò½«ËùÓĞÇĞ»»Éè¶¨Îª¹Ø±Õ×´Ì¬
+			//  Close all option menu& online menu for next usage
+			OptionMenu.gameObject.SetActive(false);
+			OnlineMenu.gameObject.SetActive(false);
+			UpdateBackground(false);
 
+			// Reset button state
+			Button_Setting.ResetHexButton();
+			Button_OnlineGame.ResetHexButton();
+			SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 		}
 
+		//=========Building model update
 		if (Building)
 		{
 			Building.Rotate(Vector3.up, 20f * Time.deltaTime);
 		}
-	}
 
-	public void SetRightMenu(bool active)
-	{
-		RightMenu.gameObject.SetActive(active);
+		
 	}
-
 
 	// Start is called before the first frame update
 	void Start()
@@ -59,80 +77,131 @@ public class TitleUIManager : MonoBehaviour
 		Button_SinglePlayer.onClick.AddListener(() => OnClickSinglePlayer());
 		Button_OnlineGame.onClick.AddListener(() => OnClickOnlineGame());
 		Button_Setting.onClick.AddListener(() => OnClickSetting());
+		Button_MapEditor.onClick.AddListener(() => OnClickMapEditor());
 
-
-		Button_ExitOnlineGame.onClick.AddListener(() => OnClickExitOnlineGame());
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
+	
+		//  Close all option menu& online menu for next usage
+		OptionMenu.gameObject.SetActive(false);
+		OnlineMenu.gameObject.SetActive(false);
+		UpdateBackground(false);
 
-		Image_OnlineGame.SetActive(false);
+		// Reset button state
+		Button_Setting.ResetHexButton();
+		Button_OnlineGame.ResetHexButton();
+
+		SoundManager.Instance.StopBGM();
+		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.TITLE, loop: true);
 	}
 
+
+	private void OnClickMapEditor()
+	{
+		SceneController.Instance.SwitchScene("MapEditor", null);
+	}
+
+	/// <summary>
+	/// End Game button event
+	/// </summary>
 	private void OnClickEndGame()
 	{
 		Debug.Log("EndGame");
 	}
+
+	/// <summary>
+	/// Single play button event
+	/// </summary>
 	private void OnClickSinglePlayer()
 	{
 		SceneStateManager.Instance.bIsSingle = true;
-		SceneManager.LoadScene("MainGame");
-		Debug.Log("SinglePlayer");
+		SceneController.Instance.SwitchScene("MainGame", null);
 	}
+
+	/// <summary>
+	/// Online game button event
+	/// </summary>
 	private void OnClickOnlineGame()
 	{
-		Image_OnlineGame.SetActive(true);
 
+		//  Set option menu active
+		OnlineMenu.gameObject.SetActive(true);
+
+		// Change material
+		UpdateBackground(true);
 	}
+
+	/// <summary>
+	/// Setting event
+	/// </summary>
 	private void OnClickSetting()
 	{
-		SetRightMenu(true);
-		Debug.Log("Setting");
-	}
-	private void OnClickExitOnlineGame()
-	{
-		Image_OnlineGame.SetActive(false);
+		
+		//  Set option menu active
+		OptionMenu.gameObject.SetActive(true);
+		OnlineMenu.gameObject.SetActive(false);
+
+		// Change material
+		UpdateBackground(true);
+
 	}
 
+	/// <summary>
+	/// Create online game button
+	/// </summary>
 	private void OnClickCreateGame()
 	{
 		if (SceneStateManager.Instance != null)
 		{
-			// »ñÈ¡²¢±£´æÍæ¼ÒÃû
-			//string playerName = SceneStateManager.Instance.PlayerName;
-
-
-			// SceneStateManager.Instance.PlayerName = playerName;
-
-			// ÉèÖÃÎª·şÎñÆ÷Ä£Ê½
 			SceneStateManager.Instance.SetAsServer(true);
-
-			Debug.Log($"´´½¨·¿¼ä - Íæ¼ÒÃû: {SceneStateManager.Instance.PlayerName}, Ä£Ê½: ·şÎñÆ÷");
 		}
 		else
 		{
-			Debug.LogError("SceneStateManager.Instance Îª¿Õ!");
+			Debug.LogError("SceneStateManager.Instance ï¾ï½ªï½¿ï¾•!");
 		}
 
 
 		SceneManager.LoadScene("MainGame");
 	}
+
+
+	/// <summary>
+	/// Join game button event
+	/// </summary>
 	private void OnClickAddGame()
 	{
+		
 		if (SceneStateManager.Instance != null)
 		{
-
-			// ÉèÖÃÎª¿Í»§¶ËÄ£Ê½
 			SceneStateManager.Instance.SetAsServer(false);
-
-			Debug.Log($"¼ÓÈë·¿¼ä - Íæ¼ÒÃû: {SceneStateManager.Instance.PlayerName}, Ä£Ê½: ¿Í»§¶Ë");
 		}
 		else
 		{
-			Debug.LogError("SceneStateManager.Instance Îª¿Õ!");
+			Debug.LogError("SceneStateManager.Instance is null!");
 		}
 		SceneManager.LoadScene("MainGame");
 
 	}
+
+
+	/// <summary>
+	/// Update game background blur effect
+	/// </summary>
+	/// <param name="isOn"></param>
+	private void UpdateBackground(bool isOn)
+	{
+		if (isOn)
+		{
+			mat.SetFloat("_UseMask", 1);
+			mat.SetFloat("_BlurSize", 5);
+		}
+		else
+		{
+			mat.SetFloat("_UseMask", 0);
+			mat.SetFloat("_BlurSize", 0);
+		}
+	}
+
 }
 
 

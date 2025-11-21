@@ -971,8 +971,18 @@ public class HexGrid : MonoBehaviour
 		int chunkX = x / HexMetrics.chunkSizeX;
 		int chunkZ = z / HexMetrics.chunkSizeZ;
 
-		chunks[chunkX + chunkZ * chunkCountX].features.UpdateFeature(index,cells[index].Unit);
+		chunks[chunkX + chunkZ * chunkCountX].features.UpdateFeature(index, cells[index].Unit);
 	}
 
+	public void UpdateCellFeature(HexCell cell)
+	{
+		if (cell == null) return;
+		int x = cell.Index % CellCountX;
+		int z = cell.Index / CellCountX;
 
+		int chunkX = x / HexMetrics.chunkSizeX;
+		int chunkZ = z / HexMetrics.chunkSizeZ;
+
+		chunks[chunkX + chunkZ * chunkCountX].features.UpdateFeature(cell.Index, cell.Unit);
+	}
 }
