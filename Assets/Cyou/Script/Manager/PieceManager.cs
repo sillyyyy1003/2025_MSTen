@@ -74,11 +74,14 @@ public struct syncPieceData
     // ヘルパープロパティ：pieceIDから元の所有者を計算
     public int OriginalPlayerID => pieceID / 10000;
 
+
     /// <summary>
     /// Pieceインスタンスから完全なsyncPieceDataを生成
     /// </summary>
     public static syncPieceData CreateFromPiece(Piece piece)
     {                                                    //25.11.12 ri ADD Religion para
+
+        Debug.Log("piece HP is "+piece.HPLevel);
         // 駒の種類を取得
         PieceType pieceType = piece switch
         {
@@ -120,6 +123,7 @@ public struct swapPieceData
     public syncPieceData piece1;
     public syncPieceData piece2;
 }
+
 
 
 /// <summary>
@@ -222,6 +226,23 @@ public class PieceManager : MonoBehaviour
     public int GetLocalPlayerID()
     {
         return localPlayerID;
+    }
+
+
+    //25.11.21 RI add Get Pope swap cooldown
+    public bool GetCanPopeSwap(int pieceID)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return false;
+        }
+        switch (piece)
+        {
+            case Pope pope:
+                return pope.CanSwap();
+        }
+         return false;
     }
 
     #region 駒の生成
@@ -518,13 +539,11 @@ public class PieceManager : MonoBehaviour
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return null;
         }
-
+        Debug.Log("piece HP level is "+piece.HPLevel);
         switch (upgradeType)
         {
             case PieceUpgradeType.HP:
-                Debug.Log("升级HP! 升级前HP: " + piece.HPLevel);
                 piece.UpgradeHP();
-                Debug.Log("升级HP! 升级后HP: "+piece.HPLevel);
                 return syncPieceData.CreateFromPiece(piece);
             case PieceUpgradeType.AP:
                 piece.UpgradeAP();

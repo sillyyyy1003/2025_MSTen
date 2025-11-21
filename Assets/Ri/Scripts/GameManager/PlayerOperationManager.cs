@@ -43,8 +43,6 @@ public class PlayerOperationManager : MonoBehaviour
     // 点击到的格子的id
     private int ClickCellid;
 
-    // 点击到准备建造建筑的格子的id
-    private int ClickBuildingCellid;
 
     // 射线检测指定为cell层级
     private int RayTestLayerMask = 1 << 6;
@@ -97,6 +95,12 @@ public class PlayerOperationManager : MonoBehaviour
 
     // === Event 定义区域 ===
     public event System.Action<int, CardType> OnUnitChoosed;
+
+
+    // 单位相关
+    // 教皇移动冷却时间
+    private int PopeSwatCooldown;
+
 
     // *************************
     //         公有属性
@@ -358,7 +362,6 @@ public class PlayerOperationManager : MonoBehaviour
 
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
             {
-                ClickBuildingCellid = -1;
                 Debug.Log("Get Enemy Unit " + clickPos);
                 PlayerUnitDataInterface.Instance.SetEnemyUnitPosition(clickPos);
             }
@@ -421,23 +424,22 @@ public class PlayerOperationManager : MonoBehaviour
                 int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
 
                 // Pope交换位置
-                if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+                if (ownerId == localPlayerId &&
+                    PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
                 {
-                    if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
-                    {
+                  
                         PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
                         if (targetUnit.HasValue && !targetUnit.Value.IsBuilding())
                         {
-                            if (!CheckUnitHasEnoughAP(currentPos, 1))
+                            if (!PieceManager.Instance.GetCanPopeSwap(PlayerDataManager.Instance.nowChooseUnitID))
                             {
-                                Debug.Log("[Pope交换] AP不足");
+                                Debug.Log("[Pope交换] 无法交换，尚未冷却");
                                 return;
                             }
                             ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
                             return;
                         }
 
-                    }
 
 
                 }
@@ -848,7 +850,7 @@ public class PlayerOperationManager : MonoBehaviour
         localPlayerUnits.Clear();
 
         CreateUnitAtPosition(CardType.Pope, startBoardID);
-
+        PopeSwatCooldown = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[0].PlayerUnitDataSO.swapCooldownLevel;
 
         GameManage.Instance._GameCamera.GetPlayerPosition(GameManage.Instance.FindCell(startBoardID).Cells3DPos);
 
@@ -1034,33 +1036,75 @@ public class PlayerOperationManager : MonoBehaviour
     // 单位升级
     public bool UnitUpgrade(TechTree tech, CardType type)
     {
+        Debug.Log("进行升级: 科技树: " + tech + " 单位种类: " + type);
         List<PlayerUnitData> list = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits;
+        syncPieceData newData = new syncPieceData();
         switch (tech)
         {
             case TechTree.HP:
                 for (int i = 0; i < list.Count; i++)
                 {
-                    if (list[i].UnitType != CardType.Building)
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
                     {
-                        if (PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.HP)!= null)
-                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.HP));
+                         newData = (syncPieceData)PieceManager.Instance.UpgradePiece(
+                            PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.HP);
+                        break;
                     }
                     else
                     {
                         //list[i].SetBuildingUnitDataSO((syncBuildingData)GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.HP));
+
                     }
                 }
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        list[i] = unit;
+                        Debug.Log("Upgrade after Unit ID is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.pieceID +
+                            " dataSO HP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHPLevel);
+                    }
+                    else
+                    {
+
+                    }
+                }
+                   
+
                 return true;
             case TechTree.AP:
                 for (int i = 0; i < list.Count; i++)
                 {
-                    if (list[i].UnitType != CardType.Building)
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
                     {
-                        if (PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP) != null)
-                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP));
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePiece(
+                           PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
+                        break;
+                    }
+                    else
+                    {
+                        //list[i].SetBuildingUnitDataSO((syncBuildingData)GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.HP));
+
                     }
                 }
 
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        list[i] = unit;
+                      
+                    }
+                    else
+                    {
+
+                    }
+                }
                 //PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
                 return true;
             case TechTree.Occupy:
@@ -1068,44 +1112,96 @@ public class PlayerOperationManager : MonoBehaviour
                 {
                     if (list[i].UnitType == CardType.Missionary)
                     {
-                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryOccupy) != null)
-                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryOccupy));
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryOccupy);
+                        break;
+                       
                     }
                 }
-               
+
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        list[i] = unit;
+                      
+                    }
+                    else
+                    {
+
+                    }
+                }
+
                 return true;
             case TechTree.Conversion:
                 for (int i = 0; i < list.Count; i++)
                 {
                     if (list[i].UnitType == CardType.Missionary)
                     {
-                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryConvertEnemy) != null)
-                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryConvertEnemy));
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryConvertEnemy);
+                        break;
                     }
                 }
-             
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Missionary)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        list[i] = unit;
+                    }
+                 
+                }
+
                 return true;
             case TechTree.ATK:
                 for (int i = 0; i < list.Count; i++)
                 {
                     if (list[i].UnitType == CardType.Solider)
                     {
-                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MilitaryAttackPower) != null)
-                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MilitaryAttackPower));
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MilitaryAttackPower);
+                        break;
                     }
                 }
-               
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Solider)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        list[i] = unit;
+                    }
+
+                }
                 return true;
             case TechTree.Sacrifice:
                 for (int i = 0; i < list.Count; i++)
                 {
                     if (list[i].UnitType == CardType.Farmer)
                     {
-                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.FarmerSacrifice) != null)
-                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.FarmerSacrifice));
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.FarmerSacrifice);
+                        break;
+                     
                     }
                 }
-               
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Farmer)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        list[i] = unit;
+                    }
+
+                }
                 return true;
             case TechTree.AttackPosition:
                 GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.AttackRange);
@@ -1121,32 +1217,51 @@ public class PlayerOperationManager : MonoBehaviour
                 {
                     if (list[i].UnitType == CardType.Pope)
                     {
-                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeSwapCooldown) != null)
-                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeSwapCooldown));
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeSwapCooldown);
+                        break;
                     }
                 }
-               
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Pope)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        list[i] = unit;
+                    }
+
+                }
                 return true;
             case TechTree.Buff:
                 for (int i = 0; i < list.Count; i++)
                 {
                     if (list[i].UnitType == CardType.Pope)
                     {
-                        if (PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeBuff) != null)
-                            list[i].SetUnitDataSO((syncPieceData)PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeBuff));
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeBuff);
+                        break;
+                   
                     }
                 }
-               
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Pope)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        list[i] = unit;
+                    }
+
+                }
                 return true;
             //case TechTree.Heresy:
             //    PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
-          
+
             default:
                 return false;
         }
-
     }
-
 
     // 取消选择单位的描边
     private void ReturnToDefault()

@@ -61,7 +61,9 @@ public struct PlayerUnitData
     }
     public void SetUnitDataSO(syncPieceData unitData)
     {
+        Debug.Log("Set unitID is "+ PlayerUnitDataSO.pieceID+" HP is "+ PlayerUnitDataSO.currentHPLevel);
         PlayerUnitDataSO = unitData;
+        Debug.Log("Set unitID is " + PlayerUnitDataSO.pieceID + " HP is " + PlayerUnitDataSO.currentHPLevel);
     }
     public void SetBuildingUnitDataSO(syncBuildingData unitData)
     {
@@ -948,6 +950,17 @@ public class PlayerDataManager : MonoBehaviour
         foreach (var kvp in allPlayersData)
         {
             if (kvp.Value.FindUnitAt(pos) != null)
+                return kvp.Key;
+        }
+        return -1; // 没有单位
+    }
+
+    // 获取某个格子id返回所属玩家ID
+    public int GetUnitOwner(int cellID)
+    {
+        foreach (var kvp in allPlayersData)
+        {
+            if (kvp.Value.FindUnitAt(cellID) != null)
                 return kvp.Key;
         }
         return -1; // 没有单位
