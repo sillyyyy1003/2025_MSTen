@@ -73,7 +73,14 @@ namespace GameData
 		MAP_H = 7,
 		MAP_I = 8,
 		MAP_J = 9
-	}
+    }
+    public enum OperationType
+    {
+        Move,
+        Attack,
+        Charm,
+
+        }
 
 	public enum OperationType
 	{
@@ -87,7 +94,7 @@ namespace GameData
 	}
 
 
-	public enum Terrain
+    public enum Terrain
     {
         Normal, Gold
     }
