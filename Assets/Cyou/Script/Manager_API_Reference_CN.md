@@ -637,6 +637,63 @@ Debug.Log($"玩家1的农民数: {farmers.Count}");
 
 ---
 
+#### `GetUnitOperationCostByType()`
+获取棋子操作所需的 AP 消耗。
+
+**函数签名:**
+```csharp
+public int GetUnitOperationCostByType(int pieceID, GameData.OperationType type)
+```
+
+**参数:**
+- `pieceID`: 棋子 ID
+- `type`: 操作类型（`GameData.OperationType`）
+  - `OperationType.Move` - 移动（所有棋子通用）
+  - `OperationType.Attack` - 攻击（仅军队）
+  - `OperationType.Occupy` - 占领领地（仅传教士）
+  - `OperationType.Convert` - 魅惑敌人（仅传教士）
+  - `OperationType.Sacrifice` - 恢复技能（仅农民）
+
+**返回值:**
+- 成功: AP 消耗（正整数）
+- 失败: -1（棋子不存在，或不支持指定操作）
+
+**使用示例:**
+```csharp
+// 获取军队的攻击 AP 消耗
+int attackCost = PieceManager.Instance.GetUnitOperationCostByType(militaryID, GameData.OperationType.Attack);
+if (attackCost > 0)
+{
+    Debug.Log($"攻击需要 {attackCost} AP");
+
+    // 检查 AP 是否足够
+    int currentAP = PieceManager.Instance.GetPieceAP(militaryID);
+    if (currentAP >= attackCost)
+    {
+        // 执行攻击
+        PieceManager.Instance.AttackEnemy(militaryID, targetID);
+    }
+}
+
+// 获取传教士的魅惑 AP 消耗
+int convertCost = PieceManager.Instance.GetUnitOperationCostByType(missionaryID, GameData.OperationType.Convert);
+
+// 获取农民的恢复 AP 消耗
+int sacrificeCost = PieceManager.Instance.GetUnitOperationCostByType(farmerID, GameData.OperationType.Sacrifice);
+
+// 移动 AP 消耗（所有棋子通用）
+int moveCost = PieceManager.Instance.GetUnitOperationCostByType(pieceID, GameData.OperationType.Move);
+```
+
+**重要功能:**
+- 从各棋子的 DataSO 中自动获取适当的 AP 消耗
+- 对于不正确的组合（例如：农民攻击），返回 -1 并输出错误日志
+- 用于行动执行前的 AP 检查，可以防止不必要的错误
+
+**实现位置:** `PieceManager.cs:1016-1074`
+
+---
+
 ### 棋子行动
 
 #### `AttackEnemy()`
@@ -2308,6 +2365,36 @@ public enum SpecialUpgradeType
     PopeBuff                   // 教皇: 增益效果
 }
 ```
+
+### OperationType
+棋子的操作类型（用于获取 AP 消耗）。
+
+```csharp
+public enum OperationType
+{
+    Move,       // 移动（所有棋子通用）
+    Attack,     // 攻击（仅军队）
+    Occupy,     // 占领领地（仅传教士）
+    Convert,    // 魅惑敌人（仅传教士）
+    Sacrifice   // 恢复技能（仅农民）
+}
+```
+
+**使用方法:**
+与 `GetUnitOperationCostByType()` 函数结合使用。
+
+```csharp
+using GameData; // OperationType 定义在 GameData 命名空间中
+
+// 获取各种操作的 AP 消耗
+int attackCost = PieceManager.Instance.GetUnitOperationCostByType(militaryID, OperationType.Attack);
+int moveCost = PieceManager.Instance.GetUnitOperationCostByType(pieceID, OperationType.Move);
+int convertCost = PieceManager.Instance.GetUnitOperationCostByType(missionaryID, OperationType.Convert);
+```
+
+**定义位置:** `GameDataEnums.cs:52-59`
+
+---
 
 ### BuildingUpgradeType
 ```csharp
