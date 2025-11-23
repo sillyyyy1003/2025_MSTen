@@ -356,7 +356,6 @@ public class PlayerUnitDataInterface : MonoBehaviour
     {
 
         int ResourcesCost= PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
-
         int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
         if (ResourcesCount < ResourcesCost)
         {
@@ -367,10 +366,23 @@ public class PlayerUnitDataInterface : MonoBehaviour
         // 尝试创建单位
         if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
         {
-
-            ResourcesCount -= ResourcesCost;
-            PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
-            return true;
+			// 当前玩家人口上限
+			int currentPlayerPopulationTotal = 32;
+			// 当前玩家已用人口
+			int currentPlayerPopulationUsed = 3;
+            // 棋子所需要的人口
+			int currentUnitPopulationCost = 5;
+			if (currentUnitPopulationCost <= currentPlayerPopulationTotal - currentPlayerPopulationUsed) 
+	        {
+		        ResourcesCount -= ResourcesCost;
+		        PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+		        return true;
+			}
+	        else
+			{
+				Debug.LogWarning("创建失败 - 人口不足");
+				return false;
+	        }
 
         }
         else

@@ -100,6 +100,7 @@ public class GameManage : MonoBehaviour
     // *************************
 
 
+
     // 玩家相机引用
     public GameCamera _GameCamera;
     // 玩家操作管理器
@@ -135,6 +136,8 @@ public class GameManage : MonoBehaviour
     // *************************
     //        属性访问器
     // *************************
+    // 另一玩家ID
+    public int OtherPlayerID = -1;
 
     public int LocalPlayerID => _LocalPlayerID;
     public int CurrentTurnPlayerID => _CurrentTurnPlayerID;
@@ -241,6 +244,7 @@ public class GameManage : MonoBehaviour
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
         if (NetGameSystem.Instance!= null && !NetGameSystem.Instance.bIsServer)
         {
+            OtherPlayerID = 0;// 服务器默认是玩家0
             _LocalPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
             // 这里需要NetGameSystem提供本地客户端ID
@@ -250,6 +254,7 @@ public class GameManage : MonoBehaviour
         }
         else
         {
+            OtherPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             _LocalPlayerID = 0; // 服务器默认是玩家0
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
         }
