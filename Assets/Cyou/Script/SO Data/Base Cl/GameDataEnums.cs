@@ -74,13 +74,7 @@ namespace GameData
 		MAP_I = 8,
 		MAP_J = 9
     }
-    public enum OperationType
-    {
-        Move,
-        Attack,
-        Charm,
-
-        }
+  
 
 	public enum OperationType
 	{
