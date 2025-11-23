@@ -95,7 +95,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     public int GetUnitOperationCostByType(OperationType type)
     {
 
-        return 0;
+        return PieceManager.Instance.GetUnitOperationCostByType(PlayerDataManager.Instance.nowChooseUnitID,type);
     }
     /// <summary>
     /// 拿到某种棋子的已上场的key列表

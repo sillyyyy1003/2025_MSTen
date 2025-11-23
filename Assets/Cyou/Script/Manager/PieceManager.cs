@@ -1044,7 +1044,7 @@ public class PieceManager : MonoBehaviour
                 {
                     case GameData.OperationType.Occupy:
                         return missionaryData.occupyAPCost;
-                    case GameData.OperationType.Convert:
+                    case GameData.OperationType.Charm:
                         return missionaryData.convertAPCost;
                     case GameData.OperationType.Attack:
                         // 宣教師も攻撃可能（魅惑攻撃）
@@ -1055,7 +1055,7 @@ public class PieceManager : MonoBehaviour
                 }
 
             case Farmer farmer:
-                if (type == GameData.OperationType.Sacrifice)
+                if (type == GameData.OperationType.Cure)
                 {
                     GameData.FarmerDataSO farmerData = (GameData.FarmerDataSO)farmer.Data;
                     return farmerData.devotionAPCost;
