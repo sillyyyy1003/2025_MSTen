@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json.Bson;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// 表示関連の管理
@@ -16,6 +17,7 @@ public class DisplayManager : MonoBehaviour
 
 
 	public bool IsGridOn => isGridOn;
+	
 
 
 	//--------------------------------------------------------------------------------
@@ -48,18 +50,6 @@ public class DisplayManager : MonoBehaviour
 		ShowGrid();
 	}
 
-
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="gridOn"></param>
-	public void UpdateGridOn()
-	{
-		isGridOn = !isGridOn;
-		ShowGrid();	// 切换材质的状态
-	}
-
-
 	public void ShowGrid()
 	{
 		if (isGridOn)
@@ -71,6 +61,17 @@ public class DisplayManager : MonoBehaviour
 			terrainMaterial.DisableKeyword("_SHOW_GRID");
 		}
 
+	}
+
+	public void InitializeToggle(Toggle toggle)
+	{
+		toggle.onValueChanged.AddListener(OnToggleChanged);
+	}
+
+	private void OnToggleChanged(bool isOn)
+	{
+		isGridOn = isOn;
+		ShowGrid();
 	}
 
 }

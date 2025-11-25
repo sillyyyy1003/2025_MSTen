@@ -129,7 +129,6 @@ public class PlayerOperationManager : MonoBehaviour
     }
 
 
-
     // Update is called once per frame
     void Update()
     {
@@ -188,12 +187,10 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
-
-
-    // *************************
-    //       追加高亮选择处理
-    // *************************
-    void UpdateCellHighlightData(HexCell cell)
+	// *************************
+	//       追加高亮选择处理
+	// *************************
+	void UpdateCellHighlightData(HexCell cell)
     {
 
 

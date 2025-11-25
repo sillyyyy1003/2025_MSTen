@@ -394,8 +394,54 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
 
-    // 将 CardType 转换为 PieceType
-    public PieceType ConvertCardTypeToPieceType(CardType cardType)
+	/// <summary>
+	/// 购买某种棋子直接生成到地图检测资源是否足够
+	/// </summary>
+	/// <param name="type"></param>
+	/// <returns></returns>
+	public bool TryBuyUnitToMapByType(CardType type)
+    {
+        Religion playerReligion = SceneStateManager.Instance.PlayerReligion;
+        int ResourcesCost = GetCreateUnitResoursesCost(playerReligion, type);
+        int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
+        if (ResourcesCount < ResourcesCost)
+        {
+            Debug.LogWarning("资源不足!");
+            return false;
+        }
+
+		// 尝试创建单位
+		if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
+		{
+			// 当前玩家人口上限
+			int currentPlayerPopulationTotal = 32;
+			// 当前玩家已用人口
+			int currentPlayerPopulationUsed = 3;
+			// 棋子所需要的人口
+			int currentUnitPopulationCost = 5;
+			if (currentUnitPopulationCost <= currentPlayerPopulationTotal - currentPlayerPopulationUsed)
+			{
+				ResourcesCount -= ResourcesCost;
+				PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+				return true;
+			}
+			else
+			{
+				Debug.LogWarning("创建失败 - 人口不足");
+				return false;
+			}
+
+		}
+		else
+		{
+			Debug.LogWarning("创建失败 - 请先选择一个空格子");
+			return false;
+		}
+	}
+
+
+	// 将 CardType 转换为 PieceType
+	public PieceType ConvertCardTypeToPieceType(CardType cardType)
     {
         switch (cardType)
         {

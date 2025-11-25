@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -42,9 +43,23 @@ public class TitleUIManager : MonoBehaviour
 	public Transform Building;
 	public Transform Lighting;
 
+	[Header("DisplayComponent")]
+	public TMP_Dropdown ResolutionDropdown;
+	public TMP_Dropdown FullScreenDropdown;
+	public Toggle GridToggle;
+
+	[Header("SoundComponent")]
+	public Slider MasterSlider;
+	public Slider BGMSlider;
+	public Slider SESlider;
+
+
 	//--------------------------------------------------------------------------------
 	// メソッド
 	//--------------------------------------------------------------------------------
+	
+
+
 
 	void Update()
 	{
@@ -99,6 +114,40 @@ public class TitleUIManager : MonoBehaviour
 
 		SoundManager.Instance.StopBGM();
 		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.TITLE, loop: true);
+
+		// 更新分辨率设定
+		ResolutionManager.Instance.InitializeResolutionDropDown(ResolutionDropdown);
+		ResolutionManager.Instance.InitializeFullScreenDropDown(FullScreenDropdown);
+		ResolutionDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentResolutionIndex);
+		FullScreenDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentFullScreenIndex);
+
+		// 更新Display
+		DisplayManager.Instance.InitializeToggle(GridToggle);
+
+		// 更新Slider
+		MasterSlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetMasterVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
+		BGMSlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetBGMVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
+		SESlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetSEVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
+		MasterSlider.SetValueWithoutNotify(SoundManager.Instance.MasterVolume);
+		BGMSlider.SetValueWithoutNotify(SoundManager.Instance.BGMVolume);
+		SESlider.SetValueWithoutNotify(SoundManager.Instance.SEVolume);
+
+
 	}
 
 

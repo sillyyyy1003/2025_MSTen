@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeOverlay: {fileID: 1773481354271988574}
-  fadeDuration: 2
+  fadeDuration: 1
   fadeEase: 7
 --- !u!1 &8063940174556533834
 GameObject:
