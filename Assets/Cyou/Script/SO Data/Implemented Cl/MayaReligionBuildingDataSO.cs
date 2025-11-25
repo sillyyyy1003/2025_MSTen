@@ -13,6 +13,9 @@ namespace GameData
         {
             buildingName = "瑪雅外星人文明教_特殊建築";
 
+            // 建築に必要な資源
+            buildingResourceCost = 18;
+
             // HP（初始, 升級1, 升級2）
             maxHpByLevel = new int[3] { 25, 30, 45 };
 
