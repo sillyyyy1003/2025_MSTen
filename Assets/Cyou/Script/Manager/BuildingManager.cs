@@ -416,6 +416,30 @@ public class BuildingManager : MonoBehaviour
         return costs;
     }
 
+    /// <summary>
+    /// 指定された宗教の建物データを取得
+    /// </summary>
+    /// <param name="religion">宗教</param>
+    /// <returns>BuildingDataSO（見つからない場合はnull）</returns>
+    public BuildingDataSO GetBuildingDataByReligion(Religion religion)
+    {
+        if (buildingRegistry == null)
+        {
+            Debug.LogError("BuildingRegistryが設定されていません");
+            return null;
+        }
+
+        List<BuildingDataSO> buildings = buildingRegistry.GetBuildingsByReligion(religion);
+        if (buildings == null || buildings.Count == 0)
+        {
+            Debug.LogWarning($"宗教 {religion} に属する建物が見つかりません");
+            return null;
+        }
+
+        // 各宗教には1つの特殊建築しかないため、最初の要素を返す
+        return buildings[0];
+    }
+
     #endregion
 
     #region 農民配置
