@@ -157,6 +157,14 @@ public class PlayerOperationManager : MonoBehaviour
         //}
 
         // 农民献祭
+        if (Input.GetKeyDown(KeyCode.Q)
+            && PlayerDataManager.Instance.nowChooseUnitType == CardType.Building)
+        {
+            UnitUpgrade(TechTree.HP,CardType.Building);
+            //ClickBuildingCellid = ClickCellid;
+
+        }
+        // 农民献祭
         if (Input.GetKeyDown(KeyCode.T)
             && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
         {
@@ -1079,6 +1087,8 @@ public class PlayerOperationManager : MonoBehaviour
 
                             newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
                             PlayerDataManager.Instance.nowChooseUnitID);
+                            Debug.LogWarning("Building ID : " + newBuildingData.buildingID + " Upgrade HP! "+ newBuildingData.currentHP);
+
                             break;
 
                         }
@@ -1109,7 +1119,7 @@ public class PlayerOperationManager : MonoBehaviour
                         unit.PlayerUnitDataSO.pieceID = ID[j];
                         list[j] = unit;
                         Debug.Log("j= " + j + "Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
-                            " dataSO HP is " + list[j].PlayerUnitDataSO.currentHPLevel);
+                            " dataSO HP is " + list[j].BuildingData.Value.currentHP);
 
                     }
                 }
