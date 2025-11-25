@@ -196,79 +196,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 363b9c475f7350c4f8ebada57e548899, type: 3}
---- !u!1001 &247165172
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_Name
-      value: siruku_01
-      objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 0cc228c773c4a9443bf7d1fca123919f,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 0cc228c773c4a9443bf7d1fca123919f, type: 3}
 --- !u!1 &476724489
 GameObject:
   m_ObjectHideFlags: 0
@@ -5459,74 +5386,6 @@ MonoBehaviour:
     mipBias: 0
     varianceClampScale: 0.9
     contrastAdaptiveSharpening: 0
---- !u!1001 &1573832130
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 14.59543
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 5.0669775
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7971769675044262867, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_Name
-      value: Building_Shiruku_20251024 (1)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 378e62e84f9298c47be6c5aa9f97d644, type: 3}
 --- !u!1 &2054386553
 GameObject:
   m_ObjectHideFlags: 0
@@ -15261,7 +15120,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
---- !u!1001 &7215197944202774259
+--- !u!1001 &3039825174973303863
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -15269,66 +15128,71 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 64713724203331083, guid: d886dbf77c82ac94cb02a54e6a3121d5,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5820619560128198455, guid: d886dbf77c82ac94cb02a54e6a3121d5,
+        type: 3}
+      propertyPath: m_Name
+      value: Building_Shiruku_20251024
+      objectReference: {fileID: 0}
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7544937273474232770, guid: 378e62e84f9298c47be6c5aa9f97d644,
+    - target: {fileID: 8205008318355112687, guid: d886dbf77c82ac94cb02a54e6a3121d5,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7971769675044262867, guid: 378e62e84f9298c47be6c5aa9f97d644,
-        type: 3}
-      propertyPath: m_Name
-      value: Building_Shiruku_20251024
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 378e62e84f9298c47be6c5aa9f97d644, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: d886dbf77c82ac94cb02a54e6a3121d5, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -15336,8 +15200,6 @@ SceneRoots:
   - {fileID: 1407588593}
   - {fileID: 940135482}
   - {fileID: 476724491}
-  - {fileID: 247165172}
   - {fileID: 2054386556}
   - {fileID: 56687486}
-  - {fileID: 7215197944202774259}
-  - {fileID: 1573832130}
+  - {fileID: 3039825174973303863}
