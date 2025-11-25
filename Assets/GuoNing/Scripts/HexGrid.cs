@@ -937,24 +937,6 @@ public class HexGrid : MonoBehaviour
 		// 25.10.26 RI 添加起始位置
 		infor.bIsStartPos = cell.IsStartPos;
 
-
-		// 判断是否有水
-		if (cell.IsUnderwater || cell.Elevation > 2)
-		{
-			infor.type = TerrainType.UnPassable;	// 不可通过
-		}
-		else
-		{
-			if (cell.PlantIndex==(int)PlantType.Forest|| cell.PlantIndex == (int)PlantType.FallingForest|| cell.PlantIndex == (int)PlantType.RainForest|| cell.PlantIndex == (int)PlantType.Swamp)
-			{
-				infor.type = TerrainType.Passable;	// 可通行 不可占领
-			}
-			else
-			{
-				infor.type = TerrainType.Capable;	// 可通行可占领
-			}
-		}
-
 		GameManage.Instance.SetGameBoardInfor(infor);
 	}
 
@@ -984,5 +966,34 @@ public class HexGrid : MonoBehaviour
 		int chunkZ = z / HexMetrics.chunkSizeZ;
 
 		chunks[chunkX + chunkZ * chunkCountX].features.UpdateFeature(cell.Index, cell.Unit);
+	}
+
+
+
+	private static readonly HashSet<PlantType> forestTypes = new()
+	{
+		//PlantType.t1m1, PlantType.t1m2, PlantType.t1m3,
+		//PlantType.t3m1, PlantType.t3m2, PlantType.t3m3
+		PlantType.t2m2, PlantType.t2m3,
+		PlantType.t3m2, PlantType.t3m3,
+	};
+	public bool IsForest(PlantType type)
+	{
+		return forestTypes.Contains(type);
+	}
+
+	public bool GetNeighborCellHasForeset(int cellIndex)
+	{
+		HexCell cell = GetCell(cellIndex);
+		for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+		{
+			if (cell.TryGetNeighbor(d, out HexCell neighbor))
+			{
+				Debug.Log(neighbor.PlantIndex);
+				if (IsForest((PlantType)neighbor.PlantIndex))
+					return true;
+			}
+		}
+		return false;
 	}
 }

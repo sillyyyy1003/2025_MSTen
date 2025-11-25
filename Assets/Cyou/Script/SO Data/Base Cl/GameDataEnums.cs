@@ -1,6 +1,8 @@
 ﻿// ===== 列挙型定義 =====
 // (so_data_definitions.cs より分離)
 
+using System.Collections.Generic;
+
 namespace GameData
 {
     public enum ResourceGenerationType
@@ -105,4 +107,7 @@ namespace GameData
     {
         Normal, Gold
     }
+
+
+
 }

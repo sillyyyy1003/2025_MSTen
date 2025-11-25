@@ -23,9 +23,6 @@ public struct BoardInfor
     // 每个格子的id
     public int id;
 
-    // 每个格子的地块信息 是否可通过
-    public TerrainType type;
-
     // 是否是起始位置
     public bool bIsStartPos;
 

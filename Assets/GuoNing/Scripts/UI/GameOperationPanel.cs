@@ -88,6 +88,8 @@ public class GameOperationPanel : MonoBehaviour
 			if (Input.GetMouseButton(0))
 			{
 				HexCell cell = hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
+
+				if (hexGrid.GetNeighborCellHasForeset(cell.Index))Debug.LogWarning("有森林");
 				ShowBuyCardInfo(cell.Index);
 				
 				return;

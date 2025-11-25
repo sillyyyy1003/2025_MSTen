@@ -114,7 +114,7 @@ public class UISpriteHelper : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
         Initialize();
     }
 

@@ -118,7 +118,7 @@ public class GameUIManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
         isInitialize = false;
     }
 

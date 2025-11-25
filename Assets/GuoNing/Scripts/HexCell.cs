@@ -1,6 +1,7 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+﻿using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
+using UnityEngine.UI;
 
 
 
@@ -38,14 +39,22 @@ public enum PlantType
 	t0m0 = 0,      
 	t0m1 = 1,  
 	t0m2 = 2,
-	DessertGrass = 3,
-	Grass = 4,     
-	Bush = 5,      
-	Forest = 6,    
-	FallingForest = 7,
-	RainForest = 8,  
-	Swamp = 9,      
-	DessertTree = 10	
+	t0m3 = 3,
+
+	t1m0 = 4,
+	t1m1 = 5,
+	t1m2 = 6,
+	t1m3 = 7,
+
+	t2m0 = 8,
+	t2m1 = 9,
+	t2m2 = 10,
+	t2m3 = 11,
+
+	t3m0 = 12,
+	t3m1 = 13,
+	t3m2 = 14,
+	t3m3 = 15,
 }
 
 
