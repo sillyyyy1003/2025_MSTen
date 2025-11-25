@@ -15,6 +15,7 @@ public class GameOption : MonoBehaviour
 
 	[Header("UI Component")]
 	public RectTransform ResulotionMenu;
+	public Button ResolutionButton;
 	public RectTransform SoundMunu;
 	public RectTransform OtherMenu;
 
@@ -29,7 +30,7 @@ public class GameOption : MonoBehaviour
 
 	[Header("SynchroMenu")] 
 	public TMP_Dropdown resolutionDropdown;
-	public TMP_Dropdown fullScreenDropDwon;
+	public TMP_Dropdown fullScreenDropdown;
 	public Toggle gridToggle;
 
 	private bool isOpen = false;
@@ -40,36 +41,56 @@ public class GameOption : MonoBehaviour
 		FirstLayer.gameObject.SetActive(false);
 		SecondLayer.gameObject.SetActive(false);
 
+		// 同步音量Slider
+		MasterSlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetMasterVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
+		BGMSlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetBGMVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
+		SESlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetSEVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
 		MasterSlider.SetValueWithoutNotify(SoundManager.Instance.MasterVolume);
 		BGMSlider.SetValueWithoutNotify(SoundManager.Instance.BGMVolume);
 		SESlider.SetValueWithoutNotify(SoundManager.Instance.SEVolume);
 
 		// 同步Grid
+		DisplayManager.Instance.InitializeToggle(gridToggle);
 		gridToggle.SetIsOnWithoutNotify(DisplayManager.Instance.IsGridOn);
 
 		// 同步resolution drop down
+		ResolutionManager.Instance.InitializeResolutionDropDown(resolutionDropdown);
 		resolutionDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentResolutionIndex);
 
 		// 同步full screen drop down
-		fullScreenDropDwon.SetValueWithoutNotify(ResolutionManager.Instance.CurrentFullScreenIndex);
+		ResolutionManager.Instance.InitializeFullScreenDropDown(fullScreenDropdown);
+		fullScreenDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentFullScreenIndex);
 
-		
-
+	
 	}
 	private void Update()
 	{
+		// Press Escape to open/close menu
 		if (Input.GetKeyUp(KeyCode.Escape))
 		{
-			if (isOpen) 
-			{ 
+			if (isOpen)
+			{
 				CloseMenu();
 			}
 			else
 			{
 				OpenMenu();
 			}
-
-			
 		}
 	}
 	
@@ -79,6 +100,10 @@ public class GameOption : MonoBehaviour
 	public void OpenMenu()
 	{
 		isOpen = !isOpen;
+
+		GameManage.Instance.SetIsGamingOrNot(false);
+		Debug.Log(GameManage.Instance.GetIsGamingOrNot());
+
 		Menu.gameObject.SetActive(true);
 		FirstLayer.gameObject.SetActive(true);
 		SecondLayer.gameObject.SetActive(false);
@@ -90,12 +115,21 @@ public class GameOption : MonoBehaviour
 	public void CloseMenu()
 	{
 		isOpen = !isOpen;
+		GameManage.Instance.SetIsGamingOrNot(true);
+		Debug.Log(GameManage.Instance!=null);
 		Menu.gameObject.SetActive(false);
+	}
+
+	public void CloseSecondLayer()
+	{
+		FirstLayer.gameObject.SetActive(true);
+		SecondLayer.gameObject.SetActive(false);
 	}
 
 
 	public void OpenResolutionMenu()
 	{
+		ResolutionButton.Select();
 		ResulotionMenu.gameObject.SetActive(true);
 		SoundMunu.gameObject.SetActive(false);
 		OtherMenu.gameObject.SetActive(false);

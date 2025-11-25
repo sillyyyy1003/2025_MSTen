@@ -88,18 +88,20 @@ public class UnitCardManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+		// 2025.11.25 GuoNing 注释掉，避免重复DontDestroyOnLoad
+		// DontDestroyOnLoad(gameObject);
 
 
-        currentCardType = CardType.None;
+		currentCardType = CardType.None;
         targetCardType = CardType.None;
 
         enableSingleMode = true;
         doubleContainer.gameObject.SetActive(false);
-        singleContainer.gameObject.SetActive(true);
+		// 2025.11.25 GuoNing 
+		singleContainer.gameObject.SetActive(false);
 
 
-        cardWidth = cardPrefab.transform.Find("Card").GetComponent<RectTransform>().sizeDelta.x;
+		cardWidth = cardPrefab.transform.Find("Card").GetComponent<RectTransform>().sizeDelta.x;
         detailCardWidth = cardPrefab.transform.Find("DetailCard").GetComponent<RectTransform>().sizeDelta.x;
 		openOffset = detailCardWidth + openSpacing + cardWidth;
         containerWidth = cardContainer.sizeDelta.x;
@@ -121,7 +123,7 @@ public class UnitCardManager : MonoBehaviour
 
     void Update()
 	{
-        UpdateCards();
+        //UpdateCards();
 
     }
 

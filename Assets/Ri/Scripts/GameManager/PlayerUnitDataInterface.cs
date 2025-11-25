@@ -8,6 +8,8 @@ using GameData.UI;
 using Unity.Mathematics;
 using TMPro;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Linq;
+
 
 #if UNITY_EDITOR
 using Mono.Cecil.Cil;
@@ -364,8 +366,8 @@ public class PlayerUnitDataInterface : MonoBehaviour
         // 购买某种棋子直接生成到地图
     public bool BuyUnitToMapByType(CardType type)
     {
-
-        int ResourcesCost= PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
+		// 检查资源是否足够
+		int ResourcesCost = PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
         int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
         if (ResourcesCount < ResourcesCost)
         {
@@ -373,42 +375,106 @@ public class PlayerUnitDataInterface : MonoBehaviour
             return false;
         }
 
-        // 尝试创建单位
-        if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
-        {
-			// 当前玩家人口上限
-			int currentPlayerPopulationTotal = PlayerDataManager.Instance.PopulationCost;
-			// 当前玩家已用人口
-			int currentPlayerPopulationUsed = PlayerDataManager.Instance.NowPopulation;
-            // 棋子所需要的人口
-            int currentUnitPopulationCost = 0;
-            if (type!=CardType.Building) 
-			    currentUnitPopulationCost = PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type),SceneStateManager.Instance.PlayerReligion);
-		
-            if (currentUnitPopulationCost <= currentPlayerPopulationTotal - currentPlayerPopulationUsed) 
-	        {
-		        ResourcesCount -= ResourcesCost;
-		        PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
-		        return true;
-			}
-	        else 
-			{
-				Debug.LogWarning("创建失败 - 人口不足");
-				return false;
-	        }
 
+        // 检查人口是否足够
+		// 当前玩家人口上限
+		int currentPlayerPopulationTotal = PlayerDataManager.Instance.PopulationCost;
+		// 当前玩家已用人口
+		int currentPlayerPopulationUsed = PlayerDataManager.Instance.NowPopulation;
+		// 棋子所需要的人口
+		int currentUnitPopulationCost = 0;
+		if (type != CardType.Building)
+			currentUnitPopulationCost = PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type), SceneStateManager.Instance.PlayerReligion);
+
+		if (currentUnitPopulationCost > currentPlayerPopulationTotal - currentPlayerPopulationUsed)
+        {
+            Debug.LogWarning("人口不足!");
+            return false;
         }
         else
         {
-            Debug.LogWarning("创建失败 - 请先选择一个空格子");
-            return false;
-        }
+            // 尝试创建单位
+            if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
+            {
+                ResourcesCount -= ResourcesCost;
+                PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+                return true;
+            }
+            else
+            {
 
+				Debug.LogWarning("创建失败 - 请先选择一个空格子");
+				return false;
+			}
+
+		}
     }
 
 
-    // 将 CardType 转换为 PieceType
-    public PieceType ConvertCardTypeToPieceType(CardType cardType)
+	/// <summary>
+	/// 购买某种棋子直接生成到地图检测资源是否足够、人口是否足够
+	/// </summary>
+	/// <param name="type"></param>
+	/// <returns></returns>
+	public bool TryBuyUnitToMapByType(CardType type)
+    {
+		// 检查资源是否足够
+		Religion playerReligion = SceneStateManager.Instance.PlayerReligion;
+        int ResourcesCost = 0;
+        if (type == CardType.Building)
+        {
+            ResourcesCost = 18;
+            //GameManage.Instance._BuildingManager.GetBuildingCostsByReligion(playerReligion).Values.First();
+		}
+        else
+        {
+			ResourcesCost = PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
+        }
+        Debug.Log("资源"+ResourcesCost);
+
+
+        int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
+		if (ResourcesCount < ResourcesCost)
+		{
+			Debug.LogWarning("资源不足!");
+			return false;
+		}
+
+		// 检查人口是否足够
+		// 当前玩家人口上限
+		int currentPlayerPopulationTotal = PlayerDataManager.Instance.PopulationCost;
+		// 当前玩家已用人口
+		int currentPlayerPopulationUsed = PlayerDataManager.Instance.NowPopulation;
+		// 棋子所需要的人口
+		int currentUnitPopulationCost = 0;
+		if (type != CardType.Building)
+			currentUnitPopulationCost = PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type), SceneStateManager.Instance.PlayerReligion);
+
+		if (currentUnitPopulationCost > currentPlayerPopulationTotal - currentPlayerPopulationUsed)
+		{
+			Debug.LogWarning("人口不足!");
+			return false;
+		}
+		else
+		{
+			// 尝试创建单位
+			if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
+			{
+				ResourcesCount -= ResourcesCost;
+				PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+				return true;
+			}
+			else
+			{
+				Debug.LogWarning("创建失败 - 请先选择一个空格子");
+				return false;
+			}
+		}
+	}
+
+
+	// 将 CardType 转换为 PieceType
+	public PieceType ConvertCardTypeToPieceType(CardType cardType)
     {
         switch (cardType)
         {

@@ -27,10 +27,6 @@ public class ResolutionManager : MonoBehaviour
 	//--------------------------------------------------------------------------------
 
 	/// <summary>
-	/// 
-	/// </summary>
-	private int currentIndex;
-	/// <summary>
 	/// Singleton instance
 	/// </summary>
 	public static ResolutionManager Instance;
@@ -47,7 +43,6 @@ public class ResolutionManager : MonoBehaviour
 
 	private int currentResolutionIndex;
 	private int currentFullScrrenIndex;
-	private Resolution resolution;
 
 	bool isFullScreen = true;
 
@@ -61,11 +56,11 @@ public class ResolutionManager : MonoBehaviour
 	/// <summary>
 	/// DropDown UI
 	/// </summary>
-	public TMP_Dropdown dropdown;
+	//public TMP_Dropdown dropdown;
 	/// <summary>
 	/// Full screen dropdown
 	/// </summary>
-	public TMP_Dropdown fullscreenModeDropdown;
+	//public TMP_Dropdown fullscreenModeDropdown;
 
 	//--------------------------------------------------------------------------------
 	// メソッド
@@ -86,9 +81,19 @@ public class ResolutionManager : MonoBehaviour
 
 	void Start()
 	{
-		resolution = new Resolution();
+
+		currentResolutionIndex = 0;			// default 1080p
+		currentFullScrrenIndex = 0; // default full screen
+
+		// 应用设置 (FULL HD/WINDOW)
+		Screen.SetResolution(resolutionSettings[0].width, resolutionSettings[0].height, false);
+
+	}
+
+	public void InitializeResolutionDropDown(TMP_Dropdown dropdown)
+	{
+
 		List<string> options = new List<string>();
-		currentIndex = 0;	// default 1080p
 
 		for (int i = 0; i < resolutionSettings.Length; i++)
 		{
@@ -96,27 +101,22 @@ public class ResolutionManager : MonoBehaviour
 			options.Add(optionLabel);
 		}
 
-
-		// todo list：use save load function load settings
 		dropdown.ClearOptions();
 		dropdown.AddOptions(options);
-		dropdown.value = currentIndex;
+		dropdown.value = currentResolutionIndex;
 		dropdown.RefreshShownValue();
-
-
-		List<string> fullscreenOptions = new List<string> { "フルスクリーン", "ウィンドウ", "ボーダーレス" };
-		fullscreenModeDropdown.ClearOptions();
-		fullscreenModeDropdown.AddOptions(fullscreenOptions);
-		fullscreenModeDropdown.value = 0; // 默认全屏
-		fullscreenModeDropdown.RefreshShownValue();
-
-
-		// 应用设置 (FULL HD/WINDOW)
-		Screen.SetResolution(resolutionSettings[0].width, resolutionSettings[0].height, false);
-
-		//fullScreenToggle.isOn = false;	// Set toggle false
-
 	}
+
+	public void InitializeFullScreenDropDown(TMP_Dropdown dropdown)
+	{
+		List<string> fullscreenOptions = new List<string> { "フルスクリーン", "ウィンドウ", "ボーダーレス" };
+		dropdown.ClearOptions();
+		dropdown.AddOptions(fullscreenOptions);
+		dropdown.value = currentFullScrrenIndex; // 默认全屏
+		dropdown.RefreshShownValue();
+	}
+
+
 
 	public void OnChangeResolution(int index)
 	{
@@ -131,14 +131,13 @@ public class ResolutionManager : MonoBehaviour
 	public void OnChangeFullScreenMode(int index)
 	{
 		FullScreenMode mode = FullScreenMode.Windowed;
-		switch (index)
+		currentFullScrrenIndex = index;
+		switch (currentFullScrrenIndex)
 		{
 			case 0: mode = FullScreenMode.ExclusiveFullScreen; break;
 			case 1: mode = FullScreenMode.Windowed; break;
 			case 2: mode = FullScreenMode.FullScreenWindow; break;
 		}
-
-		currentFullScrrenIndex = index;
 		Screen.fullScreenMode = mode;
 	}
 
