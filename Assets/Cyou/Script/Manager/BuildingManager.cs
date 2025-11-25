@@ -354,83 +354,71 @@ public class BuildingManager : MonoBehaviour
 
     #endregion
 
-    #region 建築処理
+    #region 建築処理（資源コスト取得）
 
     /// <summary>
-    /// 建物の建築を進める（農民を投入）
+    /// 建物名から建築に必要な資源コストを取得
     /// </summary>
-    /// <param name="buildingID">建物ID</param>
-    /// <param name="farmerID">投入する農民の駒ID</param>
-    /// <param name="pieceManager">PieceManagerの参照</param>
-    /// <returns>建築進行成功したらtrue</returns>
-    public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
+    /// <param name="buildingName">建物名</param>
+    /// <returns>資源コスト（見つからない場合は-1）</returns>
+    public int GetBuildingCost(string buildingName)
     {
-        if (!buildings.TryGetValue(buildingID, out Building building))
+        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
+        if (buildingData == null)
         {
-            Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return false;
+            Debug.LogError($"建物データが見つかりません: {buildingName}");
+            return -1;
         }
-
-        if (building.State != BuildingState.UnderConstruction)
-        {
-            Debug.LogError($"建物ID={buildingID}は建築中ではありません（状態: {building.State}）");
-            return false;
-        }
-
-        // PieceManagerから農民を取得
-        if (!pieceManager.DoesPieceExist(farmerID))
-        {
-            Debug.LogError($"農民が見つかりません: ID={farmerID}");
-            return false;
-        }
-
-        // 農民のAPを取得
-        float farmerAP = pieceManager.GetPieceAP(farmerID);
-        if (farmerAP <= 0)
-        {
-            Debug.LogError($"農民ID={farmerID}のAPが不足しています");
-            return false;
-        }
-
-        // 建築を進める
-        int apToConsume = Mathf.Min(Mathf.FloorToInt(farmerAP), building.RemainingBuildCost);
-
-        // 農民のAPを消費（PieceManagerを通じて）
-        if (!pieceManager.ConsumePieceAP(farmerID, apToConsume))
-        {
-            Debug.LogError($"農民ID={farmerID}のAP消費に失敗しました");
-            return false;
-        }
-
-        // 建築を進める
-        bool isCompleted = building.ProgressConstruction(apToConsume);
-
-        if (isCompleted)
-        {
-            Debug.Log($"建物ID={buildingID}の建築が完了しました！");
-        }
-        else
-        {
-            Debug.Log($"建物ID={buildingID}の建築が進みました（残りコスト: {building.RemainingBuildCost}）");
-        }
-
-        return true;
+        return buildingData.buildingResourceCost;
     }
 
     /// <summary>
-    /// 建築をキャンセル
+    /// 建物IDから建築に必要な資源コストを取得
     /// </summary>
     /// <param name="buildingID">建物ID</param>
-    /// <returns>キャンセル成功したらtrue</returns>
-    public bool CancelConstruction(int buildingID)
+    /// <returns>資源コスト（見つからない場合は-1）</returns>
+    public int GetBuildingCost(int buildingID)
     {
-        if (!buildings.TryGetValue(buildingID, out Building building))
+        Building building = GetMyBuilding(buildingID);
+        if (building == null)
         {
             Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return false;
+            return -1;
+        }
+        return building.Data.buildingResourceCost;
+    }
+
+    /// <summary>
+    /// 指定された宗教のすべての建物の資源コストを取得
+    /// </summary>
+    /// <param name="religion">宗教</param>
+    /// <returns>建物名と資源コストのDictionary（見つからない場合は空のDictionary）</returns>
+    public Dictionary<string, int> GetBuildingCostsByReligion(Religion religion)
+    {
+        Dictionary<string, int> costs = new Dictionary<string, int>();
+
+        if (buildingRegistry == null)
+        {
+            Debug.LogError("BuildingRegistryが設定されていません");
+            return costs;
         }
 
-        return building.CancelConstruction();
+        List<BuildingDataSO> buildings = buildingRegistry.GetBuildingsByReligion(religion);
+        if (buildings == null || buildings.Count == 0)
+        {
+            Debug.LogWarning($"宗教 {religion} に属する建物が見つかりません");
+            return costs;
+        }
+
+        foreach (BuildingDataSO buildingData in buildings)
+        {
+            if (buildingData != null)
+            {
+                costs[buildingData.buildingName] = buildingData.buildingResourceCost;
+            }
+        }
+
+        return costs;
     }
 
     #endregion
@@ -766,21 +754,44 @@ public class BuildingManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 自分の建物を取得
+    /// </summary>
+    /// <param name="buildingID">建物ID</param>
+    /// <returns>Buildingインスタンス（見つからない場合はnull）</returns>
+    public Building GetMyBuilding(int buildingID)
+    {
+        if (buildings.TryGetValue(buildingID, out Building building))
+        {
+            return building;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 敵の建物を取得
+    /// </summary>
+    /// <param name="buildingID">建物ID</param>
+    /// <returns>Buildingインスタンス（見つからない場合はnull）</returns>
+    public Building GetEnemyBuilding(int buildingID)
+    {
+        if (enemyBuildings.TryGetValue(buildingID, out Building building))
+        {
+            return building;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// 建物インスタンスを取得（己方・敵方両方から検索）
     /// </summary>
     /// <param name="buildingID">建物ID</param>
     /// <returns>Buildingインスタンス（見つからない場合はnull）</returns>
     public Building GetBuilding(int buildingID)
     {
-        if (buildings.TryGetValue(buildingID, out Building building))
-        {
-            return building;
-        }
-        if (enemyBuildings.TryGetValue(buildingID, out building))
-        {
-            return building;
-        }
-        return null;
+        Building building = GetMyBuilding(buildingID);
+        if (building != null) return building;
+
+        return GetEnemyBuilding(buildingID);
     }
 
     /// <summary>
