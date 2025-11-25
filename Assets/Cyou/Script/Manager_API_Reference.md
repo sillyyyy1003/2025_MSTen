@@ -1497,6 +1497,37 @@ foreach (var kvp in costs)
 
 ---
 
+#### `GetBuildingDataByReligion(Religion religion)`
+指定された宗教の建物データを直接取得します。
+
+**シグネチャ:**
+```csharp
+public BuildingDataSO GetBuildingDataByReligion(Religion religion)
+```
+
+**パラメータ:**
+- `religion`: 宗教
+
+**戻り値:**
+- BuildingDataSO（見つからない場合はnull）
+
+**使用例:**
+```csharp
+// 宗教から直接BuildingDataSOを取得
+BuildingDataSO buildingData = buildingManager.GetBuildingDataByReligion(Religion.SilkReligion);
+
+if (buildingData != null)
+{
+    int cost = buildingData.buildingResourceCost; // 18
+    string name = buildingData.buildingName; // "絲織教_特殊建築"
+    Debug.Log($"{name} のコスト: {cost} 資源");
+}
+```
+
+**実装箇所:** `BuildingManager.cs:424-441`
+
+---
+
 ### 建築コスト取得の使用例
 
 建物を建築する際は、事前に資源コストを確認してから、資源を消費して建物を生成します。
