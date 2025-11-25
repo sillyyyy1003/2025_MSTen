@@ -61,9 +61,7 @@ public struct PlayerUnitData
     }
     public void SetUnitDataSO(syncPieceData unitData)
     {
-        Debug.Log("Set unitID is "+ PlayerUnitDataSO.pieceID+" HP is "+ PlayerUnitDataSO.currentHPLevel);
         PlayerUnitDataSO = unitData;
-        Debug.Log("Set unitID is " + PlayerUnitDataSO.pieceID + " HP is " + PlayerUnitDataSO.currentHPLevel);
     }
     public void SetBuildingUnitDataSO(syncBuildingData unitData)
     {
@@ -299,6 +297,9 @@ public class PlayerDataManager : MonoBehaviour
     // 当前选择中的单位类型
     public CardType nowChooseUnitType;
 
+    // 本地玩家数据(不参与数据同步)
+    // 人口上限
+    public int PopCap;
 
 
     // 建筑
@@ -315,6 +316,8 @@ public class PlayerDataManager : MonoBehaviour
 
     // 事件: 单位移动
     public event Action<int, int2, int2> OnUnitMoved;
+
+
 
     private void Awake()
     {
