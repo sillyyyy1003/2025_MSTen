@@ -1274,7 +1274,7 @@ if (myBuildingData.HasValue)
 - 基本信息：buildingID, buildingName, playerID
 - 位置和状态：position, currentHP, state
 - 建造信息：remainingBuildCost
-- 升级等级：hpLevel, attackRangeLevel, slotsLevel, buildCostLevel
+- 升级等级：hpLevel, attackRangeLevel, slotsLevel
 
 **实现位置:** `BuildingManager.cs:420-458`
 
@@ -2436,7 +2436,6 @@ public struct syncBuildingData
     public int hpLevel;            // HP 等级 (0-3)
     public int attackRangeLevel;   // 攻击范围等级 (0-3)
     public int slotsLevel;         // 槽位数等级 (0-3)
-    public int buildCostLevel;     // 建造成本等级 (0-3)
 }
 ```
 
