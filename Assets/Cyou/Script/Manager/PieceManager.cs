@@ -352,7 +352,7 @@ public class PieceManager : MonoBehaviour
 
         // 25.11.12 RI change return data
         syncPieceData pieceData=syncPieceData.CreateFromPiece(piece);
-        Debug.Log("piece re is " + pieceData.religion);
+        //Debug.Log("piece re is " + pieceData.religion);
         allPiecesSyncData.Add(pieceID, pieceData);
         
         // 只需要返回基本信息的同步数据

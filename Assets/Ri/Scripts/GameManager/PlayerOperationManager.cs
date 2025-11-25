@@ -769,16 +769,29 @@ public class PlayerOperationManager : MonoBehaviour
         {
             case CardType.Farmer:
                 pieceType = PieceType.Farmer;
+                PlayerDataManager.Instance.NowPopulation +=
+                    PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer,SceneStateManager.Instance.PlayerReligion);
+           
 
                 break;
             case CardType.Solider:
                 pieceType = PieceType.Military;
+                PlayerDataManager.Instance.NowPopulation +=
+                 PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
+
+             
+
                 break;
             case CardType.Missionary:
                 pieceType = PieceType.Missionary;
+                PlayerDataManager.Instance.NowPopulation +=
+               PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
                 break;
             case CardType.Pope:
-                pieceType = PieceType.Pope;
+                pieceType = PieceType.Pope; 
+                PlayerDataManager.Instance.NowPopulation +=
+               PieceManager.Instance.GetPiecePopulationCost(PieceType.Pope, SceneStateManager.Instance.PlayerReligion);
+             
                 GetStartWall(cellId);
 
                 // init Hex Cell List
@@ -893,38 +906,38 @@ public class PlayerOperationManager : MonoBehaviour
         return true;
     }
 
-    // 在外部指定的格子创建单位
-    public bool TryCreateUnit(CardType unitType, int cellID)
-    {
-        // 检查是否选中了空格子
-        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
-        {
-            Debug.LogWarning("未选中任何空格子");
-            return false;
-        }
+    //// 在外部指定的格子创建单位
+    //public bool TryCreateUnit(CardType unitType, int cellID)
+    //{
+    //    // 检查是否选中了空格子
+    //    if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
+    //    {
+    //        Debug.LogWarning("未选中任何空格子");
+    //        return false;
+    //    }
 
-        // 获取选中格子的信息
-        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
-        int2 cellPos = cellInfo.Cells2DPos;
+    //    // 获取选中格子的信息
+    //    BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
+    //    int2 cellPos = cellInfo.Cells2DPos;
 
-        // 再次确认该位置是空的
-        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
-        {
-            Debug.LogWarning("该格子已有单位");
-            SelectedEmptyCellID = -1;
-            return false;
-        }
+    //    // 再次确认该位置是空的
+    //    if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
+    //    {
+    //        Debug.LogWarning("该格子已有单位");
+    //        SelectedEmptyCellID = -1;
+    //        return false;
+    //    }
 
-        // 在领土内创建单位
+    //    // 在领土内创建单位
 
-        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
+    //    CreateUnitAtPosition(unitType, SelectedEmptyCellID);
 
-        // 清除选择
-        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
-        SelectedEmptyCellID = -1;
+    //    // 清除选择
+    //    _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
+    //    SelectedEmptyCellID = -1;
 
-        return true;
-    }
+    //    return true;
+    //}
     // 创建敌方单位
     private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
     {

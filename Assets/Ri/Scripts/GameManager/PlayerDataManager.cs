@@ -299,7 +299,8 @@ public class PlayerDataManager : MonoBehaviour
 
     // 本地玩家数据(不参与数据同步)
     // 人口上限
-    public int PopCap;
+    public int PopulationCost { get; private set; }
+    public int NowPopulation=0;
 
 
     // 建筑
@@ -364,6 +365,30 @@ public class PlayerDataManager : MonoBehaviour
         if (!allPlayersData.ContainsKey(playerId))
         {
             allPlayersData[playerId] = new PlayerData(playerId);
+
+            // 设置人口上限
+            if(playerId==GameManage.Instance.LocalPlayerID)
+            {
+                switch (allPlayersData[playerId].PlayerReligion)
+                {
+                    case Religion.MadScientistReligion:
+                        PopulationCost = 20;
+                        break;
+                    case Religion.MirrorLakeReligion:
+                        PopulationCost = 20;
+                        break;
+                    case Religion.RedMoonReligion:
+                        PopulationCost = 26;
+                        break;
+                    case Religion.SilkReligion:
+                        PopulationCost = 20;
+                        break;
+                    case Religion.MayaReligion:
+                        PopulationCost = 20;
+                        break;
+                 
+                }
+            }
             //allPlayersData[playerId].SetReligion();
             Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }
