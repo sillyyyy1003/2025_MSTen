@@ -61,9 +61,7 @@ public struct PlayerUnitData
     }
     public void SetUnitDataSO(syncPieceData unitData)
     {
-        Debug.Log("Set unitID is "+ PlayerUnitDataSO.pieceID+" HP is "+ PlayerUnitDataSO.currentHPLevel);
         PlayerUnitDataSO = unitData;
-        Debug.Log("Set unitID is " + PlayerUnitDataSO.pieceID + " HP is " + PlayerUnitDataSO.currentHPLevel);
     }
     public void SetBuildingUnitDataSO(syncBuildingData unitData)
     {
@@ -299,6 +297,10 @@ public class PlayerDataManager : MonoBehaviour
     // 当前选择中的单位类型
     public CardType nowChooseUnitType;
 
+    // 本地玩家数据(不参与数据同步)
+    // 人口上限
+    public int PopulationCost { get; private set; }
+    public int NowPopulation=0;
 
 
     // 建筑
@@ -315,6 +317,8 @@ public class PlayerDataManager : MonoBehaviour
 
     // 事件: 单位移动
     public event Action<int, int2, int2> OnUnitMoved;
+
+
 
     private void Awake()
     {
@@ -361,6 +365,30 @@ public class PlayerDataManager : MonoBehaviour
         if (!allPlayersData.ContainsKey(playerId))
         {
             allPlayersData[playerId] = new PlayerData(playerId);
+
+            // 设置人口上限
+            if(playerId==GameManage.Instance.LocalPlayerID)
+            {
+                switch (allPlayersData[playerId].PlayerReligion)
+                {
+                    case Religion.MadScientistReligion:
+                        PopulationCost = 20;
+                        break;
+                    case Religion.MirrorLakeReligion:
+                        PopulationCost = 20;
+                        break;
+                    case Religion.RedMoonReligion:
+                        PopulationCost = 26;
+                        break;
+                    case Religion.SilkReligion:
+                        PopulationCost = 20;
+                        break;
+                    case Religion.MayaReligion:
+                        PopulationCost = 20;
+                        break;
+                 
+                }
+            }
             //allPlayersData[playerId].SetReligion();
             Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }

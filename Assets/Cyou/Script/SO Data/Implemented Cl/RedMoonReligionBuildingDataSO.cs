@@ -22,19 +22,13 @@ namespace GameData
             // 攻撃範囲
             attackRangeByLevel = new int[3] { 0, 1, 2 };
 
-            // 建造所需花費
-            buildingAPCostByLevel = new int[3] { 9, 6, 3 };
-
             // 各項目のアップグレードコスト (Excel行67-70)
             hpUpgradeCost = new int[2] { 6, 9 }; // 血量: 25→30(6資源), 30→45(9資源)
             attackRangeUpgradeCost = new int[2] { 8, 10 }; // 攻撃範囲: 無→範囲1(8資源), 範囲1→範囲2(10資源)
             slotsUpgradeCost = new int[2] { 8, 10 }; // 祭壇格子數: 4→5(8資源), 5→6(10資源)
-            buildCostUpgradeCost = new int[2] { 6, 8 }; // 建造花費: 9→6(6資源), 6→3(8資源)
 
             // 資源生成設定
-            buildStartAPCost = 1;
             resourceGenInterval = 1;
-            apCostperTurn = 1;
 
             // 生産量（一般領地: 2, 金鉱領地: 5）
             generationType = ResourceGenerationType.Gold;

@@ -1274,7 +1274,7 @@ if (myBuildingData.HasValue)
 - 基本信息：buildingID, buildingName, playerID
 - 位置和状态：position, currentHP, state
 - 建造信息：remainingBuildCost
-- 升级等级：hpLevel, attackRangeLevel, slotsLevel, buildCostLevel
+- 升级等级：hpLevel, attackRangeLevel, slotsLevel
 
 **实现位置:** `BuildingManager.cs:420-458`
 
@@ -1539,54 +1539,92 @@ void HandleBuildingDestruction(int destroyedBuildingID)
 
 ---
 
-### 建造处理
+### 建造处理（资源成本获取）
 
-#### `AddFarmerToConstruction()`
-推进建筑建造（投入农民）。
+#### `GetBuildingCost(string buildingName)`
+从建筑名称获取建造所需的资源成本。
 
 **函数签名:**
 ```csharp
-public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
+public int GetBuildingCost(string buildingName)
 ```
 
 **参数:**
-- `buildingID`: 建筑 ID
-- `farmerID`: 投入的农民棋子 ID
-- `pieceManager`: PieceManager 引用
+- `buildingName`: 建筑名称
 
 **返回值:**
-- `true`: 建造推进成功
-- `false`: 失败
+- 资源成本（未找到时返回 -1）
 
 **使用示例:**
 ```csharp
-if (buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager))
+int cost = buildingManager.GetBuildingCost("祭坛");
+if (cost > 0)
 {
-    Debug.Log("建造推进中");
+    Debug.Log($"祭坛建造成本: {cost} 资源");
 }
 ```
 
-**处理流程:**
-1. 确认农民的 AP
-2. 确认建筑的剩余建造成本
-3. 消耗农民的 AP
-4. 推进建筑建造
-5. 完成时输出日志
-
-**实现位置:** `BuildingManager.cs:106-158`
+**实现位置:** `BuildingManager.cs:364-373`
 
 ---
 
-#### `CancelConstruction()`
-取消建造。
+#### `GetBuildingCost(int buildingID)`
+从建筑 ID 获取建造所需的资源成本。
 
 **函数签名:**
 ```csharp
-public bool CancelConstruction(int buildingID)
+public int GetBuildingCost(int buildingID)
 ```
 
 **参数:**
 - `buildingID`: 建筑 ID
+
+**返回值:**
+- 资源成本（未找到时返回 -1）
+
+**使用示例:**
+```csharp
+int cost = buildingManager.GetBuildingCost(buildingID);
+if (cost > 0)
+{
+    Debug.Log($"建筑ID {buildingID} 的建造成本: {cost} 资源");
+}
+```
+
+**实现位置:** `BuildingManager.cs:380-389`
+
+---
+
+#### `GetBuildingCostsByReligion(Religion religion)`
+获取指定宗教的所有建筑的资源成本。
+
+**函数签名:**
+```csharp
+public Dictionary<string, int> GetBuildingCostsByReligion(Religion religion)
+```
+
+**参数:**
+- `religion`: 宗教
+
+**返回值:**
+- 建筑名称和资源成本的 Dictionary（未找到时返回空 Dictionary）
+
+**使用示例:**
+```csharp
+Dictionary<string, int> costs = buildingManager.GetBuildingCostsByReligion(Religion.MirrorLakeReligion);
+
+foreach (var kvp in costs)
+{
+    Debug.Log($"{kvp.Key}: {kvp.Value} 资源");
+}
+// 输出示例:
+// 祭坛: 100 资源
+// 农场: 50 资源
+```
+
+**实现位置:** `BuildingManager.cs:396-423`
+
+---
 
 **返回值:**
 - `true`: 取消成功
@@ -2025,6 +2063,92 @@ public bool CanUpgrade(int buildingID, BuildingUpgradeType upgradeType)
 
 ### 建筑信息获取
 
+#### `GetMyBuilding()`
+获取自己的建筑实例。
+
+**函数签名:**
+```csharp
+public Building GetMyBuilding(int buildingID)
+```
+
+**参数:**
+- `buildingID`: 建筑 ID
+
+**返回值:**
+- 成功: Building 实例
+- 失败: null
+
+**使用示例:**
+```csharp
+Building myBuilding = buildingManager.GetMyBuilding(buildingID);
+if (myBuilding != null)
+{
+    Debug.Log($"建筑HP: {myBuilding.CurrentHP}");
+}
+```
+
+**实现位置:** `BuildingManager.cs:761-768`
+
+---
+
+#### `GetEnemyBuilding()`
+获取敌方的建筑实例。
+
+**函数签名:**
+```csharp
+public Building GetEnemyBuilding(int buildingID)
+```
+
+**参数:**
+- `buildingID`: 建筑 ID
+
+**返回值:**
+- 成功: Building 实例
+- 失败: null
+
+**使用示例:**
+```csharp
+Building enemyBuilding = buildingManager.GetEnemyBuilding(buildingID);
+if (enemyBuilding != null)
+{
+    Debug.Log($"敌方建筑HP: {enemyBuilding.CurrentHP}");
+}
+```
+
+**实现位置:** `BuildingManager.cs:775-782`
+
+---
+
+#### `GetBuilding()`
+获取建筑实例（从己方和敌方建筑中搜索）。
+
+**函数签名:**
+```csharp
+public Building GetBuilding(int buildingID)
+```
+
+**参数:**
+- `buildingID`: 建筑 ID
+
+**返回值:**
+- 成功: Building 实例
+- 失败: null
+
+**使用示例:**
+```csharp
+Building building = buildingManager.GetBuilding(buildingID);
+if (building != null)
+{
+    Debug.Log($"找到建筑: {building.Data.buildingName}");
+}
+```
+
+**注意:** 如果需要区分自己的建筑和敌方的建筑，请使用 `GetMyBuilding()` 或 `GetEnemyBuilding()`。
+
+**实现位置:** `BuildingManager.cs:789-795`
+
+---
+
 #### `GetBuildingHP()`
 获取建筑当前 HP。
 
@@ -2312,7 +2436,6 @@ public struct syncBuildingData
     public int hpLevel;            // HP 等级 (0-3)
     public int attackRangeLevel;   // 攻击范围等级 (0-3)
     public int slotsLevel;         // 槽位数等级 (0-3)
-    public int buildCostLevel;     // 建造成本等级 (0-3)
 }
 ```
 

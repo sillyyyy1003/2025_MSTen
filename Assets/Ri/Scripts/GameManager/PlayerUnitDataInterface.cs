@@ -351,7 +351,17 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     }
 
-    // 购买某种棋子直接生成到地图
+    public int GetCurrentPopulation()
+    {
+        return PlayerDataManager.Instance.NowPopulation;
+    }
+    public int GetCurrentUnitPopulationCostByType(CardType type)
+    {
+
+        return PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type), SceneStateManager.Instance.PlayerReligion);
+
+    }
+        // 购买某种棋子直接生成到地图
     public bool BuyUnitToMapByType(CardType type)
     {
 
@@ -367,18 +377,21 @@ public class PlayerUnitDataInterface : MonoBehaviour
         if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
         {
 			// 当前玩家人口上限
-			int currentPlayerPopulationTotal = 32;
+			int currentPlayerPopulationTotal = PlayerDataManager.Instance.PopulationCost;
 			// 当前玩家已用人口
-			int currentPlayerPopulationUsed = 3;
+			int currentPlayerPopulationUsed = PlayerDataManager.Instance.NowPopulation;
             // 棋子所需要的人口
-			int currentUnitPopulationCost = 5;
-			if (currentUnitPopulationCost <= currentPlayerPopulationTotal - currentPlayerPopulationUsed) 
+            int currentUnitPopulationCost = 0;
+            if (type!=CardType.Building) 
+			    currentUnitPopulationCost = PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type),SceneStateManager.Instance.PlayerReligion);
+		
+            if (currentUnitPopulationCost <= currentPlayerPopulationTotal - currentPlayerPopulationUsed) 
 	        {
 		        ResourcesCount -= ResourcesCost;
 		        PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
 		        return true;
 			}
-	        else
+	        else 
 			{
 				Debug.LogWarning("创建失败 - 人口不足");
 				return false;

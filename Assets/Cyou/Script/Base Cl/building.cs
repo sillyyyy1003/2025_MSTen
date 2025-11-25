@@ -23,14 +23,12 @@ namespace Buildings
         private int remainingBuildCost;
         private int currentSkillUses;//現時点まだ使用可能のスロットの数
         private int lastResourceGenTurn;
-        private int apCostperTurn;
         private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2（全体レベル・互換性のため残す）
 
         // ===== 各項目の個別レベル =====
         private int hpLevel = 0;            // HP レベル (0-2)
         private int attackRangeLevel = 0;   // 攻撃範囲レベル (0-2)
         private int slotsLevel = 0;         // スロット数レベル (0-2)
-        private int buildCostLevel = 0;     // 建築コストレベル (0-2)
 
         // 配置された農民のリスト
         private List<FarmerSlot> farmerSlots = new List<FarmerSlot>();
@@ -48,16 +46,14 @@ namespace Buildings
         public bool IsAlive => currentState != BuildingState.Ruined;
         public bool IsOperational => (currentState == BuildingState.Inactive || currentState == BuildingState.Active) && currentSkillUses > 0;
         public int CurrentHP => currentHp;
-        public float BuildProgress => buildingData.buildingAPCost > 0 ?
-            1f - (float)remainingBuildCost / buildingData.buildingAPCost : 1f;
+        public float BuildProgress => buildingData.buildingResourceCost > 0 ?
+            1f - (float)remainingBuildCost / buildingData.buildingResourceCost : 1f;
         public int RemainingBuildCost => remainingBuildCost;
         public List<FarmerSlot> FarmerSlots => farmerSlots;
-        public int APCostPerTurn => apCostperTurn;
         public int UpgradeLevel => upgradeLevel;
         public int HPLevel => hpLevel;
         public int AttackRangeLevel => attackRangeLevel;
         public int SlotsLevel => slotsLevel;
-        public int BuildCostLevel => buildCostLevel;
 
         /// <summary>
         /// 建物IDを設定（BuildingManagerのみが呼び出し）
@@ -74,8 +70,7 @@ namespace Buildings
             buildingData = data;
             playerID = ownerPlayerID;
             currentHp = data.maxHp;
-            remainingBuildCost = data.buildingAPCost;
-            apCostperTurn = data.apCostperTurn;
+            remainingBuildCost = data.buildingResourceCost;
             currentSkillUses = data.GetMaxSlotsByLevel(0);
             //地面に金鉱があるか否かを判断すべき
 
@@ -103,25 +98,6 @@ namespace Buildings
         #endregion
 
         #region 建築処理
-
-        /// <summary>
-        /// 建築を進める
-        /// </summary>
-        public bool ProgressConstruction(int AP)
-        {
-            if (currentState != BuildingState.UnderConstruction)
-                return false;
-
-            remainingBuildCost -= AP;
-
-            if (remainingBuildCost <= 0)
-            {
-                CompleteConstruction();
-                return true;
-            }
-
-            return false;
-        }
 
         private void CompleteConstruction()
         {
@@ -261,7 +237,7 @@ namespace Buildings
             {
                 if (slot.IsOccupied)
                 {
-                    slot.ConsumeActionPoint(apCostperTurn);//毎ターン在籍中農民の行動力消費量
+                    // 行動力チェックは他のシステムで管理されるため削除
                     if (!slot.HasAP)
                     {
                         // 行動力が尽きた農民を除去
@@ -537,49 +513,6 @@ namespace Buildings
             return true;
         }
 
-        /// <summary>
-        /// 建築コストをアップグレードする（建築に必要なAPを減少させる）
-        /// </summary>
-        /// <returns>アップグレード成功したらtrue</returns>
-        public bool UpgradeBuildCost()
-        {
-            // 建物状態チェック
-            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
-            {
-                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
-                return false;
-            }
-
-            // 最大レベルチェック
-            if (buildCostLevel >= 2)
-            {
-                Debug.LogWarning($"{buildingData.buildingName} の建築コストは既に最大レベル(2)です");
-                return false;
-            }
-
-            // アップグレードコスト配列の境界チェック
-            if (buildingData.buildCostUpgradeCost == null || buildCostLevel >= buildingData.buildCostUpgradeCost.Length)
-            {
-                Debug.LogError($"{buildingData.buildingName} のbuildCostUpgradeCostが正しく設定されていません");
-                return false;
-            }
-
-            int cost = buildingData.buildCostUpgradeCost[buildCostLevel];
-
-            // コストが0の場合はアップグレード不可
-            if (cost <= 0)
-            {
-                Debug.LogWarning($"{buildingData.buildingName} の建築コストレベル{buildCostLevel}→{buildCostLevel + 1}へのアップグレードは設定されていません（コスト0）");
-                return false;
-            }
-
-            // レベルアップ実行
-            buildCostLevel++;
-            int newBuildCost = buildingData.GetBuildingAPCostByLevel(buildCostLevel);
-
-            Debug.Log($"{buildingData.buildingName} の建築コストがレベル{buildCostLevel}にアップグレードしました（建築AP: {newBuildCost}）");
-            return true;
-        }
 
         /// <summary>
         /// 指定項目のアップグレードコストを取得
@@ -602,12 +535,6 @@ namespace Buildings
                     if (level >= 2 || buildingData.slotsUpgradeCost == null || level >= buildingData.slotsUpgradeCost.Length)
                         return -1;
                     return buildingData.slotsUpgradeCost[level];
-
-
-                //case BuildingUpgradeType.BuildCost:
-                //    if (buildCostLevel >= 2 || buildingData.buildCostUpgradeCost == null || buildCostLevel >= buildingData.buildCostUpgradeCost.Length)
-                //        return -1;
-                //    return buildingData.buildCostUpgradeCost[buildCostLevel];
 
                 default:
                     return -1;
@@ -690,13 +617,6 @@ namespace Buildings
             }
         }
 
-        /// <summary>
-        /// 建築コストレベルを直接設定（ネットワーク同期用）
-        /// </summary>
-        public void SetBuildCostLevel(int level)
-        {
-            buildCostLevel = Mathf.Clamp(level, 0, 2);
-        }
 
         /// <summary>
         /// 残り建築コストを直接設定（ネットワーク同期用）

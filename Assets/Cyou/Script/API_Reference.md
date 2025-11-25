@@ -60,10 +60,9 @@ else
 ```
 
 **処理の流れ:**
-1. `buildStartAPCost`分のAPを消費
-2. `BuildingFactory.CreateBuilding()`で建物インスタンスを生成
-3. 農民の残りAPで建築を進行
-4. APが不足した場合、農民は消費される（Die()）
+1. `BuildingFactory.CreateBuilding()`で建物インスタンスを生成
+2. 農民の残りAPで建築を進行
+3. APが不足した場合、農民は消費される（Die()）
 
 **実装箇所:** `farmer.cs:102-140`
 
@@ -1656,7 +1655,6 @@ private int buffLevel = 0;  // 0-3
 private int hpLevel = 0;  // 0-2
 private int attackRangeLevel = 0;  // 0-2
 private int slotsLevel = 0;  // 0-2
-private int buildCostLevel = 0;  // 0-2
 ```
 
 #### 2. アップグレードコスト取得パターン

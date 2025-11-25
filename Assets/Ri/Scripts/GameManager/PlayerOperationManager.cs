@@ -766,16 +766,29 @@ public class PlayerOperationManager : MonoBehaviour
         {
             case CardType.Farmer:
                 pieceType = PieceType.Farmer;
+                PlayerDataManager.Instance.NowPopulation +=
+                    PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer,SceneStateManager.Instance.PlayerReligion);
+           
 
                 break;
             case CardType.Solider:
                 pieceType = PieceType.Military;
+                PlayerDataManager.Instance.NowPopulation +=
+                 PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
+
+             
+
                 break;
             case CardType.Missionary:
                 pieceType = PieceType.Missionary;
+                PlayerDataManager.Instance.NowPopulation +=
+               PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
                 break;
             case CardType.Pope:
-                pieceType = PieceType.Pope;
+                pieceType = PieceType.Pope; 
+                PlayerDataManager.Instance.NowPopulation +=
+               PieceManager.Instance.GetPiecePopulationCost(PieceType.Pope, SceneStateManager.Instance.PlayerReligion);
+             
                 GetStartWall(cellId);
 
                 // init Hex Cell List
@@ -890,38 +903,38 @@ public class PlayerOperationManager : MonoBehaviour
         return true;
     }
 
-    // 在外部指定的格子创建单位
-    public bool TryCreateUnit(CardType unitType, int cellID)
-    {
-        // 检查是否选中了空格子
-        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
-        {
-            Debug.LogWarning("未选中任何空格子");
-            return false;
-        }
+    //// 在外部指定的格子创建单位
+    //public bool TryCreateUnit(CardType unitType, int cellID)
+    //{
+    //    // 检查是否选中了空格子
+    //    if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
+    //    {
+    //        Debug.LogWarning("未选中任何空格子");
+    //        return false;
+    //    }
 
-        // 获取选中格子的信息
-        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
-        int2 cellPos = cellInfo.Cells2DPos;
+    //    // 获取选中格子的信息
+    //    BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
+    //    int2 cellPos = cellInfo.Cells2DPos;
 
-        // 再次确认该位置是空的
-        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
-        {
-            Debug.LogWarning("该格子已有单位");
-            SelectedEmptyCellID = -1;
-            return false;
-        }
+    //    // 再次确认该位置是空的
+    //    if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
+    //    {
+    //        Debug.LogWarning("该格子已有单位");
+    //        SelectedEmptyCellID = -1;
+    //        return false;
+    //    }
 
-        // 在领土内创建单位
+    //    // 在领土内创建单位
 
-        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
+    //    CreateUnitAtPosition(unitType, SelectedEmptyCellID);
 
-        // 清除选择
-        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
-        SelectedEmptyCellID = -1;
+    //    // 清除选择
+    //    _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
+    //    SelectedEmptyCellID = -1;
 
-        return true;
-    }
+    //    return true;
+    //}
     // 创建敌方单位
     private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
     {
@@ -1038,6 +1051,7 @@ public class PlayerOperationManager : MonoBehaviour
         Debug.Log("进行升级: 科技树: " + tech + " 单位种类: " + type);
         List<PlayerUnitData> list = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits;
         syncPieceData newData = new syncPieceData();
+        syncBuildingData newBuildingData = new syncBuildingData();
         List<int> ID = new List<int>();
         for (int i=0;i<list.Count;i++)
         {
@@ -1054,9 +1068,22 @@ public class PlayerOperationManager : MonoBehaviour
                             PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.HP);
                         break;
                     }
-                    else
+                    else if (list[i].UnitType == CardType.Building)
                     {
-                        //list[i].SetBuildingUnitDataSO((syncBuildingData)GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.HP));
+                        // Building Upgrade
+                        if(GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildingHP))
+                        {
+
+                            newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
+                            PlayerDataManager.Instance.nowChooseUnitID);
+                            break;
+
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Building ID : "+ PlayerDataManager.Instance.nowChooseUnitID+" Upgrade Failed!");
+                      
+                        }
 
                     }
                 }
@@ -1072,8 +1099,14 @@ public class PlayerOperationManager : MonoBehaviour
                         Debug.Log("j= "+j+"Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
                             " dataSO HP is " + list[j].PlayerUnitDataSO.currentHPLevel);
                     }
-                    else
+                    else if (list[j].UnitType == CardType.Building)
                     {
+                        PlayerUnitData unit = list[j];
+                        unit.BuildingData= newBuildingData;
+                        unit.PlayerUnitDataSO.pieceID = ID[j];
+                        list[j] = unit;
+                        Debug.Log("j= " + j + "Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
+                            " dataSO HP is " + list[j].PlayerUnitDataSO.currentHPLevel);
 
                     }
                 }
@@ -1216,10 +1249,81 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 return true;
             case TechTree.AttackPosition:
-                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.attackRange);
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                     if (list[i].UnitType == CardType.Building)
+                    {
+                        // Building Upgrade
+                        if (GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.attackRange))
+                        {
+                            newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
+                            PlayerDataManager.Instance.nowChooseUnitID);
+                            break;
+
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Building ID : " + PlayerDataManager.Instance.nowChooseUnitID + " Upgrade Failed!");
+
+                        }
+
+                    }
+                }
+
+                for (int j = 0; j < list.Count; j++)
+                {
+                    if (list[j].UnitType == CardType.Building)
+                    {
+                        PlayerUnitData unit = list[j];
+                        newBuildingData.buildingID = ID[j];
+                        unit.BuildingData = newBuildingData;
+                        unit.PlayerUnitDataSO.pieceID = ID[j];
+                        list[j] = unit;
+                        Debug.Log("j= " + j + "Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
+                            " dataSO AttackPosition is " + list[j].BuildingData.Value.attackRangeLevel);
+
+                    }
+                }
+
                 return false;
             case TechTree.AltarCount:
-                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.slotsLevel);
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Building)
+                    {
+                        // Building Upgrade
+                        if (GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.slotsLevel))
+                        {
+                            newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
+                            PlayerDataManager.Instance.nowChooseUnitID);
+                            break;
+
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Building ID : " + PlayerDataManager.Instance.nowChooseUnitID + " Upgrade Failed!");
+
+                        }
+
+                    }
+                }
+
+                for (int j = 0; j < list.Count; j++)
+                {
+                    if (list[j].UnitType == CardType.Building)
+                    {
+                        PlayerUnitData unit = list[j];
+                        newBuildingData.buildingID = ID[j];
+                        unit.BuildingData = newBuildingData;
+                        unit.PlayerUnitDataSO.pieceID = ID[j];
+                        list[j] = unit;
+                        Debug.Log("j= " + j + "Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
+                            " dataSO AttackPosition is " + list[j].BuildingData.Value.slotsLevel);
+
+                    }
+                }
                 return true;
             case TechTree.ConstructionCost:
                 GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildingHP);

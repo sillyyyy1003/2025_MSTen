@@ -1459,8 +1459,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b138e65e88b578d4c83051eafae7a95a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nowChooseUnitID: 0
-  nowChooseUnitType: 0
+  nowChooseUnitID: -1
+  nowChooseUnitType: 5
+  PopCap: 0
   buildingRegistry: {fileID: 0}
 --- !u!114 &131122553
 MonoBehaviour:
