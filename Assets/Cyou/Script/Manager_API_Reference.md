@@ -426,6 +426,63 @@ public List<int> GetPlayerPiecesByType(int playerID, PieceType pieceType)
 
 ---
 
+#### `GetUnitOperationCostByType()`
+駒の操作に必要なAPコストを取得します。
+
+**シグネチャ:**
+```csharp
+public int GetUnitOperationCostByType(int pieceID, GameData.OperationType type)
+```
+
+**パラメータ:**
+- `pieceID`: 駒ID
+- `type`: 操作タイプ（`GameData.OperationType`）
+  - `OperationType.Move` - 移動（全駒共通）
+  - `OperationType.Attack` - 攻撃（軍隊のみ）
+  - `OperationType.Occupy` - 領地占領（宣教師のみ）
+  - `OperationType.Convert` - 敵魅惑（宣教師のみ）
+  - `OperationType.Sacrifice` - 回復スキル（農民のみ）
+
+**戻り値:**
+- 成功: APコスト（正の整数）
+- 失敗: -1（駒が存在しない、または指定した操作をサポートしていない）
+
+**使用例:**
+```csharp
+// 軍隊の攻撃APコストを取得
+int attackCost = PieceManager.Instance.GetUnitOperationCostByType(militaryID, GameData.OperationType.Attack);
+if (attackCost > 0)
+{
+    Debug.Log($"攻撃には{attackCost} APが必要です");
+
+    // APが足りるかチェック
+    int currentAP = PieceManager.Instance.GetPieceAP(militaryID);
+    if (currentAP >= attackCost)
+    {
+        // 攻撃実行
+        PieceManager.Instance.AttackEnemy(militaryID, targetID);
+    }
+}
+
+// 宣教師の魅惑APコストを取得
+int convertCost = PieceManager.Instance.GetUnitOperationCostByType(missionaryID, GameData.OperationType.Convert);
+
+// 農民の回復APコストを取得
+int sacrificeCost = PieceManager.Instance.GetUnitOperationCostByType(farmerID, GameData.OperationType.Sacrifice);
+
+// 移動APコスト（全駒共通）
+int moveCost = PieceManager.Instance.GetUnitOperationCostByType(pieceID, GameData.OperationType.Move);
+```
+
+**重要な機能:**
+- 各駒のDataSOから適切なAPコストを自動取得
+- 不正な組み合わせ（例: 農民で攻撃）の場合は-1を返してエラーログを出力
+- 行動実行前のAP確認に使用することで、不要なエラーを防止できる
+
+**実装箇所:** `PieceManager.cs:1016-1074`
+
+---
+
 ### 駒の行動
 
 #### `AttackEnemy()`
@@ -1823,6 +1880,34 @@ public enum SpecialUpgradeType
     PopeBuff                   // 教皇: バフ効果
 }
 ```
+
+### OperationType
+駒の操作タイプ（APコスト取得用）。
+
+```csharp
+public enum OperationType
+{
+    Move,       // 移動（全駒共通）
+    Attack,     // 攻撃（軍隊のみ）
+    Occupy,     // 領地占領（宣教師のみ）
+    Convert,    // 敵魅惑（宣教師のみ）
+    Sacrifice   // 回復スキル（農民のみ）
+}
+```
+
+**使用方法:**
+`GetUnitOperationCostByType()` 関数と組み合わせて使用します。
+
+```csharp
+using GameData; // OperationType は GameData namespace に定義されています
+
+// 各種操作のAPコストを取得
+int attackCost = PieceManager.Instance.GetUnitOperationCostByType(militaryID, OperationType.Attack);
+int moveCost = PieceManager.Instance.GetUnitOperationCostByType(pieceID, OperationType.Move);
+int convertCost = PieceManager.Instance.GetUnitOperationCostByType(missionaryID, OperationType.Convert);
+```
+
+**定義箇所:** `GameDataEnums.cs:52-59`
 
 ---
 

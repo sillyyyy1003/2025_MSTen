@@ -7,6 +7,8 @@ using GameData;
 using GameData.UI;
 using Unity.Mathematics;
 using TMPro;
+using System.Runtime.InteropServices.WindowsRuntime;
+
 #if UNITY_EDITOR
 using Mono.Cecil.Cil;
 #endif
@@ -72,21 +74,35 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     }
 
+
+
     // 拿到点击的敌方单位id
     private void GetEmemyUnitID(int unitid)
     {
         EnemyID=unitid;
     }
-        // *****************************
-        // **********接口部分***********
-        // *****************************
+    // *****************************
+    // **********接口部分***********
+    // *****************************
 
-        /// <summary>
-        /// 拿到某种棋子的已上场的key列表
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public List<int> GetUnitIDListByType(CardType type)
+    // 获取创建某种宗教的某类棋子所需要的资源值
+    public int GetCreateUnitResoursesCost(Religion religion,CardType type)
+    {
+
+        return PieceManager.Instance.GetPieceResourceCost(ConvertCardTypeToPieceType(type),religion);
+    }
+    // 根据行动类型 获得某种行动所需消耗的行动力
+    public int GetUnitOperationCostByType(OperationType type)
+    {
+
+        return PieceManager.Instance.GetUnitOperationCostByType(PlayerDataManager.Instance.nowChooseUnitID,type);
+    }
+    /// <summary>
+    /// 拿到某种棋子的已上场的key列表
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public List<int> GetUnitIDListByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type);
     }
@@ -378,4 +394,34 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
 
+    // 将 CardType 转换为 PieceType
+    public PieceType ConvertCardTypeToPieceType(CardType cardType)
+    {
+        switch (cardType)
+        {
+            case CardType.Farmer: return PieceType.Farmer;
+            case CardType.Solider: return PieceType.Military;
+            case CardType.Missionary: return PieceType.Missionary;
+            case CardType.Pope: return PieceType.Pope;
+            case CardType.Building: return PieceType.Building;
+            default:
+                Debug.LogError($"未知的 CardType: {cardType}");
+                return PieceType.None;
+        }
+    }
+
+    // 将 PieceType 转换为 CardType
+    public CardType ConvertPieceTypeToCardType(PieceType pieceType)
+    {
+        switch (pieceType)
+        {
+            case PieceType.Farmer: return CardType.Farmer;
+            case PieceType.Military: return CardType.Solider;
+            case PieceType.Missionary: return CardType.Missionary;
+            case PieceType.Pope: return CardType.Pope;
+            default:
+                Debug.LogError($"未知的 PieceType: {pieceType}");
+                return CardType.Farmer; // 默认返回Farmer
+        }
+    }
 }

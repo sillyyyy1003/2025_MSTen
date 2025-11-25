@@ -1007,6 +1007,72 @@ public class PieceManager : MonoBehaviour
             .ToList();
     }
 
+    /// <summary>
+    /// 駒の操作に必要なAPコストを取得
+    /// </summary>
+    /// <param name="pieceID">駒ID</param>
+    /// <param name="type">操作タイプ</param>
+    /// <returns>APコスト（取得失敗時は-1）</returns>
+    public int GetUnitOperationCostByType(int pieceID, GameData.OperationType type)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+
+        // 移動は全駒共通
+        if (type == GameData.OperationType.Move)
+        {
+            return (int)piece.Data.moveAPCost;
+        }
+
+        // 駒の種類に応じて処理
+        switch (piece)
+        {
+            case MilitaryUnit military:
+                if (type == GameData.OperationType.Attack)
+                {
+                    return piece.Data.attackAPCost;
+                }
+                Debug.LogError($"軍隊は{type}操作をサポートしていません");
+                return -1;
+
+            case Missionary missionary:
+                GameData.MissionaryDataSO missionaryData = (GameData.MissionaryDataSO)missionary.Data;
+                switch (type)
+                {
+                    case GameData.OperationType.Occupy:
+                        return missionaryData.occupyAPCost;
+                    case GameData.OperationType.Charm:
+                        return missionaryData.convertAPCost;
+                    case GameData.OperationType.Attack:
+                        // 宣教師も攻撃可能（魅惑攻撃）
+                        return piece.Data.attackAPCost;
+                    default:
+                        Debug.LogError($"宣教師は{type}操作をサポートしていません");
+                        return -1;
+                }
+
+            case Farmer farmer:
+                if (type == GameData.OperationType.Cure)
+                {
+                    GameData.FarmerDataSO farmerData = (GameData.FarmerDataSO)farmer.Data;
+                    return farmerData.devotionAPCost;
+                }
+                Debug.LogError($"農民は{type}操作をサポートしていません");
+                return -1;
+
+            case Pope pope:
+                Debug.LogError($"教皇は{type}操作をサポートしていません（位置交換はAPコストなし）");
+                return -1;
+
+            default:
+                Debug.LogError($"不明な駒タイプです: ID={pieceID}");
+                return -1;
+        }
+    }
+
     #endregion
 
     #region 駒の削除

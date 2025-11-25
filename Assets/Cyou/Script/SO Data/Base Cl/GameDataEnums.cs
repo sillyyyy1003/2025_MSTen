@@ -46,6 +46,8 @@ namespace GameData
         Building
     }
 
+   
+
     public enum Religion
     {
         None,
@@ -73,9 +75,10 @@ namespace GameData
 		MAP_H = 7,
 		MAP_I = 8,
 		MAP_J = 9
-	}
+    }
 
-	public enum OperationType
+    // 駒の操作タイプ（APコスト取得用）
+    public enum OperationType
 	{
 		Move,       // 移动
 		Attack,     // 士兵攻击
@@ -86,8 +89,19 @@ namespace GameData
 		Occupy      // 占地
 	}
 
+    /// <summary>
+    /// 駒の操作タイプ（APコスト取得用）
+    /// </summary>
+    //public enum OperationType
+    //{
+    //    Move,       // 移動（全駒共通）
+    //    Attack,     // 攻撃（軍隊のみ）
+    //    Occupy,     // 領地占領（宣教師のみ）
+    //    Convert,    // 敵魅惑（宣教師のみ）
+    //    Sacrifice   // 回復スキル（農民のみ）
+    //}
 
-	public enum Terrain
+    public enum Terrain
     {
         Normal, Gold
     }

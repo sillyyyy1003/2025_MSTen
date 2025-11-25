@@ -367,7 +367,7 @@ public class PlayerOperationManager : MonoBehaviour
             }
             else
             {
-
+               //Debug.Log("owner Player is "+PlayerDataManager.Instance.GetCellOwner(ClickCellid));
                 // 点击了空地或其他玩家单位
                 ReturnToDefault();
                 SelectingUnit = null;
@@ -668,6 +668,8 @@ public class PlayerOperationManager : MonoBehaviour
                 if (_HexGrid.GetCell(cellId) != null)
                 {
                     _HexGrid.GetCell(cellId).Walled = true;
+
+                   
                 }
             }
         }
@@ -1537,7 +1539,7 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 currentPID = localPlayerId,
                 pieceID = buildData.buildingID,
-                piecetype = ConvertCardTypeToPieceType(CardType.Building),  // 假设有Building类型，或用特殊值 
+                piecetype = PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(CardType.Building),  // 假设有Building类型，或用特殊值 
             };
 
             // 创建PlayerUnitData，包含buildingData
@@ -2801,7 +2803,6 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 攻击者前进到目标位置
         Vector3 targetWorldPos = GameManage.Instance.GetCell2D(targetPos).Cells3DPos;
-        targetWorldPos.y += 2.5f;
 
         // 更新字典
         if (attackerPlayerId == localPlayerId)
@@ -3114,7 +3115,7 @@ public class PlayerOperationManager : MonoBehaviour
     private GameObject CreateUnitGameObject(int playerId, PlayerUnitData unitData)
     {
         // 获取单位类型对应的预制体
-        PieceType pieceType = ConvertCardTypeToPieceType(unitData.UnitType);
+        PieceType pieceType =PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(unitData.UnitType);
 
         // 使用PieceManager创建单位
         bool success = PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
@@ -3751,36 +3752,6 @@ public class PlayerOperationManager : MonoBehaviour
 
 
 
-    // 将 CardType 转换为 PieceType
-    private PieceType ConvertCardTypeToPieceType(CardType cardType)
-    {
-        switch (cardType)
-        {
-            case CardType.Farmer: return PieceType.Farmer;
-            case CardType.Solider: return PieceType.Military;
-            case CardType.Missionary: return PieceType.Missionary;
-            case CardType.Pope: return PieceType.Pope;
-            case CardType.Building: return PieceType.Building;
-            default:
-                Debug.LogError($"未知的 CardType: {cardType}");
-                return PieceType.None;
-        }
-    }
-
-    // 将 PieceType 转换为 CardType
-    private CardType ConvertPieceTypeToCardType(PieceType pieceType)
-    {
-        switch (pieceType)
-        {
-            case PieceType.Farmer: return CardType.Farmer;
-            case PieceType.Military: return CardType.Solider;
-            case PieceType.Missionary: return CardType.Missionary;
-            case PieceType.Pope: return CardType.Pope;
-            default:
-                Debug.LogError($"未知的 PieceType: {pieceType}");
-                return CardType.Farmer; // 默认返回Farmer
-        }
-    }
 
 
 

@@ -966,6 +966,17 @@ public class PlayerDataManager : MonoBehaviour
         return -1; // 没有单位
     }
 
+    // 拿到格子的所属玩家id
+    public int GetCellOwner(int cellID)
+    {
+        foreach (var kvp in allPlayersData)
+        {
+            if (kvp.Value.PlayerOwnedCells.Contains(cellID))
+                return kvp.Key;
+        }
+        return -1; // 没有所属
+    }
+
     // 设置玩家资源
     public void SetPlayerResourses(int newResources)
     {
@@ -1006,7 +1017,7 @@ public class PlayerDataManager : MonoBehaviour
     // *************************
     //     魅惑单位管理
     // *************************
-
+    #region == Charmed ==
     /// <summary>
     /// 设置单位为被魅惑状态
     /// </summary>
@@ -1288,4 +1299,4 @@ public struct CharmExpireInfo
     public int OriginalOwnerID;
     public PlayerUnitData UnitData;
 }
-
+#endregion
