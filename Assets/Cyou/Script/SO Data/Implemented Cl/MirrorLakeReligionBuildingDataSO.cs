@@ -27,19 +27,13 @@ namespace GameData
             hasCounterAttack = new bool[3] { false, true, true };
             counterAttackDamage = new int[3] { 0, 1, 2 }; // 反撃ダメージ（0、基礎1、基礎+1で2）
 
-            // 建造所需花費（村民の建築AP消費量）
-            buildingAPCostByLevel = new int[3] { 9, 6, 3 };
-
             // 各項目のアップグレードコスト
             hpUpgradeCost = new int[2] { 6, 8 }; // 血量: 25→30(6資源), 30→35(8資源)
             attackRangeUpgradeCost = new int[2] { 8, 10 }; // 反撃機能: 無→反撃(8資源), 反撃→反撃+1(10資源)
             slotsUpgradeCost = new int[2] { 8, 10 }; // 祭壇格子數: 3→4(8資源), 4→5(10資源)
-            buildCostUpgradeCost = new int[2] { 6, 8 }; // 建造花費: 9→6(6資源), 6→3(8資源)
 
             // 資源生成設定
-            buildStartAPCost = 1;
             resourceGenInterval = 1; // 毎回合
-            apCostperTurn = 1; // 1信徒につき1APコスト
 
             // 生産量（一般領地: 2, 金鉱領地: 4）
             generationType = ResourceGenerationType.Gold;

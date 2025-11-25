@@ -1145,7 +1145,7 @@ if (myBuildingData.HasValue)
 - 基本情報：buildingID, buildingName, playerID
 - 位置と状態：position, currentHP, state
 - 建築情報：remainingBuildCost
-- アップグレードレベル：hpLevel, attackRangeLevel, slotsLevel, buildCostLevel
+- アップグレードレベル：hpLevel, attackRangeLevel, slotsLevel
 
 **実装箇所:** `BuildingManager.cs:420-458`
 
@@ -2058,7 +2058,6 @@ public struct syncBuildingData
     public int hpLevel;            // HP等級 (0-3)
     public int attackRangeLevel;   // 攻撃範囲等級 (0-3)
     public int slotsLevel;         // スロット数等級 (0-3)
-    public int buildCostLevel;     // 建造コスト等級 (0-3)
 }
 ```
 

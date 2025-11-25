@@ -328,11 +328,6 @@ public class BuildingManager : MonoBehaviour
             building.SetSlotsLevel(sbd.slotsLevel);
         }
 
-        if (sbd.buildCostLevel > 0)
-        {
-            building.SetBuildCostLevel(sbd.buildCostLevel);
-        }
-
         // 建築進捗を設定
         if (sbd.state == BuildingState.UnderConstruction && sbd.remainingBuildCost > 0)
         {
@@ -523,11 +518,6 @@ public class BuildingManager : MonoBehaviour
         if (sbd.slotsLevel > 0)
         {
             building.SetSlotsLevel(sbd.slotsLevel);
-        }
-
-        if (sbd.buildCostLevel > 0)
-        {
-            building.SetBuildCostLevel(sbd.buildCostLevel);
         }
 
         // 建築進捗を同期
@@ -1047,7 +1037,6 @@ public struct syncBuildingData
     public int hpLevel;            // HP等級 (0-3)
     public int attackRangeLevel;   // 攻撃範囲等級 (0-3)
     public int slotsLevel;         // スロット数等級 (0-3)
-    public int buildCostLevel;     // 建造コスト等級 (0-3)
 
     /// <summary>
     /// Buildingインスタンスから完全なsyncBuildingDataを生成
@@ -1067,8 +1056,7 @@ public struct syncBuildingData
             // アップグレードレベル
             hpLevel = building.HPLevel,
             attackRangeLevel = building.AttackRangeLevel,
-            slotsLevel = building.SlotsLevel,
-            buildCostLevel = building.BuildCostLevel
+            slotsLevel = building.SlotsLevel
         };
     }
 }
