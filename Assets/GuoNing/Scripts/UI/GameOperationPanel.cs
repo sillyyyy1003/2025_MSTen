@@ -30,8 +30,9 @@ public class GameOperationPanel : MonoBehaviour
 	[Header("Text")]
 	public TMP_Text OperationPanelText;
 	public TMP_Text[] CostText= new TMP_Text[4];
+	public TMP_Text ResourceText;
 
-
+	private event System.Action OnCardTypeBought;
 
 	[SerializeField]
 	private HexGrid hexGrid;
@@ -66,7 +67,7 @@ public class GameOperationPanel : MonoBehaviour
 			return;
 		}
 
-
+		OnCardTypeBought += HandleResourceUpdate;
 		UpdateCostText();
 	}
 
@@ -101,7 +102,6 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 当选择对象发生变化的时候 更新操作面板
 		UpdateOperationPanelInfo();
-		
 	}
 
 	/// <summary>随时更新操作面板</summary>
@@ -212,27 +212,34 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyMissionary()
 	{
-		unitDataInterface.TryBuyUnitToMapByType(CardType.Missionary);
+		// 更新Resource
+		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Missionary))
+			OnCardTypeBought?.Invoke();
+
 		CloseStorePanel();
 	}
 
 	public void BuyFarmer()
 	{
-		unitDataInterface.TryBuyUnitToMapByType(CardType.Farmer);
+		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Farmer))
+			OnCardTypeBought?.Invoke();
+
 		CloseStorePanel();
 
 	}
 
 	public void BuyArmy()
 	{
-		unitDataInterface.TryBuyUnitToMapByType(CardType.Solider);
+		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Solider))
+			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 	}
 
 
 	public void BuyBuilding()
 	{
-		unitDataInterface.TryBuyUnitToMapByType(CardType.Building);
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Building))
+			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 
 	}
@@ -382,8 +389,12 @@ public class GameOperationPanel : MonoBehaviour
 		CostText[(int)BuyType.Army].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Solider).ToString();
 		CostText[(int)BuyType.Farmer].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Farmer).ToString();
 		//CostText[(int)BuyType.Building].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Building).ToString();
-
-		CostText[(int)BuyType.Building].text = "10"; // 建筑固定10资源
+		CostText[(int)BuyType.Building].text = "18"; // 建筑固定10资源
 	}
 
+	private void HandleResourceUpdate()
+	{
+		// 每次资源更新都刷新一次花费显示
+		ResourceText.text = dataManager.GetPlayerResource().ToString();
+	}
 }

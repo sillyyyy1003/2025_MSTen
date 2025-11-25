@@ -110,7 +110,7 @@ public struct PlayerData
     {
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
-        Resources = 100;
+        Resources = 32; //2025.11.25 GuoNing  修改为32
         PlayerReligion = SceneStateManager.Instance.PlayerReligion;
         PlayerOwnedCells = new List<int>();
     }
@@ -1020,7 +1020,6 @@ public class PlayerDataManager : MonoBehaviour
         allPlayersData[playerId] = data;
 
         Debug.Log($"Player {playerId} Resources updated to {newResources}");
-
     }
 
     public int GetCreateUnitResoursesCost(CardType type)

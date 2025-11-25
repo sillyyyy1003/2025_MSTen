@@ -1461,7 +1461,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nowChooseUnitID: -1
   nowChooseUnitType: 5
-  PopCap: 0
+  NowPopulation: 0
   buildingRegistry: {fileID: 0}
 --- !u!114 &131122553
 MonoBehaviour:
@@ -6810,7 +6810,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f826cc867a904d87bd0b0d7efdc88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GameUIObject: {fileID: 1679360509}
+  GameUIObject: {fileID: 1332267}
   NetRoomUIObject: {fileID: 157152612}
   PlayerItemPrefab: {fileID: 7483342906484592198, guid: 31a039d20d4f87d49bbad8c580939bdb,
     type: 3}
@@ -7233,7 +7233,7 @@ PrefabInstance:
     - target: {fileID: 5420698492908003137, guid: 0240edcb80155b849809eff09fae7267,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13124,6 +13124,7 @@ MonoBehaviour:
   - {fileID: 1176490212}
   - {fileID: 554864207}
   - {fileID: 646492090}
+  ResourceText: {fileID: 1802942244}
   hexGrid: {fileID: 1913528995}
   screenOffset: {x: 75, y: -45}
 --- !u!1 &1597651903
@@ -13851,7 +13852,7 @@ PrefabInstance:
     - target: {fileID: 1888084853070597338, guid: e8e8499d8d01e8147ad12b97facba60a,
         type: 3}
       propertyPath: minLoadingTime
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13876,7 +13877,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1679360510
 RectTransform:
   m_ObjectHideFlags: 0
@@ -14098,7 +14099,7 @@ MonoBehaviour:
   fakeProgress: 30
   endProgress: 100
   fakeLimit: 1.2
-  timeLimit: 3
+  timeLimit: 1.2
   text: {fileID: 1964164580}
 --- !u!114 &1690574046
 MonoBehaviour:
@@ -16888,7 +16889,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   religionIcon: {fileID: 1467605456}
-  resourcesValue: {fileID: 1802942244}
+  resourcesValue: {fileID: 909387981}
   activateMissionaryValue: {fileID: 346153710}
   activateSoliderValue: {fileID: 703235282}
   activateFarmerValue: {fileID: 1355552845}
