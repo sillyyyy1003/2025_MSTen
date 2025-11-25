@@ -23,7 +23,6 @@ namespace Buildings
         private int remainingBuildCost;
         private int currentSkillUses;//現時点まだ使用可能のスロットの数
         private int lastResourceGenTurn;
-        private int apCostperTurn;
         private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2（全体レベル・互換性のため残す）
 
         // ===== 各項目の個別レベル =====
@@ -48,11 +47,10 @@ namespace Buildings
         public bool IsAlive => currentState != BuildingState.Ruined;
         public bool IsOperational => (currentState == BuildingState.Inactive || currentState == BuildingState.Active) && currentSkillUses > 0;
         public int CurrentHP => currentHp;
-        public float BuildProgress => buildingData.buildingAPCost > 0 ?
-            1f - (float)remainingBuildCost / buildingData.buildingAPCost : 1f;
+        public float BuildProgress => buildingData.buildingResourceCost > 0 ?
+            1f - (float)remainingBuildCost / buildingData.buildingResourceCost : 1f;
         public int RemainingBuildCost => remainingBuildCost;
         public List<FarmerSlot> FarmerSlots => farmerSlots;
-        public int APCostPerTurn => apCostperTurn;
         public int UpgradeLevel => upgradeLevel;
         public int HPLevel => hpLevel;
         public int AttackRangeLevel => attackRangeLevel;
@@ -74,8 +72,7 @@ namespace Buildings
             buildingData = data;
             playerID = ownerPlayerID;
             currentHp = data.maxHp;
-            remainingBuildCost = data.buildingAPCost;
-            apCostperTurn = data.apCostperTurn;
+            remainingBuildCost = data.buildingResourceCost;
             currentSkillUses = data.GetMaxSlotsByLevel(0);
             //地面に金鉱があるか否かを判断すべき
 
@@ -103,25 +100,6 @@ namespace Buildings
         #endregion
 
         #region 建築処理
-
-        /// <summary>
-        /// 建築を進める
-        /// </summary>
-        public bool ProgressConstruction(int AP)
-        {
-            if (currentState != BuildingState.UnderConstruction)
-                return false;
-
-            remainingBuildCost -= AP;
-
-            if (remainingBuildCost <= 0)
-            {
-                CompleteConstruction();
-                return true;
-            }
-
-            return false;
-        }
 
         private void CompleteConstruction()
         {
