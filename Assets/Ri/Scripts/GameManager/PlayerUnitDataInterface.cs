@@ -90,13 +90,17 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // 获取创建某种宗教的某类棋子所需要的资源值
     public int GetCreateUnitResoursesCost(Religion religion,CardType type)
     {
+        if (type == CardType.Building) 
+        {
+            return GameManage.Instance._BuildingManager.GetBuildingCostsByReligion(religion).Values.First();
+        }
 
-        return PieceManager.Instance.GetPieceResourceCost(ConvertCardTypeToPieceType(type),religion);
-    }
+		return PieceManager.Instance.GetPieceResourceCost(ConvertCardTypeToPieceType(type), religion);
+
+	}
     // 根据行动类型 获得某种行动所需消耗的行动力
     public int GetUnitOperationCostByType(OperationType type)
     {
-
         return PieceManager.Instance.GetUnitOperationCostByType(PlayerDataManager.Instance.nowChooseUnitID,type);
     }
     /// <summary>

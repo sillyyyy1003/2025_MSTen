@@ -390,8 +390,8 @@ public class GameOperationPanel : MonoBehaviour
 		CostText[(int)BuyType.Missionary].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Missionary).ToString();
 		CostText[(int)BuyType.Army].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Solider).ToString();
 		CostText[(int)BuyType.Farmer].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Farmer).ToString();
-		//CostText[(int)BuyType.Building].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Building).ToString();
-		CostText[(int)BuyType.Building].text = "18"; // 建筑固定10资源
+		CostText[(int)BuyType.Building].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Building).ToString();
+		//CostText[(int)BuyType.Building].text = "18"; // 建筑固定10资源
 	}
 
 	private void HandleResourceUpdate()
