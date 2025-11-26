@@ -156,14 +156,45 @@ public class PlayerOperationManager : MonoBehaviour
 
         //}
 
-        // 农民献祭
-        if (Input.GetKeyDown(KeyCode.Q)
-            && PlayerDataManager.Instance.nowChooseUnitType == CardType.Building)
-        {
-            UnitUpgrade(TechTree.HP,CardType.Building);
-            //ClickBuildingCellid = ClickCellid;
+        //// 测试建筑升级
+        //if (Input.GetKeyDown(KeyCode.B)
+        //    && PlayerDataManager.Instance.nowChooseUnitType == CardType.Building)
+        //{
+        //    UnitUpgrade(TechTree.HP,CardType.Building);
+        //    //ClickBuildingCellid = ClickCellid;
 
-        }
+        //}
+        //// 测试红月被动
+        //if (Input.GetKeyDown(KeyCode.R)
+        //    && SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion)
+        //{
+        //    PlayerDataManager.Instance.DeadUnitCount = 12 ;
+
+        //    PlayerDataManager.Instance.bRedMoonSkill = true;
+
+        //    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits.Count; i++)
+        //    {
+        //        int hp =0;
+        //        syncPieceData newData = new syncPieceData();
+        //        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitType!=CardType.Building)
+        //        {
+        //            hp = PieceManager.Instance.GetPieceAllHP(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID) / 5;
+        //            if (hp == 0)
+        //                hp += 1;
+        //            newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
+                   
+        //            PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
+        //            unit.PlayerUnitDataSO = newData;
+        //            PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
+                   
+        //            Debug.Log( "Heal HP is " + hp);
+        //        }
+        //    }
+        //    //ClickBuildingCellid = ClickCellid;
+
+        //}
+
+
         // 农民献祭
         if (Input.GetKeyDown(KeyCode.T)
             && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
@@ -457,11 +488,17 @@ public class PlayerOperationManager : MonoBehaviour
                 {
                     // 检查目标位置是否是建筑
                     PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
-                    if (targetUnit.HasValue && targetUnit.Value.IsBuilding())
+                    if (targetUnit.HasValue && targetUnit.Value.IsBuilding()&&
+                          GameManage.Instance._BuildingManager.NewEnterBuilding(PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos), PlayerDataManager.Instance.nowChooseUnitID))
                     {
                         Debug.Log("[农民进建筑] 农民尝试进入己方建筑");
                         ExecuteFarmerEnterBuilding(currentPos, targetPos, ClickCellid);
                         return;
+                    }
+                    else
+                    {
+
+                        Debug.LogWarning("[农民进建筑] 格子已满，无法进入!");
                     }
                 }
 
@@ -605,6 +642,17 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction + " Resource is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
         }
 
+        // 回合开始计算被动
+        if(SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion
+            &&PlayerDataManager.Instance.bRedMoonSkill)
+        {
+            PlayerDataManager.Instance.RedMoonSkillCount +=1;
+            if (PlayerDataManager.Instance.RedMoonSkillCount >= 3)
+            {
+                PlayerDataManager.Instance.RedMoonSkillCount = 0;
+                PlayerDataManager.Instance.bRedMoonSkill = false;
+            }
+        }
 
     }
 
@@ -1438,7 +1486,8 @@ public class PlayerOperationManager : MonoBehaviour
 
         PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, fromPos);
         Debug.Log("now unit " + unitData.Value.UnitID + "AP is" + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
-        if (PieceManager.Instance.GetPieceAP(unitData.Value.UnitID) > 0)
+       
+        if (PlayerDataManager.Instance.nowChooseUnitType!=CardType.Farmer&&PieceManager.Instance.GetPieceAP(unitData.Value.UnitID) > 0)
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         }
@@ -2002,7 +2051,7 @@ public class PlayerOperationManager : MonoBehaviour
 
 
 
-    #region ===农民进入建筑===
+       #region ===农民进入建筑===
     // 农民进入建筑
     private void ExecuteFarmerEnterBuilding(int2 farmerPos, int2 buildingPos, int buildingCellId)
     {
@@ -2057,11 +2106,16 @@ public class PlayerOperationManager : MonoBehaviour
                 }
             }
 
+          
             // 3. 从PieceManager移除
             PieceManager.Instance.RemovePiece(farmerPieceID);
 
             // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
             GameManage.Instance.SetCellObject(farmerPos, null);
+
+            //  BuildingManager更新
+            int ap=PieceManager.Instance.GetPieceAP(farmerID);
+            GameManage.Instance._BuildingManager.NewEnterBuilding(PlayerDataManager.Instance.GetUnitIDBy2DPos(buildingPos), ap);
 
             // 5. 网络同步农民消失（使用农民的原始位置）
             SyncFarmerEnterBuilding(farmerID, farmerPos);
@@ -2785,6 +2839,8 @@ public class PlayerOperationManager : MonoBehaviour
 
                     if (msg.TargetDestroyed)
                     {
+                      
+
                         // 目标死亡，攻击者继续前进到目标位置
                         HandleTargetDestroyedAfterAttack(
                             attackerObj,
@@ -2813,6 +2869,38 @@ public class PlayerOperationManager : MonoBehaviour
 
             if (msg.TargetDestroyed)
             {
+                //计算己方死亡单位 (红月教)
+                PlayerDataManager.Instance.DeadUnitCount += 1;
+
+                // 触发回血被动
+                if (SceneStateManager.Instance.PlayerReligion == Religion.RedMoonReligion 
+                    && PlayerDataManager.Instance.DeadUnitCount >= 12
+                    &&!PlayerDataManager.Instance.bRedMoonSkill)
+                {
+                    PlayerDataManager.Instance.bRedMoonSkill= true;
+
+                    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits.Count; i++)
+                    {
+                        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID != msg.TargetSyncData.Value.pieceID)
+                        {
+                           
+                            syncPieceData newData = new syncPieceData();
+                            if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitType != CardType.Building)
+                            {
+                                int hp = PieceManager.Instance.GetPieceAllHP(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID) / 5;
+                                if (hp == 0)
+                                    hp += 1;
+                                newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
+
+                                PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
+                                unit.PlayerUnitDataSO = newData;
+                                PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
+
+                                Debug.Log("Heal HP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHP);
+                            }
+                        }
+                    }
+                }
                 // 目标死亡，攻击者前进到目标位置
                 HandleTargetDestroyedAfterAttack(
                     attackerObj,
@@ -2933,6 +3021,8 @@ public class PlayerOperationManager : MonoBehaviour
         // 更新GameManage
         GameManage.Instance.SetCellObject(attackerCurrentPos, null);
         GameManage.Instance.SetCellObject(targetPos, attackerObj);
+
+       
 
         // 播放前进动画
         attackerObj.transform.DOMove(targetWorldPos, MoveSpeed * 0.5f).OnComplete(() =>

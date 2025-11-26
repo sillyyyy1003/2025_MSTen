@@ -302,6 +302,17 @@ public class PlayerDataManager : MonoBehaviour
     public int PopulationCost { get; private set; }
     public int NowPopulation=0;
 
+    // 单位死亡数
+    public int DeadUnitCount=0;
+    public int RedMoonSkillCount;
+    public bool bRedMoonSkill=false;
+   
+    // 进入建筑的农民数量
+    public int BuildingFarmerCount;
+
+    // 镜湖教 触发次数
+    public int MirrorSkillCount=0;
+
 
     // 建筑
     [SerializeField] private BuildingRegistry buildingRegistry;
@@ -378,6 +389,8 @@ public class PlayerDataManager : MonoBehaviour
                         PopulationCost = 20;
                         break;
                     case Religion.RedMoonReligion:
+                        // 同时设置被动回合
+                        RedMoonSkillCount = 0;
                         PopulationCost = 26;
                         break;
                     case Religion.SilkReligion:

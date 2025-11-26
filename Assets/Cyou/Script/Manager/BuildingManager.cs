@@ -34,6 +34,7 @@ public class BuildingManager : MonoBehaviour
 
     private bool isUpgraded = false;
 
+
     //25.11.11 RI add GameObject
     private GameObject buildingObject;
 
@@ -420,6 +421,44 @@ public class BuildingManager : MonoBehaviour
 
     #region 農民配置
 
+    // 25.11.26 RI add EnterBuilding new logic
+    public bool NewEnterBuilding(int buildingID, int farmerAP)
+    {
+        if (!buildings.TryGetValue(buildingID, out Building building))
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return false;
+        } 
+     
+        if(!building.FarmerEnter(farmerAP))
+        {
+            return false;
+        }
+      
+
+        return true;  
+    }
+    
+ 
+    public int BuildingCreateResource()
+    {
+        int res = 0;
+       foreach(var a in buildings)
+        {
+            res += a.Value.GetNowActivedSlot()*2;
+        }
+        return res;
+    }
+    public bool SetSlotToCantUse(int buildingID)
+    {
+        if (!buildings.TryGetValue(buildingID, out Building building))
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return false;
+        }
+        building.SetCantUse();
+        return true;
+    }
     /// <summary>
     /// 農民を建物に配置
     /// </summary>
@@ -695,6 +734,32 @@ public class BuildingManager : MonoBehaviour
     #endregion
 
     #region 建物の情報取得
+
+    /// <summary>
+    /// 25.11.26 RI Add 建物のAllHPを取得
+    /// </summary>
+    public int GetBuildingAllHP(int buildingID)
+    {
+        if (!buildings.TryGetValue(buildingID, out Building building))
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return -1;
+        }
+        return building.GetAllHP(); ;
+    }
+
+    /// <summary>
+    /// 25.11.26 RI Add 建物のslotを取得
+    /// </summary>
+    public int GetBuildingSlot(int buildingID)
+    {
+        if (!buildings.TryGetValue(buildingID, out Building building))
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return -1;
+        }
+        return building.GetSlots();
+    }
 
     /// <summary>
     /// 建物の現在HPを取得

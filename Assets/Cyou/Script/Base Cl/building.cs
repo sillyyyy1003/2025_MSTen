@@ -25,6 +25,10 @@ namespace Buildings
         private int lastResourceGenTurn;
         private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2（全体レベル・互換性のため残す）
 
+
+        // 25.11.26 RI add now slot count and cant use slot
+        private int nowActivedSlotCount = 0;
+        private int nowCantUseSlotCount = 0;
         // ===== 各項目の個別レベル =====
         private int hpLevel = 0;            // HP レベル (0-2)
         private int attackRangeLevel = 0;   // 攻撃範囲レベル (0-2)
@@ -32,6 +36,9 @@ namespace Buildings
 
         // 配置された農民のリスト
         private List<FarmerSlot> farmerSlots = new List<FarmerSlot>();
+
+        // 25.11.26 RI add slots
+        private int slots =0;
 
         // ===== イベント =====
         public event Action<Building> OnBuildingCompleted;
@@ -72,6 +79,7 @@ namespace Buildings
             currentHp = data.maxHp;
             remainingBuildCost = data.buildingResourceCost;
             currentSkillUses = data.GetMaxSlotsByLevel(0);
+            slots = data.GetMaxSlotsByLevel(data.maxSlotsByLevel[0]);
             //地面に金鉱があるか否かを判断すべき
 
             // 25.11.10 RI 修改为直接创建完毕
@@ -171,6 +179,8 @@ namespace Buildings
         /// </summary>
         public int ProcessTurn()
         {
+            //25.11.26 RI change logic
+
             if (!IsOperational)
             {
                 Debug.Log($"建物 {buildingData.buildingName} は稼働可能な状態ではありません (状態: {currentState}, スロット: {currentSkillUses})");
@@ -368,6 +378,17 @@ namespace Buildings
             }
         }
 
+        // 25.11.26 RI Add Get Building All HP
+        public int  GetAllHP()
+        {
+            return buildingData.GetMaxHpByLevel(hpLevel);
+        }
+
+        // 25.11.26 RI Add Get Building Slots
+        public int GetSlots()
+        {
+            return slots;
+        }
         /// <summary>
         /// HPをアップグレードする
         /// </summary>
@@ -457,7 +478,26 @@ namespace Buildings
             Debug.Log($"{buildingData.buildingName} の攻撃範囲がレベル{attackRangeLevel}にアップグレードしました（攻撃範囲: {newAttackRange}）");
             return true;
         }
-
+        //25.11.26 RI add new FarmerEnter
+        public bool FarmerEnter(int ap)
+        {
+            nowActivedSlotCount += 1;
+            if (nowActivedSlotCount+nowCantUseSlotCount >= slots)
+            {
+                nowActivedSlotCount -= 1;
+                return false;
+            }
+            return true;
+        }
+        public void SetCantUse()
+        {
+            nowCantUseSlotCount += 1;
+        }
+        //25.11.26 RI add Get Now Actived Slot
+        public int GetNowActivedSlot()
+        {
+            return nowActivedSlotCount;
+        }
         /// <summary>
         /// スロット数をアップグレードする
         /// </summary>
@@ -498,6 +538,8 @@ namespace Buildings
             slotsLevel++;
             int newMaxSlots = buildingData.GetMaxSlotsByLevel(slotsLevel);
 
+            // 25.11.26 RI add slots
+            slots = newMaxSlots;
             // スロット数を増やす
             if (newMaxSlots > farmerSlots.Count)
             {
