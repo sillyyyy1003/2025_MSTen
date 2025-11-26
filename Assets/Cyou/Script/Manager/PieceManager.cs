@@ -82,7 +82,6 @@ public struct syncPieceData
     public static syncPieceData CreateFromPiece(Piece piece)
     {                                                    //25.11.12 ri ADD Religion para
 
-        Debug.Log("piece HP is "+piece.HPLevel);
         // 駒の種類を取得
         PieceType pieceType = piece switch
         {
@@ -909,6 +908,19 @@ public class PieceManager : MonoBehaviour
         return piece.CurrentHP;
     }
 
+    /// <summary>
+    /// 25.11.26 RI Add 駒の全てHPを取得
+    /// </summary>
+    public int GetPieceAllHP(int pieceID)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+        Debug.Log("piece all HP is "+ piece.CurrentMaxHP);
+        return piece.CurrentMaxHP;
+    }
     /// <summary>
     /// 駒の現在APを取得
     /// </summary>
