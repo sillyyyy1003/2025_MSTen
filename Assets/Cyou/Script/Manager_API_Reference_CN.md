@@ -1626,6 +1626,37 @@ foreach (var kvp in costs)
 
 ---
 
+#### `GetBuildingDataByReligion(Religion religion)`
+直接获取指定宗教的建筑数据。
+
+**函数签名:**
+```csharp
+public BuildingDataSO GetBuildingDataByReligion(Religion religion)
+```
+
+**参数:**
+- `religion`: 宗教
+
+**返回值:**
+- BuildingDataSO（未找到时返回 null）
+
+**使用示例:**
+```csharp
+// 从宗教直接获取 BuildingDataSO
+BuildingDataSO buildingData = buildingManager.GetBuildingDataByReligion(Religion.SilkReligion);
+
+if (buildingData != null)
+{
+    int cost = buildingData.buildingResourceCost; // 18
+    string name = buildingData.buildingName; // "絲織教_特殊建築"
+    Debug.Log($"{name} 的成本: {cost} 资源");
+}
+```
+
+**实现位置:** `BuildingManager.cs:424-441`
+
+---
+
 **返回值:**
 - `true`: 取消成功
 - `false`: 失败
