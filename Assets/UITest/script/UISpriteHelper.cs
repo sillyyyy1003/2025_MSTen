@@ -24,7 +24,9 @@ public enum UISpriteID
     Background_Square,
     Background_Value,
     Background_ValueLong,
-
+	//2025.11.26 新增UI图标
+	Result_Bar,     // 结算界面条
+    HPBar_Icon,     // 血条图标
 }
 
 [System.Serializable]

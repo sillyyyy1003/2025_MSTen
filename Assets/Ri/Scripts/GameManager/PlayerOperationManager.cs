@@ -822,10 +822,15 @@ public class PlayerOperationManager : MonoBehaviour
 
 
         // 添加到数据管理器
-        PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
+        // 2025.11.26 Guoning 追加HP显示
+        //PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
+        // 生成ID，创建单位
+        int unitID = PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
+        // 生成HP
+        HPBarManager.Instance.CreateHPBar(unitID, unitData.currentHP, pieceObj.transform, unitType);
 
-        // 保存本地引用
-        localPlayerUnits[position] = pieceObj;
+		// 保存本地引用
+		localPlayerUnits[position] = pieceObj;
         GameManage.Instance.SetCellObject(position, pieceObj);
 
         Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");

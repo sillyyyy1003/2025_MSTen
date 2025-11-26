@@ -88,9 +88,7 @@ public class GameOperationPanel : MonoBehaviour
 			if (Input.GetMouseButton(0))
 			{
 				HexCell cell = hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-
-				if (hexGrid.GetNeighborCellHasForeset(cell.Index))Debug.LogWarning("有森林");
-				ShowBuyCardInfo(cell.Index);
+				if(cell) ShowBuyCardInfo(cell.Index);
 				
 				return;
 			}
@@ -390,8 +388,8 @@ public class GameOperationPanel : MonoBehaviour
 		CostText[(int)BuyType.Missionary].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Missionary).ToString();
 		CostText[(int)BuyType.Army].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Solider).ToString();
 		CostText[(int)BuyType.Farmer].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Farmer).ToString();
-		//CostText[(int)BuyType.Building].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Building).ToString();
-		CostText[(int)BuyType.Building].text = "18"; // 建筑固定10资源
+		CostText[(int)BuyType.Building].text =
+			unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Building).ToString();
 	}
 
 	private void HandleResourceUpdate()

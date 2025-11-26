@@ -110,7 +110,7 @@ public struct PlayerData
     {
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
-        Resources = 32; //2025.11.25 GuoNing  修改为32
+        Resources = 100; //2025.11.25 GuoNing  修改为32
         PlayerReligion = SceneStateManager.Instance.PlayerReligion;
         PlayerOwnedCells = new List<int>();
     }
