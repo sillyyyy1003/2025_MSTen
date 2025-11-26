@@ -24,7 +24,7 @@ public enum UISpriteID
     Background_Square,
     Background_Value,
     Background_ValueLong,
-
+    Result_Bar,     // 结算界面条
 }
 
 [System.Serializable]

@@ -92,8 +92,8 @@ public class PlayerUnitDataInterface : MonoBehaviour
     {
         if (type == CardType.Building) 
         {
-            return GameManage.Instance._BuildingManager.GetBuildingCostsByReligion(religion).Values.First();
-        }
+            return GameManage.Instance._BuildingManager.GetBuildingDataByReligion(religion).buildingResourceCost;
+		}
 
 		return PieceManager.Instance.GetPieceResourceCost(ConvertCardTypeToPieceType(type), religion);
 
@@ -427,7 +427,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         int ResourcesCost = 0;
         if (type == CardType.Building)
         {
-            ResourcesCost = 18;
+            ResourcesCost = 10;
             //GameManage.Instance._BuildingManager.GetBuildingCostsByReligion(playerReligion).Values.First();
 		}
         else
