@@ -7247,6 +7247,107 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 816535063}
   m_CullTransparentMesh: 1
+--- !u!1 &851308551
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 851308552}
+  - component: {fileID: 851308555}
+  - component: {fileID: 851308554}
+  - component: {fileID: 851308553}
+  m_Layer: 0
+  m_Name: HPCanvas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &851308552
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851308551}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1264131565}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1920, y: 1080}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &851308553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851308551}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &851308554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851308551}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_UiScaleMode: 0
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 800, y: 600}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 1
+--- !u!223 &851308555
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851308551}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 332689582}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!1 &851849818
 GameObject:
   m_ObjectHideFlags: 0
@@ -10884,6 +10985,7 @@ Transform:
   - {fileID: 1553363927}
   - {fileID: 1149289329}
   - {fileID: 1409855868}
+  - {fileID: 851308552}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1267637838
@@ -17566,6 +17668,14 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 1e4da6dfff4b7714badfae6566a9c1cf, type: 3}
     - {fileID: 21300000, guid: 1cda9866508b6e9498ed902838781b50, type: 3}
     note: 
+  - id: 17
+    singleSprite: {fileID: 21300000, guid: 1e4da6dfff4b7714badfae6566a9c1cf, type: 3}
+    spriteSheet:
+    - {fileID: 21300000, guid: 9cfab4c6aee979b408cfa29ec9acf541, type: 3}
+    - {fileID: 21300000, guid: b28ce28c963fa14449b6a3d8aca9c4ba, type: 3}
+    - {fileID: 21300000, guid: e2c39fc85f0d1584fa5801f28c6629d7, type: 3}
+    - {fileID: 21300000, guid: e47ec964f4010e74082b28f7175c17b6, type: 3}
+    note: 
 --- !u!1 &2018555611
 GameObject:
   m_ObjectHideFlags: 0
@@ -17937,6 +18047,7 @@ GameObject:
   - component: {fileID: 2117784777}
   - component: {fileID: 2117784781}
   - component: {fileID: 2117784782}
+  - component: {fileID: 2117784783}
   m_Layer: 0
   m_Name: GameUIManager
   m_TagString: Untagged
@@ -18115,6 +18226,22 @@ MonoBehaviour:
   resolutionDropdown: {fileID: 174602638}
   fullScreenDropdown: {fileID: 1040283214}
   gridToggle: {fileID: 1180549202}
+--- !u!114 &2117784783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2117784775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e16b89b2ef127ac4a91ec99e2162ff4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hpBarPrefab: {fileID: 4540047841074454573, guid: 007e9cb32bab8fb428eea97b6277c5da,
+    type: 3}
+  uiCanvas: {fileID: 851308555}
+  defaultOffset: {x: 0, y: 20, z: 0}
 --- !u!1 &2117941066
 GameObject:
   m_ObjectHideFlags: 0

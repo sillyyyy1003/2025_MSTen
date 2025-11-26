@@ -4,46 +4,85 @@ using UnityEngine;
 
 public class HPBarManager : MonoBehaviour
 {
+	public static HPBarManager Instance { get; private set; }
 
-	public HPBar hpBarprefab;
-    public Transform PieceTransform;
+	[SerializeField] private HPBar hpBarPrefab;
+	[SerializeField] private Canvas uiCanvas;
 
-    public Canvas UICanvas;
+	public Vector3 defaultOffset = new Vector3(0, 2, 0);
 
-    public GameObject hp;
+	private Dictionary<int, HPBar> hpBars = new Dictionary<int, HPBar>();
 
-    private Dictionary<int,HPBar> hpBars = new Dictionary<int, HPBar>();
-	// Start is called before the first frame update
-	void Start()
-    {
-       
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-	    if (Input.GetKeyUp(KeyCode.Space))
-	    {
-			var hpBar = Instantiate(hpBarprefab, UICanvas.transform);
-			hpBar.InitSegments(5, PieceTransform, new Vector3(0, 2, 0));
-			hpBars.Add(0, hpBar);
+	private void Awake()
+	{
+		if (Instance == null)
+		{
+			Instance = this;
 		}
-
-	    if (Input.GetKeyUp(KeyCode.Y))
-	    {
-		    PieceTransform.transform.position+=new Vector3(0,1,0);
-			GetHPBar(0).SetHP(3);
+		else
+		{
+			Destroy(gameObject);
 		}
-        
+	}
 
-    }
+	public void CreateHPBar(int id, int maxHP, Transform target, CardType type)
+	{
+		var hpBar = Instantiate(hpBarPrefab, uiCanvas.transform);
+		hpBar.Initialize(maxHP, target, defaultOffset, type);
+		hpBars.Add(id, hpBar);
+	}
 
-	HPBar GetHPBar(int id)
+	/// <summary>
+	/// 通过ID更新血条
+	/// </summary>
+	/// <param name="id"></param>
+	/// <param name="hp"></param>
+	/// <returns></returns>
+	public bool UpdateHPBarByID(int id, int hp)
 	{
 		if (hpBars.ContainsKey(id))
 		{
-			return hpBars[id];
+			hpBars[id].UpdateHP(hp);
+			return true;
 		}
-		return null;
+		Debug.LogWarning($"HPBar with ID {id} not found.");
+		return false;
 	}
+
+	/// <summary>
+	/// 通过ID更新血条和最大血量
+	/// </summary>
+	/// <param name="id"></param>
+	/// <param name="hp"></param>
+	/// <param name="maxHP"></param>
+	/// <returns></returns>
+	public bool UpdateHPBarByID(int id, int hp, int maxHP)
+	{
+		if (hpBars.ContainsKey(id))
+		{
+			hpBars[id].UpdateHP(hp,maxHP);
+			return true;
+		}
+		Debug.LogWarning($"HPBar with ID {id} not found.");
+		return false;
+	}
+
+	/// <summary>
+	/// 通过ID 移除血条（当单位死亡时）
+	/// </summary>
+	/// <param name="id"></param>
+	public void RemoveHPBar(int id)
+	{
+		if (hpBars.TryGetValue(id, out HPBar bar))
+		{
+			Destroy(bar.gameObject);
+			hpBars.Remove(id);
+		}
+		else
+		{
+			Debug.LogWarning($"Try to remove HPBar but ID {id} not found.");
+		}
+	}
+
+
 }
