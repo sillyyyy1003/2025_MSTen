@@ -427,15 +427,13 @@ public class PlayerUnitDataInterface : MonoBehaviour
         int ResourcesCost = 0;
         if (type == CardType.Building)
         {
-            ResourcesCost = 10;
-            //GameManage.Instance._BuildingManager.GetBuildingCostsByReligion(playerReligion).Values.First();
-		}
+            ResourcesCost = GameManage.Instance._BuildingManager.GetBuildingDataByReligion(playerReligion).buildingResourceCost;
+        }
         else
         {
 			ResourcesCost = PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
         }
-        Debug.Log("资源"+ResourcesCost);
-
+  
 
         int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
 		if (ResourcesCount < ResourcesCost)

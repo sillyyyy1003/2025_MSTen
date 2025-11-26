@@ -16,8 +16,7 @@ MonoBehaviour:
   religion: 1
   buildingName: "\u7D72\u7E54\u6559_\u7279\u6B8A\u5EFA\u7BC9"
   maxHp: 100
-  buildStartAPCost: 1
-  buildingAPCost: 0
+  buildingResourceCost: 18
   resourceGenInterval: 1
   cellType: 0
   isSpecialBuilding: 1
@@ -25,15 +24,14 @@ MonoBehaviour:
   generationType: 5
   baseProductionAmount: 2
   goldenProductionAmount: 4
-  apCostperTurn: 1
   productionMultiplier: 1
   maxHpByLevel: 190000001e0000002d000000
   attackRangeByLevel: 000000000100000002000000
   maxSlotsByLevel: 030000000400000005000000
-  buildingAPCostByLevel: 090000000600000003000000
+  hasCounterAttack: 000000
+  counterAttackDamage: 000000000000000000000000
   hpUpgradeCost: 0600000008000000
   attackRangeUpgradeCost: 080000000a000000
   slotsUpgradeCost: 080000000a000000
-  buildCostUpgradeCost: 0600000008000000
-  buildingPrefab: {fileID: 7971769675044262867, guid: 378e62e84f9298c47be6c5aa9f97d644,
+  buildingPrefab: {fileID: 5820619560128198455, guid: d886dbf77c82ac94cb02a54e6a3121d5,
     type: 3}

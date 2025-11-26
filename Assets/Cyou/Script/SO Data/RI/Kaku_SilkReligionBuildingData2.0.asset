@@ -9,12 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a511dd377733864c9606e1ab8f5b5b4, type: 3}
-  m_Name: RI_RedMoonReligionBuildingData
+  m_Script: {fileID: 11500000, guid: 44f0f6bcefa0c3f40874ad6d1b4bfc47, type: 3}
+  m_Name: Kaku_SilkReligionBuildingData2.0
   m_EditorClassIdentifier: 
   piecePrefabResourcePath: 
-  religion: 2
-  buildingName: "\u7D05\u6708\u6559_\u7279\u6B8A\u5EFA\u7BC9"
+  religion: 1
+  buildingName: "\u7D72\u7E54\u6559_\u7279\u6B8A\u5EFA\u7BC9"
   maxHp: 100
   buildingResourceCost: 18
   resourceGenInterval: 1
@@ -23,15 +23,15 @@ MonoBehaviour:
   maxUnitCapacity: 0
   generationType: 5
   baseProductionAmount: 2
-  goldenProductionAmount: 5
+  goldenProductionAmount: 4
   productionMultiplier: 1
   maxHpByLevel: 190000001e0000002d000000
   attackRangeByLevel: 000000000100000002000000
-  maxSlotsByLevel: 040000000500000006000000
+  maxSlotsByLevel: 030000000400000005000000
   hasCounterAttack: 000000
   counterAttackDamage: 000000000000000000000000
-  hpUpgradeCost: 0600000009000000
+  hpUpgradeCost: 0600000008000000
   attackRangeUpgradeCost: 080000000a000000
   slotsUpgradeCost: 080000000a000000
-  buildingPrefab: {fileID: 2193762852899578588, guid: 90206617e66999a4299a5950b74ca676,
+  buildingPrefab: {fileID: 5820619560128198455, guid: d886dbf77c82ac94cb02a54e6a3121d5,
     type: 3}

@@ -18054,7 +18054,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   religionIcon: {fileID: 1467605456}
-  resourcesValue: {fileID: 909387981}
+  resourcesValue: {fileID: 1802942244}
   activateMissionaryValue: {fileID: 346153710}
   activateSoliderValue: {fileID: 703235282}
   activateFarmerValue: {fileID: 1355552845}
