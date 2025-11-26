@@ -11,6 +11,7 @@ namespace GameData
     {
         private void Reset()
         {
+            religion = Religion.RedMoonReligion;
             buildingName = "紅月教_特殊建築";
 
             // 建築に必要な資源

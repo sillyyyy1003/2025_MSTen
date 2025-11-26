@@ -11,6 +11,7 @@ namespace GameData
     {
         private void Reset()
         {
+            religion = Religion.MayaReligion;
             buildingName = "瑪雅外星人文明教_特殊建築";
 
             // 建築に必要な資源

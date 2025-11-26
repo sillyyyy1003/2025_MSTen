@@ -12,6 +12,7 @@ namespace GameData
     {
         private void Reset()
         {
+            religion = Religion.MirrorLakeReligion;
             buildingName = "鏡湖教_特殊建築";
 
             // 建築に必要な資源
