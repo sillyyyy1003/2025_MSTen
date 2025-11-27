@@ -13,11 +13,10 @@ MonoBehaviour:
   m_Name: Kaku_MadScientistBuildingData
   m_EditorClassIdentifier: 
   piecePrefabResourcePath: 
-  religion: 0
+  religion: 4
   buildingName: "\u760B\u72C2\u79D1\u5B78\u5BB6\u6559_\u7279\u6B8A\u5EFA\u7BC9"
   maxHp: 100
-  buildStartAPCost: 1
-  buildingAPCost: 0
+  buildingResourceCost: 18
   resourceGenInterval: 1
   cellType: 0
   isSpecialBuilding: 1
@@ -25,17 +24,14 @@ MonoBehaviour:
   generationType: 5
   baseProductionAmount: 2
   goldenProductionAmount: 5
-  apCostperTurn: 1
   productionMultiplier: 1
   maxHpByLevel: 190000001e0000002d000000
   attackRangeByLevel: 000000000100000002000000
   maxSlotsByLevel: 030000000400000005000000
-  buildingAPCostByLevel: 090000000600000003000000
   hasCounterAttack: 000000
   counterAttackDamage: 000000000000000000000000
   hpUpgradeCost: 0600000008000000
   attackRangeUpgradeCost: 080000000a000000
   slotsUpgradeCost: 080000000a000000
-  buildCostUpgradeCost: 0600000008000000
   buildingPrefab: {fileID: 9065990753959265065, guid: 53d6959d408184a47be1b80c125c8680,
     type: 3}
