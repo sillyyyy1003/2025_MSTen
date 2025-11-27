@@ -37,7 +37,7 @@ public class GameStartData
     public int[] PlayerIds;
     public int[] StartPositions;
     public int FirstTurnPlayerId;
-    public Religion PlayerReligions;
+    public int[] PlayerReligions;
 }
 
 // 回合结束数据
@@ -225,12 +225,37 @@ public class GameManage : MonoBehaviour
         SetIsGamingOrNot(true);
         Debug.Log($"游戏状态已设置: {bIsInGaming}");
 
-        // 保存玩家信息
-        foreach (var playerId in data.PlayerIds)
+        // 保存玩家信息并提取宗教
+        for (int i = 0; i < data.PlayerIds.Length; i++)
         {
+            int playerId = data.PlayerIds[i];
             AllPlayerIds.Add(playerId);
             _PlayerDataManager.CreatePlayer(playerId);
-            Debug.Log($"创建玩家数据: {playerId}");
+
+            // 提取每个玩家的宗教
+            Religion playerReligion = Religion.None;
+            if (i < data.PlayerReligions.Length)
+            {
+                playerReligion = (Religion)data.PlayerReligions[i];
+            }
+
+            Debug.Log($"创建玩家数据: {playerId}, 宗教: {playerReligion}");
+
+            // 如果是敌方玩家，保存其宗教用于建筑初始化
+            // (假设有两个玩家，非本地玩家就是敌方)
+            if (NetGameSystem.Instance != null)
+            {
+                if (NetGameSystem.Instance.bIsServer && playerId != 0)
+                {
+                    enemyRe = playerReligion;
+                    Debug.Log($"敌方玩家宗教: {enemyRe}");
+                }
+                else if (!NetGameSystem.Instance.bIsServer && playerId == 0)
+                {
+                    enemyRe = playerReligion;
+                    Debug.Log($"敌方玩家宗教: {enemyRe}");
+                }
+            }
         }
 
         // 保存起始位置，后续更改
@@ -246,10 +271,7 @@ public class GameManage : MonoBehaviour
             OtherPlayerID = 0;// 服务器默认是玩家0
             _LocalPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
-            // 这里需要NetGameSystem提供本地客户端ID
-            // localPlayerID = netGameSystem.GetLocalClientId();
-            // 临时方案: 假设第一个玩家是本地玩家
-            //_LocalPlayerID = data.PlayerIds[0];
+         
         }
         else
         {
@@ -264,11 +286,6 @@ public class GameManage : MonoBehaviour
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
 
-        //for(int i=0;i<data.PlayerIds.Length;i++)
-        // {
-        //     if (data.PlayerIds[i] != LocalPlayerID)
-        //         enemyRe = data.PlayerReligions[i];
-        // }
 
         _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, enemyRe);
 

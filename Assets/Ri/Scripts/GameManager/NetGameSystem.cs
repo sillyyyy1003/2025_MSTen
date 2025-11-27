@@ -78,7 +78,8 @@ public class NetworkMessage
 public class ConnectMessage
 {
     public string PlayerName;
-    public string PlayerIP;
+    public string PlayerIP; 
+    public int PlayerReligion; // Religion as int for serialization
 }
 
 [Serializable]
@@ -96,6 +97,7 @@ public class PlayerInfo
     public string PlayerName;
     public string PlayerIP;
     public bool IsReady;
+    public int PlayerReligion; // Religion as int
 }
 
 // 玩家加入消息
@@ -105,6 +107,7 @@ public class PlayerJoinedMessage
     public uint PlayerId;
     public string PlayerName;
     public string PlayerIP;
+    public int PlayerReligion; // Religion as int
 }
 
 // 玩家准备消息
@@ -357,6 +360,7 @@ public class NetGameSystem : MonoBehaviour
     // 客户端准备状态和IP
     private Dictionary<uint, bool> clientReadyStatus; // 服务器: 客户端准备状态
     private Dictionary<uint, string> clientIPs; // 服务器: 客户端IP地址
+    private Dictionary<uint, Religion> clientReligions; // 服务器: 客户端宗教
 
 
     // 本地准备状态
@@ -436,6 +440,7 @@ public class NetGameSystem : MonoBehaviour
         // 初始化房间相关字典 
         clientReadyStatus = new Dictionary<uint, bool>();
         clientIPs = new Dictionary<uint, string>();
+        clientReligions = new Dictionary<uint, Religion>();
 
     }
 
@@ -517,14 +522,7 @@ public class NetGameSystem : MonoBehaviour
             gameManage = GameObject.Find("GameManager").GetComponent<GameManage>();
         }
 
-        //if (gameManage == null)
-        //{
-        //    Debug.LogError("无法找到 GameManage!");
-        //}
-        //else
-        //{
-        //    Debug.Log($"成功获取 GameManage");
-        //}
+    
 
         playerDataManager = PlayerDataManager.Instance;
 
@@ -590,6 +588,7 @@ public class NetGameSystem : MonoBehaviour
 
             clientReadyStatus = new Dictionary<uint, bool>();
             clientIPs = new Dictionary<uint, string>();
+            clientReligions = new Dictionary<uint, Religion>();
 
             //connectedPlayers.Clear();
 
@@ -606,7 +605,8 @@ public class NetGameSystem : MonoBehaviour
                 PlayerId = 0,
                 PlayerName = playerName,
                 PlayerIP = playerIP,
-                IsReady = true
+                IsReady = true,
+                PlayerReligion = (int)SceneStateManager.Instance.PlayerReligion
             });
 
             // 启动接收线程
@@ -668,6 +668,7 @@ public class NetGameSystem : MonoBehaviour
                         clientNames[clientId] = connectData.PlayerName;
                         clientReadyStatus[clientId] = false; // 初始化为未准备
                         clientIPs[clientId] = connectData.PlayerIP; // 保存IP
+                        clientReligions[clientId] = (Religion)connectData.PlayerReligion; // 保存宗教
                         connectedPlayers.Add(clientId);
 
                         // 发送确认
@@ -691,7 +692,8 @@ public class NetGameSystem : MonoBehaviour
                         {
                             PlayerId = clientId,
                             PlayerName = connectData.PlayerName,
-                            PlayerIP = connectData.PlayerIP
+                            PlayerIP = connectData.PlayerIP,
+                            PlayerReligion = connectData.PlayerReligion
                         };
 
                         NetworkMessage joinedMessage = new NetworkMessage
@@ -739,7 +741,8 @@ public class NetGameSystem : MonoBehaviour
             PlayerId = 0,
             PlayerName = playerName,
             PlayerIP = playerIP,
-            IsReady = true
+            IsReady = true,
+            PlayerReligion = (int)SceneStateManager.Instance.PlayerReligion
         });
 
         // 添加所有客户端
@@ -752,13 +755,18 @@ public class NetGameSystem : MonoBehaviour
                 {
                     clientReady = clientReadyStatus[clientId];
                 }
-
+                int religionValue = 0;
+                if (clientReligions.ContainsKey(clientId))
+                {
+                    religionValue = (int)clientReligions[clientId];
+                }
                 roomPlayers.Add(new PlayerInfo
                 {
                     PlayerId = clientId,
                     PlayerName = clientNames[clientId],
                     PlayerIP = clientIPs.ContainsKey(clientId) ? clientIPs[clientId] : "Unknown",
-                    IsReady = clientReady
+                    IsReady = clientReady,
+                    PlayerReligion = religionValue
                 });
                 // 调试输出
                 //Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
@@ -906,9 +914,31 @@ public class NetGameSystem : MonoBehaviour
         // 创建游戏开始数据
 
         int[] playerIds = new int[connectedPlayers.Count];
+        int[] playerReligions = new int[connectedPlayers.Count];
         for (int i = 0; i < connectedPlayers.Count; i++)
         {
             playerIds[i] = (int)connectedPlayers[i];
+            // 获取每个玩家的宗教
+            if (connectedPlayers[i] == 0)
+            {
+                // 服务器玩家 (Player 0)
+                playerReligions[i] = (int)SceneStateManager.Instance.PlayerReligion;
+            }
+            else
+            {
+                // 客户端玩家
+                if (clientReligions.ContainsKey(connectedPlayers[i]))
+                {
+                    playerReligions[i] = (int)clientReligions[connectedPlayers[i]];
+                }
+                else
+                {
+                    playerReligions[i] = (int)Religion.None;
+                    Debug.LogWarning($"玩家 {connectedPlayers[i]} 的宗教信息缺失，使用默认值");
+                }
+            }
+
+            Debug.Log($"玩家 {playerIds[i]} 的宗教: {(Religion)playerReligions[i]}");
         }
 
         GameStartData gameData = new GameStartData
@@ -916,6 +946,7 @@ public class NetGameSystem : MonoBehaviour
             PlayerIds = playerIds,
             StartPositions = AssignStartPositions(),
             FirstTurnPlayerId = (int)connectedPlayers[0],
+            PlayerReligions = playerReligions
         };
 
         NetworkMessage message = new NetworkMessage
@@ -954,20 +985,7 @@ public class NetGameSystem : MonoBehaviour
             for (int i = 0; i < positions.Length; i++)
             {
                 positions[i] = gameManage.GetStartPosForNetGame(i);
-                // 更改为保存的起始位置
-                //if (i == 0)
-                //    positions[i] = 0;
-                //else if (i == positions.Length - 1)
-                //    positions[i] = boardCount - 1;
-                //else
-                //    positions[i] = (boardCount / positions.Length) * i;
-
-                //if (i == 0)
-                //    positions[i] = 0;
-                //else if (i == positions.Length - 1)
-                //    positions[i] = boardCount - 1;
-                //else
-                //    positions[i] = (boardCount / positions.Length) * i;
+            
             }
 
             return positions;
@@ -1040,7 +1058,8 @@ public class NetGameSystem : MonoBehaviour
             ConnectMessage connectMsg = new ConnectMessage
             {
                 PlayerName = playerName,
-                PlayerIP = playerIP
+                PlayerIP = playerIP,
+                PlayerReligion = (int)SceneStateManager.Instance.PlayerReligion
             };
 
             NetworkMessage message = new NetworkMessage
@@ -1729,27 +1748,6 @@ public class NetGameSystem : MonoBehaviour
             var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
             Debug.Log($"目标玩家: {data.PlayerId}");
 
-            //// 多重查找 GameManage
-            //if (gameManage == null)
-            //{
-            //    Debug.Log("gameManage 为 null，尝试查找...");
-            //    gameManage = GameManage.Instance;
-            //}
-
-            //if (gameManage == null)
-            //{
-            //    Debug.Log("尝试通过 GameObject.Find 查找...");
-            //    GameObject gmObj = GameObject.Find("GameManager");
-            //    if (gmObj != null)
-            //    {
-            //        gameManage = gmObj.GetComponent<GameManage>();
-            //        Debug.Log($" 通过 GameObject.Find 找到 GameManage");
-            //    }
-            //    else
-            //    {
-            //        Debug.LogError("GameObject.Find 未找到 'GameManager' 对象");
-            //    }
-            //}
 
             if (gameManage != null)
             {
@@ -1826,27 +1824,6 @@ public class NetGameSystem : MonoBehaviour
 
         Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
 
-        // 重新加载所有单位的 PieceDataSO
-        //for (int i = 0; i < playerData.PlayerUnits.Count; i++)
-        //{
-        //    PlayerUnitData unit = playerData.PlayerUnits[i];
-
-        //    if (unit.PlayerUnitDataSO.pieceID!=-1)
-        //    {
-        //        //PieceDataSO pieceData = LoadPieceDataSO(unit.UnitType);
-
-        //        //if (pieceData != null)
-        //        //{
-        //        //    unit.PlayerUnitDataSO = pieceData;
-        //        //    playerData.PlayerUnits[i] = unit;
-        //        //    Debug.Log($" 重新加载 {unit.UnitType} 的 PieceDataSO: {pieceData.name}");
-        //        //}
-        //        //else
-        //        //{
-        //        //    Debug.LogError($"❌ 无法加载 {unit.UnitType} 的 PieceDataSO");
-        //        //}
-        //    }
-        //}
         // 更新数据
         if (playerDataManager != null)
         {
@@ -1961,53 +1938,6 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
         }
     }
-
-    /// <summary>
-    /// 统一的 PieceDataSO 加载方法
-    /// </summary>
-    //private PieceDataSO LoadPieceDataSO(CardType cardType)
-    //{
-    //    PieceDataSO pieceData = null;
-
-    //    // 方法1: 从 UnitListTable 加载
-    //    if (UnitListTable.Instance != null)
-    //    {
-    //        pieceData = UnitListTable.Instance.GetPieceDataByCardType(cardType);
-    //        if (pieceData != null)
-    //        {
-    //            return pieceData;
-    //        }
-    //    }
-
-    //    // 方法2: 从 Resources 加载
-    //    string resourcePath = GetResourcePathForCardType(cardType);
-    //    if (!string.IsNullOrEmpty(resourcePath))
-    //    {
-    //        pieceData = Resources.Load<PieceDataSO>(resourcePath);
-    //        if (pieceData != null)
-    //        {
-    //            return pieceData;
-    //        }
-    //    }
-
-    //    Debug.LogError($"无法加载 PieceDataSO for CardType: {cardType}");
-    //    return null;
-    //}
-
-    //private string GetResourcePathForCardType(CardType cardType)
-    //{
-    //    switch (cardType)
-    //    {
-    //        case CardType.Farmer: return "Cyou/Prefab/farmer";
-    //        case CardType.Solider: return "Cyou/Prefab/military";
-    //        case CardType.Missionary: return "Cyou/Prefab/Missionary";
-    //        case CardType.Pope: return "Cyou/Prefab/pope";
-    //        default: return null;
-    //    }
-    //}
-
-
-
     // 单位移动
     private void HandleUnitMove(NetworkMessage message)
     {
