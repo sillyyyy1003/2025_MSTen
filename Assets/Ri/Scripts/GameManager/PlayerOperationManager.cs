@@ -3815,10 +3815,9 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 获取目标数据（如果存活）
         PlayerUnitData? targetData = null;
-        if (!targetDestroyed)
-        {
+       
             targetData = PlayerDataManager.Instance.FindUnit(targetPlayerId, targetPos);
-        }
+        
 
         // 发送网络消息 - 攻击者位置不变,所以不传递移动参数
         NetGameSystem.Instance.SendUnitAttackMessage(

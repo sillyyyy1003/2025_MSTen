@@ -1118,8 +1118,9 @@ public class PieceManager : MonoBehaviour
             };
         }
 
+        //25.11.27 RI 修改销毁逻辑
         // 駒を削除（内部処理）
-        RemovePieceInternal(pieceID, piece);
+        //RemovePieceInternal(pieceID, piece);
 
         // GameManagerに通知（己方の駒の場合のみ）
         if (isLocalPiece)
