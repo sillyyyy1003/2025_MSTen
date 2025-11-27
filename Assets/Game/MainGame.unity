@@ -1474,6 +1474,11 @@ MonoBehaviour:
   nowChooseUnitID: -1
   nowChooseUnitType: 5
   NowPopulation: 0
+  DeadUnitCount: 0
+  RedMoonSkillCount: 0
+  bRedMoonSkill: 0
+  BuildingFarmerCount: 0
+  MirrorSkillCount: 0
   buildingRegistry: {fileID: 0}
 --- !u!114 &131122553
 MonoBehaviour:
@@ -17744,7 +17749,8 @@ MonoBehaviour:
     spriteSheet:
     - {fileID: 21300000, guid: 5389d7def11e2b0468439310dc820bda, type: 3}
     - {fileID: 21300000, guid: fb58ae5edc1c59f4586ebeea467e776b, type: 3}
-    - {fileID: 21300000, guid: 87e935b7c81f93a4f9a192dd29100b6e, type: 3}
+    - {fileID: 21300000, guid: 61fbc314492a99040a0885fd1cedcd59, type: 3}
+    - {fileID: 21300000, guid: 0b53a5e3934a05149a6cca1fa384bed2, type: 3}
     note: 
   - id: 8
     singleSprite: {fileID: 21300000, guid: 2566f3973fe74e145ae720a37ad540b7, type: 3}

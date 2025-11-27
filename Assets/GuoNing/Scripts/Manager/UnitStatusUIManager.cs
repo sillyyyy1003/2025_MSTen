@@ -30,6 +30,12 @@ public class UnitStatusUIManager : MonoBehaviour
 		units.Add(id, ui);
 	}
 
+	/// <summary>
+	/// 更新HPUI显示
+	/// </summary>
+	/// <param name="id"></param>
+	/// <param name="hp"></param>
+	/// <returns></returns>
 	public bool UpdateHPByID(int id, int hp)
 	{
 		if (units.TryGetValue(id, out var ui))
@@ -41,6 +47,13 @@ public class UnitStatusUIManager : MonoBehaviour
 		return false;
 	}
 
+	/// <summary>
+	/// 更新HPUI显示 包括最大HP
+	/// </summary>
+	/// <param name="id"></param>
+	/// <param name="hp"></param>
+	/// <param name="maxHP"></param>
+	/// <returns></returns>
 	public bool UpdateHPByID(int id, int hp, int maxHP)
 	{
 		if (units.TryGetValue(id, out var ui))
@@ -52,6 +65,12 @@ public class UnitStatusUIManager : MonoBehaviour
 		return false;
 	}
 
+	/// <summary>
+	/// 更新行动力UI显示
+	/// </summary>
+	/// <param name="id"></param>
+	/// <param name="ap"></param>
+	/// <returns></returns>
 	public bool UpdateAPByID(int id, int ap)
 	{
 		if (units.TryGetValue(id, out var ui))
@@ -63,6 +82,13 @@ public class UnitStatusUIManager : MonoBehaviour
 		return false;
 	}
 
+	/// <summary>
+	/// 更新行动力UI显示 包括最大行动力
+	/// </summary>
+	/// <param name="id"></param>
+	/// <param name="ap"></param>
+	/// <param name="maxAP"></param>
+	/// <returns></returns>
 	public bool UpdateAPByID(int id, int ap, int maxAP)
 	{
 		if (units.TryGetValue(id, out var ui))
@@ -74,6 +100,10 @@ public class UnitStatusUIManager : MonoBehaviour
 		return false;
 	}
 
+	/// <summary>
+	/// 当角色死亡时移除其状态UI
+	/// </summary>
+	/// <param name="id"></param>
 	public void RemoveStatusUI(int id)
 	{
 		if (units.TryGetValue(id, out var ui))

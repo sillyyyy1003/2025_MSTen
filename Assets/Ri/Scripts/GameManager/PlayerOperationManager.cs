@@ -882,7 +882,7 @@ public class PlayerOperationManager : MonoBehaviour
         //PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
         // 生成ID，创建单位
         int unitID = PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
-        // 生成HP
+        // 生成StatusUI
         UnitStatusUIManager.Instance.CreateStatusUI(unitID, unitData.currentHP,unitData.currentAP, pieceObj.transform, unitType);
 
 		// 保存本地引用
