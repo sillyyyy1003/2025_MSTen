@@ -2912,11 +2912,15 @@ public class PlayerOperationManager : MonoBehaviour
                     targetObj,
                     msg.TargetPlayerId
                 );
+                // 处理血量
+                HPBarManager.Instance.RemoveHPBar(msg.TargetSyncData.Value.pieceID);
             }
             else
             {
                 // 目标存活，只播放受击动画
                 HandleTargetSurvivedAfterAttack(targetObj, msg);
+                // 处理血量
+                HPBarManager.Instance.UpdateHPBarByID(msg.TargetSyncData.Value.pieceID,msg.TargetSyncData.Value.currentHP);
             }
         }
 
