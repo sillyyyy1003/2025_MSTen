@@ -7260,7 +7260,7 @@ GameObject:
   - component: {fileID: 851308554}
   - component: {fileID: 851308553}
   m_Layer: 0
-  m_Name: HPCanvas
+  m_Name: StatusCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -18352,7 +18352,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e16b89b2ef127ac4a91ec99e2162ff4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hpBarPrefab: {fileID: 4540047841074454573, guid: 007e9cb32bab8fb428eea97b6277c5da,
+  statusUIPrefab: {fileID: -8201623605849898354, guid: 007e9cb32bab8fb428eea97b6277c5da,
     type: 3}
   uiCanvas: {fileID: 851308555}
   defaultOffset: {x: 0, y: 20, z: 0}

@@ -827,7 +827,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 生成ID，创建单位
         int unitID = PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
         // 生成HP
-        HPBarManager.Instance.CreateHPBar(unitID, unitData.currentHP, pieceObj.transform, unitType);
+        UnitStatusUIManager.Instance.CreateStatusUI(unitID, unitData.currentHP,unitData.currentAP, pieceObj.transform, unitType);
 
 		// 保存本地引用
 		localPlayerUnits[position] = pieceObj;
