@@ -671,6 +671,10 @@ public class PlayerOperationManager : MonoBehaviour
         SelectingUnit = null;
         SelectedEmptyCellID = -1;
 
+        // 更新NowChoose
+        PlayerDataManager.Instance.nowChooseUnitID = -1;
+        PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+
 
         Debug.Log("你的回合结束!");
 

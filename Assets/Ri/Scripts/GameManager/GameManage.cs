@@ -219,6 +219,8 @@ public class GameManage : MonoBehaviour
         PlayerStartPositions.Clear();
         CellObjects.Clear();
 
+        Religion enemyRe=Religion.None;
+
         // 设置游戏状态
         SetIsGamingOrNot(true);
         Debug.Log($"游戏状态已设置: {bIsInGaming}");
@@ -261,7 +263,14 @@ public class GameManage : MonoBehaviour
         _PlayerDataManager.SetPlayerPopulationCost();
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-        _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, data.PlayerReligion);
+
+        foreach (var playerId in data.PlayerIds)
+        {
+            if (playerId != LocalPlayerID)
+                enemyRe= data.PlayerReligion;
+        }
+
+        _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, enemyRe);
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)

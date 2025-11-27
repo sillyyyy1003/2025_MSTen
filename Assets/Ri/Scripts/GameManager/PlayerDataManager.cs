@@ -292,10 +292,10 @@ public class PlayerDataManager : MonoBehaviour
     private Dictionary<int, int> unitIdToPlayerIdMap = new Dictionary<int, int>();
 
     // 当前选择中的单位id
-    public int nowChooseUnitID;
+    public int nowChooseUnitID=-1;
 
     // 当前选择中的单位类型
-    public CardType nowChooseUnitType;
+    public CardType nowChooseUnitType=CardType.None;
 
     // 本地玩家数据(不参与数据同步)
     // 人口上限
