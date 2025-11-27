@@ -2768,7 +2768,7 @@ public class PlayerOperationManager : MonoBehaviour
         int2 attackerPos = new int2(msg.AttackerPosX, msg.AttackerPosY);
         int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
 
-        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 玩家 {msg.TargetPlayerId}");
+        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 单位 {msg.AttackerSyncData.pieceID} 攻击 玩家 {msg.TargetPlayerId} 单位 {msg.TargetSyncData.Value.pieceID} ");
         Debug.Log($"[网络攻击] 攻击者位置: ({attackerPos.x},{attackerPos.y}), 目标位置: ({targetPos.x},{targetPos.y})");
 
         // 获取攻击者GameObject
@@ -2871,6 +2871,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             if (msg.TargetDestroyed)
             {
+                // 先处理处理血量
+                HPBarManager.Instance.RemoveHPBar(msg.TargetSyncData.Value.pieceID);
+
                 //计算己方死亡单位 (红月教)
                 PlayerDataManager.Instance.DeadUnitCount += 1;
 
@@ -2903,6 +2906,7 @@ public class PlayerOperationManager : MonoBehaviour
                         }
                     }
                 }
+
                 // 目标死亡，攻击者前进到目标位置
                 HandleTargetDestroyedAfterAttack(
                     attackerObj,
@@ -2912,8 +2916,6 @@ public class PlayerOperationManager : MonoBehaviour
                     targetObj,
                     msg.TargetPlayerId
                 );
-                // 处理血量
-                HPBarManager.Instance.RemoveHPBar(msg.TargetSyncData.Value.pieceID);
             }
             else
             {
