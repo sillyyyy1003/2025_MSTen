@@ -371,7 +371,12 @@ public class NetGameSystem : MonoBehaviour
 
     // 服务器发现事件
     public event Action<ServerDiscoveryInfo> OnServerDiscovered;
-
+    //  新增: 自动连接相关字段                                                  │
+    private bool autoConnectEnabled = false;   // 是否启用自动连接                
+    private bool hasAutoConnected = false;     // 是否已经自动连接过              
+                                                                             
+    //  新增: 自动连接超时事件                                                  
+    public event Action OnAutoConnectTimeout;  // 搜索超时事件  
 
     [Header("网络配置")]
     [SerializeField] private bool isServer = false;
@@ -419,6 +424,7 @@ public class NetGameSystem : MonoBehaviour
     public event Action OnConnectedToServer;      // 客户端
     public event Action OnDisconnected;
     public event Action OnGameStarted;
+
 
     // 房间状态更新事件
     public event Action<List<PlayerInfo>> OnRoomStatusUpdated;
@@ -1083,7 +1089,12 @@ public class NetGameSystem : MonoBehaviour
         }
 
         try
-        {
+        {  
+            // 新增: 初始化服务器端点    
+             serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIP), port);    
+             Debug.Log($"[客户端] 设置服务器端点: {serverEndPoint}");
+
+
             // 创建UDP客户端
             udpClient = new UdpClient();
             isRunning = true;
@@ -1105,6 +1116,66 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 启动客户端并自动搜索连接到第一个发现的服务器
+    /// UI只需调用这一个方法即可完成搜索和连接
+    /// </summary>
+    /// <param name="timeoutSeconds">搜索超时时间（秒），默认10秒</param>
+    public void StartClientWithAutoConnect(float timeoutSeconds = 10f)
+    {
+        if (isRunning)
+        {
+            Debug.LogWarning("[自动连接] 客户端已在运行!");
+            return;
+        }
+
+        if (isListening)
+        {
+            Debug.LogWarning("[自动连接] 已在监听中!");
+            return;
+        }
+
+        Debug.Log("[自动连接] 开始自动搜索并连接服务器...");
+
+        // 设置为客户端
+        isServer = false;
+
+        // 设置自动连接标志
+        autoConnectEnabled = true;
+        hasAutoConnected = false;
+
+        // 开始监听服务器广播
+        StartClientListen();
+
+        // 启动超时检测协程
+        StartCoroutine(AutoConnectTimeoutCoroutine(timeoutSeconds));
+    }
+
+    /// <summary>
+    /// 自动连接超时检测协程
+    /// </summary>
+    private IEnumerator AutoConnectTimeoutCoroutine(float timeout)
+    {
+        Debug.Log($"[自动连接] 启动超时检测，{timeout}秒后超时");
+
+        yield return new WaitForSeconds(timeout);
+
+        // 如果超时时还在监听且未连接，说明没找到服务器
+        if (autoConnectEnabled && !hasAutoConnected)
+        {
+            Debug.LogWarning("[自动连接] 搜索超时，未找到服务器");
+
+            autoConnectEnabled = false;
+
+            // 停止监听
+            StopClientListen();
+
+            // 触发超时事件
+            OnAutoConnectTimeout?.Invoke();
+        }
+    }
+
+
     // 包含宗教信息
     private void SendConnectRequest()
     {
@@ -1124,6 +1195,7 @@ public class NetGameSystem : MonoBehaviour
         SendToServer(message);
         Debug.Log($"发送连接请求到服务器 {serverIP}:{port}");
     }
+
     private void ClientLoop()
     {
         while (isRunning)
@@ -1307,6 +1379,20 @@ public class NetGameSystem : MonoBehaviour
                     MainThreadDispatcher.Enqueue(() =>
                     {
                         OnServerDiscovered?.Invoke(info);
+
+                        // 新增: 自动连接逻辑 
+                        if (autoConnectEnabled && !hasAutoConnected)
+                        {
+                            Debug.Log($"[自动连接] 自动连接到服务器: {{info.ServerIP}}\"");
+                            hasAutoConnected = true;
+                            autoConnectEnabled = false;
+                             // 停止监听                                          
+                            StopClientListen();                                 
+                                                                             
+                            // 自动连接                                          
+                            StartAsClient(info.ServerIP);
+                        }
+
                     });
                 }
                 catch (SocketException se)
@@ -1347,7 +1433,11 @@ public class NetGameSystem : MonoBehaviour
     public void StopClientListen()
     {
         isListening = false;
-
+        if (autoConnectEnabled)                                                 
+        {                                                                       
+            autoConnectEnabled = false;                                         
+            Debug.Log("[自动连接] 监听停止，取消自动连接");                        
+        }
         if (listenClient != null)
         {
             listenClient.Close();
