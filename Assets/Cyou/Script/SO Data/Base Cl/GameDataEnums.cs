@@ -58,7 +58,8 @@ namespace GameData
         MayaReligion,           // 瑪雅外星人文明教
         MadScientistReligion,   // 瘋狂科學家教
         MirrorLakeReligion,     // 鏡湖教
-        F, G, H                 // 将来の拡張用
+        FlyingSpaghettiReligion,// 飛天擔擔麵教
+        G, H                    // 将来の拡張用
     }
 
 
