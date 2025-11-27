@@ -258,7 +258,7 @@ public class GameManage : MonoBehaviour
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
         // 设置人口上限
-        _PlayerDataManager.SetPlayerPopulationCost(LocalPlayerID);
+        _PlayerDataManager.SetPlayerPopulationCost();
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
         _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, data.PlayerReligion);
