@@ -51,7 +51,9 @@ public enum NetworkMessageType
     // 同步
     SYNC_DATA,
     PING,
-    PONG
+    PONG,
+
+    CLIENT_RELIGION_INFO,  // 新增: 客户端宗教信息
 }
 
 // *************************
@@ -120,6 +122,24 @@ public class PlayerReadyMessage
 public class RoomStatusUpdateMessage
 {
     public List<PlayerInfo> Players;
+}
+
+// 宗教与IP广播数据
+[Serializable]
+public class ServerDiscoveryInfo
+{
+    public string ServerName;      // 服务器名称
+    public string ServerIP;        // 服务器IP
+    public int ServerPort;         // 服务器端口
+    public int ServerReligion;     // 服务器选择的宗教
+    public long Timestamp;         // 时间戳
+}
+
+[Serializable]
+public class ClientReligionMessage
+{
+    public uint ClientId;
+    public int Religion;  // Religion枚举转int
 }
 
 [Serializable]
@@ -328,6 +348,30 @@ public class NetGameSystem : MonoBehaviour
     // 单例
     public static NetGameSystem Instance { get; private set; }
 
+    // ========== 新增: 局域网广播相关字段 ==========
+    [Header("LAN Discovery Settings")]
+    private const int BROADCAST_PORT = 47777;  // 广播端口
+    private const float BROADCAST_INTERVAL = 2f; // 广播间隔(秒)
+    private const int LISTEN_TIMEOUT = 5000; // 监听超时(毫秒)
+
+    // UDP客户端 - 广播和监听
+    private UdpClient broadcastClient;
+    private UdpClient listenClient;
+
+    // 广播和监听线程
+    private Thread broadcastThread;
+    private Thread listenThread;
+
+    // 广播控制
+    private bool isBroadcasting = false;
+    private bool isListening = false;
+
+    // 客户端宗教信息存储
+    private Dictionary<uint, Religion> clientReligions = new Dictionary<uint, Religion>();
+
+    // 服务器发现事件
+    public event Action<ServerDiscoveryInfo> OnServerDiscovered;
+
 
     [Header("网络配置")]
     [SerializeField] private bool isServer = false;
@@ -486,7 +530,7 @@ public class NetGameSystem : MonoBehaviour
             }
             else
             {
-                ConnectToServer();
+                StartAsClient();
             }
         }
     }
@@ -501,7 +545,11 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log("NetGameManager已销毁");
         }
     }
-
+    // 19. 修改OnApplicationQuit方法(如果有的话,如果没有就添加)
+    private void OnApplicationQuit()
+    {
+        Shutdown();
+    }
     // *************************
     //         初始化
     // *************************
@@ -563,7 +611,9 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.CHARM_EXPIRE, HandleCharmExpire },
 
                 { NetworkMessageType.PING, HandlePing },
-                { NetworkMessageType.PONG, HandlePong }
+                { NetworkMessageType.PONG, HandlePong },    
+                
+                { NetworkMessageType.CLIENT_RELIGION_INFO, HandleClientReligionInfo }
         };
 
         //Debug.Log($"=== 消息处理器注册完成 ===");
@@ -582,49 +632,35 @@ public class NetGameSystem : MonoBehaviour
             return;
         }
 
+        Debug.Log("正在启动服务器...");
+        isServer = true;
+        localClientId = 0; // 服务器是玩家0
+
+        // 设置服务器IP
+        serverIP = SceneStateManager.Instance.PlayerIP;
+        Debug.Log($"服务器IP: {serverIP}");
+
         try
         {
-            clients = new Dictionary<uint, IPEndPoint>();
-            clientNames = new Dictionary<uint, string>();
-
-            clientReadyStatus = new Dictionary<uint, bool>();
-            clientIPs = new Dictionary<uint, string>();
-
-            //connectedPlayers.Clear();
-
+            // 创建UDP客户端
             udpClient = new UdpClient(port);
             isRunning = true;
 
-            // 服务器自己算作第一个玩家
-            localClientId = 0;
-            connectedPlayers.Add(0);
-
-            //添加服务器自己到房间玩家列表
-            roomPlayers.Add(new PlayerInfo
-            {
-                PlayerId = 0,
-                PlayerName = playerName,
-                PlayerIP = playerIP,
-                IsReady = true
-            });
-
-            // 启动接收线程
-            networkThread = new Thread(ServerLoop) { IsBackground = true };
+            // 启动网络线程
+            networkThread = new Thread(ServerLoop);
+            networkThread.IsBackground = true;
             networkThread.Start();
 
-            Debug.Log($"[服务器] 启动成功 - 端口: {port}");
+            Debug.Log($"服务器已启动,监听端口 {port}");
 
-            // 通知UI更新房间状态 
-            MainThreadDispatcher.Enqueue(() =>
-            {
-                OnRoomStatusUpdated?.Invoke(roomPlayers);
+            // 新增: 启动局域网广播
+            StartServerBroadcast();
 
-            });
-
+            OnConnectedToServer?.Invoke();
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            Debug.LogError($"[服务器] 启动失败: {ex.Message}");
+            Debug.LogError($"启动服务器失败: {e.Message}");
             isRunning = false;
         }
     }
@@ -889,6 +925,11 @@ public class NetGameSystem : MonoBehaviour
             Debug.LogWarning("只有服务器可以启动游戏!");
             return;
         }
+        if (clients.Count == 0)
+        {
+            Debug.LogWarning("没有客户端连接!");
+            return;
+        }
 
         if (isGameStarted)
         {
@@ -904,25 +945,55 @@ public class NetGameSystem : MonoBehaviour
 
         // 创建游戏开始数据
 
-        int[] playerIds = new int[connectedPlayers.Count];
-        for (int i = 0; i < connectedPlayers.Count; i++)
+        // 获取所有玩家ID
+        List<int> playerIds = new List<int> { 0 }; // 服务器是玩家0
+        foreach (var clientId in clients.Keys)
         {
-            playerIds[i] = (int)connectedPlayers[i];
+            playerIds.Add((int)clientId);
         }
 
-        GameStartData gameData = new GameStartData
+        // 获取起始位置
+        List<int> startPositions = new List<int>();
+        if (GameManage.Instance != null)
         {
-            PlayerIds = playerIds,
-            StartPositions = AssignStartPositions(),
-            FirstTurnPlayerId = (int)connectedPlayers[0],
-            PlayerReligion = SceneStateManager.Instance.PlayerReligion
+            for (int i = 0; i < playerIds.Count && i < 2; i++)
+            {
+                int startPos = GameManage.Instance.GetStartPosForNetGame(i);
+                startPositions.Add(startPos);
+                Debug.Log($"玩家 {playerIds[i]} 起始位置: {startPos}");
+            }
+        }
+
+        // 新增: 获取客户端宗教
+        Religion clientReligion = Religion.None; // 默认值
+        if (clients.Count > 0)
+        {
+            uint firstClientId = new List<uint>(clients.Keys)[0];
+            if (clientReligions.ContainsKey(firstClientId))
+            {
+                clientReligion = clientReligions[firstClientId];
+                Debug.Log($"[宗教同步] 使用客户端宗教: {clientReligion}");
+            }
+            else
+            {
+                Debug.LogWarning($"[宗教同步] 未找到客户端宗教信息,使用默认值: {clientReligion}");
+            }
+        }
+
+        GameStartData gameStartData = new GameStartData
+        {
+            PlayerIds = playerIds.ToArray(),
+            StartPositions = startPositions.ToArray(),
+            FirstTurnPlayerId = 0,
+            ServerReligion = SceneStateManager.Instance.PlayerReligion,  // 新增
+            ClientReligion = clientReligion  // 新增
         };
 
         NetworkMessage message = new NetworkMessage
         {
             MessageType = NetworkMessageType.GAME_START,
             SenderId = 0,
-            JsonData = JsonConvert.SerializeObject(gameData)
+            JsonData = JsonConvert.SerializeObject(gameStartData)
         };
 
         // 广播给所有客户端
@@ -931,9 +1002,17 @@ public class NetGameSystem : MonoBehaviour
         // 服务器自己也处理
         MainThreadDispatcher.Enqueue(() =>
         {
-            Debug.Log("[服务器] 游戏开始!");
-            OnGameStarted?.Invoke();
-            HandleGameStart(message);
+            if (GameManage.Instance != null)
+            {
+                bool success = GameManage.Instance.InitGameWithNetworkData(gameStartData);
+                if (success)
+                {
+                    Debug.Log("服务器游戏初始化成功");
+
+                    // 新增: 停止局域网广播(游戏已开始)
+                    StopServerBroadcast();
+                }
+            }
         });
 
         // 2025.11.14 Guoning 开始播放音乐
@@ -981,90 +1060,70 @@ public class NetGameSystem : MonoBehaviour
     //      客户端功能
     // *************************
 
-    public void ConnectToServer()
+    public void StartAsClient(string autoServerIP = null)
     {
-        // 添加服务器检测
-        bool serverExists = false;
-        using (UdpClient testClient = new UdpClient())
+        if (isRunning)
         {
-            try
-            {
-                testClient.Connect(serverIP, port);
-                //Debug.Log("Server IP is "+serverIP+" server port is "+port);
-                // 发送一个测试Ping包
-                byte[] testData = Encoding.UTF8.GetBytes("PingCheck");
-                testClient.Send(testData, testData.Length);
-
-                // 设置超时
-                testClient.Client.ReceiveTimeout = 500;
-                IPEndPoint remote = new IPEndPoint(IPAddress.Any, 0);
-
-                // 等待服务器响应
-                DateTime startTime = DateTime.Now;
-                while ((DateTime.Now - startTime).TotalMilliseconds < 500)
-                {
-                    if (testClient.Available > 0)
-                    {
-                        byte[] recv = testClient.Receive(ref remote);
-                        string reply = Encoding.UTF8.GetString(recv);
-                        if (reply.Contains("ServerAlive"))
-                        {
-                            serverExists = true;
-                            break;
-                        }
-                    }
-                    Thread.Sleep(10); // 短暂等待避免占满CPU
-                }
-            }
-            catch (SocketException)
-            {
-                serverExists = false;
-            }
-        }
-
-        if (!serverExists)
-        {
-            Debug.LogWarning("[客户端] 未检测到服务器，连接失败。");
-            SceneController.Instance?.SwitchScene("SelectScene", null);
+            Debug.LogWarning("客户端已在运行!");
             return;
         }
 
+        Debug.Log("正在启动客户端...");
+        isServer = false;
+
+        // 新增: 如果提供了自动发现的服务器IP,使用它
+        if (!string.IsNullOrEmpty(autoServerIP))
+        {
+            serverIP = autoServerIP;
+            Debug.Log($"[客户端] 使用自动发现的服务器IP: {serverIP}");
+        }
+        else
+        {
+            Debug.Log($"[客户端] 使用手动设置的服务器IP: {serverIP}");
+        }
 
         try
         {
-            serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIP), port);
+            // 创建UDP客户端
             udpClient = new UdpClient();
             isRunning = true;
 
-            // 发送连接请求
-            ConnectMessage connectMsg = new ConnectMessage
-            {
-                PlayerName = playerName,
-                PlayerIP = playerIP
-            };
-
-            NetworkMessage message = new NetworkMessage
-            {
-                MessageType = NetworkMessageType.CONNECT,
-                SenderId = 0,
-                JsonData = JsonConvert.SerializeObject(connectMsg)
-            };
-
-            SendToServer(message);
-
-            // 启动接收线程
-            networkThread = new Thread(ClientLoop) { IsBackground = true };
+            // 启动网络线程
+            networkThread = new Thread(ClientLoop);
+            networkThread.IsBackground = true;
             networkThread.Start();
 
-            Debug.Log($"[客户端] 正在连接到 {serverIP}:{port}...");
+            Debug.Log($"客户端已启动,准备连接到 {serverIP}:{port}");
+
+            // 发送连接请求
+            SendConnectRequest();
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            Debug.LogError($"[客户端] 连接失败: {ex.Message}");
+            Debug.LogError($"启动客户端失败: {e.Message}");
             isRunning = false;
         }
     }
 
+    // 包含宗教信息
+    private void SendConnectRequest()
+    {
+        ConnectMessage connectMsg = new ConnectMessage
+        {
+            PlayerName = SceneStateManager.Instance.PlayerName,
+            PlayerIP = SceneStateManager.Instance.PlayerIP
+        };
+
+        NetworkMessage message = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.CONNECT,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(connectMsg)
+        };
+
+        SendToServer(message);
+        Debug.Log($"发送连接请求到服务器 {serverIP}:{port}");
+    }
     private void ClientLoop()
     {
         while (isRunning)
@@ -1101,6 +1160,209 @@ public class NetGameSystem : MonoBehaviour
             }
         }
     }
+
+    // *************************
+    //      广播相关
+    // *************************
+    // 6. 新增: 启动服务器广播
+    private void StartServerBroadcast()
+    {
+        if (isBroadcasting)
+        {
+            Debug.LogWarning("[广播] 广播已在运行");
+            return;
+        }
+
+        isBroadcasting = true;
+
+        // 创建广播信息
+        ServerDiscoveryInfo info = new ServerDiscoveryInfo
+        {
+            ServerName = SceneStateManager.Instance.PlayerName,
+            ServerIP = SceneStateManager.Instance.PlayerIP,
+            ServerPort = port,
+            ServerReligion = (int)SceneStateManager.Instance.PlayerReligion,
+            Timestamp = DateTime.Now.Ticks
+        };
+
+        // 启动广播线程
+        broadcastThread = new Thread(() => BroadcastLoop(info));
+        broadcastThread.IsBackground = true;
+        broadcastThread.Start();
+
+        Debug.Log($"[广播] 开始广播服务器信息: {info.ServerIP}:{info.ServerPort}, 宗教: {(Religion)info.ServerReligion}");
+    }
+
+    // 7. 新增: 广播循环
+    private void BroadcastLoop(ServerDiscoveryInfo info)
+    {
+        try
+        {
+            broadcastClient = new UdpClient();
+            broadcastClient.EnableBroadcast = true;
+            IPEndPoint broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, BROADCAST_PORT);
+
+            while (isBroadcasting && isRunning)
+            {
+                try
+                {
+                    // 更新时间戳
+                    info.Timestamp = DateTime.Now.Ticks;
+
+                    // 序列化为JSON
+                    string json = JsonConvert.SerializeObject(info);
+                    byte[] data = Encoding.UTF8.GetBytes(json);
+
+                    // 发送广播
+                    broadcastClient.Send(data, data.Length, broadcastEndPoint);
+                    Debug.Log($"[广播] 发送服务器信息");
+
+                    Thread.Sleep((int)(BROADCAST_INTERVAL * 1000));
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[广播] 广播错误: {e.Message}");
+                    Thread.Sleep(1000);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[广播] 广播线程错误: {e.Message}");
+        }
+        finally
+        {
+            if (broadcastClient != null)
+            {
+                broadcastClient.Close();
+                broadcastClient = null;
+            }
+            Debug.Log("[广播] 广播线程已停止");
+        }
+    }
+
+    // 8. 新增: 停止服务器广播
+    private void StopServerBroadcast()
+    {
+        isBroadcasting = false;
+
+        if (broadcastClient != null)
+        {
+            broadcastClient.Close();
+            broadcastClient = null;
+        }
+
+        if (broadcastThread != null && broadcastThread.IsAlive)
+        {
+            broadcastThread.Join(1000);
+        }
+
+        Debug.Log("[广播] 已停止服务器广播");
+    }
+
+    // 9. 新增: 启动客户端监听
+    public void StartClientListen()
+    {
+        if (isListening)
+        {
+            Debug.LogWarning("[监听] 监听已在运行");
+            return;
+        }
+
+        isListening = true;
+
+        // 启动监听线程
+        listenThread = new Thread(ListenLoop);
+        listenThread.IsBackground = true;
+        listenThread.Start();
+
+        Debug.Log("[监听] 开始监听服务器广播");
+    }
+
+    // 10. 新增: 监听循环
+    private void ListenLoop()
+    {
+        try
+        {
+            listenClient = new UdpClient(BROADCAST_PORT);
+            listenClient.Client.ReceiveTimeout = LISTEN_TIMEOUT;
+            IPEndPoint anyEndPoint = new IPEndPoint(IPAddress.Any, BROADCAST_PORT);
+
+            Debug.Log($"[监听] 监听端口 {BROADCAST_PORT}");
+
+            while (isListening)
+            {
+                try
+                {
+                    // 接收广播数据
+                    byte[] data = listenClient.Receive(ref anyEndPoint);
+                    string json = Encoding.UTF8.GetString(data);
+
+                    // 反序列化
+                    ServerDiscoveryInfo info = JsonConvert.DeserializeObject<ServerDiscoveryInfo>(json);
+
+                    Debug.Log($"[监听] 发现服务器: {info.ServerName} ({info.ServerIP}:{info.ServerPort}), 宗教: {(Religion)info.ServerReligion}");
+
+                    // 在主线程触发事件
+                    MainThreadDispatcher.Enqueue(() =>
+                    {
+                        OnServerDiscovered?.Invoke(info);
+                    });
+                }
+                catch (SocketException se)
+                {
+                    if (se.SocketErrorCode == SocketError.TimedOut)
+                    {
+                        // 超时是正常的,继续监听
+                        continue;
+                    }
+                    Debug.LogError($"[监听] Socket错误: {se.Message}");
+                }
+                catch (Exception e)
+                {
+                    if (isListening) // 只在仍在监听时报错
+                    {
+                        Debug.LogError($"[监听] 监听错误: {e.Message}");
+                    }
+                    Thread.Sleep(1000);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[监听] 监听线程错误: {e.Message}");
+        }
+        finally
+        {
+            if (listenClient != null)
+            {
+                listenClient.Close();
+                listenClient = null;
+            }
+            Debug.Log("[监听] 监听线程已停止");
+        }
+    }
+
+    // 11. 新增: 停止客户端监听
+    public void StopClientListen()
+    {
+        isListening = false;
+
+        if (listenClient != null)
+        {
+            listenClient.Close();
+            listenClient = null;
+        }
+
+        if (listenThread != null && listenThread.IsAlive)
+        {
+            listenThread.Join(1000);
+        }
+
+        Debug.Log("[监听] 已停止客户端监听");
+    }
+
+
 
     // *************************
     //      发送消息
@@ -1571,13 +1833,58 @@ public class NetGameSystem : MonoBehaviour
 
     private void HandleConnected(NetworkMessage message)
     {
-        // 客户端收到连接确认
         ConnectedMessage data = JsonConvert.DeserializeObject<ConnectedMessage>(message.JsonData);
         localClientId = data.AssignedClientId;
-        connectedPlayers = data.ExistingPlayerIds;
 
-        Debug.Log($"成功连接到服务器，分配ID: {localClientId}");
-        OnConnectedToServer?.Invoke();
+        Debug.Log($"已连接到服务器,分配ID: {localClientId}");
+
+        // 新增: 停止监听广播
+        StopClientListen();
+
+        // 新增: 连接成功后发送客户端宗教信息
+        SendClientReligionInfo();
+
+        // 主线程回调
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            OnConnectedToServer?.Invoke();
+        });
+    }
+
+    // 13. 新增: 客户端发送宗教信息
+    public void SendClientReligionInfo()
+    {
+        if (bIsServer)
+        {
+            Debug.LogWarning("服务器不需要发送客户端宗教信息");
+            return;
+        }
+
+        ClientReligionMessage religionMsg = new ClientReligionMessage
+        {
+            ClientId = localClientId,
+            Religion = (int)SceneStateManager.Instance.PlayerReligion
+        };
+
+        NetworkMessage message = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.CLIENT_RELIGION_INFO,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(religionMsg)
+        };
+
+        SendToServer(message);
+        Debug.Log($"[宗教同步] 发送客户端宗教信息: {SceneStateManager.Instance.PlayerReligion}");
+    }
+
+
+    // 新增: 处理客户端宗教信息
+    private void HandleClientReligionInfo(NetworkMessage message)
+    {
+        ClientReligionMessage data = JsonConvert.DeserializeObject<ClientReligionMessage>(message.JsonData);
+
+        clientReligions[data.ClientId] = (Religion)data.Religion;
+        Debug.Log($"[宗教同步] 收到客户端 {data.ClientId} 的宗教信息: {(Religion)data.Religion}");
     }
     private void HandlePlayerJoined(NetworkMessage message)
     {
@@ -2436,6 +2743,10 @@ public class NetGameSystem : MonoBehaviour
         Debug.Log("Server Over!");
 
         isRunning = false;
+
+        // 新增: 停止广播和监听
+        StopServerBroadcast();
+        StopClientListen();
 
         if (networkThread != null && networkThread.IsAlive)
         {

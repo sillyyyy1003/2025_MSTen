@@ -148,10 +148,7 @@ public class SceneStateManager : MonoBehaviour
     {
         // 生成一个随机值（目前为1~4 之后扩展到1~8）
 
-        // 25.11.27 RI 暂时修改
-        //int religion = Random.Range(1, 4);
-        //PlayerReligion = (Religion)religion;
-        int religion = Random.Range(1, 2);
+        int religion = Random.Range(1, 4);
         PlayerReligion = (Religion)religion;
 
     }
