@@ -1018,7 +1018,9 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.LogWarning($"[显示更新] 创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}) player ID:{unit.PlayerUnitDataSO.currentPID} unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
             CreateEnemyUnit(playerId, unit);
-        }
+
+		
+		}
 
         Debug.Log($"[显示更新] 玩家 {playerId} 显示更新完成，当前单位数: {otherPlayersUnits[playerId].Count}");
     }
@@ -1243,7 +1245,9 @@ public class PlayerOperationManager : MonoBehaviour
                     unit = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     unit.transform.position = worldPos;
                 }
-                Debug.Log($"敌方建筑创建成功");
+                // 创建UI
+                UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
+				Debug.Log($"敌方建筑创建成功");
             }
             else
             {
@@ -1283,10 +1287,12 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[playerId][unitData.Position] = unit;
             GameManage.Instance.SetCellObject(unitData.Position, unit);
 
-            //Debug.Log("开始查询敌方单位位置");
-            //PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+			//Debug.Log("开始查询敌方单位位置");
+			//PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+			// 创建UI
+			UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
 
-        }
+		}
     }
 
     #endregion

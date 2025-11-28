@@ -72,7 +72,7 @@ public class SceneStateManager : MonoBehaviour
             PlayerIP = GetLocalIPv4();
 
             // 2025.11.17 Guoning 如果是服务器 则生成地图序列编号
-            ChosseRandomMap();
+            ChooseRandomMap();
 
         }
         else
@@ -85,7 +85,7 @@ public class SceneStateManager : MonoBehaviour
 
         // 2025.11.17 Guoning 随机选择宗教
         // 2025.11.17 RI 现有宗教单位数不足以随机，暂时注释
-        //ChooseRandomReligion();
+        ChooseRandomReligion();
 
 	}
 
@@ -148,7 +148,7 @@ public class SceneStateManager : MonoBehaviour
     {
         // 生成一个随机值（目前为1~4 之后扩展到1~8）
 
-        int religion = Random.Range(1, 4);
+        int religion = Random.Range(1, 3);
         PlayerReligion = (Religion)religion;
 
     }
@@ -156,7 +156,7 @@ public class SceneStateManager : MonoBehaviour
     /// <summary>
     /// 随机选择地图
     /// </summary>
-    private void ChosseRandomMap()
+    private void ChooseRandomMap()
     {
 		// map 1001~1010
 		mapSerialNumber = Random.Range(1001, 1010);
