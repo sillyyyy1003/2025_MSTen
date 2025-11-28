@@ -101,11 +101,6 @@ public class GameSceneUIManager : MonoBehaviour
 
     }
 
-    public void OnStartSingleGame()
-    {
-		GameUIObject.SetActive(true);
-		loadUI.gameObject.SetActive(false);
-	}
 
     // 初始化房间UI
     private void InitializeRoomUI()
@@ -313,7 +308,7 @@ public class GameSceneUIManager : MonoBehaviour
     }
 
     // 游戏开始回调 
-    private void OnGameStarted()
+    public void OnGameStarted()
     {
         // 切换到游戏UI
     
@@ -329,8 +324,6 @@ public class GameSceneUIManager : MonoBehaviour
 		}
 
 		Debug.Log("游戏开始，切换到游戏界面");
-
-
     }
 
     // 清理事件订阅

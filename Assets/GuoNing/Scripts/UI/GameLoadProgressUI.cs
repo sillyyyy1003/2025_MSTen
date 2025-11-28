@@ -90,16 +90,18 @@ public class GameLoadProgressUI : MonoBehaviour
 			.OnComplete(() =>
 			{
 				Debug.Log("[客户端] 假 Loading 完成，等待玩家到齐");
-				if (isSingle) StartRealLoading(); 
-				else OnLoadingEnd?.Invoke(true);		// OnLoadingEnd->HandleRoom
+				if (isSingle) StartRealLoading();
 			});
 	}
 
 
 
+	// 所以现在的逻辑是 如果是单机模式 则单机模式之后自动开始真实加载
+	// 如果是联机模式 则先开始单机模式 然后等待服务器通知，如果玩家到齐 则开始真实加载 在真实加载开始时 OnLoadingEnd通知系统 该玩家已经Ready 网络系统收到所有玩家Ready的通知后 运行StartGame
 	public void StartRealLoading()
 	{
 		// 纠正摄像头的位置
+		OnLoadingEnd?.Invoke(true);     // 通知玩家本地已经Ready 如果非单机模式
 		GameManage.Instance._GameCamera.SetCanUseCamera(true);
 
 		// 防止重复播放
@@ -120,12 +122,11 @@ public class GameLoadProgressUI : MonoBehaviour
 			.SetEase(Ease.Linear)
 			.OnComplete(() =>
             {
-            
+         
                 Debug.Log("[客户端] 真实 Loading 完成，开始淡出动画");
-				gameObject.SetActive(false);
 				spriteRender.gameObject.SetActive(false);
 				GameManage.Instance._GameCamera.SetCanUseCamera(false); // 禁止使用摄像头
-				//GameSceneUIManager.Instance.OnStartSingleGame();        // UI表示修正
+				GameSceneUIManager.Instance.OnGameStarted();			// UI表示修正
 
 				FadeManager.Instance.FadeFromBlack(1, () =>
 				{
