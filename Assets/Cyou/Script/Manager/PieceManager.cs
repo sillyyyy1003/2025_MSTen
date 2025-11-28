@@ -7,6 +7,7 @@ using GamePieces;
 using DG.Tweening.Core.Easing;
 using UnityEngine.UIElements;
 using DG.Tweening;
+using static UnityEngine.GraphicsBuffer;
 
 //25.11.4 RI 添加序列化Vector3 变量
 
@@ -246,7 +247,18 @@ public class PieceManager : MonoBehaviour
         return localPlayerID;
     }
 
+    //25.11.21 RI add Get Pope swap cooldown
+    public int GetPopeSwapCooldown(int pieceID)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
 
+        
+        return piece.PopeSwapPosRemaining;
+    }
     //25.11.21 RI add Get Pope swap cooldown
     public bool GetCanPopeSwap(int pieceID)
     {
@@ -255,12 +267,15 @@ public class PieceManager : MonoBehaviour
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return false;
         }
-        switch (piece)
+     
+        if (piece.PopeSwapPosRemaining > 0)
         {
-            case Pope pope:
-                return true;
+            return false;
         }
-         return false;
+
+        return true;
+
+      
     }
 
     #region 駒の生成
@@ -1536,10 +1551,10 @@ public class PieceManager : MonoBehaviour
 
         if (pope.PopeSwapPosRemaining > 0)
         {
-            Debug.LogError($"駒ID={popeID}の位置交換スキルはクールダウン中です。");
+            Debug.LogWarning($"駒ID={popeID}の位置交換スキルはクールダウン中です。");
             return false;
         }
-        
+        SetPopeSwapCD(popeID);
         return true;
     }
 
