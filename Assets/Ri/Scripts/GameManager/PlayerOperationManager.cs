@@ -73,7 +73,7 @@ public class PlayerOperationManager : MonoBehaviour
     private int RuinID = 0;
     // 建筑废墟字典
     private Dictionary<int, Dictionary<int, GameObject>> BuildingRuins = new Dictionary<int, Dictionary<int, GameObject>>();
-
+    
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
 
@@ -681,12 +681,15 @@ public class PlayerOperationManager : MonoBehaviour
                         PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
                         if (targetUnit.HasValue && !targetUnit.Value.IsBuilding())
                         {
-                            if (!PieceManager.Instance.GetCanPopeSwap(PlayerDataManager.Instance.nowChooseUnitID))
+                            if (!PieceManager.Instance.CanSwapPositions(PlayerDataManager.Instance.nowChooseUnitID, targetUnit.Value.UnitID))
                             {
                                 Debug.Log("[Pope交换] 无法交换，尚未冷却");
                                 return;
                             }
-                            ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
+                            else
+                            {
+                                ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
+                            }
                             return;
                         }
 
@@ -700,8 +703,12 @@ public class PlayerOperationManager : MonoBehaviour
                     // 检查目标位置是否是建筑
                     PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
                     if (targetUnit.HasValue && targetUnit.Value.IsBuilding()&&
-                          GameManage.Instance._BuildingManager.NewEnterBuilding(PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos), PlayerDataManager.Instance.nowChooseUnitID))
+                          GameManage.Instance._BuildingManager.NewEnterBuilding(
+                              PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos), 
+                          PieceManager.Instance.GetPieceAP(PlayerDataManager.Instance.nowChooseUnitID)
+                          ))
                     {
+                        
                         Debug.Log("[农民进建筑] 农民尝试进入己方建筑");
                         ExecuteFarmerEnterBuilding(currentPos, targetPos, ClickCellid);
                         return;
@@ -840,21 +847,27 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = true;
 
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
+      
+
+        // 获取建筑资源
+        int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
+        res += GameManage.Instance._BuildingManager.ProcessTurnStart();
+        PlayerDataManager.Instance.SetPlayerResourses(res);
+
+        Debug.Log("你的回合开始!获取资源行动 " + res+" 目前资源: " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            // 若有建筑则增加resource
-            if (unit.UnitType == CardType.Building)
-            {
-                int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
-                res += 5;
-                PlayerDataManager.Instance.SetPlayerResourses(res);
-            }
             Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction + " Resource is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
+            if(unit.UnitType==CardType.Building)
+            {
+                GameManage.Instance._BuildingManager.GetIsActived(unit.UnitID);
+                Debug.Log("THIS BUILDING ACTIVED IS " + GameManage.Instance._BuildingManager.GetIsActived(unit.UnitID));
+            }
         }
 
         // 回合开始计算被动
-        if(SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion
+        if (SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion
             &&PlayerDataManager.Instance.bRedMoonSkill)
         {
             PlayerDataManager.Instance.RedMoonSkillCount +=1;
@@ -1182,38 +1195,6 @@ public class PlayerOperationManager : MonoBehaviour
         return true;
     }
 
-    //// 在外部指定的格子创建单位
-    //public bool TryCreateUnit(CardType unitType, int cellID)
-    //{
-    //    // 检查是否选中了空格子
-    //    if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
-    //    {
-    //        Debug.LogWarning("未选中任何空格子");
-    //        return false;
-    //    }
-
-    //    // 获取选中格子的信息
-    //    BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
-    //    int2 cellPos = cellInfo.Cells2DPos;
-
-    //    // 再次确认该位置是空的
-    //    if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
-    //    {
-    //        Debug.LogWarning("该格子已有单位");
-    //        SelectedEmptyCellID = -1;
-    //        return false;
-    //    }
-
-    //    // 在领土内创建单位
-
-    //    CreateUnitAtPosition(unitType, SelectedEmptyCellID);
-
-    //    // 清除选择
-    //    _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
-    //    SelectedEmptyCellID = -1;
-
-    //    return true;
-    //}
     // 创建敌方单位
     private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
     {
@@ -1711,6 +1692,10 @@ public class PlayerOperationManager : MonoBehaviour
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         }
+        if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+        {
+            _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+        }
         else
         {
             Debug.Log("该单位AP不足！");
@@ -1778,7 +1763,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // ============= 移动消耗AP逻辑 ============
                 PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, toPos);
-                if (unitData.HasValue)
+                if (unitData.HasValue&&unitData.Value.UnitType!=CardType.Farmer)
                 {
                     int pieceID = unitData.Value.PlayerUnitDataSO.pieceID;
 
@@ -2050,11 +2035,11 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.LogError("[Pope交换] 找不到目标单位数据");
             return;
         }
-        if(!PieceManager.Instance.GetCanPopeSwap(popeUnitData.Value.UnitID))
-        {
-            Debug.Log("Piece Pope CantSwap!");
-            return;
-        }
+        //if(!PieceManager.Instance.CanSwapPositions(popeUnitData.Value.UnitID,PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos)))
+        //{
+        //    Debug.Log("Piece Pope CantSwap!");
+        //    return;
+        //}
         // 检查目标是否为建筑
         if (targetUnitData.Value.IsBuilding())
         {
@@ -2186,26 +2171,18 @@ public class PlayerOperationManager : MonoBehaviour
             // 5. 更新LastSelectingCellID为Pope的新位置
             LastSelectingCellID = targetCellId;
 
-            // 6. 消耗Pope的AP
-            int popeID = popeUnitData.Value.PlayerUnitDataSO.pieceID;
-            bool apConsumed = PieceManager.Instance.ConsumePieceAP(popeID, 1);
+            //// 6. 消耗Pope的AP
+            //int popeID = popeUnitData.Value.PlayerUnitDataSO.pieceID;
 
-            if (apConsumed)
-            {
-                Debug.Log($"[Pope交换] Pope消耗1 AP，剩余AP: {PieceManager.Instance.GetPieceAP(popeID)}");
-
-                // 检查AP是否为0
-                Piece popePiece = PieceManager.Instance.GetPiece(popeID);
-                if (popePiece != null && popePiece.CurrentAP <= 0)
-                {
-                    PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, targetPos, false);
-                    Debug.Log($"[Pope交换] Pope AP为0，bCanDoAction设置为false");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[Pope交换] Pope AP消耗失败");
-            }
+                //// 检查AP是否为0
+                //Piece popePiece = PieceManager.Instance.GetPiece(popeID);
+                //if (popePiece != null && popePiece.CurrentAP <= 0)
+                //{
+                //    PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, targetPos, false);
+                //    Debug.Log($"[Pope交换] Pope AP为0，bCanDoAction设置为false");
+                //}
+            
+          
 
             // 7. 网络同步 - 发送交换位置消息
             // ===== 关键修复：必须使用交换后的数据 =====
@@ -2296,6 +2273,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         int farmerID = farmerData.Value.UnitID;
         int farmerPieceID = farmerData.Value.PlayerUnitDataSO.pieceID;
+        int ap = PieceManager.Instance.GetPieceAP(farmerID);
 
         // 保存农民的GameObject引用（在移动前）
         GameObject farmerObj = SelectingUnit;
@@ -2316,6 +2294,10 @@ public class PlayerOperationManager : MonoBehaviour
             // 2. 销毁农民GameObject（不影响建筑）
             if (farmerObj != null)
             {
+                // 更新血条显示
+                UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
+                PlayerDataManager.Instance.nowChooseUnitID = -1;
+                PlayerDataManager.Instance.nowChooseUnitType=CardType.None;
                 // 播放消失动画（淡出效果）
                 farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
                 {
@@ -2337,10 +2319,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
             GameManage.Instance.SetCellObject(farmerPos, null);
 
-            //  BuildingManager更新
-            int ap=PieceManager.Instance.GetPieceAP(farmerID);
-            GameManage.Instance._BuildingManager.NewEnterBuilding(PlayerDataManager.Instance.GetUnitIDBy2DPos(buildingPos), ap);
-
+         
             // 5. 网络同步农民消失（使用农民的原始位置）
             SyncFarmerEnterBuilding(farmerID, farmerPos);
 
