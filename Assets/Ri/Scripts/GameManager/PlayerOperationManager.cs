@@ -1719,7 +1719,7 @@ public class PlayerOperationManager : MonoBehaviour
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         }
-        if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+        else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         }
