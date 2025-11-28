@@ -1474,6 +1474,11 @@ MonoBehaviour:
   nowChooseUnitID: -1
   nowChooseUnitType: 5
   NowPopulation: 0
+  DeadUnitCount: 0
+  RedMoonSkillCount: 0
+  bRedMoonSkill: 0
+  BuildingFarmerCount: 0
+  MirrorSkillCount: 0
   buildingRegistry: {fileID: 0}
 --- !u!114 &131122553
 MonoBehaviour:
@@ -7260,7 +7265,7 @@ GameObject:
   - component: {fileID: 851308554}
   - component: {fileID: 851308553}
   m_Layer: 0
-  m_Name: HPCanvas
+  m_Name: StatusCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -17744,7 +17749,8 @@ MonoBehaviour:
     spriteSheet:
     - {fileID: 21300000, guid: 5389d7def11e2b0468439310dc820bda, type: 3}
     - {fileID: 21300000, guid: fb58ae5edc1c59f4586ebeea467e776b, type: 3}
-    - {fileID: 21300000, guid: 87e935b7c81f93a4f9a192dd29100b6e, type: 3}
+    - {fileID: 21300000, guid: 61fbc314492a99040a0885fd1cedcd59, type: 3}
+    - {fileID: 21300000, guid: 0b53a5e3934a05149a6cca1fa384bed2, type: 3}
     note: 
   - id: 8
     singleSprite: {fileID: 21300000, guid: 2566f3973fe74e145ae720a37ad540b7, type: 3}
@@ -18352,7 +18358,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e16b89b2ef127ac4a91ec99e2162ff4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hpBarPrefab: {fileID: 4540047841074454573, guid: 007e9cb32bab8fb428eea97b6277c5da,
+  statusUIPrefab: {fileID: -8201623605849898354, guid: 007e9cb32bab8fb428eea97b6277c5da,
     type: 3}
   uiCanvas: {fileID: 851308555}
   defaultOffset: {x: 0, y: 20, z: 0}
