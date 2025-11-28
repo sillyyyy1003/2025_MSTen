@@ -160,7 +160,7 @@ public class SceneStateManager : MonoBehaviour
                 }
             }
         }
-
+        Debug.Log("ip is "+ string.IsNullOrEmpty(localIP));
         return string.IsNullOrEmpty(localIP) ? "未找到局域网 IPv4 地址" : localIP;
     }
 
