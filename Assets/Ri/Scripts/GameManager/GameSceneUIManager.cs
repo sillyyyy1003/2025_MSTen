@@ -74,21 +74,12 @@ public class GameSceneUIManager : MonoBehaviour
 			GameUIObject.SetActive(false);
             NetRoomUIObject.SetActive(false);
 			loadUI.gameObject.SetActive(true);
-
-			loadUI.StartRealLoadingRoutine();
-            // 结束时从Fadefromblack并打开UIlayout
-			loadUI.OnLoadingEnd += (isSuccesful) =>
-            {
-                OnStartSingleGame();
-				FadeManager.Instance.FadeFromBlack(1, () => GameManage.Instance.SetIsGamingOrNot(true));
-			};
         }
 		else
         {
             GameUIObject.SetActive(false);
             NetRoomUIObject.SetActive(true);
             loadUI.gameObject.SetActive(true);
-			
 		}
 	}
 
@@ -111,7 +102,7 @@ public class GameSceneUIManager : MonoBehaviour
 
     }
 
-    private void OnStartSingleGame()
+    public void OnStartSingleGame()
     {
 		GameUIObject.SetActive(true);
 		NetRoomUIObject.SetActive(false);

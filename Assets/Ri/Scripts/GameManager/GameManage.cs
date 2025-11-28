@@ -124,7 +124,7 @@ public class GameManage : MonoBehaviour
     public event Action<int> OnTurnEnded;
 
     // 事件: 游戏开始
-    public event Action OnGameStarted;
+    public event Action<bool> OnGameStarted;
 
     // 事件: 游戏结束
     public event Action<int> OnGameEnded;
@@ -200,8 +200,10 @@ public class GameManage : MonoBehaviour
     // 在此处设置单机或联机启动
     public void StartGameFromRoomUI()
     {
-        _GameCamera.SetCanUseCamera(true);
-
+        //_GameCamera.SetCanUseCamera(true);
+        
+        //
+        _GameCamera.SetCanUseCamera(false);
 
         // 单机测试
         GameInit();
@@ -313,9 +315,10 @@ public class GameManage : MonoBehaviour
 
         NetGameSystem.Instance.GetGameManage();
 
-        _GameCamera.SetCanUseCamera(true);
-        // 触发游戏开始事件
-        OnGameStarted?.Invoke();
+		// _GameCamera.SetCanUseCamera(true);
+        _GameCamera.SetCanUseCamera(false);
+		// 触发游戏开始事件
+        OnGameStarted?.Invoke(false);
 
         // 开始第一个玩家的回合
         StartTurn(data.FirstTurnPlayerId);
@@ -335,8 +338,10 @@ public class GameManage : MonoBehaviour
             StartCoroutine(TrueStartGame());
 
 
-        // 2025.11.14 Guoning 播放音乐
-        SoundManager.Instance.StopBGM();
+        OnGameStarted?.Invoke(true);
+
+		// 2025.11.14 Guoning 播放音乐
+		SoundManager.Instance.StopBGM();
         SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME);
 
         return true;
@@ -377,7 +382,8 @@ public class GameManage : MonoBehaviour
             // 开始第一个回合
             StartTurn(0);
             bIsStartSingleGame = true;
-        }
+
+		}
 
     }
     // 游戏结束

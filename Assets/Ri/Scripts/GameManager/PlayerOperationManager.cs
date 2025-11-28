@@ -93,8 +93,15 @@ public class PlayerOperationManager : MonoBehaviour
     private float lastClickTime;
     private int clickCount = 0;
 
-    // === Event 定义区域 ===
-    public event System.Action<int, CardType> OnUnitChoosed;
+	//2025.11.28 检测右键长按
+	public float longPressThreshold = 1.2f;
+	private float rightClickTimer = 0f;
+	private bool isPressing = false;
+	private bool longPressTriggered = false;
+
+
+	// === Event 定义区域 ===
+	public event System.Action<int, CardType> OnUnitChoosed;
 
 
     // 单位相关
@@ -137,7 +144,8 @@ public class PlayerOperationManager : MonoBehaviour
         {
 
             //2025.11.13 Guoning 修改鼠标移动留痕与点击判断
-            if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
+			if (Input.GetMouseButton(0) || Input.GetMouseButton(1) ||
+                    Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
                 HandleMouseInput();
             else UpdateCellHighlightData(GetCellUnderCursor());
 
@@ -338,16 +346,222 @@ public class PlayerOperationManager : MonoBehaviour
 
         }
 
-        // 右键点击 - 移动/攻击
+        //右键点击 - 移动 / 攻击
+        //if (Input.GetMouseButtonDown(1) && bCanContinue)
+        //{
+        //    _HexGrid.GetCell(selectCellID).DisableHighlight();
+        //    HandleRightClick();
+        //}
+
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
-            _HexGrid.GetCell(selectCellID).DisableHighlight();
-            HandleRightClick();
+            isPressing = true;
+            rightClickTimer = 0f;
         }
+
+        if (isPressing && Input.GetMouseButton(1) && bCanContinue)
+        {
+            rightClickTimer += Time.deltaTime;
+        }
+
+
+        // 松开
+        if (isPressing && Input.GetMouseButtonUp(1) && bCanContinue)
+		{
+		
+			if (rightClickTimer < longPressThreshold) OnRightClickShortPress();
+			else OnRightClickLongPress();
+
+			isPressing = false;
+			rightClickTimer = 0f;
+		}
     }
 
 
-    private void HandleLeftClick(bool isDoubleClick)
+    private void OnRightClickShortPress()
+    {
+     
+		if (SelectingUnit == null) return;
+
+		Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
+		RaycastHit hit;
+
+		// 射线检测
+		if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
+		{
+			ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().Index;
+			int2 targetPos = GameManage.Instance.FindCell(ClickCellid).Cells2DPos;
+
+			// 获取当前选中单位的位置
+			int2 currentPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
+
+			// 检查目标位置
+			if (PlayerDataManager.Instance.IsPositionOccupied(targetPos))
+			{
+				int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
+
+				// Pope交换位置
+				if (ownerId == localPlayerId &&
+					PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+				{
+
+					PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
+					if (targetUnit.HasValue && !targetUnit.Value.IsBuilding())
+					{
+						if (!PieceManager.Instance.GetCanPopeSwap(PlayerDataManager.Instance.nowChooseUnitID))
+						{
+							Debug.Log("[Pope交换] 无法交换，尚未冷却");
+							return;
+						}
+						ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
+						return;
+					}
+
+
+
+				}
+
+				// 农民进入己方建筑
+				if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+				{
+					// 检查目标位置是否是建筑
+					PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
+					if (targetUnit.HasValue && targetUnit.Value.IsBuilding() &&
+						  GameManage.Instance._BuildingManager.NewEnterBuilding(PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos), PlayerDataManager.Instance.nowChooseUnitID))
+					{
+						Debug.Log("[农民进建筑] 农民尝试进入己方建筑");
+						ExecuteFarmerEnterBuilding(currentPos, targetPos, ClickCellid);
+						return;
+					}
+					else
+					{
+
+						Debug.LogWarning("[农民进建筑] 格子已满，无法进入!");
+					}
+				}
+
+				// 传教士魅惑敌方单位
+				if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary && IsAdjacentPosition(currentPos, targetPos))
+				{
+					Debug.Log("[魅惑] 传教士尝试魅惑敌方单位");
+
+					// 检查AP（魅惑需要消耗AP）
+					if (!CheckUnitHasEnoughAP(currentPos, 1))
+					{
+						Debug.Log("[魅惑] AP不足，无法魅惑");
+						return;
+					}
+
+					ExecuteCharm(targetPos, ownerId);
+					return;
+				}
+
+				// 军事单位攻击敌方单位
+				if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Solider)
+				{
+					//  新逻辑：检查是否在攻击范围（相邻格）
+					if (IsAdjacentPosition(currentPos, targetPos))
+					{
+						// 在攻击范围内，直接攻击
+						Debug.Log("[攻击] 目标在攻击范围内，执行攻击");
+
+						// 检查AP（攻击需要消耗1点AP）
+						if (!CheckUnitHasEnoughAP(currentPos, 1))
+						{
+							Debug.Log("[攻击] AP不足，无法攻击");
+							return;
+						}
+
+						ExecuteAttack(targetPos, ClickCellid);
+					}
+					else
+					{
+						// 不在攻击范围内，无法攻击也无法移动到敌方单位位置
+						Debug.Log("[攻击] 目标不在相邻格，无法攻击。请先移动到敌方单位旁边再攻击。");
+						return;
+					}
+
+				}
+				else
+				{
+					Debug.Log("不能移动到已占用的位置");
+				}
+			}
+			else
+			{
+				// 教皇无法移动
+				if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+				{
+					return;
+				}
+				// 传教士移动
+				if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+				{
+
+					if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
+					{
+						MoveToSelectCell(ClickCellid);
+					}
+					else
+					{
+						Debug.LogWarning("Missionary  Cant Move To That Cell!");
+					}
+
+				}
+				// 农民移动
+				else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+				{
+					if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
+					{
+						MoveToSelectCell(ClickCellid);
+					}
+					else
+					{
+						Debug.LogWarning("Farmer  Cant Move To That Cell!");
+					}
+
+				}
+				else
+					MoveToSelectCell(ClickCellid);
+			}
+		}
+
+	}
+
+    private void OnRightClickLongPress()
+    {
+       
+		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+		{
+			FarmerSacrifice();
+			//ClickBuildingCellid = ClickCellid;
+
+		}
+
+		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+		{
+			// 传教士占领
+			// 通过PieceManager判断
+			if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
+			    && _HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1)
+			    && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
+			{
+
+				_HexGrid.GetCell(LastSelectingCellID).Walled = true;
+				PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
+				HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
+
+				// 2025.11.14 Guoning 音声再生
+				SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+			}
+			else
+			{
+				Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
+			}
+		}
+	}
+
+	private void HandleLeftClick(bool isDoubleClick)
     {
         Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
