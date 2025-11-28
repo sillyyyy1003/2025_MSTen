@@ -358,6 +358,11 @@ public class GameManage : MonoBehaviour
             PlayerStartPositions.Add(GameBoardInforDict.Count - 1);
 
             _PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
+
+
+            // 设置人口上限
+            _PlayerDataManager.SetPlayerPopulationCost();
+
             // 初始化本机玩家
             // 起始位置方法，待地图起始位置功能实装后使用
             //_PlayerOperation.InitPlayer(_LocalPlayerID, PlayerStartPositions[0]);
