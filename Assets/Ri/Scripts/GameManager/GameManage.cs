@@ -37,7 +37,7 @@ public class GameStartData
     public int[] PlayerIds;
     public int[] StartPositions;
     public int FirstTurnPlayerId;
-    public Religion PlayerReligion;
+    public int[] PlayerReligions;
 }
 
 // 回合结束数据
@@ -152,8 +152,8 @@ public class GameManage : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-			//2025.11.17 Guoning
-			// DontDestroyOnLoad(gameObject);
+            //2025.11.17 Guoning
+            // DontDestroyOnLoad(gameObject);
             // Debug.Log($" GameManage.Instance 已设置 (GameObject: {gameObject.name})");
         }
         else if (Instance != this)
@@ -219,16 +219,43 @@ public class GameManage : MonoBehaviour
         PlayerStartPositions.Clear();
         CellObjects.Clear();
 
+        Religion enemyRe = Religion.None;
+
         // 设置游戏状态
         SetIsGamingOrNot(true);
         Debug.Log($"游戏状态已设置: {bIsInGaming}");
 
-        // 保存玩家信息
-        foreach (var playerId in data.PlayerIds)
+        // 保存玩家信息并提取宗教
+        for (int i = 0; i < data.PlayerIds.Length; i++)
         {
+            int playerId = data.PlayerIds[i];
             AllPlayerIds.Add(playerId);
             _PlayerDataManager.CreatePlayer(playerId);
-            Debug.Log($"创建玩家数据: {playerId}");
+
+            // 提取每个玩家的宗教
+            Religion playerReligion = Religion.None;
+            if (i < data.PlayerReligions.Length)
+            {
+                playerReligion = (Religion)data.PlayerReligions[i];
+            }
+
+            Debug.Log($"创建玩家数据: {playerId}, 宗教: {playerReligion}");
+
+            // 如果是敌方玩家，保存其宗教用于建筑初始化
+            // (假设有两个玩家，非本地玩家就是敌方)
+            if (NetGameSystem.Instance != null)
+            {
+                if (NetGameSystem.Instance.bIsServer && playerId != 0)
+                {
+                    enemyRe = playerReligion;
+                    Debug.Log($"敌方玩家宗教: {enemyRe}");
+                }
+                else if (!NetGameSystem.Instance.bIsServer && playerId == 0)
+                {
+                    enemyRe = playerReligion;
+                    Debug.Log($"敌方玩家宗教: {enemyRe}");
+                }
+            }
         }
 
         // 保存起始位置，后续更改
@@ -239,15 +266,12 @@ public class GameManage : MonoBehaviour
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
-        if (NetGameSystem.Instance!= null && !NetGameSystem.Instance.bIsServer)
+        if (NetGameSystem.Instance != null && !NetGameSystem.Instance.bIsServer)
         {
             OtherPlayerID = 0;// 服务器默认是玩家0
             _LocalPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
-            // 这里需要NetGameSystem提供本地客户端ID
-            // localPlayerID = netGameSystem.GetLocalClientId();
-            // 临时方案: 假设第一个玩家是本地玩家
-            //_LocalPlayerID = data.PlayerIds[0];
+         
         }
         else
         {
@@ -257,10 +281,13 @@ public class GameManage : MonoBehaviour
         }
 
         Debug.Log($"本地玩家ID: {LocalPlayerID}");
-
+        // 设置人口上限
+        _PlayerDataManager.SetPlayerPopulationCost();
         // 初始化buildingManager
         _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-        _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, data.PlayerReligion);
+
+
+        _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, enemyRe);
 
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
@@ -308,11 +335,11 @@ public class GameManage : MonoBehaviour
             StartCoroutine(TrueStartGame());
 
 
-		// 2025.11.14 Guoning 播放音乐
-		SoundManager.Instance.StopBGM();
-		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME);
+        // 2025.11.14 Guoning 播放音乐
+        SoundManager.Instance.StopBGM();
+        SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME);
 
-		return true;
+        return true;
     }
     private IEnumerator TrueStartGame()
     {
@@ -600,7 +627,7 @@ public class GameManage : MonoBehaviour
     }
 
     // 根据格子id返回其周围所有格子的id
-    public List<int> GetBoardNineSquareGrid(int id,bool isStart)
+    public List<int> GetBoardNineSquareGrid(int id, bool isStart)
     {
         Debug.Log("pos is " + GetBoardInfor(id).Cells2DPos);
         List<int> startPos = new List<int>();
@@ -608,7 +635,7 @@ public class GameManage : MonoBehaviour
         {
             for (int dy = -1; dy <= 1; dy++)
             {
-                if(isStart)
+                if (isStart)
                 {
                     int2 pos = new int2(GameBoardInforDict[id].Cells2DPos.x + dx, GameBoardInforDict[id].Cells2DPos.y + dy);
                     if (GameBoardInforDict2D.ContainsKey(pos))
@@ -631,7 +658,7 @@ public class GameManage : MonoBehaviour
                         }
                     }
                 }
-                   
+
             }
         }
         return startPos;
@@ -685,7 +712,7 @@ public class GameManage : MonoBehaviour
         {
             CellObjects.Remove(pos);
             _PlayerOperation._HexGrid.GetCell(pos.x, pos.y).Unit = false;
-            Debug.Log("格子 " + pos + " 移除单位: " );
+            Debug.Log("格子 " + pos + " 移除单位: ");
         }
         else
         {
@@ -704,7 +731,7 @@ public class GameManage : MonoBehaviour
 
             CellObjects.Remove(fromPos);
             _PlayerOperation._HexGrid.GetCell(fromPos.x, fromPos.y).Unit = false;
-            Debug.Log("格子 " + fromPos + " 移除单位: " );
+            Debug.Log("格子 " + fromPos + " 移除单位: ");
 
             CellObjects[toPos] = obj;
             _PlayerOperation._HexGrid.GetCell(toPos.x, toPos.y).Unit = true;

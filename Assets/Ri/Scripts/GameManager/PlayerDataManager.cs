@@ -292,10 +292,10 @@ public class PlayerDataManager : MonoBehaviour
     private Dictionary<int, int> unitIdToPlayerIdMap = new Dictionary<int, int>();
 
     // 当前选择中的单位id
-    public int nowChooseUnitID;
+    public int nowChooseUnitID=-1;
 
     // 当前选择中的单位类型
-    public CardType nowChooseUnitType;
+    public CardType nowChooseUnitType=CardType.None;
 
     // 本地玩家数据(不参与数据同步)
     // 人口上限
@@ -376,32 +376,7 @@ public class PlayerDataManager : MonoBehaviour
         if (!allPlayersData.ContainsKey(playerId))
         {
             allPlayersData[playerId] = new PlayerData(playerId);
-
-            // 设置人口上限
-            if(playerId==GameManage.Instance.LocalPlayerID)
-            {
-                switch (allPlayersData[playerId].PlayerReligion)
-                {
-                    case Religion.MadScientistReligion:
-                        PopulationCost = 20;
-                        break;
-                    case Religion.MirrorLakeReligion:
-                        PopulationCost = 20;
-                        break;
-                    case Religion.RedMoonReligion:
-                        // 同时设置被动回合
-                        RedMoonSkillCount = 0;
-                        PopulationCost = 26;
-                        break;
-                    case Religion.SilkReligion:
-                        PopulationCost = 20;
-                        break;
-                    case Religion.MayaReligion:
-                        PopulationCost = 20;
-                        break;
-                 
-                }
-            }
+         
             //allPlayersData[playerId].SetReligion();
             Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }
@@ -412,9 +387,35 @@ public class PlayerDataManager : MonoBehaviour
         PieceManager.Instance.SetPieceRligion(allPlayersData[playerId].PlayerReligion);
     
     }
+    // 设置人口 放置在Create之后
+    public void SetPlayerPopulationCost()
+    { 
+        
+            switch (allPlayersData[GameManage.Instance.LocalPlayerID].PlayerReligion)
+            {
+                case Religion.MadScientistReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.MirrorLakeReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.RedMoonReligion:
+                    // 同时设置被动回合
+                    RedMoonSkillCount = 0;
+                    PopulationCost = 26;
+                    break;
+                case Religion.SilkReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.MayaReligion:
+                    PopulationCost = 20;
+                    break;
 
-    // 获取玩家数据
-    public PlayerData GetPlayerData(int playerId)
+            }
+            Debug.Log(" PopulationCost is " + PopulationCost);
+    }
+        // 获取玩家数据
+        public PlayerData GetPlayerData(int playerId)
     {
         if (allPlayersData.ContainsKey(playerId))
         {

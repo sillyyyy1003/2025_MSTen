@@ -671,6 +671,10 @@ public class PlayerOperationManager : MonoBehaviour
         SelectingUnit = null;
         SelectedEmptyCellID = -1;
 
+        // 更新NowChoose
+        PlayerDataManager.Instance.nowChooseUnitID = -1;
+        PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+
 
         Debug.Log("你的回合结束!");
 
@@ -1832,7 +1836,11 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.LogError("[Pope交换] 找不到目标单位数据");
             return;
         }
-
+        if(!PieceManager.Instance.GetCanPopeSwap(popeUnitData.Value.UnitID))
+        {
+            Debug.Log("Piece Pope CantSwap!");
+            return;
+        }
         // 检查目标是否为建筑
         if (targetUnitData.Value.IsBuilding())
         {
@@ -2768,7 +2776,7 @@ public class PlayerOperationManager : MonoBehaviour
         int2 attackerPos = new int2(msg.AttackerPosX, msg.AttackerPosY);
         int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
 
-        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 玩家 {msg.TargetPlayerId}");
+        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 单位 {msg.AttackerSyncData.pieceID} 攻击 玩家 {msg.TargetPlayerId} 单位 {msg.TargetSyncData.Value.pieceID} ");
         Debug.Log($"[网络攻击] 攻击者位置: ({attackerPos.x},{attackerPos.y}), 目标位置: ({targetPos.x},{targetPos.y})");
 
         // 获取攻击者GameObject
@@ -2871,6 +2879,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             if (msg.TargetDestroyed)
             {
+                // 先处理处理血量
+                HPBarManager.Instance.RemoveHPBar(msg.TargetSyncData.Value.pieceID);
+
                 //计算己方死亡单位 (红月教)
                 PlayerDataManager.Instance.DeadUnitCount += 1;
 
@@ -2903,6 +2914,7 @@ public class PlayerOperationManager : MonoBehaviour
                         }
                     }
                 }
+
                 // 目标死亡，攻击者前进到目标位置
                 HandleTargetDestroyedAfterAttack(
                     attackerObj,
@@ -2917,6 +2929,8 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 // 目标存活，只播放受击动画
                 HandleTargetSurvivedAfterAttack(targetObj, msg);
+                // 处理血量
+                HPBarManager.Instance.UpdateHPBarByID(msg.TargetSyncData.Value.pieceID,msg.TargetSyncData.Value.currentHP);
             }
         }
 
@@ -3809,10 +3823,9 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 获取目标数据（如果存活）
         PlayerUnitData? targetData = null;
-        if (!targetDestroyed)
-        {
+       
             targetData = PlayerDataManager.Instance.FindUnit(targetPlayerId, targetPos);
-        }
+        
 
         // 发送网络消息 - 攻击者位置不变,所以不传递移动参数
         NetGameSystem.Instance.SendUnitAttackMessage(
