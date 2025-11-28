@@ -75,7 +75,6 @@ public class GameLoadProgressUI : MonoBehaviour
 	public void StartFakeLoading(bool isSingle = false)
 	{
 		// 防止重复播放
-		OnLoadingEnd?.Invoke(true);     // 通知玩家本地已经Ready 如果非单机模式
 		fakeLoadingTween?.Kill();
 		fakeLoadingTween = DOTween.To(
 				() => 0f,                   // 起点
@@ -124,6 +123,7 @@ public class GameLoadProgressUI : MonoBehaviour
             {
          
                 Debug.Log("[客户端] 真实 Loading 完成，开始淡出动画");
+				OnLoadingEnd?.Invoke(true);     // 通知玩家本地已经Ready 如果非单机模式
 				spriteRender.gameObject.SetActive(false);
 				GameManage.Instance._GameCamera.SetCanUseCamera(false); // 禁止使用摄像头
 				GameSceneUIManager.Instance.OnGameStarted();			// UI表示修正
