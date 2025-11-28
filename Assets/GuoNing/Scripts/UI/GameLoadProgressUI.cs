@@ -63,11 +63,6 @@ public class GameLoadProgressUI : MonoBehaviour
 	private void Start()
 	{
 		text.text = $"{startProgress:F0}%";
-		if (GameManage.Instance != null)
-		{
-			GameManage.Instance.OnGameStarted += StartFakeLoading;
-		}
-		
 
 	}
 
@@ -79,9 +74,6 @@ public class GameLoadProgressUI : MonoBehaviour
 
 	public void StartFakeLoading(bool isSingle = false)
 	{
-		// 纠正摄像头的位置
-		GameManage.Instance._GameCamera.SetCanUseCamera(true);
-
 		// 防止重复播放
 		fakeLoadingTween?.Kill();
 		fakeLoadingTween = DOTween.To(
@@ -97,9 +89,9 @@ public class GameLoadProgressUI : MonoBehaviour
 			.SetEase(Ease.Linear)
 			.OnComplete(() =>
 			{
-				GameManage.Instance._GameCamera.SetCanUseCamera(false);	// 锁定摄像头
 				Debug.Log("[客户端] 假 Loading 完成，等待玩家到齐");
-				if(isSingle)StartRealLoading();
+				if (isSingle) StartRealLoading(); 
+				else OnLoadingEnd?.Invoke(true);		// OnLoadingEnd->HandleRoom
 			});
 	}
 
@@ -107,9 +99,11 @@ public class GameLoadProgressUI : MonoBehaviour
 
 	public void StartRealLoading()
 	{
+		// 纠正摄像头的位置
+		GameManage.Instance._GameCamera.SetCanUseCamera(true);
+
 		// 防止重复播放
 		realLoadingTween?.Kill();
-
 		float start = fakeProgress;
 		realLoadingTween = DOTween.To(
 				() => start,
@@ -126,15 +120,16 @@ public class GameLoadProgressUI : MonoBehaviour
 			.SetEase(Ease.Linear)
 			.OnComplete(() =>
             {
-                OnLoadingEnd?.Invoke(true);
+            
                 Debug.Log("[客户端] 真实 Loading 完成，开始淡出动画");
 				gameObject.SetActive(false);
 				spriteRender.gameObject.SetActive(false);
-				
+				GameManage.Instance._GameCamera.SetCanUseCamera(false); // 禁止使用摄像头
+				//GameSceneUIManager.Instance.OnStartSingleGame();        // UI表示修正
+
 				FadeManager.Instance.FadeFromBlack(1, () =>
 				{
 					GameManage.Instance.SetIsGamingOrNot(true);				// 设置为游戏中状态
-					GameSceneUIManager.Instance.OnStartSingleGame();		// UI表示修正
 					GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
 
 					//======在这里追加其他的游戏开始操作

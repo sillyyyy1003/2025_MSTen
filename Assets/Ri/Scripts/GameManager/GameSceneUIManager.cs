@@ -72,11 +72,13 @@ public class GameSceneUIManager : MonoBehaviour
 			//2025.11.17先保持是End 等Fade结束再恢复
 			GameUIObject.SetActive(false);
 			loadUI.gameObject.SetActive(true);
-        }
+            loadUI.StartFakeLoading(true);
+		}
 		else
         {
             GameUIObject.SetActive(false);
             loadUI.gameObject.SetActive(true);
+			loadUI.StartFakeLoading(false);
 		}
 	}
 

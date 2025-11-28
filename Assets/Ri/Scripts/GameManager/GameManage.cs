@@ -315,8 +315,6 @@ public class GameManage : MonoBehaviour
 
         NetGameSystem.Instance.GetGameManage();
 
-		// _GameCamera.SetCanUseCamera(true);
-        _GameCamera.SetCanUseCamera(false);
 		// 触发游戏开始事件
         OnGameStarted?.Invoke(false);
 
@@ -336,7 +334,6 @@ public class GameManage : MonoBehaviour
         // 使用协程开始游戏，避免脚本Start执行顺序问题
         if (!bIsStartSingleGame)
             StartCoroutine(SingleStartGame());
-
 
         OnGameStarted?.Invoke(true);
 
