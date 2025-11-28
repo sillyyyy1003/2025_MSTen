@@ -13,7 +13,6 @@ public class GameSceneUIManager : MonoBehaviour
 
 
     public GameObject GameUIObject;
-    public GameObject NetRoomUIObject;
 
     int time1 = 0;
 
@@ -72,13 +71,11 @@ public class GameSceneUIManager : MonoBehaviour
         {
 			//2025.11.17先保持是End 等Fade结束再恢复
 			GameUIObject.SetActive(false);
-            NetRoomUIObject.SetActive(false);
 			loadUI.gameObject.SetActive(true);
         }
 		else
         {
             GameUIObject.SetActive(false);
-            NetRoomUIObject.SetActive(true);
             loadUI.gameObject.SetActive(true);
 		}
 	}
@@ -105,7 +102,6 @@ public class GameSceneUIManager : MonoBehaviour
     public void OnStartSingleGame()
     {
 		GameUIObject.SetActive(true);
-		NetRoomUIObject.SetActive(false);
 		loadUI.gameObject.SetActive(false);
 	}
 
@@ -185,35 +181,35 @@ public class GameSceneUIManager : MonoBehaviour
     private void CreatePlayerListItem(PlayerInfo player)
     {
         // 使用预制体创建玩家列表项
-        GameObject item = Instantiate(PlayerItemPrefab, NetRoomUIObject.transform);
-        item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[(int)player.PlayerId];
+        //GameObject item = Instantiate(PlayerItemPrefab, NetRoomUIObject.transform);
+        //item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[(int)player.PlayerId];
        
-        playerListItems[player.PlayerId] = item;
+        //playerListItems[player.PlayerId] = item;
        
-        item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
-        item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
+        //item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
+        //item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
 
-        // 使用player.IsReady来设置Toggle状态
-        Toggle toggle = item.transform.Find("Toggle").GetComponent<Toggle>();
-        if (toggle != null)
-        {
-            toggle.isOn = player.IsReady;  // 使用实际的准备状态
-            toggle.interactable = false;    // Toggle只用于显示
-        }
+        //// 使用player.IsReady来设置Toggle状态
+        //Toggle toggle = item.transform.Find("Toggle").GetComponent<Toggle>();
+        //if (toggle != null)
+        //{
+        //    toggle.isOn = player.IsReady;  // 使用实际的准备状态
+        //    toggle.interactable = false;    // Toggle只用于显示
+        //}
 
-        if (player.PlayerId==0)
-        {
-            Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "WaitForPlayer";
-            Button_ReadyAndStartGame.interactable = false;
-        }
-        else
-        {
-            Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "Ready";
-            Button_ReadyAndStartGame.interactable =true;
-        }
+        //if (player.PlayerId==0)
+        //{
+        //    Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "WaitForPlayer";
+        //    Button_ReadyAndStartGame.interactable = false;
+        //}
+        //else
+        //{
+        //    Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "Ready";
+        //    Button_ReadyAndStartGame.interactable =true;
+        //}
 
-        // 更新显示信息
-        TextMeshProUGUI nameText = item.GetComponentInChildren<TextMeshProUGUI>();
+        //// 更新显示信息
+        //TextMeshProUGUI nameText = item.GetComponentInChildren<TextMeshProUGUI>();
     }
 
     // 更新客户端按钮状态
@@ -318,11 +314,7 @@ public class GameSceneUIManager : MonoBehaviour
     private void OnGameStarted()
     {
         // 切换到游戏UI
-        if (NetRoomUIObject != null)
-        {
-            NetRoomUIObject.SetActive(false);
-        }
-
+    
         if (GameUIObject != null)
         {
             GameUIObject.SetActive(true);
