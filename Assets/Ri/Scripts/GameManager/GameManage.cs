@@ -505,7 +505,7 @@ public class GameManage : MonoBehaviour
         if (NetGameSystem.Instance != null)
         {
             NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
-            Debug.Log($" 已发送回合结束消息");
+            //Debug.Log($" 已发送回合结束消息");
 
 
 

@@ -105,7 +105,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
     }
 
     // 拿到教皇移动冷却
-    public int GetPopeSwapCooldown()
+    public int2 GetPopeSwapCooldown()
     {
         return PieceManager.Instance.GetPopeSwapCooldown(GameManage.Instance.LocalPlayerID);
     }

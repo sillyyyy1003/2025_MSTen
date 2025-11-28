@@ -137,11 +137,16 @@ public class Pope : Piece
         return true;
     }
 
-    /// <summary>
-    /// バフ効果をアップグレードする（リソース消費は呼び出し側で行う）
-    /// </summary>
-    /// <returns>アップグレード成功したらtrue</returns>
-    public bool UpgradeBuff()
+    //25.11.28 ri add get max cool down
+    public int GetMaxSwapCooldown()
+    {
+        return popeData.swapCooldown[swapCooldownLevel];
+    }
+        /// <summary>
+        /// バフ効果をアップグレードする（リソース消費は呼び出し側で行う）
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeBuff()
     {
         // 最大レベルチェック
         if (buffLevel >= 3)
