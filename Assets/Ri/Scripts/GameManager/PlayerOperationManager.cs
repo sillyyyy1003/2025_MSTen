@@ -94,10 +94,12 @@ public class PlayerOperationManager : MonoBehaviour
     private int clickCount = 0;
 
 	//2025.11.28 检测右键长按
-	public float longPressThreshold = 1.2f;
+	public Image fillImage;
+	private float longPressThreshold = 1.2f;
 	private float rightClickTimer = 0f;
 	private bool isPressing = false;
-	private bool longPressTriggered = false;
+
+
 
 
 	// === Event 定义区域 ===
@@ -357,12 +359,14 @@ public class PlayerOperationManager : MonoBehaviour
         {
             isPressing = true;
             rightClickTimer = 0f;
+            fillImage.gameObject.SetActive(true);
         }
 
         if (isPressing && Input.GetMouseButton(1) && bCanContinue)
         {
             rightClickTimer += Time.deltaTime;
-        }
+            fillImage.fillAmount = Mathf.Clamp(rightClickTimer,0,longPressThreshold) / longPressThreshold;
+		}
 
 
         // 松开
@@ -374,6 +378,7 @@ public class PlayerOperationManager : MonoBehaviour
 
 			isPressing = false;
 			rightClickTimer = 0f;
+			fillImage.gameObject.SetActive(false);
 		}
     }
 
@@ -1013,7 +1018,9 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.LogWarning($"[显示更新] 创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}) player ID:{unit.PlayerUnitDataSO.currentPID} unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
             CreateEnemyUnit(playerId, unit);
-        }
+
+		
+		}
 
         Debug.Log($"[显示更新] 玩家 {playerId} 显示更新完成，当前单位数: {otherPlayersUnits[playerId].Count}");
     }
@@ -1238,7 +1245,9 @@ public class PlayerOperationManager : MonoBehaviour
                     unit = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     unit.transform.position = worldPos;
                 }
-                Debug.Log($"敌方建筑创建成功");
+                // 创建UI
+                UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
+				Debug.Log($"敌方建筑创建成功");
             }
             else
             {
@@ -1278,10 +1287,12 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[playerId][unitData.Position] = unit;
             GameManage.Instance.SetCellObject(unitData.Position, unit);
 
-            //Debug.Log("开始查询敌方单位位置");
-            //PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+			//Debug.Log("开始查询敌方单位位置");
+			//PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+			// 创建UI
+			UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
 
-        }
+		}
     }
 
     #endregion
