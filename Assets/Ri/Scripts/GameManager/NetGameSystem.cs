@@ -48,6 +48,7 @@ public enum NetworkMessageType
     UNIT_CHARM,          // 单位魅惑
     CHARM_EXPIRE,        // 魅惑过期（归还控制权）
 
+    BUILDING_DESTRUCTION, // 建筑摧毁 (新增)
     // 同步
     SYNC_DATA,
     PING,
@@ -194,6 +195,16 @@ public class BuildingAttackMessage
     public syncPieceData AttackerSyncData; // 攻击者的同步数据
     public int BuildingRemainingHP;    // 建筑剩余HP
     public bool BuildingDestroyed;     // 建筑是否被摧毁
+}
+
+// 建筑摧毁消息
+[Serializable]
+public class BuildingDestructionMessage
+{
+    public int BuildingOwnerId;    // 建筑所有者ID
+    public int BuildingPosX;       // 建筑位置X
+    public int BuildingPosY;       // 建筑位置Y
+    public int BuildingID;         // 被摧毁的建筑ID
 }
 
 // 魅惑消息
@@ -605,6 +616,7 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
                 { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },
                 { NetworkMessageType.BUILDING_ATTACK, HandleBuildingAttack },
+                          { NetworkMessageType.BUILDING_DESTRUCTION, HandleBuildingDestruction }, // 新增建筑摧毁
                 { NetworkMessageType.UNIT_CHARM, HandleUnitCharm },
                 { NetworkMessageType.CHARM_EXPIRE, HandleCharmExpire },
 
@@ -896,6 +908,7 @@ public class NetGameSystem : MonoBehaviour
             }
             catch (SocketException)
             {
+                Debug.Log("socket error");
                 serverExists = false;
             }
         }
@@ -1631,7 +1644,40 @@ public class NetGameSystem : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 发送建筑摧毁消息
+    /// </summary>
+    public void SendBuildingDestructionMessage(
+        int buildingOwnerId,
+        int2 buildingPos,
+        int buildingID)
+    {
+        BuildingDestructionMessage destructionData = new BuildingDestructionMessage
+        {
+            BuildingOwnerId = buildingOwnerId,
+            BuildingPosX = buildingPos.x,
+            BuildingPosY = buildingPos.y,
+            BuildingID = buildingID
+        };
 
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.BUILDING_DESTRUCTION,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(destructionData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 BUILDING_DESTRUCTION 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 BUILDING_DESTRUCTION 消息到服务器");
+        }
+    }
 
     // 发送单位魅惑消息
     public void SendUnitCharmMessage(
@@ -2459,7 +2505,49 @@ public class NetGameSystem : MonoBehaviour
             }
         }
     }
+    /// <summary>
+    /// 处理建筑摧毁消息
+    /// </summary>
+    private void HandleBuildingDestruction(NetworkMessage message)
+    {
+        BuildingDestructionMessage data = JsonConvert.DeserializeObject<BuildingDestructionMessage>(message.JsonData);
 
+        int2 buildingPos = new int2(data.BuildingPosX, data.BuildingPosY);
+
+        Debug.Log($"[网络] 玩家 {data.BuildingOwnerId} 的建筑 ID={data.BuildingID} at ({buildingPos.x},{buildingPos.y}) 被摧毁");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // 从 PlayerDataManager 移除建筑数据
+        if (playerDataManager != null)
+        {
+            bool buildingRemoved = playerDataManager.RemoveUnit(data.BuildingOwnerId, buildingPos);
+
+            if (buildingRemoved)
+            {
+                Debug.Log($"[网络] 建筑已从PlayerDataManager移除");
+            }
+        }
+
+        // 从 BuildingManager 移除建筑
+        if (gameManage != null && gameManage._BuildingManager != null)
+        {
+            gameManage._BuildingManager.RemoveBuilding(data.BuildingID);
+            Debug.Log($"[网络] 建筑已从BuildingManager移除");
+        }
+
+        // 通知 PlayerOperationManager 处理建筑摧毁的视觉效果
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkBuildingDestruction(data);
+        }
+
+        Debug.Log($"[网络] 建筑摧毁消息处理完成");
+    }
     // 单位魅惑
     private void HandleUnitCharm(NetworkMessage message)
     {
