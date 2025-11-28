@@ -1,6 +1,8 @@
 ﻿// ===== 列挙型定義 =====
 // (so_data_definitions.cs より分離)
 
+using System.Collections.Generic;
+
 namespace GameData
 {
     public enum ResourceGenerationType
@@ -37,12 +39,16 @@ namespace GameData
         Neutral
     }
 
+ 
+
     public enum PieceType
     {
         None, Military, Farmer, Missionary, Pope,
         //25.11.11 RI add building enum
         Building
     }
+
+   
 
     public enum Religion
     {
@@ -52,7 +58,8 @@ namespace GameData
         MayaReligion,           // 瑪雅外星人文明教
         MadScientistReligion,   // 瘋狂科學家教
         MirrorLakeReligion,     // 鏡湖教
-        F, G, H                 // 将来の拡張用
+        FlyingSpaghettiReligion,// 飛天擔擔麵教
+        G, H                    // 将来の拡張用
     }
 
 
@@ -71,12 +78,37 @@ namespace GameData
 		MAP_H = 7,
 		MAP_I = 8,
 		MAP_J = 9
+    }
+
+    // 駒の操作タイプ（APコスト取得用）
+    public enum OperationType
+	{
+		Move,       // 移动
+		Attack,     // 士兵攻击
+		Cure,       // 农民治疗
+		Work,       // 农民进入建筑
+		Switch,     // 教皇交换位置
+		Charm,      // 魅惑
+		Occupy      // 占地
 	}
 
+    /// <summary>
+    /// 駒の操作タイプ（APコスト取得用）
+    /// </summary>
+    //public enum OperationType
+    //{
+    //    Move,       // 移動（全駒共通）
+    //    Attack,     // 攻撃（軍隊のみ）
+    //    Occupy,     // 領地占領（宣教師のみ）
+    //    Convert,    // 敵魅惑（宣教師のみ）
+    //    Sacrifice   // 回復スキル（農民のみ）
+    //}
 
-
-	public enum Terrain
+    public enum Terrain
     {
         Normal, Gold
     }
+
+
+
 }

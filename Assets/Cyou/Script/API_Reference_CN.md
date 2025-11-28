@@ -60,10 +60,9 @@ else
 ```
 
 **处理流程:**
-1. 消耗`buildStartAPCost`的AP
-2. 通过`BuildingFactory.CreateBuilding()`生成建筑物实例
-3. 用农民剩余的AP推进建造
-4. 如果AP不足，农民被消耗（Die()）
+1. 通过`BuildingFactory.CreateBuilding()`生成建筑物实例
+2. 用农民剩余的AP推进建造
+3. 如果AP不足，农民被消耗（Die()）
 
 **实现位置:** `farmer.cs:102-140`
 
@@ -1656,7 +1655,6 @@ private int buffLevel = 0;  // 0-3
 private int hpLevel = 0;  // 0-2
 private int attackRangeLevel = 0;  // 0-2
 private int slotsLevel = 0;  // 0-2
-private int buildCostLevel = 0;  // 0-2
 ```
 
 #### 2. 获取升级成本模式

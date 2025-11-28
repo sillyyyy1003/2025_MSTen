@@ -553,6 +553,18 @@ public class SoundManager : MonoBehaviour
     public void SetSEVolume(float _volume) { volumeSettings.seVolume = _volume; }
 
 
+	/// <summary>
+	/// 整数设定BGM音量
+	/// </summary>
+	/// <param name="_volume"></param>
+
+	public void SetIntBGMVolume(int _volume)
+    {
+	    float volume = _volume / 10f;
+        SetBGMVolume(volume);
+    }
+
+
 	//--------------------------------------------------------------------------------
 	// 指定サウンド再生
 	//--------------------------------------------------------------------------------

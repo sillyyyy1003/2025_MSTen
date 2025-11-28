@@ -167,94 +167,7 @@ public class Farmer : Piece
     /// 生産倍率を取得（スキルレベルに基づく）←（廃止）
     /// </summary>
 
-    /// <summary>
-    /// 建物を建築（仮）
-    /// </summary>
-    public bool StartConstruction(BuildingDataSO selectedBuilding, Vector3 position)
-    {
-        if (farmerData == null || currentState != PieceState.Idle)
-            return false;
 
-
-        ///現時点SOデータにてハードコーディングされているが
-        ///今後GameManagerにリストを要求するように移行する。
-        ///
-        // 行動力チェック
-        if (currentAP < selectedBuilding.buildStartAPCost)
-            return false;
-
-        // 行動力消費
-        ConsumeAP(selectedBuilding.buildStartAPCost);
-
-        // 建物生成
-        var building = BuildingFactory.CreateBuilding(selectedBuilding, this.CurrentPID, position);
-        if (building != null)
-        {
-            ChangeState(PieceState.Building);
-            if (CurrentAP >0&&CurrentAP<building.RemainingBuildCost)
-            {
-                building.ProgressConstruction((int)CurrentAP);//
-                currentAP = 0;
-                Die(); // 農民を削除
-            }
-            else if (CurrentAP > 0 && currentAP >= building.RemainingBuildCost)
-            {
-                int buildCos = building.RemainingBuildCost;
-                building.ProgressConstruction((int)CurrentAP);
-                currentAP-=buildCos;
-                ChangeState(PieceState.Idle);
-            }
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// 既存の建築中建物の建築を継続
-    /// 複数の農民を選択してこれを実行させることが必要だと思うが
-    /// それはGMに任せる
-    /// </summary>
-    public bool ContinueConstruction(Building building)
-    {
-        if (building == null || currentState != PieceState.Idle)
-            return false;
-
-        if (building.State != Buildings.BuildingState.UnderConstruction)
-        {
-            Debug.LogWarning("建物は建築中ではありません");
-            return false;
-        }
-
-        if (currentAP <= 0)
-        {
-            Debug.LogWarning("農民の行動力が不足しています");
-            return false;
-        }
-
-        // 現在の行動力を建築に投入
-        int aPToInvest = Mathf.RoundToInt(currentAP);
-        int remainingCost = building.RemainingBuildCost;
-
-        if (aPToInvest >= remainingCost)
-        {
-            // 建築完了
-            building.ProgressConstruction(remainingCost);
-            ConsumeAP(remainingCost);
-            ChangeState(PieceState.Idle);
-            Debug.Log($"農民が建築を完了しました。使用行動力: {remainingCost}, 残り行動力: {currentAP}");
-        }
-        else
-        {
-            // 行動力を全て使って建築進行、農民は死亡
-            building.ProgressConstruction(aPToInvest);
-            ConsumeAP(aPToInvest);
-            Die();
-            Debug.Log($"農民が建築に全力を注ぎました。使用行動力: {aPToInvest}, 残り建築コスト: {building.RemainingBuildCost}");
-        }
-
-        return true;
-    }
 
     /// <summary>
     /// 建物に入る
@@ -411,12 +324,12 @@ public class Farmer : Piece
     /// 指定項目のアップグレードコストを取得
     /// 鏡湖教の場合はAP回復コスト、それ以外の陣営はHP回復コストを返す
     /// </summary>
-    public int GetFarmerUpgradeCost(FarmerUpgradeType type)
+    public int GetFarmerUpgradeCost(int level, SpecialUpgradeType type)
     {
         switch (type)
         {
-            case FarmerUpgradeType.Sacrifice:
-                if (sacrificeLevel >= 2)
+            case SpecialUpgradeType.FarmerSacrifice:
+                if (level >= 2)
                     return -1;
 
                 // 鏡湖教の場合とそれ以外で異なるコスト配列を使用
@@ -433,7 +346,7 @@ public class Farmer : Piece
                 if (upgradeCostArray == null || sacrificeLevel >= upgradeCostArray.Length)
                     return -1;
 
-                return upgradeCostArray[sacrificeLevel];
+                return upgradeCostArray[level];
             default:
                 return -1;
         }
@@ -442,9 +355,9 @@ public class Farmer : Piece
     /// <summary>
     /// 指定項目がアップグレード可能かチェック
     /// </summary>
-    public bool CanUpgradeFarmer(FarmerUpgradeType type)
+    public bool CanUpgradeFarmer(int level, SpecialUpgradeType type)
     {
-        int cost = GetFarmerUpgradeCost(type);
+        int cost = GetFarmerUpgradeCost(level, type);
         return cost > 0;
     }
 
@@ -461,12 +374,4 @@ public class Farmer : Piece
     }
 
     #endregion
-}
-
-/// <summary>
-/// 農民のアップグレード項目タイプ
-/// </summary>
-public enum FarmerUpgradeType
-{
-    Sacrifice  // 獲祭回復量
 }

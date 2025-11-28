@@ -11,7 +11,6 @@ public class GameSceneUIManager : MonoBehaviour
     // 单例
     public static GameSceneUIManager Instance { get; private set; }
 
-    public PlayerOperationManager _PlayerOpManager;
 
     public GameObject GameUIObject;
     public GameObject NetRoomUIObject;
@@ -99,13 +98,6 @@ public class GameSceneUIManager : MonoBehaviour
 
     void Update()
     {
-
-        // ESC回到Select scene
-        if (Input.GetKeyUp(KeyCode.Escape)){
-
-            SceneController.Instance?.SwitchScene("SelectScene", null);
-            return;
-        }
 
         if(bIsPlayerTurn)
         {
@@ -409,7 +401,7 @@ public class GameSceneUIManager : MonoBehaviour
     private void OnEndTurnButtonPressed()
     {
         EndTurn();
-        _PlayerOpManager.TurnEnd();
+        GameManage.Instance._PlayerOperation.TurnEnd();
     }
 
 

@@ -118,7 +118,7 @@ public class GameUIManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
         isInitialize = false;
     }
 
@@ -347,8 +347,10 @@ public class GameUIManager : MonoBehaviour
 
         UpdatePlayerIconsData();
         UpdateResourcesData();
-        UpdateAllUnitCountData();
-        UpdateUIUnitDataListFromInterface(CardType.Missionary);
+        UpdatePopulationData(); // 更新人口显示
+		//UpdateAllUnitCountData();
+
+		UpdateUIUnitDataListFromInterface(CardType.Missionary);
         UpdateUIUnitDataListFromInterface(CardType.Solider);
         UpdateUIUnitDataListFromInterface(CardType.Farmer);
         UpdateUIUnitDataListFromInterface(CardType.Building);
@@ -468,14 +470,15 @@ public class GameUIManager : MonoBehaviour
         allPlayersData = new Dictionary<int, UIPlayerData>();
 
 
-        PlayerDataManager.Instance.SetPlayerResourses(100);
+        PlayerDataManager.Instance.SetPlayerResourses(32);
 
         localPlayerId = GameManage.Instance.LocalPlayerID;
         playerReligion = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerReligion;
 
         SetPlayerReligionIcon(playerReligion);
         UpdateAllUnitCountData();
-        UpdateResourcesData();
+        UpdatePopulationData(); // 更新人口显示
+		UpdateResourcesData();
 
         UpdatePlayerIconsData();
 
@@ -623,11 +626,11 @@ public class GameUIManager : MonoBehaviour
 
     private void UpdateResourcesData()
     {
-        Resources = PlayerUnitDataInterface.Instance.GetResourceNum();
-       
+        Resources = PlayerDataManager.Instance.GetPlayerResource();
         resourcesValue.text = Resources.ToString();
+		Debug.Log("[GameUIManager] 更新资源数据" + Resources + "/" + resourcesValue.text);
+	}
 
-}
 
     private void UpdateAllUnitCountData()
     {
@@ -637,10 +640,15 @@ public class GameUIManager : MonoBehaviour
 
         allUnitValue.text = $"{AllUnitCount}/{AllUnitCountLimit}";
         unusedUnitValue.text = InactiveUnitCount.ToString();
-
     }
 
+    private void UpdatePopulationData()
+    {
+        int nowPopulation = PlayerDataManager.Instance.NowPopulation;
+        int maxPopulation = PlayerDataManager.Instance.PopulationCost;
 
+        allUnitValue.text = $"{nowPopulation}/{maxPopulation}";
+	}
 
 
 
@@ -736,19 +744,18 @@ public class GameUIManager : MonoBehaviour
     {
         if (InactiveUnitCount == 0) return;
 
-        //PlayerUnitDataInterface.Instance.Get
-        
-
-
     }
 
     private void HandlePlayerDataChanged(int id,PlayerData player)
     {
+        Debug.Log($"玩家数据更新: 玩家 {id}");
+		UpdatePlayerIconsData();
+        UpdateResourcesData();  // 更新资源显示
+        UpdatePopulationData(); // 更新人口显示
+		//UpdateAllUnitCountData();
 
-        UpdatePlayerIconsData();
-        UpdateResourcesData();
-        UpdateAllUnitCountData();
-        UpdateUIUnitDataListFromInterface(CardType.Missionary);
+		// 更新单位数据列表
+		UpdateUIUnitDataListFromInterface(CardType.Missionary);
         UpdateUIUnitDataListFromInterface(CardType.Solider);
         UpdateUIUnitDataListFromInterface(CardType.Farmer);
         UpdateUIUnitDataListFromInterface(CardType.Building);

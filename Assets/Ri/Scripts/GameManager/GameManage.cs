@@ -23,9 +23,6 @@ public struct BoardInfor
     // 每个格子的id
     public int id;
 
-    // 每个格子的地块信息 是否可通过
-    public TerrainType type;
-
     // 是否是起始位置
     public bool bIsStartPos;
 
@@ -100,8 +97,6 @@ public class GameManage : MonoBehaviour
     // *************************
 
 
-    // 网络系统引用 (在Inspector中赋值或通过代码获取)
-    //public NetGameSystem _NetGameSystem;
 
     // 玩家相机引用
     public GameCamera _GameCamera;
@@ -138,6 +133,8 @@ public class GameManage : MonoBehaviour
     // *************************
     //        属性访问器
     // *************************
+    // 另一玩家ID
+    public int OtherPlayerID = -1;
 
     public int LocalPlayerID => _LocalPlayerID;
     public int CurrentTurnPlayerID => _CurrentTurnPlayerID;
@@ -244,6 +241,7 @@ public class GameManage : MonoBehaviour
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
         if (NetGameSystem.Instance!= null && !NetGameSystem.Instance.bIsServer)
         {
+            OtherPlayerID = 0;// 服务器默认是玩家0
             _LocalPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
             // 这里需要NetGameSystem提供本地客户端ID
@@ -253,6 +251,7 @@ public class GameManage : MonoBehaviour
         }
         else
         {
+            OtherPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
             _LocalPlayerID = 0; // 服务器默认是玩家0
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
         }

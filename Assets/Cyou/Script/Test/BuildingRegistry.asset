@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: BuildingRegistry
   m_EditorClassIdentifier: 
   buildingDataSOList:
-  - {fileID: 11400000, guid: 0ac2666609cba54469a0cb032cfb94ec, type: 2}
+  - {fileID: 11400000, guid: 117812b12567c724398935465ec05073, type: 2}

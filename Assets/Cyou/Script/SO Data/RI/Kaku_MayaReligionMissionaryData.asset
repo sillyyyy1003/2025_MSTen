@@ -15,26 +15,26 @@ MonoBehaviour:
   piecePrefabResourcePath: 
   originalPID: 0
   religion: 0
-  pieceName: 
-  populationCost: 1
-  resourceCost: 10
+  pieceName: "\u746A\u96C5\u5916\u661F\u4EBA\u6587\u660E\u6559_\u5BA3\u6559\u5E2B"
+  populationCost: 3
+  resourceCost: 3
   initialLevel: 0
   aPRecoveryRate: 10
-  moveAPCost: 10
+  moveAPCost: 1
   moveSpeed: 1
-  canAttack: 0
+  canAttack: 1
   attackPower: 0
   attackRange: 0
   attackCooldown: 1
   attackAPCost: 20
-  maxHPByLevel: 00000000000000000000000000000000
-  maxAPByLevel: 00000000000000000000000000000000
+  maxHPByLevel: 07000000090000000c0000000c000000
+  maxAPByLevel: 05000000070000000800000008000000
   attackPowerByLevel: 00000000000000000000000000000000
-  hpUpgradeCost: 000000000000000000000000
-  apUpgradeCost: 000000000000000000000000
-  piecePrefab: {fileID: 7153972553235425938, guid: bc85a3009b2bf0347b0ab50c4ed35fac,
+  hpUpgradeCost: 050000000600000000000000
+  apUpgradeCost: 070000000000000000000000
+  piecePrefab: {fileID: 4639449946712196576, guid: e83a1c1fe57163048976c039a9fa9c05,
     type: 3}
-  occupyAPCost: 30
+  occupyAPCost: 2
   convertAPCost: 3
   conversionTurnDuration: 02000000030000000400000005000000
   baseConversionDefenseChance: 0.2
@@ -64,5 +64,5 @@ MonoBehaviour:
   - 0.5
   - 0.6
   hasAntiConversionSkill: 00010101
-  occupyUpgradeCost: 000000000000000000000000
-  convertEnemyUpgradeCost: 000000000000000000000000
+  occupyUpgradeCost: 050000000600000000000000
+  convertEnemyUpgradeCost: 050000000600000007000000

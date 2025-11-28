@@ -48,14 +48,14 @@ public class MilitaryUnit : Piece
         if (!militaryData.canAttack || target == null || !target.IsAlive)
             return false;
 
-        if (Time.time - lastAttackTime < militaryData.attackCooldown)
-            return false;
+        //if (Time.time - lastAttackTime < militaryData.attackCooldown)
+        //    return false;
 
         if (!ConsumeAP(militaryData.attackAPCost))
             return false;
 
         PerformAttack(target);
-        lastAttackTime = Time.time;
+        //lastAttackTime = Time.time;
         return true;
     }
 
@@ -67,14 +67,14 @@ public class MilitaryUnit : Piece
         if (!militaryData.canAttack || target == null || !target.IsAlive)
             return false;
 
-        if (Time.time - lastAttackTime < militaryData.attackCooldown)
-            return false;
+        //if (Time.time - lastAttackTime < militaryData.attackCooldown)
+        //    return false;
 
         if (!ConsumeAP(militaryData.attackAPCost))
             return false;
 
         PerformAttackOnBuilding(target);
-        lastAttackTime = Time.time;
+        //lastAttackTime = Time.time;
         return true;
     }
 
@@ -85,11 +85,11 @@ public class MilitaryUnit : Piece
         target.TakeDamage(finalDamage, this);
         Debug.Log("目标为 "+target.GetType()+" 目标HP "+target.CurrentHP);
         // クリティカル判定
-        if (UnityEngine.Random.value < militaryData.criticalChance)
-        {
-            finalDamage *= 2;
-            // クリティカルエフェクト表示
-        }
+        //if (UnityEngine.Random.value < militaryData.criticalChance)
+        //{
+        //    finalDamage *= 2;
+        //    // クリティカルエフェクト表示
+        //}
     }
 
     protected virtual void PerformAttackOnBuilding(Buildings.Building target)
@@ -100,17 +100,17 @@ public class MilitaryUnit : Piece
         Debug.Log($"攻撃後の建物HP: {target.CurrentHP}");
 
         // クリティカル判定
-        if (UnityEngine.Random.value < militaryData.criticalChance)
-        {
-            finalDamage *= 2;
-            Debug.Log($"クリティカルヒット！ダメージ: {finalDamage}");
-            // クリティカルエフェクト表示
-        }
+        //if (UnityEngine.Random.value < militaryData.criticalChance)
+        //{
+        //    finalDamage *= 2;
+        //    Debug.Log($"クリティカルヒット！ダメージ: {finalDamage}");
+        //    // クリティカルエフェクト表示
+        //}
     }
 
     private int CalculateDamage()
     {
-        return militaryData.attackPower;
+        return (int)militaryData.attackPowerByLevel[attackPowerLevel];
     }
 
     /// <summary>
@@ -240,14 +240,14 @@ public class MilitaryUnit : Piece
     /// <summary>
     /// 指定項目のアップグレードコストを取得
     /// </summary>
-    public int GetMilitaryUpgradeCost(MilitaryUpgradeType type)
+    public int GetMilitaryUpgradeCost(int level, SpecialUpgradeType type)
     {
         switch (type)
         {
-            case MilitaryUpgradeType.AttackPower:
-                if (attackPowerLevel >= 3 || militaryData.attackPowerUpgradeCost == null || attackPowerLevel >= militaryData.attackPowerUpgradeCost.Length)
+            case SpecialUpgradeType.MilitaryAttackPower:
+                if (level >= 3 || militaryData.attackPowerUpgradeCost == null || level >= militaryData.attackPowerUpgradeCost.Length)
                     return -1;
-                return militaryData.attackPowerUpgradeCost[attackPowerLevel];
+                return militaryData.attackPowerUpgradeCost[level];
             default:
                 return -1;
         }
@@ -256,9 +256,9 @@ public class MilitaryUnit : Piece
     /// <summary>
     /// 指定項目がアップグレード可能かチェック
     /// </summary>
-    public bool CanUpgradeMilitary(MilitaryUpgradeType type)
+    public bool CanUpgradeMilitary(int level, SpecialUpgradeType type)
     {
-        int cost = GetMilitaryUpgradeCost(type);
+        int cost = GetMilitaryUpgradeCost(level, type);
         return cost > 0;
     }
 
@@ -277,10 +277,3 @@ public class MilitaryUnit : Piece
     #endregion
 }
 
-/// <summary>
-/// 軍隊のアップグレード項目タイプ
-/// </summary>
-public enum MilitaryUpgradeType
-{
-    AttackPower  // 攻撃力
-}

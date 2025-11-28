@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: RI_BuildingRegistry
   m_EditorClassIdentifier: 
   buildingDataSOList:
-  - {fileID: 11400000, guid: cc0b949881cbc2d408b64453f5a34154, type: 2}
   - {fileID: 11400000, guid: 41d7afcb31cc21745b72e78ac52b18b2, type: 2}
+  - {fileID: 11400000, guid: cc0b949881cbc2d408b64453f5a34154, type: 2}
+  - {fileID: 11400000, guid: eb3137655a0fab44f927134c11ec4b01, type: 2}

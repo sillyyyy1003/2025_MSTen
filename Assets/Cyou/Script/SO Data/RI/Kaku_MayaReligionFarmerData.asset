@@ -15,27 +15,29 @@ MonoBehaviour:
   piecePrefabResourcePath: 
   originalPID: 0
   religion: 0
-  pieceName: 
-  populationCost: 1
-  resourceCost: 10
+  pieceName: "\u746A\u96C5\u5916\u661F\u4EBA\u6587\u660E\u6559_\u8FB2\u6C11"
+  populationCost: 2
+  resourceCost: 2
   initialLevel: 0
   aPRecoveryRate: 10
-  moveAPCost: 10
+  moveAPCost: 0
   moveSpeed: 1
   canAttack: 0
   attackPower: 0
   attackRange: 0
   attackCooldown: 1
   attackAPCost: 20
-  maxHPByLevel: 00000000000000000000000000000000
-  maxAPByLevel: 00000000000000000000000000000000
+  maxHPByLevel: 03000000040000000500000005000000
+  maxAPByLevel: 03000000050000000500000005000000
   attackPowerByLevel: 00000000000000000000000000000000
-  hpUpgradeCost: 000000000000000000000000
-  apUpgradeCost: 000000000000000000000000
-  piecePrefab: {fileID: 7153972553235425938, guid: 9f1317f8bb1f13e4b8e70e285367a1b5,
+  hpUpgradeCost: 040000000500000000000000
+  apUpgradeCost: 050000000600000000000000
+  piecePrefab: {fileID: 6161320943670931638, guid: eb79d7a64d4165a4dbd3f33b2f34a1a7,
     type: 3}
   buildingSpeedModifier: 1
   productEfficiency: 1
   devotionAPCost: 1
-  maxSacrificeLevel: 010000000200000002000000
-  sacrificeUpgradeCost: 0000000000000000
+  maxSacrificeLevel: 020000000300000003000000
+  maxAPRecoveryLevel: 000000000000000000000000
+  sacrificeUpgradeCost: 0500000000000000
+  apRecoveryUpgradeCost: 0000000000000000

@@ -273,6 +273,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4db2196be2b48bd429aa6a6370759ded, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pieceReligion: 0
   unitListTable: {fileID: 1789075467}
 --- !u!4 &151968402
 Transform:
@@ -557,7 +558,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1c98f6d83ca1824cb6612f496a5ffc4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingRegistry: {fileID: 11400000, guid: f70f4dae7fb444a46803d19fffca7183, type: 2}
+  buildingRegistry: {fileID: 11400000, guid: 07a39b98ee9e761409729bb3369c17af, type: 2}
 --- !u!4 &311390073
 Transform:
   m_ObjectHideFlags: 0
@@ -1843,21 +1844,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1695341310}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 666678f5df844a64091ff8e78d9c644b, type: 3}
+  m_Script: {fileID: 11500000, guid: f7532b977afff574387ded9b4ddd97ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pieceManager: {fileID: 151968401}
   buildingManager: {fileID: 311390072}
-  testReligion: 1
-  militarySpawnPosition: {x: 0, y: 0, z: 0}
-  buildingSpawnPosition: {x: 5, y: 0, z: 0}
-  testPlayerID: 1
-  enemyPlayerID: 2
-  createMilitaryKey: 49
-  createBuildingKey: 50
-  attackKey: 32
-  autoAttackKey: 97
-  showDebugInfo: 1
+  runOnStart: 1
 --- !u!1 &1788878274
 GameObject:
   m_ObjectHideFlags: 0
@@ -2041,6 +2032,7 @@ MonoBehaviour:
   - pieceType: 1
     religion: 1
     pieceDataSO: {fileID: 11400000, guid: 8147df12aa38b4c42ad427f0bc0ab5f0, type: 2}
+  Ruins: []
 --- !u!1 &1826658662
 GameObject:
   m_ObjectHideFlags: 0

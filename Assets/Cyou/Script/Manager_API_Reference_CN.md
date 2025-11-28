@@ -637,6 +637,63 @@ Debug.Log($"玩家1的农民数: {farmers.Count}");
 
 ---
 
+#### `GetUnitOperationCostByType()`
+获取棋子操作所需的 AP 消耗。
+
+**函数签名:**
+```csharp
+public int GetUnitOperationCostByType(int pieceID, GameData.OperationType type)
+```
+
+**参数:**
+- `pieceID`: 棋子 ID
+- `type`: 操作类型（`GameData.OperationType`）
+  - `OperationType.Move` - 移动（所有棋子通用）
+  - `OperationType.Attack` - 攻击（仅军队）
+  - `OperationType.Occupy` - 占领领地（仅传教士）
+  - `OperationType.Convert` - 魅惑敌人（仅传教士）
+  - `OperationType.Sacrifice` - 恢复技能（仅农民）
+
+**返回值:**
+- 成功: AP 消耗（正整数）
+- 失败: -1（棋子不存在，或不支持指定操作）
+
+**使用示例:**
+```csharp
+// 获取军队的攻击 AP 消耗
+int attackCost = PieceManager.Instance.GetUnitOperationCostByType(militaryID, GameData.OperationType.Attack);
+if (attackCost > 0)
+{
+    Debug.Log($"攻击需要 {attackCost} AP");
+
+    // 检查 AP 是否足够
+    int currentAP = PieceManager.Instance.GetPieceAP(militaryID);
+    if (currentAP >= attackCost)
+    {
+        // 执行攻击
+        PieceManager.Instance.AttackEnemy(militaryID, targetID);
+    }
+}
+
+// 获取传教士的魅惑 AP 消耗
+int convertCost = PieceManager.Instance.GetUnitOperationCostByType(missionaryID, GameData.OperationType.Convert);
+
+// 获取农民的恢复 AP 消耗
+int sacrificeCost = PieceManager.Instance.GetUnitOperationCostByType(farmerID, GameData.OperationType.Sacrifice);
+
+// 移动 AP 消耗（所有棋子通用）
+int moveCost = PieceManager.Instance.GetUnitOperationCostByType(pieceID, GameData.OperationType.Move);
+```
+
+**重要功能:**
+- 从各棋子的 DataSO 中自动获取适当的 AP 消耗
+- 对于不正确的组合（例如：农民攻击），返回 -1 并输出错误日志
+- 用于行动执行前的 AP 检查，可以防止不必要的错误
+
+**实现位置:** `PieceManager.cs:1016-1074`
+
+---
+
 ### 棋子行动
 
 #### `AttackEnemy()`
@@ -1217,7 +1274,7 @@ if (myBuildingData.HasValue)
 - 基本信息：buildingID, buildingName, playerID
 - 位置和状态：position, currentHP, state
 - 建造信息：remainingBuildCost
-- 升级等级：hpLevel, attackRangeLevel, slotsLevel, buildCostLevel
+- 升级等级：hpLevel, attackRangeLevel, slotsLevel
 
 **实现位置:** `BuildingManager.cs:420-458`
 
@@ -1482,54 +1539,123 @@ void HandleBuildingDestruction(int destroyedBuildingID)
 
 ---
 
-### 建造处理
+### 建造处理（资源成本获取）
 
-#### `AddFarmerToConstruction()`
-推进建筑建造（投入农民）。
+#### `GetBuildingCost(string buildingName)`
+从建筑名称获取建造所需的资源成本。
 
 **函数签名:**
 ```csharp
-public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
+public int GetBuildingCost(string buildingName)
 ```
 
 **参数:**
-- `buildingID`: 建筑 ID
-- `farmerID`: 投入的农民棋子 ID
-- `pieceManager`: PieceManager 引用
+- `buildingName`: 建筑名称
 
 **返回值:**
-- `true`: 建造推进成功
-- `false`: 失败
+- 资源成本（未找到时返回 -1）
 
 **使用示例:**
 ```csharp
-if (buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager))
+int cost = buildingManager.GetBuildingCost("祭坛");
+if (cost > 0)
 {
-    Debug.Log("建造推进中");
+    Debug.Log($"祭坛建造成本: {cost} 资源");
 }
 ```
 
-**处理流程:**
-1. 确认农民的 AP
-2. 确认建筑的剩余建造成本
-3. 消耗农民的 AP
-4. 推进建筑建造
-5. 完成时输出日志
-
-**实现位置:** `BuildingManager.cs:106-158`
+**实现位置:** `BuildingManager.cs:364-373`
 
 ---
 
-#### `CancelConstruction()`
-取消建造。
+#### `GetBuildingCost(int buildingID)`
+从建筑 ID 获取建造所需的资源成本。
 
 **函数签名:**
 ```csharp
-public bool CancelConstruction(int buildingID)
+public int GetBuildingCost(int buildingID)
 ```
 
 **参数:**
 - `buildingID`: 建筑 ID
+
+**返回值:**
+- 资源成本（未找到时返回 -1）
+
+**使用示例:**
+```csharp
+int cost = buildingManager.GetBuildingCost(buildingID);
+if (cost > 0)
+{
+    Debug.Log($"建筑ID {buildingID} 的建造成本: {cost} 资源");
+}
+```
+
+**实现位置:** `BuildingManager.cs:380-389`
+
+---
+
+#### `GetBuildingCostsByReligion(Religion religion)`
+获取指定宗教的所有建筑的资源成本。
+
+**函数签名:**
+```csharp
+public Dictionary<string, int> GetBuildingCostsByReligion(Religion religion)
+```
+
+**参数:**
+- `religion`: 宗教
+
+**返回值:**
+- 建筑名称和资源成本的 Dictionary（未找到时返回空 Dictionary）
+
+**使用示例:**
+```csharp
+Dictionary<string, int> costs = buildingManager.GetBuildingCostsByReligion(Religion.MirrorLakeReligion);
+
+foreach (var kvp in costs)
+{
+    Debug.Log($"{kvp.Key}: {kvp.Value} 资源");
+}
+// 输出示例:
+// 祭坛: 100 资源
+// 农场: 50 资源
+```
+
+**实现位置:** `BuildingManager.cs:396-423`
+
+---
+
+#### `GetBuildingDataByReligion(Religion religion)`
+直接获取指定宗教的建筑数据。
+
+**函数签名:**
+```csharp
+public BuildingDataSO GetBuildingDataByReligion(Religion religion)
+```
+
+**参数:**
+- `religion`: 宗教
+
+**返回值:**
+- BuildingDataSO（未找到时返回 null）
+
+**使用示例:**
+```csharp
+// 从宗教直接获取 BuildingDataSO
+BuildingDataSO buildingData = buildingManager.GetBuildingDataByReligion(Religion.SilkReligion);
+
+if (buildingData != null)
+{
+    int cost = buildingData.buildingResourceCost; // 18
+    string name = buildingData.buildingName; // "絲織教_特殊建築"
+    Debug.Log($"{name} 的成本: {cost} 资源");
+}
+```
+
+**实现位置:** `BuildingManager.cs:424-441`
+
+---
 
 **返回值:**
 - `true`: 取消成功
@@ -1968,6 +2094,92 @@ public bool CanUpgrade(int buildingID, BuildingUpgradeType upgradeType)
 
 ### 建筑信息获取
 
+#### `GetMyBuilding()`
+获取自己的建筑实例。
+
+**函数签名:**
+```csharp
+public Building GetMyBuilding(int buildingID)
+```
+
+**参数:**
+- `buildingID`: 建筑 ID
+
+**返回值:**
+- 成功: Building 实例
+- 失败: null
+
+**使用示例:**
+```csharp
+Building myBuilding = buildingManager.GetMyBuilding(buildingID);
+if (myBuilding != null)
+{
+    Debug.Log($"建筑HP: {myBuilding.CurrentHP}");
+}
+```
+
+**实现位置:** `BuildingManager.cs:761-768`
+
+---
+
+#### `GetEnemyBuilding()`
+获取敌方的建筑实例。
+
+**函数签名:**
+```csharp
+public Building GetEnemyBuilding(int buildingID)
+```
+
+**参数:**
+- `buildingID`: 建筑 ID
+
+**返回值:**
+- 成功: Building 实例
+- 失败: null
+
+**使用示例:**
+```csharp
+Building enemyBuilding = buildingManager.GetEnemyBuilding(buildingID);
+if (enemyBuilding != null)
+{
+    Debug.Log($"敌方建筑HP: {enemyBuilding.CurrentHP}");
+}
+```
+
+**实现位置:** `BuildingManager.cs:775-782`
+
+---
+
+#### `GetBuilding()`
+获取建筑实例（从己方和敌方建筑中搜索）。
+
+**函数签名:**
+```csharp
+public Building GetBuilding(int buildingID)
+```
+
+**参数:**
+- `buildingID`: 建筑 ID
+
+**返回值:**
+- 成功: Building 实例
+- 失败: null
+
+**使用示例:**
+```csharp
+Building building = buildingManager.GetBuilding(buildingID);
+if (building != null)
+{
+    Debug.Log($"找到建筑: {building.Data.buildingName}");
+}
+```
+
+**注意:** 如果需要区分自己的建筑和敌方的建筑，请使用 `GetMyBuilding()` 或 `GetEnemyBuilding()`。
+
+**实现位置:** `BuildingManager.cs:789-795`
+
+---
+
 #### `GetBuildingHP()`
 获取建筑当前 HP。
 
@@ -2255,7 +2467,6 @@ public struct syncBuildingData
     public int hpLevel;            // HP 等级 (0-3)
     public int attackRangeLevel;   // 攻击范围等级 (0-3)
     public int slotsLevel;         // 槽位数等级 (0-3)
-    public int buildCostLevel;     // 建造成本等级 (0-3)
 }
 ```
 
@@ -2308,6 +2519,36 @@ public enum SpecialUpgradeType
     PopeBuff                   // 教皇: 增益效果
 }
 ```
+
+### OperationType
+棋子的操作类型（用于获取 AP 消耗）。
+
+```csharp
+public enum OperationType
+{
+    Move,       // 移动（所有棋子通用）
+    Attack,     // 攻击（仅军队）
+    Occupy,     // 占领领地（仅传教士）
+    Convert,    // 魅惑敌人（仅传教士）
+    Sacrifice   // 恢复技能（仅农民）
+}
+```
+
+**使用方法:**
+与 `GetUnitOperationCostByType()` 函数结合使用。
+
+```csharp
+using GameData; // OperationType 定义在 GameData 命名空间中
+
+// 获取各种操作的 AP 消耗
+int attackCost = PieceManager.Instance.GetUnitOperationCostByType(militaryID, OperationType.Attack);
+int moveCost = PieceManager.Instance.GetUnitOperationCostByType(pieceID, OperationType.Move);
+int convertCost = PieceManager.Instance.GetUnitOperationCostByType(missionaryID, OperationType.Convert);
+```
+
+**定义位置:** `GameDataEnums.cs:52-59`
+
+---
 
 ### BuildingUpgradeType
 ```csharp
