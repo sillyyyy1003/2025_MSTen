@@ -335,7 +335,7 @@ public class GameManage : MonoBehaviour
 
         // 使用协程开始游戏，避免脚本Start执行顺序问题
         if (!bIsStartSingleGame)
-            StartCoroutine(TrueStartGame());
+            StartCoroutine(SingleStartGame());
 
 
         OnGameStarted?.Invoke(true);
@@ -346,7 +346,7 @@ public class GameManage : MonoBehaviour
 
         return true;
     }
-    private IEnumerator TrueStartGame()
+    private IEnumerator SingleStartGame()
     {
         yield return 0.1f;
         if (GameBoardInforDict.Count > 0)
@@ -376,7 +376,7 @@ public class GameManage : MonoBehaviour
 
             // 初始化buildingManager
             _BuildingManager.SetLocalPlayerID(LocalPlayerID);
-            _BuildingManager.InitializeBuildingData(Religion.RedMoonReligion, Religion.SilkReligion);
+            _BuildingManager.InitializeBuildingData(SceneStateManager.Instance.PlayerReligion, Religion.SilkReligion);
 
             Debug.Log("本地玩家初始化完毕");
             // 开始第一个回合
