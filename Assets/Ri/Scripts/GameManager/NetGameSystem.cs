@@ -908,6 +908,7 @@ public class NetGameSystem : MonoBehaviour
             }
             catch (SocketException)
             {
+                Debug.Log("socket error");
                 serverExists = false;
             }
         }

@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Net;
 using UnityEngine;
 using GameData;
+using System.Net.NetworkInformation;
 
 
 // 场景状态管理，需要切换场景保存参数时使用
@@ -128,16 +129,38 @@ public class SceneStateManager : MonoBehaviour
     string GetLocalIPv4()
     {
         string localIP = "";
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList)
+
+        // 获取所有网络接口
+        NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+        foreach (NetworkInterface ni in interfaces)
         {
-            // 只要 IPv4，且不是回环地址
-            if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+            // 跳过非活动、回环和虚拟网卡
+            if (ni.OperationalStatus != OperationalStatus.Up)
+                continue;
+            if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                continue;
+            // 跳过VMware等虚拟网卡
+            if (ni.Description.Contains("VMware") ||
+                ni.Description.Contains("VirtualBox") ||
+                ni.Description.Contains("Hyper-V") ||
+                ni.Name.Contains("VMnet"))
+                continue;
+
+            // 获取该网卡的IP信息
+            IPInterfaceProperties ipProps = ni.GetIPProperties();
+            foreach (UnicastIPAddressInformation ip in ipProps.UnicastAddresses)
             {
-                localIP = ip.ToString();
-                break;
+                // 只要IPv4地址
+                if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    localIP = ip.Address.ToString();
+                    Debug.Log($"找到网卡: {ni.Name} ({ni.Description}) - IP: {localIP}");
+                    return localIP; // 找到第一个物理网卡就返回
+                }
             }
         }
+
         return string.IsNullOrEmpty(localIP) ? "未找到局域网 IPv4 地址" : localIP;
     }
 
