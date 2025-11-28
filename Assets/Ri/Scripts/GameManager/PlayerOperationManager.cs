@@ -1836,7 +1836,11 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.LogError("[Pope交换] 找不到目标单位数据");
             return;
         }
-
+        if(!PieceManager.Instance.GetCanPopeSwap(popeUnitData.Value.UnitID))
+        {
+            Debug.Log("Piece Pope CantSwap!");
+            return;
+        }
         // 检查目标是否为建筑
         if (targetUnitData.Value.IsBuilding())
         {
