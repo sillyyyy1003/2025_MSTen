@@ -125,8 +125,9 @@ public class GameLoadProgressUI : MonoBehaviour
 			)
 			.SetEase(Ease.Linear)
 			.OnComplete(() =>
-			{
-				Debug.Log("[客户端] 真实 Loading 完成，开始淡出动画");
+            {
+                OnLoadingEnd?.Invoke(true);
+                Debug.Log("[客户端] 真实 Loading 完成，开始淡出动画");
 				gameObject.SetActive(false);
 				spriteRender.gameObject.SetActive(false);
 				
