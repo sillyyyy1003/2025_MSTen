@@ -5044,7 +5044,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!199 &94873139
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -39473,7 +39473,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!199 &530173842
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -49190,7 +49190,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!199 &890270889
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -59177,7 +59177,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!199 &1215296086
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -73815,7 +73815,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!199 &1692838902
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -83673,7 +83673,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!199 &1996860913
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -88485,414 +88485,6 @@ Transform:
   - {fileID: 501874903}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &571950699403447988
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 3502802224646207737, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_Name
-      value: Effect_Shiruku_Senkyou_20251113
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8519374418313173688, guid: eea0fbd32e482fa42a833016237de836,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: eea0fbd32e482fa42a833016237de836, type: 3}
---- !u!1001 &1561158204698768823
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1703339210534525618, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7927266500866912336, guid: 52fff11b0498bf14d97199c394de958d,
-        type: 3}
-      propertyPath: m_Name
-      value: Effect_Shiruku_SenryouSippai_20251113
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 52fff11b0498bf14d97199c394de958d, type: 3}
---- !u!1001 &1692101297101441933
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2287748394462068371, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_Name
-      value: Effect_Shiruku_Senryou_20251113
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8662804763607069281, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e, type: 3}
---- !u!1001 &2791026120200239754
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 1.03
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 437048121678579153, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6322328793971936321, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a,
-        type: 3}
-      propertyPath: m_Name
-      value: Effect_Shiruku_SenkyouSeikou_20251113
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 6c8d9ca8d4df3e74582b21086ea5cc0a, type: 3}
---- !u!1001 &3480024372061094465
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1271622633826323251, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3979821070583568470, guid: 811957641979ba348b70803700a50873,
-        type: 3}
-      propertyPath: m_Name
-      value: Effect_Shiruku_SenryouSeikou_20251113
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 811957641979ba348b70803700a50873, type: 3}
---- !u!1001 &5144287374455252873
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2912939620231203930, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_Name
-      value: Effect_Shiruku_SenkyouShippai_20251113
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5978528546939156272, guid: 42502002f2c0fcf40af5a6fe624ae11a,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 42502002f2c0fcf40af5a6fe624ae11a, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -88908,9 +88500,3 @@ SceneRoots:
   - {fileID: 1692838904}
   - {fileID: 94873141}
   - {fileID: 1996860915}
-  - {fileID: 1692101297101441933}
-  - {fileID: 3480024372061094465}
-  - {fileID: 1561158204698768823}
-  - {fileID: 571950699403447988}
-  - {fileID: 2791026120200239754}
-  - {fileID: 5144287374455252873}

@@ -128,20 +128,6 @@
         {
             "m_OutputSlot": {
                 "m_Node": {
-                    "m_Id": "46473a5109ca471d97249236fa7f18e9"
-                },
-                "m_SlotId": 0
-            },
-            "m_InputSlot": {
-                "m_Node": {
-                    "m_Id": "9201c26da2ab4cdf8c9774ba7554ca2d"
-                },
-                "m_SlotId": 1
-            }
-        },
-        {
-            "m_OutputSlot": {
-                "m_Node": {
                     "m_Id": "53c16335e30f4b38b97c8acfc5e56f60"
                 },
                 "m_SlotId": 2
@@ -296,20 +282,6 @@
         {
             "m_OutputSlot": {
                 "m_Node": {
-                    "m_Id": "e86161677527406d98a247786eecf0ca"
-                },
-                "m_SlotId": 0
-            },
-            "m_InputSlot": {
-                "m_Node": {
-                    "m_Id": "e709a6fc3b644b0fa1fd4db5ec735251"
-                },
-                "m_SlotId": 1
-            }
-        },
-        {
-            "m_OutputSlot": {
-                "m_Node": {
                     "m_Id": "ee6295101162436684e8c797b0757f09"
                 },
                 "m_SlotId": 0
@@ -386,7 +358,7 @@
     },
     "m_PreviewData": {
         "serializedMesh": {
-            "m_SerializedMesh": "{\"mesh\":{\"fileID\":-6085325461309819750,\"guid\":\"219ddaca7774a2545b45fbeb2cafadef\",\"type\":3}}",
+            "m_SerializedMesh": "{\"mesh\":{\"fileID\":-8845815313036559721,\"guid\":\"356b93d9288de604e92e9929a36212ab\",\"type\":3}}",
             "m_Guid": ""
         },
         "preventRotation": false
@@ -564,7 +536,7 @@
     "m_ShaderOutputName": "Edge2",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": -0.550000011920929,
+        "x": 0.9399999976158142,
         "y": 1.0,
         "z": 1.0,
         "w": 1.0
@@ -776,7 +748,7 @@
     "m_ShaderOutputName": "Edge1",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 1.0,
+        "x": 0.5199999809265137,
         "y": 0.0,
         "z": 0.0,
         "w": 0.0
@@ -2221,7 +2193,7 @@
     },
     "m_Name": "Split",
     "m_DrawState": {
-        "m_Expanded": false,
+        "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
             "x": -1353.5999755859375,
@@ -2329,8 +2301,8 @@
     "m_Hidden": false,
     "m_Value": {
         "r": 0.0,
-        "g": 0.3492317199707031,
-        "b": 8.0,
+        "g": 0.6984634399414063,
+        "b": 16.0,
         "a": 0.0
     },
     "isMainColor": false,
@@ -2512,10 +2484,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -1021.5997924804688,
-            "y": 782.3999633789063,
+            "x": -1021.5999755859375,
+            "y": 765.5999755859375,
             "width": 207.99993896484376,
-            "height": 325.60003662109377
+            "height": 325.5999755859375
         }
     },
     "m_Slots": [
