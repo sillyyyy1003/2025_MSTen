@@ -2880,7 +2880,7 @@ public class PlayerOperationManager : MonoBehaviour
             if (msg.TargetDestroyed)
             {
                 // 先处理处理血量
-                HPBarManager.Instance.RemoveHPBar(msg.TargetSyncData.Value.pieceID);
+                UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetSyncData.Value.pieceID);
 
                 //计算己方死亡单位 (红月教)
                 PlayerDataManager.Instance.DeadUnitCount += 1;
@@ -2930,7 +2930,7 @@ public class PlayerOperationManager : MonoBehaviour
                 // 目标存活，只播放受击动画
                 HandleTargetSurvivedAfterAttack(targetObj, msg);
                 // 处理血量
-                HPBarManager.Instance.UpdateHPBarByID(msg.TargetSyncData.Value.pieceID,msg.TargetSyncData.Value.currentHP);
+               UnitStatusUIManager.Instance.UpdateHPByID(msg.TargetSyncData.Value.pieceID,msg.TargetSyncData.Value.currentHP);
             }
         }
 
