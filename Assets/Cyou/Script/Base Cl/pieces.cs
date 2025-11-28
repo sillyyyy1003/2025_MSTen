@@ -180,7 +180,7 @@ namespace GamePieces
                 return true;
             }
 
-            Debug.Log($"教皇駒ID={PieceID}は今位置交換スキル発動可能です。");
+            //Debug.Log($"教皇駒ID={PieceID}は今位置交換スキル発動可能です。");
             return true;
         }
 

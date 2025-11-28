@@ -248,16 +248,26 @@ public class PieceManager : MonoBehaviour
     }
 
     //25.11.21 RI add Get Pope swap cooldown
-    public int GetPopeSwapCooldown(int pieceID)
+    public Unity.Mathematics.int2 GetPopeSwapCooldown(int pieceID)
     {
         if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return -1;
         }
+        int max = 0;
+        switch (piece)
+        {
+            case Pope pope:
+                max = pope.GetMaxSwapCooldown();
+                break;
 
-        
-        return piece.PopeSwapPosRemaining;
+        }
+        //Debug.Log("pope now swap cooldown is "+ piece.PopeSwapPosRemaining+" max cooldown is "+max);
+
+        Unity.Mathematics.int2 popeCoolDown = new Unity.Mathematics.int2(piece.PopeSwapPosRemaining, max);
+
+        return popeCoolDown;
     }
     //25.11.21 RI add Get Pope swap cooldown
     public bool GetCanPopeSwap(int pieceID)
@@ -1725,7 +1735,7 @@ public class PieceManager : MonoBehaviour
             if (allPieces.TryGetValue(pieceID, out Piece piece))
             {
                 //25.11.9  RI 添加测试debug
-                Debug.Log($"駒ID={pieceID} ");
+                //Debug.Log($"駒ID={pieceID} ");
 
                 // AP回復
                 piece.RecoverAP(piece.Data.aPRecoveryRate);

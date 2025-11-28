@@ -300,7 +300,9 @@ public class PlayerDataManager : MonoBehaviour
     // 本地玩家数据(不参与数据同步)
     // 人口上限
     public int PopulationCost { get; private set; }
-    public int NowPopulation=0;
+    public int NowPopulation=0; 
+    // 玩家拥有的废墟所在的cellID (新增,不需要网络同步)
+    public List<int> PlayerRuinCells=new List<int>();
 
     // 单位死亡数
     public int DeadUnitCount=0;
@@ -651,6 +653,29 @@ public class PlayerDataManager : MonoBehaviour
         return GameManage.Instance.GetCellObject(pos).transform.position;
     }
 
+    /// <summary>
+    /// 添加玩家的废墟cellID
+    /// </summary>
+    public void AddPlayerRuinCell(int cellID)
+    {
+        PlayerRuinCells.Add(cellID);
+    }
+
+    /// <summary>
+    /// 获取玩家的废墟cellID列表
+    /// </summary>
+    public List<int> GetPlayerRuinCells()
+    {
+        return PlayerRuinCells;
+    }
+
+    /// <summary>
+    /// 移除玩家的废墟cellID
+    /// </summary>
+    public void RemovePlayerRuinCell(int cellID)
+    {
+        PlayerRuinCells.Remove(cellID);
+    }
 
     // 添加单位(种类与位置) - 返回生成的UnitID
     public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject = null, bool bUnitIsActivated = true)
@@ -1033,7 +1058,7 @@ public class PlayerDataManager : MonoBehaviour
         data.Resources = newResources;
         allPlayersData[playerId] = data;
 
-        Debug.Log($"Player {playerId} Resources updated to {newResources}");
+        //Debug.Log($"Player {playerId} Resources updated to {newResources}");
     }
 
     public int GetCreateUnitResoursesCost(CardType type)
