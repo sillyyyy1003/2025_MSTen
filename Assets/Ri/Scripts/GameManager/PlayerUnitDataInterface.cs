@@ -103,6 +103,12 @@ public class PlayerUnitDataInterface : MonoBehaviour
     {
         return PieceManager.Instance.GetUnitOperationCostByType(PlayerDataManager.Instance.nowChooseUnitID,type);
     }
+
+    // 拿到教皇移动冷却
+    public int GetPopeSwapCooldown()
+    {
+        return PieceManager.Instance.GetPopeSwapCooldown(GameManage.Instance.LocalPlayerID);
+    }
     /// <summary>
     /// 拿到某种棋子的已上场的key列表
     /// </summary>

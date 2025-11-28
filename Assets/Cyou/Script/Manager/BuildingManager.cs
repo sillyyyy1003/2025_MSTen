@@ -456,6 +456,7 @@ public class BuildingManager : MonoBehaviour
      
         if(!building.FarmerEnter(farmerAP))
         {
+            Debug.LogWarning("Slot is Full! cant in");
             return false;
         }
       
@@ -464,25 +465,17 @@ public class BuildingManager : MonoBehaviour
     }
     
  
-    public int BuildingCreateResource()
-    {
-        int res = 0;
-       foreach(var a in buildings)
-        {
-            res += a.Value.GetNowActivedSlot()*2;
-        }
-        return res;
-    }
-    public bool SetSlotToCantUse(int buildingID)
-    {
-        if (!buildings.TryGetValue(buildingID, out Building building))
-        {
-            Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return false;
-        }
-        building.SetCantUse();
-        return true;
-    }
+    //public int GetBuildingCreateResource()
+    //{
+    //    int res=0;
+    //   foreach (var a in buildings)
+    //    {
+    //        res += a.Value.NewGetResource();
+    //    }
+    //    return res;
+    //}
+  
+
     /// <summary>
     /// 農民を建物に配置
     /// </summary>
@@ -770,19 +763,6 @@ public class BuildingManager : MonoBehaviour
             return -1;
         }
         return building.GetAllHP(); ;
-    }
-
-    /// <summary>
-    /// 25.11.26 RI Add 建物のslotを取得
-    /// </summary>
-    public int GetBuildingSlot(int buildingID)
-    {
-        if (!buildings.TryGetValue(buildingID, out Building building))
-        {
-            Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return -1;
-        }
-        return building.GetSlots();
     }
 
     /// <summary>
@@ -1093,14 +1073,30 @@ public class BuildingManager : MonoBehaviour
         {
             if (buildings.TryGetValue(buildingID, out Building building))
             {
-                lastTurnResourceTotal+=building.ProcessTurn();
+                // 25.11.28 Ri add new turn process
+                //lastTurnResourceTotal+=building.ProcessTurn();
+                lastTurnResourceTotal += building.NewGetResource();
             }
+
         }
 
         Debug.Log($"前ターンにて{lastTurnResourceTotal}の資源が生成されました。");
         return lastTurnResourceTotal;
     }
 
+    // 25.11.28 ri add building is actived
+    public bool GetIsActived(int buildingID)
+    {
+        bool actived = true;
+        if (buildings.TryGetValue(buildingID, out Building building))
+        {
+            if(!building.GetBuildingActived())
+            {
+                actived = false;
+            }
+        }
+        return actived;
+    }
     #endregion
 }
 
