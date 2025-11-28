@@ -61,22 +61,9 @@ public class GameCamera : MonoBehaviour
 
     void Start()
     {
-        yaw = transform.eulerAngles.y;
+	    bCanUseCamera = false;
+	    Initialize();
 
-        // 初始化中心点为当前摄像机前方的点
-        focusPoint = transform.position + transform.forward * 20f;
-
-        // 初始化为中档（斜视）
-        currentZoomLevel = 1;
-        currentDistance = midZoomDistance;
-        targetDistance = currentDistance;
-        currentPitch = midPitch;
-        targetPitch = currentPitch;
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-        Debug.Log($"<color=cyan>GameCamera初始化 - edgeScrollSpeed: {edgeScrollSpeed}, moveSpeed: {moveSpeed}, edgeSize: {edgeSize}</color>");
     }
 
     void Update()
@@ -94,6 +81,33 @@ public class GameCamera : MonoBehaviour
     {
         bCanUseCamera = canUse;
     }
+
+
+
+    /// <summary>
+    /// 镜头的初始化
+    /// </summary>
+    public void Initialize()
+    {
+	    yaw = transform.eulerAngles.y;
+
+	    // 初始化中心点为当前摄像机前方的点
+	    focusPoint = transform.position + transform.forward * 20f;
+
+	    // 初始化为中档（斜视）
+	    currentZoomLevel = 1;
+	    currentDistance = midZoomDistance;
+	    targetDistance = currentDistance;
+	    currentPitch = midPitch;
+	    targetPitch = currentPitch;
+
+	    Cursor.lockState = CursorLockMode.None;
+	    Cursor.visible = true;
+
+		Debug.Log($"<color=cyan>GameCamera初始化 - edgeScrollSpeed: {edgeScrollSpeed}, moveSpeed: {moveSpeed}, edgeSize: {edgeSize}</color>");
+	  
+    }
+
 
     /// <summary>
     /// 设置玩家跟踪的位置 - 重置中心点
