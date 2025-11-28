@@ -866,7 +866,7 @@ public class NetGameSystem : MonoBehaviour
         //    return;
         //}
         //// 使用指定IP连接
-        ConnectToSpecificServer(serverIP, port);
+        //ConnectToSpecificServer(serverIP, port);
 
     }
     // 连接到特定服务器
