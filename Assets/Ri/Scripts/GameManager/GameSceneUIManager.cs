@@ -11,9 +11,9 @@ public class GameSceneUIManager : MonoBehaviour
     // 单例
     public static GameSceneUIManager Instance { get; private set; }
 
-
-    public GameObject GameUIObject;
-
+    [Header("Loading组件")]
+    public GameObject LoadingAnimationRender;
+	public GameLoadProgressUI loadUI;       // 进度条 2025.11.17 
 
 
 	// 房间UI组件
@@ -21,7 +21,7 @@ public class GameSceneUIManager : MonoBehaviour
     //public Transform PlayerListContainer; // 玩家列表容器
     public GameObject PlayerItemPrefab; // 玩家列表项预制体
     public Button Button_ReadyAndStartGame; // 准备按钮
-	public GameLoadProgressUI loadUI;       // 进度条 2025.11.17 
+	public GameObject GameUIObject;
 
 	//public Button Button_StartGame; // 开始游戏按钮
 	//public TextMeshProUGUI Text_RoomInfo; // 房间信息文本
@@ -118,7 +118,12 @@ public class GameSceneUIManager : MonoBehaviour
             NetGameSystem.Instance.OnAllPlayersReady += OnAllPlayersReadyChanged;
             NetGameSystem.Instance.OnGameStarted += loadUI.StartRealLoading; // 网络宣布游戏开始时开始真实加载
         }
-    }
+
+		// 显示Loading画面和Loading文字
+		loadUI.gameObject.SetActive(true);
+		LoadingAnimationRender.SetActive(true);
+
+	}
 
     private void InitializeGameUI()
     {

@@ -123,9 +123,10 @@ public class GameLoadProgressUI : MonoBehaviour
 
 				FadeManager.Instance.FadeFromBlack(1, () =>
 				{
+
 					GameManage.Instance.SetIsGamingOrNot(true);             // 设置为游戏中状态
 					GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
-
+					GameManage.Instance.StartFirstTurn();                     // 开始第一回合
 					//======在这里追加其他的游戏开始操作
 
 				});

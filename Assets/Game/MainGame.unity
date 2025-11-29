@@ -7845,11 +7845,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f826cc867a904d87bd0b0d7efdc88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GameUIObject: {fileID: 1510281980}
+  LoadingAnimationRender: {fileID: 1680095787}
+  loadUI: {fileID: 1690574045}
   PlayerItemPrefab: {fileID: 7483342906484592198, guid: 31a039d20d4f87d49bbad8c580939bdb,
     type: 3}
   Button_ReadyAndStartGame: {fileID: 0}
-  loadUI: {fileID: 1690574045}
+  GameUIObject: {fileID: 1510281980}
 --- !u!4 &880885085
 Transform:
   m_ObjectHideFlags: 0
@@ -15442,6 +15443,12 @@ SpriteRenderer:
 --- !u!4 &1680095786 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5825585653114105414, guid: 9f3e85a1b0c13284a87e7be781ae13e2,
+    type: 3}
+  m_PrefabInstance: {fileID: 1680095784}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1680095787 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4624519240142343748, guid: 9f3e85a1b0c13284a87e7be781ae13e2,
     type: 3}
   m_PrefabInstance: {fileID: 1680095784}
   m_PrefabAsset: {fileID: 0}
