@@ -87,8 +87,7 @@ public class GameUIManager : MonoBehaviour
 	public Button EndTurn;
 
 	[Header("Timer")]
-	public Image turnTimeImage;     // 白色条
-	public Image poolTimeImage;     // 红色条
+	public Image TimeImage;     // TimeImage
 	public TextMeshProUGUI timeText; // 可选数字显示
 
 	//public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
@@ -107,7 +106,7 @@ public class GameUIManager : MonoBehaviour
 
 
     // === Event 定义区域 ===
-    public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
+    //public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
     public event System.Action TimeIsOut;//时间结束
     public event System.Action OnEndTurnButtonPressed;//回合结束按钮按下
 
@@ -427,32 +426,24 @@ public class GameUIManager : MonoBehaviour
 		//    CountdownTime.text = $"{turnTimeStr}+{poolTimeStr}";
 		//}
 
+
 		float turnTime = timer.GetTurnTime();
 		float poolTime = timer.GetTimePool();
 		bool usingPool = timer.IsUsingTimePool();
 
-		// 比例
-		float turnRatio = Mathf.Clamp01(turnTime / timer.turnTimeLimit);
-		float poolRatio = Mathf.Clamp01(poolTime / timer.timePoolInitial);
+		// 1. 总时间进度占比
+		float totalTime = turnTime + poolTime;
+		float maxTotalTime = timer.turnTimeLimit + timer.timePoolInitial;
+		float fill = Mathf.Clamp01(totalTime / maxTotalTime);
 
-		// 更新 Fill
+		// 填充
+		TimeImage.fillAmount = fill;
+
+		// 2. 按当前使用 turn/pool 切换颜色
 		if (!usingPool)
-		{
-			// 正常使用回合时间（白色条）
-			turnTimeImage.fillAmount = turnRatio;
-			poolTimeImage.fillAmount = poolRatio;
-
-			turnTimeImage.color = Color.white;
-			poolTimeImage.color = new Color(1, 0.3f, 0.3f); // 淡红
-		}
+			TimeImage.color = Color.white;
 		else
-		{
-			// 回合时间已用完 → 使用 Time Pool（红色条）
-			turnTimeImage.fillAmount = 0; // 白色条变空
-			poolTimeImage.fillAmount = poolRatio;
-
-			poolTimeImage.color = Color.red; // 强红
-		}
+			TimeImage.color = Color.red;
 
 		// 显示数字（可选）
 		if (timeText != null)
@@ -538,7 +529,10 @@ public class GameUIManager : MonoBehaviour
         UpdateUIUnitDataListFromInterface(CardType.Building);
         UpdateUIUnitDataListFromInterface(CardType.Pope);
 
-        isInitialize = true;
+        // 时间条显示为1
+        TimeImage.fillAmount = 1f;
+
+		isInitialize = true;
     }
 
 
@@ -702,10 +696,13 @@ public class GameUIManager : MonoBehaviour
 
     private string FormatTime(float timeInSeconds)
     {
-        int minutes = Mathf.FloorToInt(timeInSeconds / 60);  // 计算分钟数
-        int seconds = Mathf.FloorToInt(timeInSeconds % 60);  // 计算秒数
-        return $"{minutes}:{seconds:D2}";  // 返回格式化字符串
-    }
+		//int minutes = Mathf.FloorToInt(timeInSeconds / 60);  // 计算分钟数
+		//int seconds = Mathf.FloorToInt(timeInSeconds % 60);  // 计算秒数
+		//return $"{minutes}:{seconds:D2}";  // 返回格式化字符串
+	
+		int seconds = Mathf.FloorToInt(timeInSeconds % 60);  // 计算秒数
+		return $"{seconds:D2}";
+	}
     private void StartTimer()
     {
         timer.StartTurn();

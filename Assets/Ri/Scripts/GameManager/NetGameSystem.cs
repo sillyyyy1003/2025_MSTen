@@ -460,11 +460,6 @@ public class NetGameSystem : MonoBehaviour
     private PlayerDataManager playerDataManager;
 
 
-    // 2025.11.17
-    private bool hasStartedLoading = false;     // 是否开始Loading
-    GameLoadProgressUI gameLoadProgressUI;      // 获得本地加载UI
-
-
 
     // *************************
     //      Unity生命周期

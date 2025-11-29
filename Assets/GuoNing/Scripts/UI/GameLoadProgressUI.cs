@@ -33,7 +33,7 @@ public class GameLoadProgressUI : MonoBehaviour
 	private Tween fakeLoadingTween;
 	private Tween realLoadingTween;
 
-	public event Action<bool> OnLoadingEnd;
+	//public event Action<bool> OnLoadingEnd;
 
 	private void Awake()
 	{

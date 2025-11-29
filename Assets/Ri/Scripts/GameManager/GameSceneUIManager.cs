@@ -93,11 +93,6 @@ public class GameSceneUIManager : MonoBehaviour
         {
             GameUIManager.Instance.UpdateTimer();
         }
-        else
-        {
-
-
-        }
 
     }
 
