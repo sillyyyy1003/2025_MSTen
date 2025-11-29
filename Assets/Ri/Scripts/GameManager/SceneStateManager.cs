@@ -81,6 +81,7 @@ public class SceneStateManager : MonoBehaviour
             SavePlayerName("MisumiUika");
             PlayerIP = GetLocalIPv4();
         }
+
         bIsServer = isServer;
 
 

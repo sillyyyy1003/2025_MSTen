@@ -41,7 +41,7 @@ public class GameLoadProgressUI : MonoBehaviour
 		// 监听房间状态更新
 		if (NetGameSystem.Instance != null)
 		{
-			//NetGameSystem.Instance.OnRoomStatusUpdated += HandleRoomStatusUpdate;
+			NetGameSystem.Instance.OnRoomStatusUpdated += HandleRoomStatusUpdate;
 		}
 	
 	}
@@ -50,7 +50,7 @@ public class GameLoadProgressUI : MonoBehaviour
 	{
 		if (NetGameSystem.Instance != null)
 		{
-			//NetGameSystem.Instance.OnRoomStatusUpdated -= HandleRoomStatusUpdate;
+			NetGameSystem.Instance.OnRoomStatusUpdated -= HandleRoomStatusUpdate;
 		}
 
 	}
@@ -144,6 +144,10 @@ public class GameLoadProgressUI : MonoBehaviour
 	// 回调
 	//===========================================================
 
+	/// <summary>
+	/// 当NetSystem房间状态更新时调用一次，让客户端玩家准备完成
+	/// </summary>
+	/// <param name="players"></param>
 	private void HandleRoomStatusUpdate(List<PlayerInfo> players)
 	{
 		if (!hasStartedRealLoading && players.Count >= 2)
@@ -151,18 +155,8 @@ public class GameLoadProgressUI : MonoBehaviour
 			Debug.Log("[客户端] 玩家到齐，开始真实 Loading");
 
 			hasStartedRealLoading = true;
-			StartRealLoading();
-		}
-	}
-
-	public void HandleRoomStatusUpdate(bool startGame)
-	{
-		if (!hasStartedRealLoading && startGame)
-		{
-			Debug.Log("[客户端] 玩家到齐，开始真实 Loading");
-
-			hasStartedRealLoading = true;
-			StartRealLoading();
+			// 将本地玩家状态设为准备完成
+			OnLocalPlayerLoadComplete(true);
 		}
 	}
 
@@ -173,8 +167,8 @@ public class GameLoadProgressUI : MonoBehaviour
 
 		hasSentReady = true;
 		Debug.Log("本地玩家加载完成 → 通知服务器");
-
-		NetGameSystem.Instance?.SetReadyStatus(true);
+		
+		NetGameSystem.Instance?.SetReadyStatus(done);
 	}
 
 }
