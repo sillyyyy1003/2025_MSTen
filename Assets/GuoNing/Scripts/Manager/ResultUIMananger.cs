@@ -32,7 +32,6 @@ public class ResultUIManager : MonoBehaviour
 		}
 		else
 		{
-
 			Destroy(gameObject);
 		}
 
@@ -107,6 +106,7 @@ public class ResultUIManager : MonoBehaviour
 
 	private void OnClickGameExitButton()
 	{
+		Debug.Log("Exit to Title Scene");
 		SceneController.Instance.SwitchToTitleScene();
 	}
 }
