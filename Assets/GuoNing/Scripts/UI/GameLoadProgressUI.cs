@@ -117,8 +117,10 @@ public class GameLoadProgressUI : MonoBehaviour
 			{
 				GameManage.Instance._GameCamera.SetCanUseCamera(false);
 				Debug.Log("[客户端] 真实 Loading 完成，开始淡出动画");
-				gameObject.SetActive(false);
-				spriteRender.gameObject.SetActive(false);
+				gameObject.SetActive(false);					// 关闭Loading数字
+				spriteRender.gameObject.SetActive(false);		// 关闭黑屏遮罩
+				GameSceneUIManager.Instance.OnGameStarted();   // 通知游戏场景UI管理器游戏开始 显示游戏UI
+
 				FadeManager.Instance.FadeFromBlack(1, () =>
 				{
 					GameManage.Instance.SetIsGamingOrNot(true);             // 设置为游戏中状态

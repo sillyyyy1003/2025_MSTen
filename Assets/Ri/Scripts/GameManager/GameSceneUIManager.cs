@@ -111,18 +111,12 @@ public class GameSceneUIManager : MonoBehaviour
             Button_ReadyAndStartGame.onClick.AddListener(OnReadyButtonClicked);
         }
 
-        // 使用进度条 2025.11.17
-        if(loadUI != null)
-        {
-			//loadUI.OnLoadingEnd += OnLocalPlayerLoadComplete;
-        }
-
         // 订阅网络事件
         if (NetGameSystem.Instance != null)
         {
             //NetGameSystem.Instance.OnRoomStatusUpdated += UpdateRoomDisplay;
             NetGameSystem.Instance.OnAllPlayersReady += OnAllPlayersReadyChanged;
-            NetGameSystem.Instance.OnGameStarted += OnGameStarted;
+            NetGameSystem.Instance.OnGameStarted += loadUI.StartRealLoading; // 网络宣布游戏开始时开始真实加载
         }
     }
 
@@ -316,12 +310,6 @@ public class GameSceneUIManager : MonoBehaviour
             GameUIObject.SetActive(true);
         }
 
-		//2025.11.17 GuoNing
-		if (loadUI != null)
-		{
-            loadUI.StartRealLoading();
-		}
-
 		Debug.Log("游戏开始，切换到游戏界面");
     }
 
@@ -333,15 +321,8 @@ public class GameSceneUIManager : MonoBehaviour
         {
            // NetGameSystem.Instance.OnRoomStatusUpdated -= UpdateRoomDisplay;
             NetGameSystem.Instance.OnAllPlayersReady -= OnAllPlayersReadyChanged;
-            NetGameSystem.Instance.OnGameStarted -= OnGameStarted;
+            NetGameSystem.Instance.OnGameStarted -= loadUI.StartRealLoading; ;
         }
-
-        // 2025.11.17 Guoning
-        if(loadUI != null)
-        {
-           // loadUI.OnLoadingEnd -= OnLocalPlayerLoadComplete;
-
-		}
     }
     // *************************
     //         公有函数
