@@ -120,7 +120,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 订阅网络事件
         if (NetGameSystem.Instance != null)
         {
-            NetGameSystem.Instance.OnRoomStatusUpdated += UpdateRoomDisplay;
+            //NetGameSystem.Instance.OnRoomStatusUpdated += UpdateRoomDisplay;
             NetGameSystem.Instance.OnAllPlayersReady += OnAllPlayersReadyChanged;
             NetGameSystem.Instance.OnGameStarted += OnGameStarted;
         }
@@ -331,7 +331,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 取消订阅事件
         if (NetGameSystem.Instance != null)
         {
-            NetGameSystem.Instance.OnRoomStatusUpdated -= UpdateRoomDisplay;
+           // NetGameSystem.Instance.OnRoomStatusUpdated -= UpdateRoomDisplay;
             NetGameSystem.Instance.OnAllPlayersReady -= OnAllPlayersReadyChanged;
             NetGameSystem.Instance.OnGameStarted -= OnGameStarted;
         }
