@@ -460,11 +460,6 @@ public class NetGameSystem : MonoBehaviour
     private PlayerDataManager playerDataManager;
 
 
-    // 2025.11.17
-    private bool hasStartedLoading = false;     // 是否开始Loading
-    GameLoadProgressUI gameLoadProgressUI;      // 获得本地加载UI
-
-
 
     // *************************
     //      Unity生命周期
@@ -1385,10 +1380,6 @@ public class NetGameSystem : MonoBehaviour
             OnGameStarted?.Invoke();
             HandleGameStart(message);
         });
-
-        // 2025.11.14 Guoning 开始播放音乐
-        SoundManager.Instance.StopBGM();
-        SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.REDMOON_THEME);
     }
 
     private int[] AssignStartPositions()

@@ -92,14 +92,16 @@ public class GameManage : MonoBehaviour
     private Dictionary<int2, GameObject> CellObjects = new Dictionary<int2, GameObject>();
 
     private bool bIsStartSingleGame = false;
-    // *************************
-    //         公有属性
-    // *************************
+    private int firstPlayerID = -1; // 用于保存首位玩家ID用于开始计时
+
+	// *************************
+	//         公有属性
+	// *************************
 
 
 
-    // 玩家相机引用
-    public GameCamera _GameCamera;
+	// 玩家相机引用
+	public GameCamera _GameCamera;
     // 玩家操作管理器
     public PlayerOperationManager _PlayerOperation;
 
@@ -319,7 +321,8 @@ public class GameManage : MonoBehaviour
         OnGameStarted?.Invoke(false);
 
         // 开始第一个玩家的回合
-        StartTurn(data.FirstTurnPlayerId);
+        // StartTurn(data.FirstTurnPlayerId);
+        firstPlayerID = data.FirstTurnPlayerId; // 记录开始的玩家
 
         return true;
     }
@@ -336,10 +339,6 @@ public class GameManage : MonoBehaviour
             StartCoroutine(SingleStartGame());
 
         OnGameStarted?.Invoke(true);
-
-		// 2025.11.14 Guoning 播放音乐
-		SoundManager.Instance.StopBGM();
-        SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME);
 
         return true;
     }
@@ -540,6 +539,19 @@ public class GameManage : MonoBehaviour
 
         StartTurn(nextPlayerId);
     }
+
+    /// <summary>
+    /// 用于外部调用开始第一回合 游戏回合从这里开始
+    /// </summary>
+    public void StartFirstTurn()
+    {
+        if(firstPlayerID==-1)Debug.LogError("首位玩家ID未设置，无法开始第一回合！");
+        else
+        {
+            Debug.Log($"开始第一回合，玩家 {firstPlayerID}");
+            StartTurn(firstPlayerID);
+		}
+	}
 
     // *************************
     //        网络消息处理

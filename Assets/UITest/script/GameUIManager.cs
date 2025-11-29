@@ -84,15 +84,21 @@ public class GameUIManager : MonoBehaviour
     public TextMeshProUGUI activateSoliderValue;    // 士兵激活数
     public TextMeshProUGUI activateFarmerValue;     // 农民激活数
     public TextMeshProUGUI allUnitValue;       // 当前人口 / 人口上限
-    public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
+	public Button EndTurn;
 
-    public GameObject playerIconPrefab;
-    public RectTransform playerIconParent;
-    public Image miniMap;
+	[Header("Timer")]
+	public Image TimeImage;     // TimeImage
+	public TextMeshProUGUI timeText; // 可选数字显示
 
-    public HexButton EndTurn;
-    public Button InactiveUnit;
-    public TextMeshProUGUI CountdownTime;
+	//public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
+	//public GameObject playerIconPrefab;
+	//public RectTransform playerIconParent;
+	//public Image miniMap;
+	//public Button InactiveUnit;
+	//public TextMeshProUGUI CountdownTime;
+	
+    
+   
 
     [Header("Script")]
     //时间
@@ -100,7 +106,7 @@ public class GameUIManager : MonoBehaviour
 
 
     // === Event 定义区域 ===
-    public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
+    //public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
     public event System.Action TimeIsOut;//时间结束
     public event System.Action OnEndTurnButtonPressed;//回合结束按钮按下
 
@@ -151,7 +157,7 @@ public class GameUIManager : MonoBehaviour
 
         EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
 
-        InactiveUnit.onClick.AddListener(() => HandleInactiveUnitButtonPressed());
+        //InactiveUnit.onClick.AddListener(() => HandleInactiveUnitButtonPressed());
 
 
         if (PlayerDataManager.Instance != null)
@@ -337,7 +343,8 @@ public class GameUIManager : MonoBehaviour
 
     public void TurnStart()
     {
-        Initialize();
+        //2025.11.29 UI的更新在OnGameStarted里进行
+        //Initialize();
 
         Debug.Log($" 回合开始：玩家 {localPlayerId}");
 
@@ -395,32 +402,61 @@ public class GameUIManager : MonoBehaviour
 
         }
 
-        RefreshPlayerIcons();
+        //RefreshPlayerIcons();
 
     }
 
 
     public void UpdateTimer()
     {
-        float turnTime = timer.GetTurnTime();
-        float poolTime = timer.GetTimePool();
-        bool usingPool = timer.IsUsingTimePool();
+		//float turnTime = timer.GetTurnTime();
+		//float poolTime = timer.GetTimePool();
+		//bool usingPool = timer.IsUsingTimePool();
 
-        // 更新显示
-        string turnTimeStr = FormatTime(turnTime);
-        string poolTimeStr = FormatTime(poolTime);
+		//// 更新显示
+		//string turnTimeStr = FormatTime(turnTime);
+		//string poolTimeStr = FormatTime(poolTime);
 
-        if (usingPool)
-        {
-            CountdownTime.text = $"<color=orange>0:00</color>+{poolTimeStr}";
-        }
-        else
-        {
-            CountdownTime.text = $"{turnTimeStr}+{poolTimeStr}";
-        }
+		//if (usingPool)
+		//{
+		//    CountdownTime.text = $"<color=orange>0:00</color>+{poolTimeStr}";
+		//}
+		//else
+		//{
+		//    CountdownTime.text = $"{turnTimeStr}+{poolTimeStr}";
+		//}
 
 
-    }
+		float turnTime = timer.GetTurnTime();
+		float poolTime = timer.GetTimePool();
+		bool usingPool = timer.IsUsingTimePool();
+
+		// 1. 总时间进度占比
+		float totalTime = turnTime + poolTime;
+		float maxTotalTime = timer.turnTimeLimit + timer.timePoolInitial;
+		float fill = Mathf.Clamp01(totalTime / maxTotalTime);
+
+		// 填充
+		TimeImage.fillAmount = fill;
+
+		// 2. 按当前使用 turn/pool 切换颜色
+		if (!usingPool)
+			TimeImage.color = Color.white;
+		else
+			TimeImage.color = Color.red;
+
+		// 显示数字（可选）
+		if (timeText != null)
+		{
+			string turnStr = FormatTime(turnTime);
+			string poolStr = FormatTime(poolTime);
+
+			if (usingPool)
+				timeText.text = $"<color=orange>0:00</color> + {poolStr}";
+			else
+				timeText.text = $"{turnStr} + {poolStr}";
+		}
+	}
     public void SetCountdownTime(int time)
     {
         timer.SetTurnTimeLimit(time);
@@ -459,7 +495,7 @@ public class GameUIManager : MonoBehaviour
 
 
     // === 内部更新 ===
-    private void Initialize()
+    public void Initialize()
     {
         if (isInitialize) return;
 
@@ -493,7 +529,10 @@ public class GameUIManager : MonoBehaviour
         UpdateUIUnitDataListFromInterface(CardType.Building);
         UpdateUIUnitDataListFromInterface(CardType.Pope);
 
-        isInitialize = true;
+        // 时间条显示为1
+        TimeImage.fillAmount = 1f;
+
+		isInitialize = true;
     }
 
 
@@ -607,8 +646,10 @@ public class GameUIManager : MonoBehaviour
         religionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
     }
 
+    /*
     private void RefreshPlayerIcons()
     {
+        
         foreach (Transform child in playerIconParent)
         {
             Destroy(child.gameObject);
@@ -622,7 +663,7 @@ public class GameUIManager : MonoBehaviour
 
 
     }
-
+    */
 
     private void UpdateResourcesData()
     {
@@ -638,8 +679,8 @@ public class GameUIManager : MonoBehaviour
         AllUnitCountLimit = PlayerUnitDataInterface.Instance.GetUnitCountLimit();
         InactiveUnitCount = PlayerUnitDataInterface.Instance.GetInactiveUnitCount();
 
-        allUnitValue.text = $"{AllUnitCount}/{AllUnitCountLimit}";
-        unusedUnitValue.text = InactiveUnitCount.ToString();
+        //allUnitValue.text = $"{AllUnitCount}/{AllUnitCountLimit}";
+        //unusedUnitValue.text = InactiveUnitCount.ToString();
     }
 
     private void UpdatePopulationData()
@@ -655,19 +696,22 @@ public class GameUIManager : MonoBehaviour
 
     private string FormatTime(float timeInSeconds)
     {
-        int minutes = Mathf.FloorToInt(timeInSeconds / 60);  // 计算分钟数
-        int seconds = Mathf.FloorToInt(timeInSeconds % 60);  // 计算秒数
-        return $"{minutes}:{seconds:D2}";  // 返回格式化字符串
-    }
+		//int minutes = Mathf.FloorToInt(timeInSeconds / 60);  // 计算分钟数
+		//int seconds = Mathf.FloorToInt(timeInSeconds % 60);  // 计算秒数
+		//return $"{minutes}:{seconds:D2}";  // 返回格式化字符串
+	
+		int seconds = Mathf.FloorToInt(timeInSeconds % 60);  // 计算秒数
+		return $"{seconds:D2}";
+	}
     private void StartTimer()
     {
         timer.StartTurn();
-        CountdownTime.gameObject.SetActive(true);
+        //CountdownTime.gameObject.SetActive(true);
     }
     private void StopTimer()
     {
         timer.StopTimer();
-        CountdownTime.gameObject.SetActive(false);
+        //CountdownTime.gameObject.SetActive(false);
     }
 
     // === 回调函数 ===
