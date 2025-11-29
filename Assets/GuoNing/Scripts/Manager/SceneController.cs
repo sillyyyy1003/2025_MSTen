@@ -69,6 +69,8 @@ public class SceneController : MonoBehaviour
 		// 第一步：淡出效果
 		yield return FadeManager.Instance.FadeToBlack().WaitForCompletion();
 
+		Debug.Log($"场景加载开始: {sceneName}");
+
 		// 第二步：异步加载场景
 		AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
 		asyncLoad.allowSceneActivation = false; // 先不激活场景

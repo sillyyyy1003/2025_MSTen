@@ -90,7 +90,7 @@ public class GameUIManager : MonoBehaviour
     public RectTransform playerIconParent;
     public Image miniMap;
 
-    public HexButton EndTurn;
+    public Button EndTurn;
     public Button InactiveUnit;
     public TextMeshProUGUI CountdownTime;
 
