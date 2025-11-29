@@ -340,10 +340,6 @@ public class GameManage : MonoBehaviour
 
         OnGameStarted?.Invoke(true);
 
-		// 2025.11.14 Guoning 播放音乐
-		SoundManager.Instance.StopBGM();
-        SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME);
-
         return true;
     }
     private IEnumerator SingleStartGame()
