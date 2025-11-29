@@ -1,10 +1,11 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.XR;
 
 /// <summary>
 /// ゲーム仮ロードUI
@@ -33,8 +34,6 @@ public class GameLoadProgressUI : MonoBehaviour
 	private Tween realLoadingTween;
 
 	public event Action<bool> OnLoadingEnd;
-
-	private bool hasSentReady = false;  // 本地玩家是否发送准备状态
 
 	private void Awake()
 	{
@@ -90,7 +89,6 @@ public class GameLoadProgressUI : MonoBehaviour
 				GameManage.Instance._GameCamera.SetCanUseCamera(false); // 锁定摄像头
 				Debug.Log("[客户端] 假 Loading 完成，等待玩家到齐");
 				if (isSingle) StartRealLoading();
-				else OnLocalPlayerLoadComplete(true); // 通知网络系统准备就绪
 			});
 	}
 
@@ -100,7 +98,7 @@ public class GameLoadProgressUI : MonoBehaviour
 	{
 		// 防止重复播放
 		realLoadingTween?.Kill();
-
+		GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
 		float start = fakeProgress;
 		realLoadingTween = DOTween.To(
 				() => start,
@@ -117,15 +115,13 @@ public class GameLoadProgressUI : MonoBehaviour
 			.SetEase(Ease.Linear)
 			.OnComplete(() =>
 			{
-				OnLoadingEnd?.Invoke(true);
+				GameManage.Instance._GameCamera.SetCanUseCamera(false);
 				Debug.Log("[客户端] 真实 Loading 完成，开始淡出动画");
 				gameObject.SetActive(false);
 				spriteRender.gameObject.SetActive(false);
-
 				FadeManager.Instance.FadeFromBlack(1, () =>
 				{
 					GameManage.Instance.SetIsGamingOrNot(true);             // 设置为游戏中状态
-					//GameSceneUIManager.Instance.OnGameStarted();			// UI表示修正
 					GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
 
 					//======在这里追加其他的游戏开始操作
@@ -155,20 +151,11 @@ public class GameLoadProgressUI : MonoBehaviour
 			Debug.Log("[客户端] 玩家到齐，开始真实 Loading");
 
 			hasStartedRealLoading = true;
-			// 将本地玩家状态设为准备完成
-			OnLocalPlayerLoadComplete(true);
+
+			NetGameSystem.Instance?.SetReadyStatus(true);
 		}
 	}
 
 
-	private void OnLocalPlayerLoadComplete(bool done)
-	{
-		if (!done || hasSentReady) return;
-
-		hasSentReady = true;
-		Debug.Log("本地玩家加载完成 → 通知服务器");
-		
-		NetGameSystem.Instance?.SetReadyStatus(done);
-	}
 
 }

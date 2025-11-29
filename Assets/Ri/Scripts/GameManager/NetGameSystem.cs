@@ -1224,7 +1224,7 @@ public class NetGameSystem : MonoBehaviour
     // 检查所有玩家是否准备完毕
     private void CheckAllPlayersReady()
     {
-        //Debug.Log("CheckAllPlayersReady");
+        Debug.Log("CheckAllPlayersReady");
         if (roomPlayers.Count < 2) // 至少需要2个玩家
         {
             OnAllPlayersReady?.Invoke(false);
@@ -1234,7 +1234,7 @@ public class NetGameSystem : MonoBehaviour
         bool allReady = true;
         foreach (var player in roomPlayers)
         {
-            //Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
+            Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
             if (!player.IsReady)
             {
                 allReady = false;
