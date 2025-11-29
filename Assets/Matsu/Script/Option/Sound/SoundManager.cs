@@ -576,8 +576,6 @@ public class SoundManager : MonoBehaviour
 
     public void PlayGameMusic()
     {
-		// 关闭所有音乐
-		StopBGM();
 
         // 根据不同宗教选择不同的音乐
 		int localPlayerId = GameManage.Instance.LocalPlayerID;

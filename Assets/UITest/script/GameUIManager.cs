@@ -84,15 +84,22 @@ public class GameUIManager : MonoBehaviour
     public TextMeshProUGUI activateSoliderValue;    // 士兵激活数
     public TextMeshProUGUI activateFarmerValue;     // 农民激活数
     public TextMeshProUGUI allUnitValue;       // 当前人口 / 人口上限
-    public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
+	public Button EndTurn;
 
-    public GameObject playerIconPrefab;
-    public RectTransform playerIconParent;
-    public Image miniMap;
+	[Header("Timer")]
+	public Image turnTimeImage;     // 白色条
+	public Image poolTimeImage;     // 红色条
+	public TextMeshProUGUI timeText; // 可选数字显示
 
-    public Button EndTurn;
-    public Button InactiveUnit;
-    public TextMeshProUGUI CountdownTime;
+	//public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
+	//public GameObject playerIconPrefab;
+	//public RectTransform playerIconParent;
+	//public Image miniMap;
+	//public Button InactiveUnit;
+	//public TextMeshProUGUI CountdownTime;
+	
+    
+   
 
     [Header("Script")]
     //时间
@@ -151,7 +158,7 @@ public class GameUIManager : MonoBehaviour
 
         EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
 
-        InactiveUnit.onClick.AddListener(() => HandleInactiveUnitButtonPressed());
+        //InactiveUnit.onClick.AddListener(() => HandleInactiveUnitButtonPressed());
 
 
         if (PlayerDataManager.Instance != null)
@@ -396,32 +403,69 @@ public class GameUIManager : MonoBehaviour
 
         }
 
-        RefreshPlayerIcons();
+        //RefreshPlayerIcons();
 
     }
 
 
     public void UpdateTimer()
     {
-        float turnTime = timer.GetTurnTime();
-        float poolTime = timer.GetTimePool();
-        bool usingPool = timer.IsUsingTimePool();
+		//float turnTime = timer.GetTurnTime();
+		//float poolTime = timer.GetTimePool();
+		//bool usingPool = timer.IsUsingTimePool();
 
-        // 更新显示
-        string turnTimeStr = FormatTime(turnTime);
-        string poolTimeStr = FormatTime(poolTime);
+		//// 更新显示
+		//string turnTimeStr = FormatTime(turnTime);
+		//string poolTimeStr = FormatTime(poolTime);
 
-        if (usingPool)
-        {
-            CountdownTime.text = $"<color=orange>0:00</color>+{poolTimeStr}";
-        }
-        else
-        {
-            CountdownTime.text = $"{turnTimeStr}+{poolTimeStr}";
-        }
+		//if (usingPool)
+		//{
+		//    CountdownTime.text = $"<color=orange>0:00</color>+{poolTimeStr}";
+		//}
+		//else
+		//{
+		//    CountdownTime.text = $"{turnTimeStr}+{poolTimeStr}";
+		//}
 
+		float turnTime = timer.GetTurnTime();
+		float poolTime = timer.GetTimePool();
+		bool usingPool = timer.IsUsingTimePool();
 
-    }
+		// 比例
+		float turnRatio = Mathf.Clamp01(turnTime / timer.turnTimeLimit);
+		float poolRatio = Mathf.Clamp01(poolTime / timer.timePoolInitial);
+
+		// 更新 Fill
+		if (!usingPool)
+		{
+			// 正常使用回合时间（白色条）
+			turnTimeImage.fillAmount = turnRatio;
+			poolTimeImage.fillAmount = poolRatio;
+
+			turnTimeImage.color = Color.white;
+			poolTimeImage.color = new Color(1, 0.3f, 0.3f); // 淡红
+		}
+		else
+		{
+			// 回合时间已用完 → 使用 Time Pool（红色条）
+			turnTimeImage.fillAmount = 0; // 白色条变空
+			poolTimeImage.fillAmount = poolRatio;
+
+			poolTimeImage.color = Color.red; // 强红
+		}
+
+		// 显示数字（可选）
+		if (timeText != null)
+		{
+			string turnStr = FormatTime(turnTime);
+			string poolStr = FormatTime(poolTime);
+
+			if (usingPool)
+				timeText.text = $"<color=orange>0:00</color> + {poolStr}";
+			else
+				timeText.text = $"{turnStr} + {poolStr}";
+		}
+	}
     public void SetCountdownTime(int time)
     {
         timer.SetTurnTimeLimit(time);
@@ -608,8 +652,10 @@ public class GameUIManager : MonoBehaviour
         religionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
     }
 
+    /*
     private void RefreshPlayerIcons()
     {
+        
         foreach (Transform child in playerIconParent)
         {
             Destroy(child.gameObject);
@@ -623,7 +669,7 @@ public class GameUIManager : MonoBehaviour
 
 
     }
-
+    */
 
     private void UpdateResourcesData()
     {
@@ -639,8 +685,8 @@ public class GameUIManager : MonoBehaviour
         AllUnitCountLimit = PlayerUnitDataInterface.Instance.GetUnitCountLimit();
         InactiveUnitCount = PlayerUnitDataInterface.Instance.GetInactiveUnitCount();
 
-        allUnitValue.text = $"{AllUnitCount}/{AllUnitCountLimit}";
-        unusedUnitValue.text = InactiveUnitCount.ToString();
+        //allUnitValue.text = $"{AllUnitCount}/{AllUnitCountLimit}";
+        //unusedUnitValue.text = InactiveUnitCount.ToString();
     }
 
     private void UpdatePopulationData()
@@ -663,12 +709,12 @@ public class GameUIManager : MonoBehaviour
     private void StartTimer()
     {
         timer.StartTurn();
-        CountdownTime.gameObject.SetActive(true);
+        //CountdownTime.gameObject.SetActive(true);
     }
     private void StopTimer()
     {
         timer.StopTimer();
-        CountdownTime.gameObject.SetActive(false);
+        //CountdownTime.gameObject.SetActive(false);
     }
 
     // === 回调函数 ===
