@@ -14,10 +14,10 @@ public class GameSceneUIManager : MonoBehaviour
 
     public GameObject GameUIObject;
 
-    int time1 = 0;
 
-    // 房间UI组件
-    [Header("房间UI组件")]
+
+	// 房间UI组件
+	[Header("房间UI组件")]
     //public Transform PlayerListContainer; // 玩家列表容器
     public GameObject PlayerItemPrefab; // 玩家列表项预制体
     public Button Button_ReadyAndStartGame; // 准备按钮
@@ -114,7 +114,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 使用进度条 2025.11.17
         if(loadUI != null)
         {
-			loadUI.OnLoadingEnd += OnLocalPlayerLoadComplete;
+			//loadUI.OnLoadingEnd += OnLocalPlayerLoadComplete;
         }
 
         // 订阅网络事件
@@ -271,7 +271,6 @@ public class GameSceneUIManager : MonoBehaviour
         if (NetGameSystem.Instance != null && NetGameSystem.Instance.bIsServer)
         {
 		
-			
             //Debug.Log("All Player Ready ? " + allReady);
             if (Button_ReadyAndStartGame != null)
             {
@@ -320,7 +319,7 @@ public class GameSceneUIManager : MonoBehaviour
 		//2025.11.17 GuoNing
 		if (loadUI != null)
 		{
-			loadUI.gameObject.SetActive(false);
+            loadUI.StartRealLoading();
 		}
 
 		Debug.Log("游戏开始，切换到游戏界面");
@@ -340,7 +339,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 2025.11.17 Guoning
         if(loadUI != null)
         {
-            loadUI.OnLoadingEnd -= OnLocalPlayerLoadComplete;
+           // loadUI.OnLoadingEnd -= OnLocalPlayerLoadComplete;
 
 		}
     }
@@ -383,12 +382,14 @@ public class GameSceneUIManager : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// 本地玩家是否加载到100%
-    /// </summary>
-    /// <param name="done"></param>
+	private int time1 = 0;
+	/// <summary>
+	/// 本地玩家是否加载到100%
+	/// </summary>
+	/// <param name="done"></param>
 	private void OnLocalPlayerLoadComplete(bool done)
 	{
+        
 		if (!done||time1!=0) return;
 
 		Debug.Log("本地玩家加载完成 → 通知服务器:time "+time1);

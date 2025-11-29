@@ -34,14 +34,14 @@ public class GameLoadProgressUI : MonoBehaviour
 
 	public event Action<bool> OnLoadingEnd;
 
-
+	private bool hasSentReady = false;  // 本地玩家是否发送准备状态
 
 	private void Awake()
 	{
 		// 监听房间状态更新
 		if (NetGameSystem.Instance != null)
 		{
-			NetGameSystem.Instance.OnRoomStatusUpdated += HandleRoomStatusUpdate;
+			//NetGameSystem.Instance.OnRoomStatusUpdated += HandleRoomStatusUpdate;
 		}
 	
 	}
@@ -50,13 +50,8 @@ public class GameLoadProgressUI : MonoBehaviour
 	{
 		if (NetGameSystem.Instance != null)
 		{
-			NetGameSystem.Instance.OnRoomStatusUpdated -= HandleRoomStatusUpdate;
+			//NetGameSystem.Instance.OnRoomStatusUpdated -= HandleRoomStatusUpdate;
 		}
-		if (GameManage.Instance != null)
-		{
-			GameManage.Instance.OnGameStarted -= StartFakeLoading;
-		}
-
 
 	}
 
@@ -95,6 +90,7 @@ public class GameLoadProgressUI : MonoBehaviour
 				GameManage.Instance._GameCamera.SetCanUseCamera(false); // 锁定摄像头
 				Debug.Log("[客户端] 假 Loading 完成，等待玩家到齐");
 				if (isSingle) StartRealLoading();
+				else OnLocalPlayerLoadComplete(true); // 通知网络系统准备就绪
 			});
 	}
 
@@ -129,7 +125,7 @@ public class GameLoadProgressUI : MonoBehaviour
 				FadeManager.Instance.FadeFromBlack(1, () =>
 				{
 					GameManage.Instance.SetIsGamingOrNot(true);             // 设置为游戏中状态
-					GameSceneUIManager.Instance.OnGameStarted();        // UI表示修正
+					//GameSceneUIManager.Instance.OnGameStarted();			// UI表示修正
 					GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
 
 					//======在这里追加其他的游戏开始操作
@@ -159,5 +155,26 @@ public class GameLoadProgressUI : MonoBehaviour
 		}
 	}
 
+	public void HandleRoomStatusUpdate(bool startGame)
+	{
+		if (!hasStartedRealLoading && startGame)
+		{
+			Debug.Log("[客户端] 玩家到齐，开始真实 Loading");
+
+			hasStartedRealLoading = true;
+			StartRealLoading();
+		}
+	}
+
+
+	private void OnLocalPlayerLoadComplete(bool done)
+	{
+		if (!done || hasSentReady) return;
+
+		hasSentReady = true;
+		Debug.Log("本地玩家加载完成 → 通知服务器");
+
+		NetGameSystem.Instance?.SetReadyStatus(true);
+	}
 
 }
