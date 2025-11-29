@@ -11,7 +11,7 @@ namespace Buildings
     /// 建物の実行時インスタンス
     /// ScriptableObjectのデータを参照し、状態管理に専念
     /// </summary>
-    public class Building : VisualGameObject
+    public class Building : MonoBehaviour
     {
         [SerializeField] private BuildingDataSO buildingData;
 
@@ -23,17 +23,21 @@ namespace Buildings
         private int remainingBuildCost;
         private int currentSkillUses;//現時点まだ使用可能のスロットの数
         private int lastResourceGenTurn;
-        private int apCostperTurn;
         private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2（全体レベル・互換性のため残す）
 
+
+        // 25.11.26 RI add now slot count and cant use slot
         // ===== 各項目の個別レベル =====
         private int hpLevel = 0;            // HP レベル (0-2)
         private int attackRangeLevel = 0;   // 攻撃範囲レベル (0-2)
         private int slotsLevel = 0;         // スロット数レベル (0-2)
-        private int buildCostLevel = 0;     // 建築コストレベル (0-2)
 
         // 配置された農民のリスト
         private List<FarmerSlot> farmerSlots = new List<FarmerSlot>();
+        private List<NewFarmerSlot> newFarmerSlots = new List<NewFarmerSlot>();
+
+        // 25.11.26 RI add slots
+        private int slots =0;
 
         // ===== イベント =====
         public event Action<Building> OnBuildingCompleted;
@@ -48,16 +52,18 @@ namespace Buildings
         public bool IsAlive => currentState != BuildingState.Ruined;
         public bool IsOperational => (currentState == BuildingState.Inactive || currentState == BuildingState.Active) && currentSkillUses > 0;
         public int CurrentHP => currentHp;
-        public float BuildProgress => buildingData.buildingAPCost > 0 ?
-            1f - (float)remainingBuildCost / buildingData.buildingAPCost : 1f;
+        public float BuildProgress => buildingData.buildingResourceCost > 0 ?
+            1f - (float)remainingBuildCost / buildingData.buildingResourceCost : 1f;
         public int RemainingBuildCost => remainingBuildCost;
         public List<FarmerSlot> FarmerSlots => farmerSlots;
-        public int APCostPerTurn => apCostperTurn;
+
+        //25.11.28 Ri add new FarmerSlots
+        public List<NewFarmerSlot> NewFarmerSlots => newFarmerSlots;
+
         public int UpgradeLevel => upgradeLevel;
         public int HPLevel => hpLevel;
         public int AttackRangeLevel => attackRangeLevel;
         public int SlotsLevel => slotsLevel;
-        public int BuildCostLevel => buildCostLevel;
 
         /// <summary>
         /// 建物IDを設定（BuildingManagerのみが呼び出し）
@@ -74,9 +80,9 @@ namespace Buildings
             buildingData = data;
             playerID = ownerPlayerID;
             currentHp = data.maxHp;
-            remainingBuildCost = data.buildingAPCost;
-            apCostperTurn = data.apCostperTurn;
+            remainingBuildCost = data.buildingResourceCost;
             currentSkillUses = data.GetMaxSlotsByLevel(0);
+            slots = data.GetMaxSlotsByLevel(data.maxSlotsByLevel[0]);
             //地面に金鉱があるか否かを判断すべき
 
             // 25.11.10 RI 修改为直接创建完毕
@@ -89,6 +95,8 @@ namespace Buildings
                 for (int i = 0; i < initialSlots; i++)
                 {
                     farmerSlots.Add(new FarmerSlot());
+                    // RT 25.11.28 AddNewSlot
+                    newFarmerSlots.Add(new NewFarmerSlot());
                 }
             }
 
@@ -97,31 +105,12 @@ namespace Buildings
 
         protected virtual void SetupComponents()
         {
-            // SetupVisualComponents(); // Prefabの外見をそのまま使用するため不要
+            // Prefabの外見をそのまま使用するため、動的な適用は不要
         }
 
         #endregion
 
         #region 建築処理
-
-        /// <summary>
-        /// 建築を進める
-        /// </summary>
-        public bool ProgressConstruction(int AP)
-        {
-            if (currentState != BuildingState.UnderConstruction)
-                return false;
-
-            remainingBuildCost -= AP;
-
-            if (remainingBuildCost <= 0)
-            {
-                CompleteConstruction();
-                return true;
-            }
-
-            return false;
-        }
 
         private void CompleteConstruction()
         {
@@ -193,12 +182,14 @@ namespace Buildings
         /// <summary>
         /// ターン処理で資源を生成
         /// </summary>
-        public void ProcessTurn(int currentTurn)
+        public int ProcessTurn()
         {
+            //25.11.26 RI change logic
+
             if (!IsOperational)
             {
                 Debug.Log($"建物 {buildingData.buildingName} は稼働可能な状態ではありません (状態: {currentState}, スロット: {currentSkillUses})");
-                return;
+                return 0;
             }
 
             // APがある農民がいるかチェック
@@ -206,7 +197,7 @@ namespace Buildings
             if (!hasActiveFarmer)
             {
                 Debug.Log($"建物 {buildingData.buildingName} にAPを持つ農民がいません");
-                return;
+                return 0;
             }
 
             // APがある農民がいる場合のみActiveに変更
@@ -216,27 +207,27 @@ namespace Buildings
                 Debug.Log($"建物 {buildingData.buildingName} がActiveに変更されました");
             }
 
-            // 資源生成間隔チェック
-            int turnsSinceLastGen = currentTurn - lastResourceGenTurn;
-            if (turnsSinceLastGen >= buildingData.resourceGenInterval)
-            {
-                GenerateResources();
-                lastResourceGenTurn = currentTurn;
+            // 資源生成間隔チェック(廃止済み)
+            //int turnsSinceLastGen = currentTurn - lastResourceGenTurn;
+            //if (turnsSinceLastGen >= buildingData.resourceGenInterval)
 
+
+            int generatedResources = GenerateResources();
+                
                 // 農民の行動力を消費
                 ProcessFarmerAP();
-            }
-            else
-            {
-                Debug.Log($"建物 {buildingData.buildingName} は資源生成間隔待ち中 ({turnsSinceLastGen}/{buildingData.resourceGenInterval}ターン)");
-            }
+            
+                Debug.Log($"建物 {buildingData.buildingName} はターン)");
+
+            return generatedResources;
         }
 
-        private void GenerateResources()
+        private int GenerateResources()
         {
             int totalProduction = CalculateProduction();
             Debug.Log($"建物 {buildingData.buildingName} が資源 {totalProduction} を生成しました！");
             OnResourceGenerated?.Invoke(totalProduction);
+            return totalProduction;
         }
 
         private int CalculateProduction()
@@ -261,7 +252,7 @@ namespace Buildings
             {
                 if (slot.IsOccupied)
                 {
-                    slot.ConsumeActionPoint(apCostperTurn);//毎ターン在籍中農民の行動力消費量
+                    // 行動力チェックは他のシステムで管理されるため削除
                     if (!slot.HasAP)
                     {
                         // 行動力が尽きた農民を除去
@@ -374,6 +365,19 @@ namespace Buildings
                 currentSkillUses = newMaxSlots;
             }
 
+            // 25.11.28 RI add new farmer Slot
+            if (newMaxSlots > newFarmerSlots.Count)
+            {
+                // スロット数を増やす
+                int slotsToAdd = newMaxSlots - newFarmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    newFarmerSlots.Add(new NewFarmerSlot());
+                }
+                currentSkillUses = newMaxSlots;
+            }
+
+
             Debug.Log($"建物のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHp}, スロット数={newMaxSlots}");
 
             // 新しい機能のログ
@@ -392,6 +396,17 @@ namespace Buildings
             }
         }
 
+        // 25.11.26 RI Add Get Building All HP
+        public int  GetAllHP()
+        {
+            return buildingData.GetMaxHpByLevel(hpLevel);
+        }
+
+        // 25.11.26 RI Add Get Building Slots
+        public int GetSlots()
+        {
+            return slots;
+        }
         /// <summary>
         /// HPをアップグレードする
         /// </summary>
@@ -481,7 +496,60 @@ namespace Buildings
             Debug.Log($"{buildingData.buildingName} の攻撃範囲がレベル{attackRangeLevel}にアップグレードしました（攻撃範囲: {newAttackRange}）");
             return true;
         }
+        //25.11.26 RI add new FarmerEnter
+        public bool FarmerEnter(int ap)
+        {
+            Debug.Log("empty slot count is "+newFarmerSlots.Count+" farmer ap is "+ap);
+            bool hasEmptySlot = false; ;
+            for (int i=0;i<newFarmerSlots.Count;i++)
+            {
+                if (newFarmerSlots[i].canInSlot)
+                {
+                    hasEmptySlot = true;
+                    newFarmerSlots[i].farmerAP = ap;
+                    newFarmerSlots[i].canInSlot = false;
+                    Debug.Log("this slot is "+i+" this slot ap is " + newFarmerSlots[i].farmerAP + " can In is " + newFarmerSlots[i].canInSlot);
+                    break;
+                }
+            }
+          
+            return hasEmptySlot;
+        }
+        //25.11.26 RI add New Get Resources
+        public int NewGetResource()
+        {
+            int res=0;
+            for (int i = 0; i < newFarmerSlots.Count; i++)
+            {
+                if (!newFarmerSlots[i].canInSlot&& newFarmerSlots[i].isActived)
+                {
+                    res += 2;
+                    newFarmerSlots[i].farmerAP -= 1;
+                    if (newFarmerSlots[i].farmerAP == 0)
+                    {
+                        newFarmerSlots[i].isActived = false;
+                        Debug.Log("this slot is unActived! " + i);
+                    }
+                }
+            }
+         
 
+            return res;
+        }
+        public bool GetBuildingActived()
+        {
+            bool actived = false;
+            foreach (var a in newFarmerSlots)
+            {
+                if (a.isActived)
+                {
+                    actived = true;
+                    break;
+                }
+            }
+
+            return actived;
+        }
         /// <summary>
         /// スロット数をアップグレードする
         /// </summary>
@@ -522,6 +590,17 @@ namespace Buildings
             slotsLevel++;
             int newMaxSlots = buildingData.GetMaxSlotsByLevel(slotsLevel);
 
+            // 25.11.26 RI add slots
+            if (newMaxSlots > newFarmerSlots.Count)
+            {
+                int slotsToAdd = newMaxSlots - newFarmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    newFarmerSlots.Add(new NewFarmerSlot());
+                }
+                currentSkillUses += slotsToAdd;
+            }
+
             // スロット数を増やす
             if (newMaxSlots > farmerSlots.Count)
             {
@@ -537,76 +616,28 @@ namespace Buildings
             return true;
         }
 
-        /// <summary>
-        /// 建築コストをアップグレードする（建築に必要なAPを減少させる）
-        /// </summary>
-        /// <returns>アップグレード成功したらtrue</returns>
-        public bool UpgradeBuildCost()
-        {
-            // 建物状態チェック
-            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
-            {
-                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
-                return false;
-            }
-
-            // 最大レベルチェック
-            if (buildCostLevel >= 2)
-            {
-                Debug.LogWarning($"{buildingData.buildingName} の建築コストは既に最大レベル(2)です");
-                return false;
-            }
-
-            // アップグレードコスト配列の境界チェック
-            if (buildingData.buildCostUpgradeCost == null || buildCostLevel >= buildingData.buildCostUpgradeCost.Length)
-            {
-                Debug.LogError($"{buildingData.buildingName} のbuildCostUpgradeCostが正しく設定されていません");
-                return false;
-            }
-
-            int cost = buildingData.buildCostUpgradeCost[buildCostLevel];
-
-            // コストが0の場合はアップグレード不可
-            if (cost <= 0)
-            {
-                Debug.LogWarning($"{buildingData.buildingName} の建築コストレベル{buildCostLevel}→{buildCostLevel + 1}へのアップグレードは設定されていません（コスト0）");
-                return false;
-            }
-
-            // レベルアップ実行
-            buildCostLevel++;
-            int newBuildCost = buildingData.GetBuildingAPCostByLevel(buildCostLevel);
-
-            Debug.Log($"{buildingData.buildingName} の建築コストがレベル{buildCostLevel}にアップグレードしました（建築AP: {newBuildCost}）");
-            return true;
-        }
 
         /// <summary>
         /// 指定項目のアップグレードコストを取得
         /// </summary>
-        public int GetUpgradeCost(BuildingUpgradeType type)
+        public int GetUpgradeCost(int level, BuildingUpgradeType type)
         {
             switch (type)
             {
-                case BuildingUpgradeType.HP:
-                    if (hpLevel >= 2 || buildingData.hpUpgradeCost == null || hpLevel >= buildingData.hpUpgradeCost.Length)
+                case BuildingUpgradeType.BuildingHP:
+                    if (level >= 2 || buildingData.hpUpgradeCost == null || level >= buildingData.hpUpgradeCost.Length)
                         return -1;
-                    return buildingData.hpUpgradeCost[hpLevel];
+                    return buildingData.hpUpgradeCost[level];
 
-                case BuildingUpgradeType.AttackRange:
-                    if (attackRangeLevel >= 2 || buildingData.attackRangeUpgradeCost == null || attackRangeLevel >= buildingData.attackRangeUpgradeCost.Length)
+                case BuildingUpgradeType.attackRange:
+                    if (level >= 2 || buildingData.attackRangeUpgradeCost == null || level >= buildingData.attackRangeUpgradeCost.Length)
                         return -1;
-                    return buildingData.attackRangeUpgradeCost[attackRangeLevel];
+                    return buildingData.attackRangeUpgradeCost[level];
 
-                case BuildingUpgradeType.Slots:
-                    if (slotsLevel >= 2 || buildingData.slotsUpgradeCost == null || slotsLevel >= buildingData.slotsUpgradeCost.Length)
+                case BuildingUpgradeType.slotsLevel:
+                    if (level >= 2 || buildingData.slotsUpgradeCost == null || level >= buildingData.slotsUpgradeCost.Length)
                         return -1;
-                    return buildingData.slotsUpgradeCost[slotsLevel];
-
-                case BuildingUpgradeType.BuildCost:
-                    if (buildCostLevel >= 2 || buildingData.buildCostUpgradeCost == null || buildCostLevel >= buildingData.buildCostUpgradeCost.Length)
-                        return -1;
-                    return buildingData.buildCostUpgradeCost[buildCostLevel];
+                    return buildingData.slotsUpgradeCost[level];
 
                 default:
                     return -1;
@@ -616,12 +647,12 @@ namespace Buildings
         /// <summary>
         /// 指定項目がアップグレード可能かチェック
         /// </summary>
-        public bool CanUpgrade(BuildingUpgradeType type)
+        public bool CanUpgrade(int level, BuildingUpgradeType type)
         {
             if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
                 return false;
 
-            int cost = GetUpgradeCost(type);
+            int cost = GetUpgradeCost(level, type);
             return cost > 0;
         }
 
@@ -687,15 +718,17 @@ namespace Buildings
                     farmerSlots.Add(new FarmerSlot());
                 }
             }
+            //25.11.28 RI add new FarmerSlots
+            if (newMaxSlots > newFarmerSlots.Count)
+            {
+                int slotsToAdd = newMaxSlots - newFarmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    newFarmerSlots.Add(new NewFarmerSlot());
+                }
+            }
         }
 
-        /// <summary>
-        /// 建築コストレベルを直接設定（ネットワーク同期用）
-        /// </summary>
-        public void SetBuildCostLevel(int level)
-        {
-            buildCostLevel = Mathf.Clamp(level, 0, 2);
-        }
 
         /// <summary>
         /// 残り建築コストを直接設定（ネットワーク同期用）
@@ -716,9 +749,27 @@ namespace Buildings
         #endregion
 
         /// <summary>
+        /// 25.11.28 RI add new FarmerSlot
         /// 農民スロット管理クラス
         /// </summary>
         [Serializable]
+        public class NewFarmerSlot
+        {
+            // excess AP
+            public int farmerAP;
+
+            // Farmer can in
+            public bool canInSlot=true;
+            // is actived
+            public bool isActived=true;
+
+
+        }
+
+            /// <summary>
+            /// 農民スロット管理クラス
+            /// </summary>
+            [Serializable]
         public class FarmerSlot
         {
             private Farmer assignedFarmer;
@@ -761,16 +812,6 @@ namespace Buildings
         Ruined            // 廃墟
     }
 
-    /// <summary>
-    /// 建物のアップグレード項目タイプ
-    /// </summary>
-    public enum BuildingUpgradeType
-    {
-        HP,             // 最大HP
-        AttackRange,    // 攻撃範囲
-        Slots,          // スロット数
-        BuildCost       // 建築コスト
-    }
 
 }
    

@@ -11,24 +11,26 @@ public class GameSceneUIManager : MonoBehaviour
     // 单例
     public static GameSceneUIManager Instance { get; private set; }
 
-    public PlayerOperationManager _PlayerOpManager;
 
     public GameObject GameUIObject;
-    public GameObject NetRoomUIObject;
 
-    // 房间UI组件
-    [Header("房间UI组件")]
+
+
+	// 房间UI组件
+	[Header("房间UI组件")]
     //public Transform PlayerListContainer; // 玩家列表容器
     public GameObject PlayerItemPrefab; // 玩家列表项预制体
     public Button Button_ReadyAndStartGame; // 准备按钮
-    //public Button Button_StartGame; // 开始游戏按钮
-    //public TextMeshProUGUI Text_RoomInfo; // 房间信息文本
-    //public TextMeshProUGUI Text_LocalPlayerInfo; // 本地玩家信息
-                                              
-    //public Toggle Toggle_Ready; // 准备状态Toggle
+	public GameLoadProgressUI loadUI;       // 进度条 2025.11.17 
 
-    // 玩家列表项字典
-    private Dictionary<uint, GameObject> playerListItems = new Dictionary<uint, GameObject>();
+	//public Button Button_StartGame; // 开始游戏按钮
+	//public TextMeshProUGUI Text_RoomInfo; // 房间信息文本
+	//public TextMeshProUGUI Text_LocalPlayerInfo; // 本地玩家信息
+
+	//public Toggle Toggle_Ready; // 准备状态Toggle
+
+	// 玩家列表项字典
+	private Dictionary<uint, GameObject> playerListItems = new Dictionary<uint, GameObject>();
 
     private List<Vector2> PlayerInforListPos=new List<Vector2> { 
         new Vector2(0,50), 
@@ -67,21 +69,26 @@ public class GameSceneUIManager : MonoBehaviour
 
         if (SceneStateManager.Instance.bIsSingle)
         {
-            GameUIObject.SetActive(true);
-            NetRoomUIObject.SetActive(false);
-        }
-        else
+			//2025.11.17先保持是End 等Fade结束再恢复
+			GameUIObject.SetActive(false);
+			loadUI.gameObject.SetActive(true);
+            loadUI.StartFakeLoading(true);
+		}
+		else
         {
             GameUIObject.SetActive(false);
-            NetRoomUIObject.SetActive(true);
-        }
+            loadUI.gameObject.SetActive(true);
+			loadUI.StartFakeLoading(false);
+		}
+	}
 
 
 
 
-    }
+
     void Update()
     {
+
         if(bIsPlayerTurn)
         {
             GameUIManager.Instance.UpdateTimer();
@@ -92,8 +99,8 @@ public class GameSceneUIManager : MonoBehaviour
 
         }
 
-
     }
+
 
     // 初始化房间UI
     private void InitializeRoomUI()
@@ -107,9 +114,9 @@ public class GameSceneUIManager : MonoBehaviour
         // 订阅网络事件
         if (NetGameSystem.Instance != null)
         {
-            NetGameSystem.Instance.OnRoomStatusUpdated += UpdateRoomDisplay;
+            //NetGameSystem.Instance.OnRoomStatusUpdated += UpdateRoomDisplay;
             NetGameSystem.Instance.OnAllPlayersReady += OnAllPlayersReadyChanged;
-            NetGameSystem.Instance.OnGameStarted += OnGameStarted;
+            NetGameSystem.Instance.OnGameStarted += loadUI.StartRealLoading; // 网络宣布游戏开始时开始真实加载
         }
     }
 
@@ -165,35 +172,35 @@ public class GameSceneUIManager : MonoBehaviour
     private void CreatePlayerListItem(PlayerInfo player)
     {
         // 使用预制体创建玩家列表项
-        GameObject item = Instantiate(PlayerItemPrefab, NetRoomUIObject.transform);
-        item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[(int)player.PlayerId];
+        //GameObject item = Instantiate(PlayerItemPrefab, NetRoomUIObject.transform);
+        //item.GetComponent<RectTransform>().anchoredPosition = PlayerInforListPos[(int)player.PlayerId];
        
-        playerListItems[player.PlayerId] = item;
+        //playerListItems[player.PlayerId] = item;
        
-        item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
-        item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
+        //item.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = player.PlayerName;
+        //item.transform.Find("IP").GetComponent<TextMeshProUGUI>().text = player.PlayerIP;
 
-        // 使用player.IsReady来设置Toggle状态
-        Toggle toggle = item.transform.Find("Toggle").GetComponent<Toggle>();
-        if (toggle != null)
-        {
-            toggle.isOn = player.IsReady;  // 使用实际的准备状态
-            toggle.interactable = false;    // Toggle只用于显示
-        }
+        //// 使用player.IsReady来设置Toggle状态
+        //Toggle toggle = item.transform.Find("Toggle").GetComponent<Toggle>();
+        //if (toggle != null)
+        //{
+        //    toggle.isOn = player.IsReady;  // 使用实际的准备状态
+        //    toggle.interactable = false;    // Toggle只用于显示
+        //}
 
-        if (player.PlayerId==0)
-        {
-            Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "WaitForPlayer";
-            Button_ReadyAndStartGame.interactable = false;
-        }
-        else
-        {
-            Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "Ready";
-            Button_ReadyAndStartGame.interactable =true;
-        }
+        //if (player.PlayerId==0)
+        //{
+        //    Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "WaitForPlayer";
+        //    Button_ReadyAndStartGame.interactable = false;
+        //}
+        //else
+        //{
+        //    Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text = "Ready";
+        //    Button_ReadyAndStartGame.interactable =true;
+        //}
 
-        // 更新显示信息
-        TextMeshProUGUI nameText = item.GetComponentInChildren<TextMeshProUGUI>();
+        //// 更新显示信息
+        //TextMeshProUGUI nameText = item.GetComponentInChildren<TextMeshProUGUI>();
     }
 
     // 更新客户端按钮状态
@@ -218,7 +225,7 @@ public class GameSceneUIManager : MonoBehaviour
             if (NetGameSystem.Instance.bIsServer && Button_ReadyAndStartGame.GetComponentInChildren<TextMeshProUGUI>().text == "StartGame")
             {
                 OnStartGameButtonClicked();
-                return;
+				return;
             }
 
             // 获取当前准备状态
@@ -257,6 +264,7 @@ public class GameSceneUIManager : MonoBehaviour
         // 只有服务器玩家才能看到开始游戏按钮
         if (NetGameSystem.Instance != null && NetGameSystem.Instance.bIsServer)
         {
+		
             //Debug.Log("All Player Ready ? " + allReady);
             if (Button_ReadyAndStartGame != null)
             {
@@ -270,6 +278,16 @@ public class GameSceneUIManager : MonoBehaviour
                     buttonText.text = allReady ? "StartGame" : "WaitForPlayer";
                 }
             }
+
+			//2025.11.17 GuoNing
+			if (loadUI != null)   
+            {
+                if(allReady)
+                {
+					// 如果使用load UI则直接开始游戏
+					NetGameSystem.Instance.StartGame();
+				}
+			}
         }
     }
 
@@ -283,22 +301,16 @@ public class GameSceneUIManager : MonoBehaviour
     }
 
     // 游戏开始回调 
-    private void OnGameStarted()
+    public void OnGameStarted()
     {
         // 切换到游戏UI
-        if (NetRoomUIObject != null)
-        {
-            NetRoomUIObject.SetActive(false);
-        }
-
+    
         if (GameUIObject != null)
         {
             GameUIObject.SetActive(true);
         }
 
-        Debug.Log("游戏开始，切换到游戏界面");
-
-
+		Debug.Log("游戏开始，切换到游戏界面");
     }
 
     // 清理事件订阅
@@ -307,9 +319,9 @@ public class GameSceneUIManager : MonoBehaviour
         // 取消订阅事件
         if (NetGameSystem.Instance != null)
         {
-            NetGameSystem.Instance.OnRoomStatusUpdated -= UpdateRoomDisplay;
+           // NetGameSystem.Instance.OnRoomStatusUpdated -= UpdateRoomDisplay;
             NetGameSystem.Instance.OnAllPlayersReady -= OnAllPlayersReadyChanged;
-            NetGameSystem.Instance.OnGameStarted -= OnGameStarted;
+            NetGameSystem.Instance.OnGameStarted -= loadUI.StartRealLoading; ;
         }
     }
     // *************************
@@ -347,8 +359,27 @@ public class GameSceneUIManager : MonoBehaviour
     private void OnEndTurnButtonPressed()
     {
         EndTurn();
-        _PlayerOpManager.TurnEnd();
+        GameManage.Instance._PlayerOperation.TurnEnd();
     }
+
+
+	private int time1 = 0;
+	/// <summary>
+	/// 本地玩家是否加载到100%
+	/// </summary>
+	/// <param name="done"></param>
+	private void OnLocalPlayerLoadComplete(bool done)
+	{
+        
+		if (!done||time1!=0) return;
+
+		Debug.Log("本地玩家加载完成 → 通知服务器:time "+time1);
+        time1++;
+
+		// 通知服务器：我加载好了
+		NetGameSystem.Instance?.SetReadyStatus(done);
+	}
+
 
 
 }

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e64c554ba0d7744afd8167ae63362c, type: 3}
+  m_Name: Kaku_MayaReligionBuildingData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  religion: 3
+  buildingName: "\u746A\u96C5\u5916\u661F\u4EBA\u6587\u660E\u6559_\u7279\u6B8A\u5EFA\u7BC9"
+  maxHp: 100
+  buildingResourceCost: 18
+  resourceGenInterval: 1
+  cellType: 0
+  isSpecialBuilding: 1
+  maxUnitCapacity: 0
+  generationType: 5
+  baseProductionAmount: 2
+  goldenProductionAmount: 5
+  productionMultiplier: 1
+  maxHpByLevel: 190000001e0000002d000000
+  attackRangeByLevel: 000000000100000002000000
+  maxSlotsByLevel: 020000000300000004000000
+  hasCounterAttack: 000000
+  counterAttackDamage: 000000000000000000000000
+  hpUpgradeCost: 0700000009000000
+  attackRangeUpgradeCost: 080000000a000000
+  slotsUpgradeCost: 080000000a000000
+  buildingPrefab: {fileID: 713326006997790903, guid: b19954b6dc990174592b4c2131b8a3af,
+    type: 3}

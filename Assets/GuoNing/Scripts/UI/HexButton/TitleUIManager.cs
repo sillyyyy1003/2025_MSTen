@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -23,6 +24,7 @@ public class TitleUIManager : MonoBehaviour
 	public HexButton Button_SinglePlayer;
 	public HexButton Button_OnlineGame;
 	public HexButton Button_Setting;
+	public HexButton Button_MapEditor;
 
 	[Header("Right Menu")]
 	public RectTransform OptionMenu;
@@ -34,15 +36,30 @@ public class TitleUIManager : MonoBehaviour
 	public HexButton Button_CreateGame;
 	public HexButton Button_AddGame;
 
+	[Header("Building")]
 	/// <summary>
 	/// 画面に表示する建物モデル
 	/// </summary>
-	public Transform Building;//todo: make it a model manager later
+	public Transform Building;
+	public Transform Lighting;
+
+	[Header("DisplayComponent")]
+	public TMP_Dropdown ResolutionDropdown;
+	public TMP_Dropdown FullScreenDropdown;
+	public Toggle GridToggle;
+
+	[Header("SoundComponent")]
+	public Slider MasterSlider;
+	public Slider BGMSlider;
+	public Slider SESlider;
 
 
 	//--------------------------------------------------------------------------------
 	// メソッド
 	//--------------------------------------------------------------------------------
+	
+
+
 
 	void Update()
 	{
@@ -66,6 +83,11 @@ public class TitleUIManager : MonoBehaviour
 			Building.Rotate(Vector3.up, 20f * Time.deltaTime);
 		}
 
+		if (Lighting)
+		{
+			Lighting.RotateAround(Building.position, Vector3.up, 40f * Time.deltaTime);
+		}
+
 		
 	}
 
@@ -76,7 +98,7 @@ public class TitleUIManager : MonoBehaviour
 		Button_SinglePlayer.onClick.AddListener(() => OnClickSinglePlayer());
 		Button_OnlineGame.onClick.AddListener(() => OnClickOnlineGame());
 		Button_Setting.onClick.AddListener(() => OnClickSetting());
-
+		Button_MapEditor.onClick.AddListener(() => OnClickMapEditor());
 
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
@@ -92,6 +114,46 @@ public class TitleUIManager : MonoBehaviour
 
 		SoundManager.Instance.StopBGM();
 		SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.TITLE, loop: true);
+
+		// 更新分辨率设定
+		ResolutionManager.Instance.InitializeResolutionDropDown(ResolutionDropdown);
+		ResolutionManager.Instance.InitializeFullScreenDropDown(FullScreenDropdown);
+		ResolutionDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentResolutionIndex);
+		FullScreenDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentFullScreenIndex);
+
+		// 更新Display
+		DisplayManager.Instance.InitializeToggle(GridToggle);
+
+		// 更新Slider
+		MasterSlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetMasterVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
+		BGMSlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetBGMVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
+		SESlider.onValueChanged.AddListener((value) =>
+		{
+			SoundManager.Instance.SetSEVolume(value);
+			SoundManager.Instance.ApplyVolumes();
+		});
+
+		MasterSlider.SetValueWithoutNotify(SoundManager.Instance.MasterVolume);
+		BGMSlider.SetValueWithoutNotify(SoundManager.Instance.BGMVolume);
+		SESlider.SetValueWithoutNotify(SoundManager.Instance.SEVolume);
+
+
+	}
+
+
+	private void OnClickMapEditor()
+	{
+		SceneController.Instance.SwitchScene("MapEditor", null);
 	}
 
 	/// <summary>
@@ -107,10 +169,8 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickSinglePlayer()
 	{
-	
 		SceneStateManager.Instance.bIsSingle = true;
-		SceneManager.LoadScene("MainGame");
-		Debug.Log("SinglePlayer");
+		SceneController.Instance.SwitchScene("MainGame", null);
 	}
 
 	/// <summary>
@@ -119,13 +179,11 @@ public class TitleUIManager : MonoBehaviour
 	private void OnClickOnlineGame()
 	{
 
-
 		//  Set option menu active
 		OnlineMenu.gameObject.SetActive(true);
 
 		// Change material
 		UpdateBackground(true);
-
 	}
 
 	/// <summary>
@@ -150,12 +208,6 @@ public class TitleUIManager : MonoBehaviour
 	{
 		if (SceneStateManager.Instance != null)
 		{
-			//string playerName = SceneStateManager.Instance.PlayerName;
-
-
-			// SceneStateManager.Instance.PlayerName = playerName;
-
-			// ﾉ靹ﾃﾎｪｷﾎ｣ﾊｽ
 			SceneStateManager.Instance.SetAsServer(true);
 		}
 		else

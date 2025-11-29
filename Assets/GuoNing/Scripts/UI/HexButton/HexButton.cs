@@ -30,7 +30,6 @@ public class HexButton : MonoBehaviour
 
 	private bool isHover = false;
 	private bool isPressed = false;
-	//public bool isOn = false;     // 当前是否选中
 
 	void Awake()
 	{
@@ -80,6 +79,7 @@ public class HexButton : MonoBehaviour
 			isHover = true;
 			if (!toggle.isOn)
 				UpdateVisual(hoverColor);
+			Debug.Log("Hovered toggle is:"+toggle.isOn);
 			
 		}
 		else if (!inside && isHover)
@@ -111,8 +111,11 @@ public class HexButton : MonoBehaviour
 						// Update other toggle color if has toggle group
 						if(toggle.group)
 						{
-							// 如果有其他被选中的 toggle 则重置颜色 并且重置状态
-							if (toggle.group.GetFirstActiveToggle()) toggle.group.GetFirstActiveToggle().GetComponent<HexButton>().ResetHexButton();
+							foreach (var t in toggle.group.GetComponentsInChildren<Toggle>())
+							{
+								if (t.isOn)
+									t.GetComponent<HexButton>().ResetHexButton();
+							}
 						}
 						// switch toggle
 						toggle.isOn = true;
@@ -158,7 +161,22 @@ public class HexButton : MonoBehaviour
 	{
 		// Reset color
 		UpdateVisual(normalColor);
+		if (toggle != null) toggle.isOn = false;
+	}
+
+	public void ToggleButtonOn()
+	{
+		// Update other toggle color if has toggle group
+		if (toggle.group)
+		{
+			foreach (var t in toggle.group.GetComponentsInChildren<Toggle>())
+			{
+				if (t.isOn)
+					t.GetComponent<HexButton>().ResetHexButton();
+			}
+		}
 
 		if (toggle != null) toggle.isOn = false;
+		UpdateVisual(toggle.isOn ? selectedColor : normalColor);
 	}
 }

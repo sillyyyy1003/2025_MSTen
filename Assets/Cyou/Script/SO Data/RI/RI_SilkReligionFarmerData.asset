@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   piecePrefabResourcePath: Cyou/Prefab/farmer
   originalPID: 0
+  religion: 0
   pieceName: "\u7D72\u7E54\u6559_\u8FB2\u6C11"
   populationCost: 2
   resourceCost: 2
@@ -26,24 +27,12 @@ MonoBehaviour:
   attackRange: 0
   attackCooldown: 1
   attackAPCost: 20
-  maxHPByLevel:
-  - 3
-  - 4
-  - 5
-  - 5
-  maxAPByLevel:
-  - 3
-  - 5
-  - 5
-  - 5
-  attackPowerByLevel:
-  - 0
-  - 0
-  - 0
-  - 0
+  maxHPByLevel: 03000000040000000500000005000000
+  maxAPByLevel: 03000000050000000500000005000000
+  attackPowerByLevel: 00000000000000000000000000000000
   hpUpgradeCost: 030000000400000000000000
   apUpgradeCost: 050000000000000000000000
-  piecePrefab: {fileID: 7153972553235425938, guid: 9f1317f8bb1f13e4b8e70e285367a1b5,
+  piecePrefab: {fileID: 6161320943670931638, guid: f23803ad0315f8e45bebfbc0e847318f,
     type: 3}
   buildingSpeedModifier: 1
   productEfficiency: 1

@@ -1,2592 +1,2534 @@
-# Manager 系统 API 参考
+meSystem.cs
+74.55 KB•2,530 lines
+•
+Formatting may be inconsistent from source
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using UnityEngine;
+using Newtonsoft.Json;
+using System.Collections;
+using UnityEngine.SceneManagement;
+using GameData;
+using Unity.Mathematics;
+using UnityEngine.Rendering.Universal;
 
-本文档说明如何使用 PieceManager 和 BuildingManager 进行基于 ID 的单位・建筑管理系统。
 
----
 
-## 目录
-
-1. [概述](#1-概述)
-2. [PieceManager - 棋子管理](#2-piecemanager---棋子管理)
-   - [初始化](#初始化)
-   - [棋子生成](#棋子生成)
-   - [网络同步](#网络同步)
-   - [棋子删除](#棋子删除)
-   - [升级管理](#升级管理)
-   - [信息获取](#信息获取)
-   - [棋子行动](#棋子行动)
-   - [AP管理](#ap管理)
-   - [回合处理](#回合处理)
-3. [BuildingManager - 建筑管理](#3-buildingmanager---建筑管理)
-   - [建筑生成](#建筑生成)
-   - [建造处理](#建造处理)
-   - [信徒配置](#信徒配置)
-   - [建筑升级](#建筑升级)
-   - [建筑信息获取](#建筑信息获取)
-   - [建筑伤害处理](#建筑伤害处理)
-   - [建筑回合处理](#建筑回合处理)
-4. [网络同步流程示例](#网络同步流程示例)
-5. [数据结构](#数据结构)
-6. [枚举类型](#枚举类型enums)
-7. [总结](#总结)
-
----
-
-## 1. 概述
-
-### 设计思想
-
-PieceManager 和 BuildingManager 是对具体单位类（Farmer, Military, Missionary, Pope）和建筑类进行**基于 ID 管理**的包装层。
-
-**优点:**
-- GameManager 无需关注具体类型（Farmer, Military 等）即可操作
-- 仅使用整数 ID 管理所有棋子・建筑
-- 保持类型安全的同时，简化接口
-
-**架构:**
-```
-GameManager → PieceManager (ID管理层) → Piece/Farmer/Military/etc (实现层)
-GameManager → BuildingManager (ID管理层) → Building (实现层)
-```
-
-### 实现文件
-- `Assets/Cyou/Script/Manager/PieceManager.cs`
-- `Assets/Cyou/Script/Manager/BuildingManager.cs`
-
----
-
-## 2. PieceManager - 棋子管理
-
-### 初始化
-
-#### `SetLocalPlayerID()`
-设置本地玩家 ID（用于区分己方棋子和敌方棋子）。
-
-**函数签名:**
-```csharp
-public void SetLocalPlayerID(int playerID)
-```
-
-**参数:**
-- `playerID`: 本地玩家的 ID
-
-**使用示例:**
-```csharp
-PieceManager pieceManager = // 获取 PieceManager 引用
-
-// 设置本地玩家 ID
-pieceManager.SetLocalPlayerID(1);
-```
-
-**重要功能:**
-- **棋子 ID 范围的自动分配**: 根据玩家 ID 自动设置棋子 ID 的范围
-  - Player 0: 0～9999
-  - Player 1: 10000～19999
-  - Player 2: 20000～29999
-  - Player 3: 30000～39999
-- 这样可以防止魅惑时棋子 ID 重复
-- 通过棋子 ID 可以一目了然地判断属于哪个玩家
-
-**注意:**
-- 必须在创建棋子前调用此方法
-- 用于网络同步中管理所有棋子（统一的 allPieces 字典）
-
-**实现位置:** `PieceManager.cs:108-114`
-
----
-
-#### `GetLocalPlayerID()`
-获取本地玩家 ID。
-
-**函数签名:**
-```csharp
-public int GetLocalPlayerID()
-```
-
-**返回值:**
-- 本地玩家 ID（未设置时返回 -1）
-
-**实现位置:** `PieceManager.cs:26-29`
-
----
-
-### 棋子生成
-
-#### `CreatePiece()`
-生成己方棋子并返回 ID。
-
-**函数签名:**
-```csharp
-public int CreatePiece(PieceType pieceType, Religion religion, int playerID, Vector3 position)
-```
-
-**参数:**
-- `pieceType`: 棋子种类（PieceType.Farmer, Military, Missionary, Pope）
-- `religion`: 宗教（Religion.Maya, RedMoon, MadScientist, Silk）
-- `playerID`: 玩家 ID
-- `position`: 生成位置
-
-**返回值:**
-- 成功: 生成的棋子 ID（正整数）
-- 失败: -1
-
-**使用示例:**
-```csharp
-PieceManager pieceManager = // 获取 PieceManager 引用
-
-// 生成农民
-int farmerID = pieceManager.CreatePiece(
-    PieceType.Farmer,
-    Religion.Maya,
-    playerID: 1,
-    new Vector3(10, 0, 10)
-);
-
-if (farmerID >= 0)
+// *************************
+//      消息类型枚举
+// *************************
+public enum NetworkMessageType
 {
-    Debug.Log($"农民生成成功: ID={farmerID}");
+    // 连接相关
+    CONNECT,
+    CONNECTED,
+    PLAYER_JOINED,
+    PLAYER_LEFT,
+
+    // 游戏流程
+    GAME_START,
+    GAME_OVER,
+
+
+    // 房间管理 
+    PLAYER_READY,      // 玩家准备
+    PLAYER_NOT_READY,  // 玩家取消准备
+    ROOM_STATUS_UPDATE, // 房间状态更新
+
+    // 回合管理
+    TURN_START,
+    TURN_END,
+
+    // 玩家操作
+    UNIT_MOVE,
+    UNIT_ADD,
+    UNIT_REMOVE,
+    UNIT_ATTACK,
+    BUILDING_ATTACK,     // 建筑攻击
+    UNIT_CHARM,          // 单位魅惑
+    CHARM_EXPIRE,        // 魅惑过期（归还控制权）
+
+    // 同步
+    SYNC_DATA,
+    PING,
+    PONG
 }
-```
 
-**注意:**
-- 此方法生成的棋子会被添加到 `pieces` 字典（己方棋子）
-- 如需生成敌方棋子，请使用 `CreateEnemyPiece()`
-
-**实现位置:** `PieceManager.cs:36-74`
-
----
-
-#### `CreateEnemyPiece()`
-根据同步数据生成敌方棋子。
-
-**函数签名:**
-```csharp
-public bool CreateEnemyPiece(syncPieceData spd)
-```
-
-**参数:**
-- `spd`: 棋子同步数据（包含所有状态信息）
-
-**返回值:**
-- `true`: 生成成功
-- `false`: 失败
-
-**使用示例:**
-```csharp
-// 接收到敌方棋子数据时
-syncPieceData enemyData = new syncPieceData
+// *************************
+//      网络消息结构
+// *************************
+[Serializable]
+public class NetworkMessage
 {
-    pieceID = 20101,  // 20000-29999 为玩家2的ID范围
-    pieceType = PieceType.Military,
-    religion = Religion.RedMoon,
-    piecePos = new SerializableVector3(20, 0, 20),
-    currentHP = 80,
-    currentHPLevel = 1,
-    currentPID = 2,
-    attackPowerLevel = 2
-};
+    public NetworkMessageType MessageType;
+    public uint SenderId;
+    public string JsonData;
+    public long Timestamp;
 
-if (pieceManager.CreateEnemyPiece(enemyData))
-{
-    Debug.Log("敌方棋子生成成功");
-}
-```
-
-**注意:**
-- 此方法会自动设置棋子的所有状态（HP、AP、等级等）
-- 生成的棋子会被添加到 `allPieces` 字典
-- 用于网络游戏中接收并创建对方的棋子
-
-**实现位置:** `PieceManager.cs:76-183`
-
----
-
-### 网络同步
-
-#### `SyncEnemyPieceState()`
-同步敌方棋子的状态。
-
-**函数签名:**
-```csharp
-public bool SyncEnemyPieceState(syncPieceData spd)
-```
-
-**参数:**
-- `spd`: 棋子同步数据
-
-**返回值:**
-- `true`: 同步成功
-- `false`: 失败（棋子不存在）
-
-**使用示例:**
-```csharp
-// 接收到棋子状态更新时
-syncPieceData updateData = new syncPieceData
-{
-    pieceID = 101,
-    currentHP = 60,  // HP 发生变化
-    currentHPLevel = 2,  // HP 等级提升
-    position = new Vector3(25, 0, 25)  // 位置变化
-};
-
-if (pieceManager.SyncEnemyPieceState(updateData))
-{
-    Debug.Log("敌方棋子状态同步成功");
-}
-```
-
-**注意:**
-- 仅更新已存在的棋子状态
-- 如果棋子不存在，应先调用 `CreateEnemyPiece()`
-- 会自动根据 localPlayerID 判断是己方还是敌方棋子
-
-**实现位置:** `PieceManager.cs:191-269`
-
----
-
-#### `CreateCompleteSyncData()`
-创建包含完整状态的同步数据。
-
-**函数签名:**
-```csharp
-public syncPieceData CreateCompleteSyncData(int pieceID, Religion religion = Religion.None)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `religion`: 宗教（如果无法从 PieceDataSO 获取则使用此参数）
-
-**返回值:**
-- 包含完整状态的 `syncPieceData`
-- 失败时返回 null
-
-**使用示例:**
-```csharp
-// 发送己方棋子的完整状态给对方
-syncPieceData myPieceData = pieceManager.CreateCompleteSyncData(farmerID, Religion.Maya);
-if (myPieceData != null)
-{
-    // 通过网络发送 myPieceData
-    NetworkManager.Send(myPieceData);
-}
-```
-
-**包含的信息:**
-- 基本信息：pieceID, pieceType, religion, playerID
-- 位置和状态：position, currentPID, currentHP
-- 等级信息：currentHPLevel, currentAPLevel
-- 职业特定等级：攻击力、献祭、占领、魅惑、位置交换CD、增益等
-
-**实现位置:** `PieceManager.cs:277-361`
-
----
-
-### 棋子删除
-
-#### `HandleEnemyPieceDeath()`
-处理接收到的敌方棋子死亡通知。
-
-**函数签名:**
-```csharp
-public bool HandleEnemyPieceDeath(syncPieceData spd)
-```
-
-**参数:**
-- `spd`: 死亡棋子的同步数据（currentHP = 0）
-
-**返回值:**
-- `true`: 删除成功
-- `false`: 失败（棋子不存在）
-
-**使用示例:**
-```csharp
-// 接收到敌方棋子死亡通知
-syncPieceData deathData = new syncPieceData
-{
-    pieceID = 101,
-    currentHP = 0
-};
-
-if (pieceManager.HandleEnemyPieceDeath(deathData))
-{
-    Debug.Log("敌方棋子已删除");
-}
-```
-
-**注意:**
-- 此方法仅删除棋子，不会触发 `OnPieceDied` 事件
-- 用于接收端处理死亡通知，避免无限循环
-
-**实现位置:** `PieceManager.cs:598-612`
-
----
-
-#### `GetLastDeadPieceData()`
-获取最后一个死亡棋子的同步数据（发送端使用）。
-
-**函数签名:**
-```csharp
-public syncPieceData? GetLastDeadPieceData()
-```
-
-**返回值:**
-- 最后一个死亡棋子的同步数据
-- 如果没有缓存数据则返回 null
-
-**使用示例:**
-```csharp
-// 在 GameManager 中订阅死亡事件
-pieceManager.OnPieceDied += (pieceID) =>
-{
-    // 获取死亡棋子的完整数据
-    syncPieceData? deathData = pieceManager.GetLastDeadPieceData();
-    if (deathData.HasValue)
+    public NetworkMessage()
     {
-        // 发送给对方玩家
-        NetworkManager.SendPieceDeath(deathData.Value);
-    }
-};
-```
-
-**注意:**
-- 数据获取后会被清空（单次使用）
-- 必须在 `OnPieceDied` 事件触发后立即调用
-- 用于发送端获取死亡数据并通知对方
-
-**实现位置:** `PieceManager.cs:620-627`
-
----
-
-#### `OnPieceDied` 事件
-棋子死亡时触发的事件。
-
-**事件签名:**
-```csharp
-public event Action<int> OnPieceDied;
-```
-
-**参数:**
-- `int`: 死亡棋子的 ID
-
-**使用示例:**
-```csharp
-// 订阅棋子死亡事件
-pieceManager.OnPieceDied += HandlePieceDeath;
-
-void HandlePieceDeath(int deadPieceID)
-{
-    Debug.Log($"棋子 {deadPieceID} 已死亡");
-
-    // 获取死亡数据并发送给对方
-    syncPieceData? deathData = pieceManager.GetLastDeadPieceData();
-    if (deathData.HasValue)
-    {
-        NetworkManager.SendPieceDeath(deathData.Value);
+        Timestamp = DateTime.Now.Ticks;
     }
 }
-```
 
-**实现位置:** `PieceManager.cs:13`
-
----
-
-### 升级管理
-
-#### `UpgradePiece()`
-升级棋子的通用项目（HP/AP）。
-
-**函数签名:**
-```csharp
-public bool UpgradePiece(int pieceID, PieceUpgradeType upgradeType)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `upgradeType`: 升级项目（PieceUpgradeType.HP 或 AP）
-
-**返回值:**
-- `true`: 升级成功
-- `false`: 失败（棋子不存在、已达最大等级、资源不足等）
-
-**使用示例:**
-```csharp
-// 升级 HP
-if (pieceManager.UpgradePiece(farmerID, PieceUpgradeType.HP))
+// *************************
+//      具体消息数据
+// *************************
+[Serializable]
+public class ConnectMessage
 {
-    Debug.Log("HP升级成功");
+    public string PlayerName;
+    public string PlayerIP;
 }
 
-// 升级 AP
-if (pieceManager.UpgradePiece(farmerID, PieceUpgradeType.AP))
+[Serializable]
+public class ConnectedMessage
 {
-    Debug.Log("AP升级成功");
-}
-```
-
-**实现位置:** `PieceManager.cs:86-104`
-
----
-
-#### `UpgradePieceSpecial()`
-升级棋子的职业专属项目。
-
-**函数签名:**
-```csharp
-public bool UpgradePieceSpecial(int pieceID, SpecialUpgradeType specialUpgradeType)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `specialUpgradeType`: 职业专属升级项目
-  - `SpecialUpgradeType.FarmerSacrifice` - 农民的献祭回复量
-  - `SpecialUpgradeType.MilitaryAttackPower` - 军队的攻击力
-  - `SpecialUpgradeType.MissionaryOccupy` - 宣教师的占领成功率
-  - `SpecialUpgradeType.MissionaryConvertEnemy` - 宣教师的魅惑成功率
-  - `SpecialUpgradeType.PopeSwapCooldown` - 教皇的位置交换冷却
-  - `SpecialUpgradeType.PopeBuff` - 教皇的增益效果
-
-**返回值:**
-- `true`: 升级成功
-- `false`: 失败
-
-**使用示例:**
-```csharp
-// 升级农民的献祭回复量
-if (pieceManager.UpgradePieceSpecial(farmerID, SpecialUpgradeType.FarmerSacrifice))
-{
-    Debug.Log("农民献祭回复量升级成功");
+    public uint AssignedClientId;
+    public List<uint> ExistingPlayerIds;
 }
 
-// 升级军队的攻击力
-if (pieceManager.UpgradePieceSpecial(militaryID, SpecialUpgradeType.MilitaryAttackPower))
+// 房间内玩家信息
+[Serializable]
+public class PlayerInfo
 {
-    Debug.Log("军队攻击力升级成功");
+    public uint PlayerId;
+    public string PlayerName;
+    public string PlayerIP;
+    public bool IsReady;
 }
-```
 
-**实现位置:** `PieceManager.cs:112-150`
-
----
-
-#### `GetUpgradeCost()`
-获取升级费用。
-
-**函数签名:**
-```csharp
-public int GetUpgradeCost(int pieceID, PieceUpgradeType upgradeType)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `upgradeType`: 升级项目
-
-**返回值:**
-- 成功: 费用（正整数）
-- 失败: -1（棋子不存在或无法升级）
-
-**使用示例:**
-```csharp
-int hpCost = pieceManager.GetUpgradeCost(farmerID, PieceUpgradeType.HP);
-if (hpCost > 0)
+// 玩家加入消息
+[Serializable]
+public class PlayerJoinedMessage
 {
-    Debug.Log($"HP升级需要{hpCost}资源");
+    public uint PlayerId;
+    public string PlayerName;
+    public string PlayerIP;
 }
-```
 
-**实现位置:** `PieceManager.cs:158-167`
-
----
-
-#### `CanUpgrade()`
-检查是否可以升级。
-
-**函数签名:**
-```csharp
-public bool CanUpgrade(int pieceID, PieceUpgradeType upgradeType)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `upgradeType`: 升级项目
-
-**返回值:**
-- `true`: 可以升级
-- `false`: 无法升级
-
-**使用示例:**
-```csharp
-if (pieceManager.CanUpgrade(farmerID, PieceUpgradeType.HP))
+// 玩家准备消息
+[Serializable]
+public class PlayerReadyMessage
 {
-    // 启用 HP 升级按钮
-    hpUpgradeButton.interactable = true;
+    public uint PlayerId;
+    public bool IsReady;
 }
-```
 
-**实现位置:** `PieceManager.cs:175-183`
-
----
-
-### 信息获取
-
-#### `GetPieceHP()`
-获取棋子当前 HP。
-
-**函数签名:**
-```csharp
-public float GetPieceHP(int pieceID)
-```
-
-**实现位置:** `PieceManager.cs:192-200`
-
----
-
-#### `GetPieceAP()`
-获取棋子当前 AP。
-
-**函数签名:**
-```csharp
-public float GetPieceAP(int pieceID)
-```
-
-**实现位置:** `PieceManager.cs:205-213`
-
----
-
-#### `GetPiecePlayerID()`
-获取棋子所属玩家 ID。
-
-**函数签名:**
-```csharp
-public int GetPiecePlayerID(int pieceID)
-```
-
-**实现位置:** `PieceManager.cs:218-226`
-
----
-
-#### `GetPieceType()`
-获取棋子种类。
-
-**函数签名:**
-```csharp
-public PieceType GetPieceType(int pieceID)
-```
-
-**返回值:**
-- PieceType.Farmer, Military, Missionary, Pope, 或 None
-
-**实现位置:** `PieceManager.cs:231-247`
-
----
-
-#### `DoesPieceExist()`
-检查棋子是否存在。
-
-**函数签名:**
-```csharp
-public bool DoesPieceExist(int pieceID)
-```
-
-**实现位置:** `PieceManager.cs:252-255`
-
----
-
-#### `GetPlayerPieces()`
-获取指定玩家的所有棋子 ID。
-
-**函数签名:**
-```csharp
-public List<int> GetPlayerPieces(int playerID)
-```
-
-**返回值:**
-- 棋子 ID 列表
-
-**使用示例:**
-```csharp
-List<int> player1Pieces = pieceManager.GetPlayerPieces(1);
-Debug.Log($"玩家1的棋子数: {player1Pieces.Count}");
-
-foreach (int pieceID in player1Pieces)
+// 房间状态更新消息
+[Serializable]
+public class RoomStatusUpdateMessage
 {
-    float hp = pieceManager.GetPieceHP(pieceID);
-    Debug.Log($"棋子ID={pieceID}, HP={hp}");
+    public List<PlayerInfo> Players;
 }
-```
 
-**实现位置:** `PieceManager.cs:260-266`
-
----
-
-#### `GetPlayerPiecesByType()`
-获取指定玩家的指定种类棋子 ID。
-
-**函数签名:**
-```csharp
-public List<int> GetPlayerPiecesByType(int playerID, PieceType pieceType)
-```
-
-**使用示例:**
-```csharp
-// 获取玩家1的所有农民
-List<int> farmers = pieceManager.GetPlayerPiecesByType(1, PieceType.Farmer);
-Debug.Log($"玩家1的农民数: {farmers.Count}");
-```
-
-**实现位置:** `PieceManager.cs:271-276`
-
----
-
-### 棋子行动
-
-#### `AttackEnemy()`
-军队攻击敌人。
-
-**函数签名:**
-```csharp
-public bool AttackEnemy(int attackerID, int targetID)
-```
-
-**参数:**
-- `attackerID`: 攻击者棋子 ID（必须是军队）
-- `targetID`: 目标棋子 ID
-
-**返回值:**
-- `true`: 攻击成功
-- `false`: 失败（棋子不存在、攻击者不是军队等）
-
-**使用示例:**
-```csharp
-if (pieceManager.AttackEnemy(militaryID, enemyID))
+[Serializable]
+public class UnitMoveMessage
 {
-    Debug.Log("攻击成功");
+    public int PlayerId;
+    public int FromX;
+    public int FromY;
+    public int ToX;
+    public int ToY;
+    public syncPieceData MovedUnitSyncData; // 移动后的单位同步数据
 }
-```
 
-**实现位置:** `PieceManager.cs:331-352`
-
----
-
-#### `ConvertEnemy()`
-宣教师魅惑敌人，暂时控制对方棋子。魅惑会在一定回合数后自动解除。
-
-**函数签名:**
-```csharp
-public syncPieceData? ConvertEnemy(int missionaryID, int targetID)
-```
-
-**参数:**
-- `missionaryID`: 宣教师棋子 ID
-- `targetID`: 目标敌方棋子 ID
-
-**返回值:**
-- 魅惑成功: `syncPieceData`（包含目标的当前 PID 和魅惑回合数）
-- 即死的情况: null（由 OnPieceDeath 事件处理）
-- 失败: null
-
-**使用示例:**
-```csharp
-syncPieceData? charmData = PieceManager.Instance.ConvertEnemy(missionaryID, enemyPieceID);
-
-if (charmData.HasValue)
+[Serializable]
+public class UnitAddMessage
 {
-    Debug.Log($"魅惑成功！控制{charmData.Value.charmedTurnsRemaining}回合");
-    SendToNetwork(charmData.Value);
+    public int PlayerId;
+    public int UnitType; // PlayerUnitType as int
+    public int PosX;
+    public int PosY;
+    public syncPieceData NewUnitSyncData; // PieceDataSO序列化为JSON字符串
+    public syncBuildingData? BuildingData;  // 新增
+    public bool IsUsed; // 单位是否已使用
 }
-```
 
-**重要行为:**
-1. 执行魅惑尝试（成功率取决于宣教师的 `convertEnemyLevel`）
-2. 魅惑成功时：
-   - 设置目标的魅惑状态（`Piece.SetCharmed()`）
-   - 魅惑回合数从 `MissionaryDataSO.conversionTurnDuration[convertEnemyLevel]` 获取
-   - 将目标的 `currentPID` 改为宣教师的 `CurrentPID`（无字典移动）
-   - 触发 `OnPieceCharmed` 事件
-3. 即死的情况（等级1以上的宣教师・军队）：
-   - 目标立即死亡，由 `OnPieceDeath` 事件处理
-4. 魅惑解除：
-   - 每回合通过 `ProcessTurnStart()` 自动减少计数器
-   - 计数器归零时 `currentPID` 恢复为原来的 `OriginalPID`（无字典移动）
-
-**实现位置:** `PieceManager.cs:959-1006`
-
----
-
-#### `OccupyTerritory()`
-宣教师占领领地。
-
-**函数签名:**
-```csharp
-public bool OccupyTerritory(int missionaryID, Vector3 targetPosition)
-```
-
-**参数:**
-- `missionaryID`: 宣教师棋子 ID
-- `targetPosition`: 占领目标领地坐标
-
-**返回值:**
-- `true`: 占领尝试成功
-- `false`: 失败
-
-**实现位置:** `PieceManager.cs:389-404`
-
----
-
-#### `SacrificeToPiece()`
-农民回复其他棋子（献祭）。
-
-**函数签名:**
-```csharp
-public bool SacrificeToPiece(int farmerID, int targetID)
-```
-
-**参数:**
-- `farmerID`: 农民棋子 ID
-- `targetID`: 回复目标棋子 ID
-
-**返回值:**
-- `true`: 回复成功
-- `false`: 失败
-
-**实现位置:** `PieceManager.cs:412-433`
-
----
-
-#### `SwapPositions()`
-教皇与友方棋子交换位置。
-
-**函数签名:**
-```csharp
-public bool SwapPositions(int popeID, int targetID)
-```
-
-**参数:**
-- `popeID`: 教皇棋子 ID
-- `targetID`: 交换目标棋子 ID
-
-**返回值:**
-- `true`: 交换成功
-- `false`: 失败
-
-**实现位置:** `PieceManager.cs:441-462`
-
----
-
-#### `DamagePiece()`
-对棋子造成伤害。
-
-**函数签名:**
-```csharp
-public void DamagePiece(int pieceID, float damage, int attackerID = -1)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `damage`: 伤害量
-- `attackerID`: 攻击者 ID（可选）
-
-**实现位置:** `PieceManager.cs:470-487`
-
----
-
-#### `HealPiece()`
-回复棋子。
-
-**函数签名:**
-```csharp
-public void HealPiece(int pieceID, float amount)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `amount`: 回复量
-
-**实现位置:** `PieceManager.cs:494-503`
-
----
-
-### AP管理
-
-#### `ConsumePieceAP()`
-消耗棋子 AP。
-
-**函数签名:**
-```csharp
-public bool ConsumePieceAP(int pieceID, float amount)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `amount`: 消耗量
-
-**返回值:**
-- `true`: 消耗成功
-- `false`: 失败（AP 不足等）
-
-**使用示例:**
-```csharp
-if (pieceManager.ConsumePieceAP(farmerID, 5.0f))
+[Serializable]
+public class UnitRemoveMessage
 {
-    Debug.Log("消耗了5AP");
+    public int PlayerId;
+    public int PosX;
+    public int PosY;
+    public int UnitID; // 被移除单位的ID
 }
-else
+
+// 攻击消息
+[Serializable]
+public class UnitAttackMessage
 {
-    Debug.Log("AP不足");
+    public int AttackerPlayerId;
+    public int AttackerPosX;
+    public int AttackerPosY;
+
+    // 原始位置字段
+    public int AttackerOriginalPosX;    // 攻击者原始位置（移动前的位置）
+    public int AttackerOriginalPosY;
+    public bool HasMoved;               // 标记攻击者是否进行了移动
+
+    public int TargetPlayerId;
+    public int TargetPosX;
+    public int TargetPosY;
+    public syncPieceData AttackerSyncData; // 攻击者的同步数据（HP可能变化）
+    public syncPieceData? TargetSyncData;  // 目标的同步数据（如果存活），null表示被击杀
+    public bool TargetDestroyed;           // 目标是否被摧毁
 }
-```
 
-**实现位置:** `PieceManager.cs:515-524`
-
----
-
-#### `RecoverPieceAP()`
-回复棋子 AP。
-
-**函数签名:**
-```csharp
-public void RecoverPieceAP(int pieceID, float amount)
-```
-
-**参数:**
-- `pieceID`: 棋子 ID
-- `amount`: 回复量
-
-**使用示例:**
-```csharp
-pieceManager.RecoverPieceAP(farmerID, 10.0f);
-```
-
-**实现位置:** `PieceManager.cs:531-540`
-
----
-
-### 回合处理
-
-#### `ProcessTurnStart()`
-执行指定玩家的回合开始处理（AP 恢复、魅惑计数器处理）。
-
-**函数签名:**
-```csharp
-public void ProcessTurnStart(int playerID)
-```
-
-**参数:**
-- `playerID`: 玩家 ID
-
-**使用示例:**
-```csharp
-// 回合开始时调用
-pieceManager.ProcessTurnStart(currentPlayerID);
-```
-
-**处理内容:**
-1. **AP 恢复**: 恢复指定玩家所有棋子的 AP
-2. **魅惑计数器处理**:
-   - 调用每个棋子的 `ProcessCharmedTurn()`
-   - 魅惑计数器 -1
-   - 计数器归零的棋子自动返回原所有者
-   - `currentPID` 恢复为 `OriginalPID`（无字典移动）
-
-**魅惑解除的自动处理:**
-```csharp
-// 魅惑解除时会自动执行以下操作：
-// 1. 棋子的 currentPID 恢复为 OriginalPID
-// 2. 触发 OnUncharmed 事件
-```
-
-**实现位置:** `PieceManager.cs:1218-1254`
-
----
-
-## 3. BuildingManager - 建筑管理
-
-### 初始化
-
-#### `SetLocalPlayerID()`
-设置本地玩家 ID（用于区分己方建筑和敌方建筑）。
-
-**函数签名:**
-```csharp
-public void SetLocalPlayerID(int playerID)
-```
-
-**参数:**
-- `playerID`: 本地玩家的 ID
-
-**使用示例:**
-```csharp
-buildingManager.SetLocalPlayerID(1);
-```
-
-**注意:**
-- 必须在生成建筑前调用此方法
-- 用于网络同步中区分己方建筑（buildings）和敌方建筑（enemyBuildings）
-
-**实现位置:** `BuildingManager.cs:41-45`
-
----
-
-#### `GetLocalPlayerID()`
-获取本地玩家 ID。
-
-**函数签名:**
-```csharp
-public int GetLocalPlayerID()
-```
-
-**返回值:**
-- 本地玩家 ID（未设置时返回 -1）
-
-**实现位置:** `BuildingManager.cs:50-53`
-
----
-
-#### `InitializeBuildingData()`
-根据宗教初始化建筑数据（从 BuildingRegistry 自动获取）。
-
-**函数签名:**
-```csharp
-public void InitializeBuildingData(Religion playerReligion, Religion enemyReligion)
-```
-
-**参数:**
-- `playerReligion`: 己方阵营的宗教
-- `enemyReligion`: 对战对手的宗教
-
-**使用示例:**
-```csharp
-using GameData; // 使用 Religion 枚举
-
-// 只需指定宗教，即可自动获取对应建筑
-buildingManager.InitializeBuildingData(Religion.SilkReligion, Religion.MadScientistReligion);
-```
-
-**工作流程:**
-1. 从 BuildingRegistry 自动获取指定宗教的建筑
-2. 将己方阵营的建筑设置到 `buildableBuildingTypes`（可建造列表）
-3. 将己方阵营和对手的建筑设置到 `allBuildingTypes`（全建筑列表）
-4. 只有己方阵营的建筑可以建造
-5. 敌方建筑数据保留用于同步（在 `CreateEnemyBuilding()` 中使用）
-
-**必要设置:**
-- 需要在 BuildingManager 的 Inspector 中设置 `BuildingRegistry`
-- 需要为每个 BuildingDataSO 资源适当设置 `religion` 字段
-
-**注意:**
-- 调用此函数前，需要在 BuildingRegistry 中注册所有建筑的 BuildingDataSO
-- 必须在生成建筑前调用此函数
-
-**实现位置:** `BuildingManager.cs:62-93`
-
-**BuildingDataSO 的设置:**
-
-每个建筑的 ScriptableObject 中添加了宗教字段：
-
-```csharp
-[Header("宗教")]
-public Religion religion = Religion.None; // 所属宗教
-```
-
-根据对战游戏设计：
-- **己方阵营建筑**: 可建造（从 `buildableBuildingTypes` 获取）
-- **敌方阵营建筑**: 不可建造，但需要知道数据（包含在 `allBuildingTypes` 中）
-
-**BuildingRegistry 的准备:**
-
-BuildingRegistry 添加了宗教筛选功能：
-
-```csharp
-/// <summary>
-/// 获取指定宗教的建筑
-/// </summary>
-public List<BuildingDataSO> GetBuildingsByReligion(Religion religion)
-
-/// <summary>
-/// 获取多个宗教的建筑
-/// </summary>
-public List<BuildingDataSO> GetBuildingsByReligions(params Religion[] religions)
-```
-
----
-
-### 建筑生成
-
-#### `CreateBuilding()`
-生成己方建筑并返回同步数据。
-
-**函数签名:**
-```csharp
-public syncBuildingData? CreateBuilding(BuildingDataSO buildingData, int playerID, Vector3 position)
-```
-
-**参数:**
-- `buildingData`: 建筑数据 SO
-- `playerID`: 玩家 ID
-- `position`: 生成位置
-
-**返回值:**
-- 成功: 生成的建筑同步数据（`syncBuildingData`）
-- 失败: null
-
-**使用示例:**
-```csharp
-// 生成建筑
-syncBuildingData? buildingData = buildingManager.CreateBuilding(
-    buildingDataSO,
-    playerID: 1,
-    new Vector3(10, 0, 10)
-);
-
-if (buildingData.HasValue)
+// 建筑攻击消息
+[Serializable]
+public class BuildingAttackMessage
 {
-    Debug.Log($"建筑生成成功: ID={buildingData.Value.buildingID}");
-    // 通过网络发送给对方
-    SendToNetwork(buildingData.Value);
+    public int AttackerPlayerId;
+    public int AttackerPosX;
+    public int AttackerPosY;
+
+    public int BuildingOwnerId;
+    public int BuildingPosX;
+    public int BuildingPosY;
+    public int BuildingID;             // 被攻击的建筑ID
+
+    public syncPieceData AttackerSyncData; // 攻击者的同步数据
+    public int BuildingRemainingHP;    // 建筑剩余HP
+    public bool BuildingDestroyed;     // 建筑是否被摧毁
 }
-```
 
-**注意:**
-- 此方法生成的建筑会被添加到 `buildings` 字典（己方建筑）
-- 如需生成敌方建筑，请使用 `CreateEnemyBuilding()`
-- 返回的同步数据可直接用于网络发送
-
-**实现位置:** `BuildingManager.cs:99-144`
-
----
-
-#### `CreateBuildingByName()`
-通过建筑名称生成建筑并返回同步数据（便捷方法）。
-
-**函数签名:**
-```csharp
-public syncBuildingData? CreateBuildingByName(string buildingName, int playerID, Vector3 position)
-```
-
-**参数:**
-- `buildingName`: 建筑名称
-- `playerID`: 玩家 ID
-- `position`: 生成位置
-
-**返回值:**
-- 成功: 生成的建筑同步数据（`syncBuildingData`）
-- 失败: null
-
-**使用示例:**
-```csharp
-syncBuildingData? buildingData = buildingManager.CreateBuildingByName(
-    "祭坛",
-    playerID: 1,
-    new Vector3(10, 0, 10)
-);
-
-if (buildingData.HasValue)
+// 魅惑消息
+[Serializable]
+public class UnitCharmMessage
 {
-    Debug.Log($"建筑生成成功: {buildingData.Value.buildingName}");
-    SendToNetwork(buildingData.Value);
+    public int MissionaryPlayerId;      // 传教士所属玩家ID
+    public int MissionaryID;            // 传教士ID
+    public int MissionaryPosX;          // 传教士位置
+    public int MissionaryPosY;
+
+    public int TargetPlayerId;          // 目标单位原始所有者ID
+    public int TargetID;                // 目标单位ID
+    public int TargetPosX;              // 目标单位位置
+    public int TargetPosY;
+
+    public syncPieceData NewUnitSyncData;  // 新创建的被魅惑单位的同步数据
+    public int CharmedTurns;            // 魅惑持续回合数
 }
-```
 
-**实现位置:** `BuildingManager.cs:146-164`
-
----
-
-#### `CreateEnemyBuilding()`
-根据同步数据生成敌方建筑。
-
-**函数签名:**
-```csharp
-public bool CreateEnemyBuilding(syncBuildingData sbd)
-```
-
-**参数:**
-- `sbd`: 建筑同步数据（包含所有状态信息）
-
-**返回值:**
-- `true`: 生成成功
-- `false`: 失败
-
-**使用示例:**
-```csharp
-// 接收到敌方建筑数据时
-syncBuildingData enemyBuildingData = new syncBuildingData
+// 魅惑过期消息（归还控制权）
+[Serializable]
+public class CharmExpireMessage
 {
-    buildingID = 201,
-    buildingName = "祭坛",
-    playerID = 2,
-    position = new Vector3(50, 0, 50),
-    currentHP = 100,
-    state = BuildingState.Active,
-    hpLevel = 1,
-    slotsLevel = 1
-};
-
-if (buildingManager.CreateEnemyBuilding(enemyBuildingData))
-{
-    Debug.Log("敌方建筑生成成功");
+    public int CurrentOwnerId;          // 当前控制者ID（魅惑者）
+    public int OriginalOwnerId;         // 原始所有者ID
+    public int UnitID;                  // 单位ID
+    public int PosX;                    // 单位位置
+    public int PosY;
+    public syncPieceData UnitSyncData;  // 单位同步数据
 }
-```
 
-**注意:**
-- 此方法会自动设置建筑的所有状态（HP、等级、建造进度等）
-- 生成的建筑会被添加到 `enemyBuildings` 字典
-- 用于网络游戏中接收并创建对方的建筑
-
-**实现位置:** `BuildingManager.cs:131-201`
-
----
-
-### 网络同步
-
-#### `SyncEnemyBuildingState()`
-同步敌方建筑的状态。
-
-**函数签名:**
-```csharp
-public bool SyncEnemyBuildingState(syncBuildingData sbd)
-```
-
-**参数:**
-- `sbd`: 建筑同步数据
-
-**返回值:**
-- `true`: 同步成功
-- `false`: 失败（建筑不存在）
-
-**使用示例:**
-```csharp
-// 接收到建筑状态更新时
-syncBuildingData updateData = new syncBuildingData
+[Serializable]
+public class TurnEndMessage
 {
-    buildingID = 201,
-    currentHP = 80,  // HP 发生变化
-    hpLevel = 2,     // HP 等级提升
-    state = BuildingState.Active
-};
-
-if (buildingManager.SyncEnemyBuildingState(updateData))
-{
-    Debug.Log("敌方建筑状态同步成功");
+    public int PlayerId;
+    public SerializablePlayerData PlayerDataJson; // PlayerData序列化
 }
-```
 
-**注意:**
-- 仅更新已存在的建筑状态
-- 如果建筑不存在，应先调用 `CreateEnemyBuilding()`
-- 会自动根据 localPlayerID 判断是己方还是敌方建筑
-
-**实现位置:** `BuildingManager.cs:354-413`
-
----
-
-#### `CreateCompleteSyncData()`
-创建包含完整状态的同步数据。
-
-**函数签名:**
-```csharp
-public syncBuildingData? CreateCompleteSyncData(int buildingID)
-```
-
-**参数:**
-- `buildingID`: 建筑 ID
-
-**返回值:**
-- 包含完整状态的 `syncBuildingData`
-- 失败时返回 null
-
-**使用示例:**
-```csharp
-// 发送己方建筑的完整状态给对方
-syncBuildingData? myBuildingData = buildingManager.CreateCompleteSyncData(buildingID);
-if (myBuildingData.HasValue)
+// 辅助消息类
+[Serializable]
+public class TurnStartMessage
 {
-    // 通过网络发送
-    NetworkManager.Send(myBuildingData.Value);
+    public int PlayerId;
 }
-```
 
-**包含的信息:**
-- 基本信息：buildingID, buildingName, playerID
-- 位置和状态：position, currentHP, state
-- 建造信息：remainingBuildCost
-- 升级等级：hpLevel, attackRangeLevel, slotsLevel, buildCostLevel
-
-**实现位置:** `BuildingManager.cs:420-458`
-
----
-
-#### CreateCompleteSyncData()的使用场景
-
-`CreateCompleteSyncData()` 用于获取建筑的完整状态信息以便网络发送。以下是具体使用场景：
-
-##### 1. 建筑完成时
-
-己方建筑完成时，用于通知对方：
-
-```csharp
-void OnBuildingCompleted(int buildingID)
+[Serializable]
+public struct SerializablePlayerUnitData
 {
-    Debug.Log($"己方建筑完成: ID={buildingID}");
+    public int UnitID;
+    public int UnitType;
+    public int PositionX;
+    public int PositionY;
+    public bool bUnitIsActivated;
+    public syncPieceData SyncData;
 
-    // 获取完成建筑的完整信息并发送
-    syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-    if (data.HasValue)
+    public static SerializablePlayerUnitData FromPlayerUnitData(PlayerUnitData data)
     {
-        networkManager.SendBuildingComplete(data.Value);
-    }
-}
-```
-
-##### 2. 状态改变时（升级、受损等）
-
-建筑状态改变时，发送变更后的完整状态给对方：
-
-```csharp
-// 建筑升级后
-void UpgradeMyBuilding(int buildingID)
-{
-    if (buildingManager.UpgradeBuilding(buildingID, BuildingUpgradeType.HP))
-    {
-        Debug.Log("建筑HP升级成功");
-
-        // 获取升级后的完整状态并发送
-        syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-        if (data.HasValue)
+        return new SerializablePlayerUnitData
         {
-            networkManager.SendBuildingUpdate(data.Value);
+            UnitID = data.UnitID,
+            UnitType = (int)data.UnitType,
+            PositionX = data.Position.x,
+            PositionY = data.Position.y,
+            bUnitIsActivated = data.bUnitIsActivated,
+            SyncData = data.PlayerUnitDataSO
+
+        };
+    }
+
+    public PlayerUnitData ToPlayerUnitData()
+    {
+        return new PlayerUnitData(
+            UnitID,
+            (CardType)UnitType,
+            new Unity.Mathematics.int2(PositionX, PositionY),
+            SyncData,
+            bUnitIsActivated
+        );
+    }
+}
+
+[Serializable]
+public struct SerializablePlayerData
+{
+    public int PlayerID;
+    public List<SerializablePlayerUnitData> PlayerUnits;
+    public int Resources;
+    public int PlayerReligion;
+    public List<int> PlayerOwnedCells;
+
+    public static SerializablePlayerData FromPlayerData(PlayerData data)
+    {
+        SerializablePlayerData serializableData = new SerializablePlayerData
+        {
+            PlayerID = data.PlayerID,
+            Resources = data.Resources,
+            PlayerReligion = (int)data.PlayerReligion,
+            PlayerOwnedCells = new List<int>(data.PlayerOwnedCells),
+            PlayerUnits = new List<SerializablePlayerUnitData>()
+        };
+
+        foreach (var unit in data.PlayerUnits)
+        {
+            serializableData.PlayerUnits.Add(
+                SerializablePlayerUnitData.FromPlayerUnitData(unit)
+            );
         }
+
+        return serializableData;
     }
-}
 
-// 建筑受损后
-void OnBuildingDamaged(int buildingID)
-{
-    // 获取受损后的完整状态并发送
-    syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-    if (data.HasValue)
+    public PlayerData ToPlayerData()
     {
-        networkManager.SendBuildingUpdate(data.Value);
-    }
-}
-```
+        PlayerData playerData = new PlayerData(PlayerID);
+        playerData.Resources = Resources;
+        playerData.PlayerReligion = (Religion)PlayerReligion;
+        playerData.PlayerOwnedCells = new List<int>(PlayerOwnedCells);
+        playerData.PlayerUnits = new List<PlayerUnitData>();
 
-##### 3. 游戏中途加入时的状态同步
-
-玩家中途加入游戏时，需要发送所有现有建筑的状态：
-
-```csharp
-// 新玩家加入时
-void OnNewPlayerJoined(int newPlayerID)
-{
-    Debug.Log("新玩家加入，正在发送现有建筑状态...");
-
-    // 发送所有己方建筑的状态
-    List<int> myBuildings = buildingManager.GetPlayerBuildings(localPlayerID);
-    foreach (int buildingID in myBuildings)
-    {
-        syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-        if (data.HasValue)
+        foreach (var unit in PlayerUnits)
         {
-            networkManager.SendToPlayer(newPlayerID, data.Value);
+            playerData.PlayerUnits.Add(unit.ToPlayerUnitData());
         }
+
+        return playerData;
     }
 }
-```
 
-##### 4. 重连时的状态恢复
-
-网络断开后重连时，重新发送所有当前状态：
-
-```csharp
-// 玩家重连时
-void OnPlayerReconnected(int playerID)
+// *************************
+//      主要网络系统
+// *************************
+public class NetGameSystem : MonoBehaviour
 {
-    Debug.Log($"玩家{playerID}重连，正在重新同步状态...");
-    SyncAllBuildingsToPlayer(playerID);
-}
+    // 单例
+    public static NetGameSystem Instance { get; private set; }
 
-void SyncAllBuildingsToPlayer(int targetPlayerID)
-{
-    // 发送所有建筑状态
-    List<int> allBuildings = buildingManager.GetAllBuildingIDs();
-    foreach (int buildingID in allBuildings)
+
+    [Header("网络配置")]
+    [SerializeField] private bool isServer = false;
+    [SerializeField] private string serverIP = "127.0.0.1";
+    [SerializeField] private int port = 8888;
+    [SerializeField] private int maxPlayers = 2;
+    [SerializeField] private string playerName = "Player";
+
+    // 网络组件
+    private UdpClient udpClient;
+    private IPEndPoint serverEndPoint;
+    private Dictionary<uint, IPEndPoint> clients; // 服务器: 客户端列表
+    private Dictionary<uint, string> clientNames; // 服务器: 客户端名称
+    private uint localClientId = 0;
+    private uint nextClientId = 1;
+    private bool isRunning = false;
+    private Thread networkThread;
+
+    // 房间相关
+    // 玩家IP
+    private string playerIP = "";
+    // 游戏状态
+    private bool isGameStarted = false;
+    private List<uint> connectedPlayers = new List<uint>();
+
+    // 客户端准备状态和IP
+    private Dictionary<uint, bool> clientReadyStatus; // 服务器: 客户端准备状态
+    private Dictionary<uint, string> clientIPs; // 服务器: 客户端IP地址
+
+
+    // 本地准备状态
+    private bool isLocalReady = false;
+
+    // 所有玩家信息列表
+    private List<PlayerInfo> roomPlayers = new List<PlayerInfo>();
+
+    // 消息处理器
+    private Dictionary<NetworkMessageType, Action<NetworkMessage>> messageHandlers;
+
+    // 事件
+    public event Action<NetworkMessage> OnMessageReceived;
+    public event Action<uint> OnClientConnected;  // 服务器端
+    //public event Action<uint> OnClientDisconnected;
+
+    public event Action OnConnectedToServer;      // 客户端
+    public event Action OnDisconnected;
+    public event Action OnGameStarted;
+
+    // 房间状态更新事件
+    public event Action<List<PlayerInfo>> OnRoomStatusUpdated;
+    public event Action<bool> OnAllPlayersReady; // 所有玩家准备完毕
+
+    // 属性
+    public bool bIsConnected => isRunning;
+    public bool bIsServer => isServer;
+    public uint bLocalClientId => localClientId;
+    public List<uint> ConnectedPlayers => new List<uint>(connectedPlayers);
+    public int PlayerCount => connectedPlayers.Count;
+
+
+    // 获取房间玩家信息
+    public List<PlayerInfo> RoomPlayers => new List<PlayerInfo>(roomPlayers);
+    public bool IsLocalReady => isLocalReady;
+
+    // 引用
+    private GameManage gameManage;
+    private PlayerDataManager playerDataManager;
+
+
+    // 2025.11.17
+    private bool hasStartedLoading = false;     // 是否开始Loading
+    GameLoadProgressUI gameLoadProgressUI;      // 获得本地加载UI
+
+
+
+    // *************************
+    //      Unity生命周期
+    // *************************
+
+    private void Awake()
     {
-        syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-        if (data.HasValue)
+        // 单例设置
+        if (Instance == null)
         {
-            networkManager.SendToPlayer(targetPlayerID, data.Value);
+            Instance = this;
+            // 2025.11.17 Guoning 避免跨场景存在
+            //DontDestroyOnLoad(gameObject);
         }
-    }
-}
-```
-
-##### 5. 调试・状态确认时
-
-开发中用于确认当前状态：
-
-```csharp
-// 调试用：输出建筑的完整状态日志
-void DebugBuildingState(int buildingID)
-{
-    syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-    if (data.HasValue)
-    {
-        Debug.Log($"=== 建筑状态: ID={data.Value.buildingID} ===");
-        Debug.Log($"名称: {data.Value.buildingName}");
-        Debug.Log($"玩家ID: {data.Value.playerID}");
-        Debug.Log($"HP: {data.Value.currentHP}");
-        Debug.Log($"状态: {data.Value.state}");
-        Debug.Log($"剩余建造成本: {data.Value.remainingBuildCost}");
-        Debug.Log($"HP等级: {data.Value.hpLevel}");
-        Debug.Log($"攻击范围等级: {data.Value.attackRangeLevel}");
-        Debug.Log($"槽位等级: {data.Value.slotsLevel}");
-    }
-}
-```
-
-##### 使用场景总结
-
-| 场景 | 用途 |
-|-----|------|
-| ✅ 建筑完成时 | 将完成建筑的所有信息通知对方 |
-| ✅ 状态改变后 | 同步升级、受损后的最新状态 |
-| ✅ 游戏中途加入 | 向新玩家发送所有现有建筑 |
-| ✅ 重连时 | 重新同步断线期间可能改变的状态 |
-| ✅ 定期同步 | 定期发送完整状态防止同步偏差 |
-| ✅ 调试 | 确认并输出当前完整状态 |
-
-**要点：**
-
-1. **包含完整状态** - HP、等级、建造进度等所有信息都包含
-2. **一致性保证** - 一次调用获取一致的状态快照
-3. **发送就绪** - 返回的 `syncBuildingData` 可直接用于网络发送
-4. **NULL 安全** - 建筑不存在时返回 null（`?` 返回值类型）
-
----
-
-### 建筑删除
-
-#### `HandleEnemyBuildingDestruction()`
-处理接收到的敌方建筑破坏通知。
-
-**函数签名:**
-```csharp
-public bool HandleEnemyBuildingDestruction(syncBuildingData sbd)
-```
-
-**参数:**
-- `sbd`: 被破坏建筑的同步数据（currentHP = 0）
-
-**返回值:**
-- `true`: 删除成功
-- `false`: 失败（建筑不存在）
-
-**使用示例:**
-```csharp
-// 接收到敌方建筑破坏通知
-syncBuildingData destructionData = new syncBuildingData
-{
-    buildingID = 201,
-    currentHP = 0,
-    state = BuildingState.Ruined
-};
-
-if (buildingManager.HandleEnemyBuildingDestruction(destructionData))
-{
-    Debug.Log("敌方建筑已删除");
-}
-```
-
-**注意:**
-- 此方法仅删除建筑，不会触发 `OnBuildingDestroyed` 事件
-- 用于接收端处理破坏通知，避免无限循环
-
-**实现位置:** `BuildingManager.cs:689-706`
-
----
-
-#### `GetLastDestroyedBuildingData()`
-获取最后一个被破坏建筑的同步数据（发送端使用）。
-
-**函数签名:**
-```csharp
-public syncBuildingData? GetLastDestroyedBuildingData()
-```
-
-**返回值:**
-- 最后一个被破坏建筑的同步数据
-- 如果没有缓存数据则返回 null
-
-**使用示例:**
-```csharp
-// 在 GameManager 中订阅建筑破坏事件
-buildingManager.OnBuildingDestroyed += (buildingID) =>
-{
-    // 获取被破坏建筑的完整数据
-    syncBuildingData? destructionData = buildingManager.GetLastDestroyedBuildingData();
-    if (destructionData.HasValue)
-    {
-        // 发送给对方玩家
-        NetworkManager.SendBuildingDestruction(destructionData.Value);
-    }
-};
-```
-
-**注意:**
-- 数据获取后会被清空（单次使用）
-- 必须在 `OnBuildingDestroyed` 事件触发后立即调用
-- 用于发送端获取破坏数据并通知对方
-
-**实现位置:** `BuildingManager.cs:712-717`
-
----
-
-#### `OnBuildingDestroyed` 事件
-建筑被破坏时触发的事件。
-
-**事件签名:**
-```csharp
-public event Action<int> OnBuildingDestroyed;
-```
-
-**参数:**
-- `int`: 被破坏建筑的 ID
-
-**使用示例:**
-```csharp
-// 订阅建筑破坏事件
-buildingManager.OnBuildingDestroyed += HandleBuildingDestruction;
-
-void HandleBuildingDestruction(int destroyedBuildingID)
-{
-    Debug.Log($"建筑 {destroyedBuildingID} 已被破坏");
-
-    // 获取破坏数据并发送给对方
-    syncBuildingData? destructionData = buildingManager.GetLastDestroyedBuildingData();
-    if (destructionData.HasValue)
-    {
-        NetworkManager.SendBuildingDestruction(destructionData.Value);
-    }
-}
-```
-
-**实现位置:** `BuildingManager.cs:33`
-
----
-
-### 建造处理
-
-#### `AddFarmerToConstruction()`
-推进建筑建造（投入农民）。
-
-**函数签名:**
-```csharp
-public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
-```
-
-**参数:**
-- `buildingID`: 建筑 ID
-- `farmerID`: 投入的农民棋子 ID
-- `pieceManager`: PieceManager 引用
-
-**返回值:**
-- `true`: 建造推进成功
-- `false`: 失败
-
-**使用示例:**
-```csharp
-if (buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager))
-{
-    Debug.Log("建造推进中");
-}
-```
-
-**处理流程:**
-1. 确认农民的 AP
-2. 确认建筑的剩余建造成本
-3. 消耗农民的 AP
-4. 推进建筑建造
-5. 完成时输出日志
-
-**实现位置:** `BuildingManager.cs:106-158`
-
----
-
-#### `CancelConstruction()`
-取消建造。
-
-**函数签名:**
-```csharp
-public bool CancelConstruction(int buildingID)
-```
-
-**参数:**
-- `buildingID`: 建筑 ID
-
-**返回值:**
-- `true`: 取消成功
-- `false`: 失败
-
-**注意:** 消耗的农民和行动力不会返还。
-
-**实现位置:** `BuildingManager.cs:165-175`
-
----
-
-### 建筑建造流程详解
-
-本节详细说明从建筑建造开始到完成，再到将完成的建筑信息传递给 GameManager 进行同步的完整流程。
-
-#### 流程图
-
-```
-GameManager
-    │
-    ├─ CreateBuilding() → BuildingManager
-    │                         │
-    │                         ├─ 生成建筑（UnderConstruction状态）
-    │                         └─ Building.Initialize()
-    │                               │
-    │                               └─ 设置 remainingBuildCost
-    │
-    ├─ AddFarmerToConstruction() → BuildingManager
-    │                                  │
-    │                                  ├─ 消耗农民 AP
-    │                                  └─ Building.ProgressConstruction()
-    │                                        │
-    │                                        ├─ 减少 remainingBuildCost
-    │                                        └─ 归零后调用 CompleteConstruction()
-    │                                              │
-    │                                              ├─ 状态改为 Inactive
-    │                                              └─ 触发 OnBuildingCompleted 事件
-    │                                                    ↓
-    │                        BuildingManager.HandleBuildingCompleted()
-    │                                                    │
-    │                                                    └─ 触发 OnBuildingCompleted 事件
-    │                                                          ↓
-    ├─ OnBuildingCompleted() ← GameManager 接收事件
-    │        │
-    │        ├─ CreateCompleteSyncData() → BuildingManager
-    │        │                                  │
-    │        │                                  └─ 生成 syncBuildingData
-    │        │
-    │        └─ 网络发送
-```
-
-#### 步骤详解
-
-**步骤1: 开始建造（GameManager → BuildingManager）**
-
-GameManager 调用 `CreateBuilding()` 生成建筑。此时建筑以 `UnderConstruction` 状态创建。
-
-```csharp
-// GameManager 代码
-BuildingDataSO buildingData = // 获取建筑数据
-int buildingID = buildingManager.CreateBuilding(buildingData, playerID, position);
-```
-
-**步骤2: 建筑初始化（Building 内部）**
-
-BuildingManager 生成建筑 Prefab 并调用 `Building.Initialize()`。此时：
-- `playerID` 设置为建筑所有者
-- `remainingBuildCost` 设置为初始建造成本
-- 建筑状态设为 `UnderConstruction`
-- 订阅 `OnBuildingCompleted` 事件
-
-```csharp
-// Building.cs 内部
-public void Initialize(BuildingDataSO data, int ownerPlayerID)
-{
-    buildingData = data;
-    playerID = ownerPlayerID; // 设置所有者
-
-    currentHp = data.maxHp;
-    remainingBuildCost = data.buildingAPCost;
-    currentState = BuildingState.UnderConstruction;
-
-    // 槽位初始化等...
-}
-```
-
-**注意:** Building 自身保存 PlayerID，因此 BuildingManager 无需单独维护 `buildingOwners` 字典。
-
-**步骤3: 推进建造（GameManager → BuildingManager → Building）**
-
-GameManager 投入农民推进建造：
-
-```csharp
-// GameManager 代码
-bool success = buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager);
-```
-
-BuildingManager 消耗农民 AP 后调用 `Building.ProgressConstruction()`：
-
-```csharp
-// BuildingManager.cs 内部
-public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
-{
-    // 确认并消耗农民 AP
-    if (pieceManager.ConsumePieceAP(farmerID, farmer.Data.devotionAPCost))
-    {
-        // 推进建造
-        building.ProgressConstruction(progressAmount);
-    }
-}
-```
-
-**步骤4: 建造成本递减（Building 内部）**
-
-`Building.ProgressConstruction()` 减少 `remainingBuildCost`，归零后调用完成处理：
-
-```csharp
-// Building.cs 内部
-public void ProgressConstruction(int amount)
-{
-    remainingBuildCost -= amount;
-
-    if (remainingBuildCost <= 0)
-    {
-        remainingBuildCost = 0;
-        CompleteConstruction();
-    }
-}
-```
-
-**步骤5: 建造完成（Building 内部）**
-
-调用 `Building.CompleteConstruction()` 时：
-- 状态改为 `Inactive`
-- 触发 `OnBuildingCompleted` 事件
-
-```csharp
-// Building.cs 内部
-private void CompleteConstruction()
-{
-    currentState = BuildingState.Inactive;
-    Debug.Log($"建筑建造完成: {Data.buildingName} (ID: {buildingID})");
-
-    // 触发事件
-    OnBuildingCompleted?.Invoke(buildingID);
-}
-```
-
-**步骤6: BuildingManager 接收事件**
-
-BuildingManager 在 `HandleBuildingCompleted()` 中接收建筑完成事件，并通知 GameManager：
-
-```csharp
-// BuildingManager.cs 内部
-private void HandleBuildingCompleted(int buildingID)
-{
-    Debug.Log($"BuildingManager: 检测到建筑完成 ID={buildingID}");
-
-    // 向 GameManager 触发事件
-    OnBuildingCompleted?.Invoke(buildingID);
-}
-```
-
-**步骤7: GameManager 接收完成通知并网络发送**
-
-GameManager 订阅 `OnBuildingCompleted` 事件，获取完成建筑的信息并通过网络发送给对方：
-
-```csharp
-// GameManager 代码
-void OnBuildingCompleted(int buildingID)
-{
-    Debug.Log($"己方建筑完成: ID={buildingID}");
-
-    // 获取完成建筑的完整同步数据
-    syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-
-    if (data.HasValue)
-    {
-        // 通过网络发送给对方
-        networkManager.SendBuildingComplete(data.Value);
-        Debug.Log($"已发送建筑完成通知: ID={buildingID}");
-    }
-}
-```
-
-#### 完整实现示例
-
-以下是 GameManager 的完整实现示例：
-
-```csharp
-public class NetworkGameManager : MonoBehaviour
-{
-    [SerializeField] private BuildingManager buildingManager;
-    [SerializeField] private PieceManager pieceManager;
-    private NetworkManager networkManager;
-    private int localPlayerID = 1;
-
-    void Start()
-    {
-        // 初始化
-        buildingManager.SetLocalPlayerID(localPlayerID);
-        pieceManager.SetLocalPlayerID(localPlayerID);
-
-        // 订阅建筑完成事件
-        buildingManager.OnBuildingCompleted += OnBuildingCompleted;
-
-        // 订阅建筑破坏事件
-        buildingManager.OnBuildingDestroyed += OnBuildingDestroyed;
-
-        // 设置网络消息接收
-        networkManager.OnBuildingCompleteReceived += OnEnemyBuildingCompleteReceived;
-    }
-
-    // === 己方建筑建造流程 ===
-
-    /// <summary>
-    /// 开始建筑建造
-    /// </summary>
-    void StartBuildingConstruction()
-    {
-        // 1. 生成建筑（UnderConstruction状态）
-        BuildingDataSO buildingData = GetBuildingData("祭坛");
-        int buildingID = buildingManager.CreateBuilding(buildingData, localPlayerID, new Vector3(10, 0, 10));
-
-        if (buildingID >= 0)
+        else
         {
-            Debug.Log($"建筑建造开始: ID={buildingID}");
+            Destroy(gameObject);
+            return;
+        }
 
-            // 向对方发送建筑生成通知
-            syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-            if (data.HasValue)
+        // 确保MainThreadDispatcher存在
+        if (FindObjectOfType<MainThreadDispatcher>() == null)
+        {
+            GameObject dispatcherObj = new GameObject("MainThreadDispatcher");
+            dispatcherObj.AddComponent<MainThreadDispatcher>();
+        }
+
+        // 初始化消息处理器
+        InitializeMessageHandlers();
+
+        // 初始化房间相关字典 
+        clientReadyStatus = new Dictionary<uint, bool>();
+        clientIPs = new Dictionary<uint, string>();
+
+    }
+
+    private void Start()
+    {
+        // 从SceneStateManager
+        if (SceneStateManager.Instance != null)
+        {
+            isServer = SceneStateManager.Instance.GetIsServer();
+            playerName = SceneStateManager.Instance.PlayerName;
+            playerIP = SceneStateManager.Instance.PlayerIP; // 获取本地IP
+
+            if (SceneStateManager.Instance.bIsDirectConnect)
             {
-                networkManager.SendBuildingCreate(data.Value);
+                // 互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                if (!isServer)
+                {
+                    //互联测试中，这里可以从PlayerPrefs获取默认服务器IP
+                    serverIP = PlayerPrefs.GetString("ServerIP", "192.168.1.100");
+                }
+
+            }
+
+
+            // 延迟启动网络,确保所有单例初始化完成
+            StartCoroutine(DelayedNetworkStart());
+        }
+
+    }
+
+    private IEnumerator DelayedNetworkStart()
+    {
+        // 等待一帧,确保所有 Awake 执行完成
+        yield return 0.1f;
+
+        // 获取 GameManage 引用
+        GetGameManage();
+
+        if (SceneStateManager.Instance.bIsSingle)
+        {
+            gameManage.StartGameFromRoomUI();
+        }
+        else
+        {
+            // 自动启动网络
+            if (isServer)
+            {
+                StartServer();
+            }
+            else
+            {
+                ConnectToServer();
+            }
+        }
+    }
+    private void OnDestroy()
+    {
+        Shutdown();
+
+        // 2025.11.17 清理
+        if (Instance == this)
+        {
+            Instance = null;
+            Debug.Log("NetGameManager已销毁");
+        }
+    }
+
+    // *************************
+    //         初始化
+    // *************************
+    public void GetGameManage()
+    {
+
+        // 多重尝试获取
+        gameManage = GameManage.Instance;
+
+        if (gameManage == null)
+        {
+            gameManage = GameObject.Find("GameManager").GetComponent<GameManage>();
+        }
+
+        //if (gameManage == null)
+        //{
+        //    Debug.LogError("无法找到 GameManage!");
+        //}
+        //else
+        //{
+        //    Debug.Log($"成功获取 GameManage");
+        //}
+
+        playerDataManager = PlayerDataManager.Instance;
+
+        if (playerDataManager == null)
+        {
+            Debug.LogError("无法找到 PlayerDataManager!");
+        }
+    }
+
+
+    private void InitializeMessageHandlers()
+    {
+        messageHandlers = new Dictionary<NetworkMessageType, Action<NetworkMessage>>
+        {
+                // 网络状态相关
+                { NetworkMessageType.CONNECT, HandleConnect },
+                { NetworkMessageType.CONNECTED, HandleConnected },
+                { NetworkMessageType.PLAYER_JOINED, HandlePlayerJoined },
+                
+                // 房间状态相关
+                { NetworkMessageType.PLAYER_LEFT, HandlePlayerLeft },
+                { NetworkMessageType.PLAYER_READY, HandlePlayerReady },
+                { NetworkMessageType.PLAYER_NOT_READY, HandlePlayerNotReady },
+                { NetworkMessageType.ROOM_STATUS_UPDATE, HandleRoomStatusUpdate }, 
+               
+                // 游戏流程相关
+                { NetworkMessageType.GAME_START, HandleGameStart },
+                { NetworkMessageType.TURN_START, HandleTurnStart },
+                { NetworkMessageType.TURN_END, HandleTurnEnd },
+                 // 单位相关
+                { NetworkMessageType.UNIT_MOVE, HandleUnitMove },
+                { NetworkMessageType.UNIT_ADD, HandleUnitAdd },
+                { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
+                { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },
+                { NetworkMessageType.BUILDING_ATTACK, HandleBuildingAttack },
+                { NetworkMessageType.UNIT_CHARM, HandleUnitCharm },
+                { NetworkMessageType.CHARM_EXPIRE, HandleCharmExpire },
+
+                { NetworkMessageType.PING, HandlePing },
+                { NetworkMessageType.PONG, HandlePong }
+        };
+
+        //Debug.Log($"=== 消息处理器注册完成 ===");
+        //Debug.Log($"共注册 {messageHandlers.Count} 个处理器");
+    }
+
+    // *************************
+    //      服务器功能
+    // *************************
+
+    public void StartServer()
+    {
+        if (isRunning)
+        {
+            Debug.LogWarning("服务器已经在运行!");
+            return;
+        }
+
+        try
+        {
+            clients = new Dictionary<uint, IPEndPoint>();
+            clientNames = new Dictionary<uint, string>();
+
+            clientReadyStatus = new Dictionary<uint, bool>();
+            clientIPs = new Dictionary<uint, string>();
+
+            //connectedPlayers.Clear();
+
+            udpClient = new UdpClient(port);
+            isRunning = true;
+
+            // 服务器自己算作第一个玩家
+            localClientId = 0;
+            connectedPlayers.Add(0);
+
+            //添加服务器自己到房间玩家列表
+            roomPlayers.Add(new PlayerInfo
+            {
+                PlayerId = 0,
+                PlayerName = playerName,
+                PlayerIP = playerIP,
+                IsReady = true
+            });
+
+            // 启动接收线程
+            networkThread = new Thread(ServerLoop) { IsBackground = true };
+            networkThread.Start();
+
+            Debug.Log($"[服务器] 启动成功 - 端口: {port}");
+
+            // 通知UI更新房间状态 
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                OnRoomStatusUpdated?.Invoke(roomPlayers);
+
+            });
+
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[服务器] 启动失败: {ex.Message}");
+            isRunning = false;
+        }
+    }
+
+    // 服务器接收循环
+    private void ServerLoop()
+    {
+        while (isRunning)
+        {
+            try
+            {
+                IPEndPoint clientEP = null;
+                byte[] data = udpClient.Receive(ref clientEP);
+                string json = Encoding.UTF8.GetString(data);
+
+                if (json == "PingCheck")
+                {
+                    // 告知客户端“服务器在线”
+                    byte[] response = Encoding.UTF8.GetBytes("ServerAlive");
+                    udpClient.Send(response, response.Length, clientEP);
+                    continue; // 跳过本次循环，不继续解析
+                }
+
+                NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(json);
+
+                // 处理消息
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    if (messageHandlers.ContainsKey(message.MessageType))
+                    {
+                        messageHandlers[message.MessageType](message);
+                    }
+
+                    // 如果是新连接请求，记录客户端
+                    if (message.MessageType == NetworkMessageType.CONNECT)
+                    {
+                        ConnectMessage connectData = JsonConvert.DeserializeObject<ConnectMessage>(message.JsonData);
+                        uint clientId = nextClientId++;
+                        clients[clientId] = clientEP;
+                        clientNames[clientId] = connectData.PlayerName;
+                        clientReadyStatus[clientId] = false; // 初始化为未准备
+                        clientIPs[clientId] = connectData.PlayerIP; // 保存IP
+                        connectedPlayers.Add(clientId);
+
+                        // 发送确认
+                        ConnectedMessage connectedMsg = new ConnectedMessage
+                        {
+                            AssignedClientId = clientId,
+                            ExistingPlayerIds = connectedPlayers
+                        };
+
+                        NetworkMessage response = new NetworkMessage
+                        {
+                            MessageType = NetworkMessageType.CONNECTED,
+                            SenderId = 0,
+                            JsonData = JsonConvert.SerializeObject(connectedMsg)
+                        };
+
+                        SendToClient(clientId, response);
+
+                        // 通知其他客户端
+                        PlayerJoinedMessage joinedMsg = new PlayerJoinedMessage
+                        {
+                            PlayerId = clientId,
+                            PlayerName = connectData.PlayerName,
+                            PlayerIP = connectData.PlayerIP
+                        };
+
+                        NetworkMessage joinedMessage = new NetworkMessage
+                        {
+                            MessageType = NetworkMessageType.PLAYER_JOINED,
+                            SenderId = 0,
+                            JsonData = JsonConvert.SerializeObject(joinedMsg)
+                        };
+
+                        BroadcastToClients(joinedMessage, clientId);
+
+                        // 更新房间玩家列表并发送房间状态
+                        UpdateRoomPlayersList();
+                        SendRoomStatusToAll();
+
+                        OnClientConnected?.Invoke(clientId);
+                    }
+
+                    // 转发其他消息
+                    else if (message.MessageType != NetworkMessageType.PING &&
+                             message.MessageType != NetworkMessageType.PONG &&
+                             message.MessageType != NetworkMessageType.PLAYER_READY &&  // 不广播准备消息
+                             message.MessageType != NetworkMessageType.PLAYER_NOT_READY)  // 不广播取消准备消息
+                    {
+                        BroadcastToClients(message, message.SenderId);
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                if (isRunning)
+                    Debug.LogError($"服务器接收错误: {e.Message}");
             }
         }
     }
 
-    /// <summary>
-    /// 投入农民推进建造
-    /// </summary>
-    void ProgressBuildingConstruction(int buildingID, int farmerID)
+    // 更新房间玩家列表
+    private void UpdateRoomPlayersList()
     {
-        // 2. 投入农民（消耗 AP 推进建造）
-        if (buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager))
-        {
-            Debug.Log($"建造推进中: buildingID={buildingID}, farmerID={farmerID}");
+        roomPlayers.Clear();
 
-            // 向对方发送建造进度
-            syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-            if (data.HasValue)
+        // 添加服务器自己
+        roomPlayers.Add(new PlayerInfo
+        {
+            PlayerId = 0,
+            PlayerName = playerName,
+            PlayerIP = playerIP,
+            IsReady = true
+        });
+
+        // 添加所有客户端
+        foreach (var clientId in connectedPlayers)
+        {
+            if (clientId != 0 && clientNames.ContainsKey(clientId))
             {
-                networkManager.SendBuildingUpdate(data.Value);
+                bool clientReady = false;
+                if (clientReadyStatus.ContainsKey(clientId))
+                {
+                    clientReady = clientReadyStatus[clientId];
+                }
+
+                roomPlayers.Add(new PlayerInfo
+                {
+                    PlayerId = clientId,
+                    PlayerName = clientNames[clientId],
+                    PlayerIP = clientIPs.ContainsKey(clientId) ? clientIPs[clientId] : "Unknown",
+                    IsReady = clientReady
+                });
+                // 调试输出
+                //Debug.Log($"[UpdateRoomPlayersList] 玩家 {clientId} - 准备状态: {clientReadyStatus[clientId]}");
             }
         }
     }
 
-    /// <summary>
-    /// 建筑完成时的处理（由事件自动调用）
-    /// </summary>
-    void OnBuildingCompleted(int buildingID)
-    {
-        Debug.Log($"己方建筑完成: ID={buildingID}");
 
-        // 3. 向对方发送完成通知
-        syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-        if (data.HasValue)
+
+    // 发送房间状态给所有玩家
+    private void SendRoomStatusToAll()
+    {
+        RoomStatusUpdateMessage statusMsg = new RoomStatusUpdateMessage
         {
-            networkManager.SendBuildingComplete(data.Value);
-            Debug.Log($"已发送建筑完成通知: ID={buildingID}");
+            Players = roomPlayers
+        };
+
+        NetworkMessage message = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.ROOM_STATUS_UPDATE,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(statusMsg)
+        };
+
+        // 广播给所有客户端
+        BroadcastToClients(message, uint.MaxValue);
+
+        // 服务器自己也更新
+        MainThreadDispatcher.Enqueue(() => {
+            OnRoomStatusUpdated?.Invoke(roomPlayers);
+
+            //Debug.Log("SendRoomStatusToAll");
+            CheckAllPlayersReady();
+        });
+    }
+
+    // 检查所有玩家是否准备完毕
+    private void CheckAllPlayersReady()
+    {
+        //Debug.Log("CheckAllPlayersReady");
+        if (roomPlayers.Count < 2) // 至少需要2个玩家
+        {
+            OnAllPlayersReady?.Invoke(false);
+            return;
+        }
+
+        bool allReady = true;
+        foreach (var player in roomPlayers)
+        {
+            //Debug.Log("Player "+player.PlayerId+" Ready? "+player.IsReady);
+            if (!player.IsReady)
+            {
+                allReady = false;
+                break;
+            }
+        }
+
+        OnAllPlayersReady?.Invoke(allReady);
+    }
+
+
+    private void HandleNewClientConnection(IPEndPoint clientEndPoint, NetworkMessage message)
+    {
+        // 检查是否已满
+        if (connectedPlayers.Count >= maxPlayers)
+        {
+            Debug.Log("[服务器] 服务器已满,拒绝连接");
+            return;
+        }
+
+        uint newClientId = nextClientId++;
+        clients[newClientId] = clientEndPoint;
+        connectedPlayers.Add(newClientId);
+
+        // 解析客户端名称
+        ConnectMessage connectMsg = JsonConvert.DeserializeObject<ConnectMessage>(message.JsonData);
+        string clientName = connectMsg?.PlayerName ?? $"Player{newClientId}";
+        clientNames[newClientId] = clientName;
+
+        // 发送连接确认
+        ConnectedMessage connectedMsg = new ConnectedMessage
+        {
+            AssignedClientId = newClientId,
+            ExistingPlayerIds = new List<uint>(connectedPlayers)
+        };
+
+        NetworkMessage response = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.CONNECTED,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(connectedMsg)
+        };
+
+        SendToClient(newClientId, response);
+
+        // 通知所有其他客户端
+        PlayerJoinedMessage joinedMsg = new PlayerJoinedMessage
+        {
+            PlayerId = newClientId,
+            PlayerName = clientName
+        };
+
+        NetworkMessage joinedMessage = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.PLAYER_JOINED,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(joinedMsg)
+        };
+
+        BroadcastToClients(joinedMessage, newClientId);
+
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            OnClientConnected?.Invoke(newClientId);
+            Debug.Log($"[服务器] 客户端 {newClientId} ({clientName}) 已连接 - 当前玩家数: {connectedPlayers.Count}/{maxPlayers}");
+
+            // 如果人数够了,自动开始游戏
+            if (connectedPlayers.Count >= maxPlayers && !isGameStarted)
+            {
+                Invoke(nameof(StartGame), 1f); // 延迟1秒开始
+            }
+        });
+    }
+
+    public void StartGame()
+    {
+        if (!isServer)
+        {
+            Debug.LogWarning("只有服务器可以启动游戏!");
+            return;
+        }
+
+        if (isGameStarted)
+        {
+            Debug.LogWarning("游戏已经开始!");
+            return;
+        }
+
+        if (connectedPlayers.Count < maxPlayers)
+        {
+            Debug.LogWarning("玩家不足,无法开始游戏!");
+            return;
+        }
+
+        // 创建游戏开始数据
+
+        int[] playerIds = new int[connectedPlayers.Count];
+        for (int i = 0; i < connectedPlayers.Count; i++)
+        {
+            playerIds[i] = (int)connectedPlayers[i];
+        }
+
+        GameStartData gameData = new GameStartData
+        {
+            PlayerIds = playerIds,
+            StartPositions = AssignStartPositions(),
+            FirstTurnPlayerId = (int)connectedPlayers[0],
+            PlayerReligion = SceneStateManager.Instance.PlayerReligion
+        };
+
+        NetworkMessage message = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.GAME_START,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(gameData)
+        };
+
+        // 广播给所有客户端
+        BroadcastToClients(message, 0);
+
+        // 服务器自己也处理
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            Debug.Log("[服务器] 游戏开始!");
+            OnGameStarted?.Invoke();
+            HandleGameStart(message);
+        });
+
+        // 2025.11.14 Guoning 开始播放音乐
+        SoundManager.Instance.StopBGM();
+        SoundManager.Instance.PlayBGM(SoundSystem.TYPE_BGM.REDMOON_THEME);
+    }
+
+    private int[] AssignStartPositions()
+    {
+        // 根据玩家数量分配起始位置，后续起始位置实装后不需要
+        if (gameManage != null && gameManage.GetBoardCount() > 0)
+        {
+            int boardCount = gameManage.GetBoardCount();
+            int[] positions = new int[connectedPlayers.Count];
+
+
+            // 简单分配: 第一个玩家在0, 最后一个玩家在最后一个格子
+            for (int i = 0; i < positions.Length; i++)
+            {
+                positions[i] = gameManage.GetStartPosForNetGame(i);
+                // 更改为保存的起始位置
+                //if (i == 0)
+                //    positions[i] = 0;
+                //else if (i == positions.Length - 1)
+                //    positions[i] = boardCount - 1;
+                //else
+                //    positions[i] = (boardCount / positions.Length) * i;
+
+                //if (i == 0)
+                //    positions[i] = 0;
+                //else if (i == positions.Length - 1)
+                //    positions[i] = boardCount - 1;
+                //else
+                //    positions[i] = (boardCount / positions.Length) * i;
+            }
+
+            return positions;
+        }
+
+        // 默认位置
+        return new int[] { 0, 99 };
+    }
+
+    // *************************
+    //      客户端功能
+    // *************************
+
+    public void ConnectToServer()
+    {
+        // 添加服务器检测
+        bool serverExists = false;
+        using (UdpClient testClient = new UdpClient())
+        {
+            try
+            {
+                testClient.Connect(serverIP, port);
+                //Debug.Log("Server IP is "+serverIP+" server port is "+port);
+                // 发送一个测试Ping包
+                byte[] testData = Encoding.UTF8.GetBytes("PingCheck");
+                testClient.Send(testData, testData.Length);
+
+                // 设置超时
+                testClient.Client.ReceiveTimeout = 500;
+                IPEndPoint remote = new IPEndPoint(IPAddress.Any, 0);
+
+                // 等待服务器响应
+                DateTime startTime = DateTime.Now;
+                while ((DateTime.Now - startTime).TotalMilliseconds < 500)
+                {
+                    if (testClient.Available > 0)
+                    {
+                        byte[] recv = testClient.Receive(ref remote);
+                        string reply = Encoding.UTF8.GetString(recv);
+                        if (reply.Contains("ServerAlive"))
+                        {
+                            serverExists = true;
+                            break;
+                        }
+                    }
+                    Thread.Sleep(10); // 短暂等待避免占满CPU
+                }
+            }
+            catch (SocketException)
+            {
+                serverExists = false;
+            }
+        }
+
+        if (!serverExists)
+        {
+            Debug.LogWarning("[客户端] 未检测到服务器，连接失败。");
+            SceneController.Instance?.SwitchScene("SelectScene", null);
+            return;
+        }
+
+
+        try
+        {
+            serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIP), port);
+            udpClient = new UdpClient();
+            isRunning = true;
+
+            // 发送连接请求
+            ConnectMessage connectMsg = new ConnectMessage
+            {
+                PlayerName = playerName,
+                PlayerIP = playerIP
+            };
+
+            NetworkMessage message = new NetworkMessage
+            {
+                MessageType = NetworkMessageType.CONNECT,
+                SenderId = 0,
+                JsonData = JsonConvert.SerializeObject(connectMsg)
+            };
+
+            SendToServer(message);
+
+            // 启动接收线程
+            networkThread = new Thread(ClientLoop) { IsBackground = true };
+            networkThread.Start();
+
+            Debug.Log($"[客户端] 正在连接到 {serverIP}:{port}...");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[客户端] 连接失败: {ex.Message}");
+            isRunning = false;
         }
     }
 
-    /// <summary>
-    /// 建筑破坏时的处理（由事件自动调用）
-    /// </summary>
-    void OnBuildingDestroyed(int buildingID)
+    private void ClientLoop()
     {
-        Debug.Log($"己方建筑被破坏: ID={buildingID}");
-
-        // 获取破坏数据并发送
-        syncBuildingData? data = buildingManager.GetLastDestroyedBuildingData();
-        if (data.HasValue)
+        while (isRunning)
         {
-            networkManager.SendBuildingDestruction(data.Value);
+            try
+            {
+                IPEndPoint remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                byte[] data = udpClient.Receive(ref remoteEndPoint);
+                string jsonData = Encoding.UTF8.GetString(data);
+
+                NetworkMessage message = JsonConvert.DeserializeObject<NetworkMessage>(jsonData);
+
+                // 在主线程处理消息
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    if (messageHandlers.ContainsKey(message.MessageType))
+                    {
+                        messageHandlers[message.MessageType](message);
+                    }
+                    OnMessageReceived?.Invoke(message);
+                });
+            }
+            catch (SocketException)
+            {
+                if (isRunning)
+                {
+                    Thread.Sleep(10);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (isRunning)
+                    Debug.LogError($"[客户端] 错误: {ex.Message}");
+            }
         }
     }
 
-    // === 敌方建筑接收流程 ===
+    // *************************
+    //      发送消息
+    // *************************
 
-    /// <summary>
-    /// 接收敌方建筑完成通知
-    /// </summary>
-    void OnEnemyBuildingCompleteReceived(syncBuildingData data)
+    public void SendMessage(NetworkMessageType type, object data)
     {
-        Debug.Log($"收到敌方建筑完成通知: ID={data.buildingID}");
-
-        // 如果建筑已存在则同步状态
-        if (buildingManager.DoesBuildingExist(data.buildingID))
+        NetworkMessage message = new NetworkMessage
         {
-            buildingManager.SyncEnemyBuildingState(data);
+            MessageType = type,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(data)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(message, localClientId);
         }
         else
         {
-            // 建筑不存在则新建
-            buildingManager.CreateEnemyBuilding(data);
-        }
-    }
-}
-```
-
-#### 要点总结
-
-1. **建造状态转换**
-   - `UnderConstruction` → `Inactive` → `Active`
-   - 完成后立即为 `Inactive`（配置农民后变为 `Active`）
-
-2. **事件驱动设计**
-   - Building → BuildingManager → GameManager 层级事件传播
-   - 各层松耦合独立运作
-
-3. **syncBuildingData 的使用**
-   - `remainingBuildCost` 包含建造进度
-   - `state` 包含当前建筑状态
-   - 用一个结构体表达完整状态
-
-4. **网络同步时机**
-   - 建造开始时：通知建筑生成
-   - 建造进行时：更新进度（可选）
-   - 建造完成时：发送完成通知（重要）
-
-5. **初始化两个 Manager**
-   - 需要同时调用 `buildingManager.SetLocalPlayerID()` 和 `pieceManager.SetLocalPlayerID()`
-   - 这样才能正确区分己方/敌方的建筑・棋子
-
----
-
-### 信徒配置
-
-#### `EnterBuilding()`
-将农民配置到建筑中。
-
-**函数签名:**
-```csharp
-public bool EnterBuilding(int buildingID, int farmerID, PieceManager pieceManager)
-```
-
-**参数:**
-- `buildingID`: 建筑 ID
-- `farmerID`: 农民棋子 ID
-- `pieceManager`: PieceManager 引用
-
-**返回值:**
-- `true`: 配置成功
-- `false`: 失败（槽位已满、建筑未完成等）
-
-**使用示例:**
-```csharp
-if (buildingManager.EnterBuilding(buildingID, farmerID, pieceManager))
-{
-    Debug.Log("农民已配置到建筑");
-}
-else
-{
-    Debug.Log("配置失败（槽位已满或建筑未完成）");
-}
-```
-
-**实现位置:** `BuildingManager.cs:182-230`
-
----
-
-### 建筑升级
-
-#### `UpgradeBuilding()`
-升级建筑项目。
-
-**函数签名:**
-```csharp
-public bool UpgradeBuilding(int buildingID, BuildingUpgradeType upgradeType)
-```
-
-**参数:**
-- `buildingID`: 建筑 ID
-- `upgradeType`: 升级项目
-  - `BuildingUpgradeType.HP` - 最大 HP
-  - `BuildingUpgradeType.AttackRange` - 攻击范围
-  - `BuildingUpgradeType.Slots` - 槽位数
-  - `BuildingUpgradeType.BuildCost` - 建造成本
-
-**返回值:**
-- `true`: 升级成功
-- `false`: 失败
-
-**使用示例:**
-```csharp
-// 升级 HP
-if (buildingManager.UpgradeBuilding(buildingID, BuildingUpgradeType.HP))
-{
-    Debug.Log("建筑 HP 升级成功");
-}
-
-// 升级槽位数
-if (buildingManager.UpgradeBuilding(buildingID, BuildingUpgradeType.Slots))
-{
-    Debug.Log("建筑槽位数升级成功");
-}
-```
-
-**实现位置:** `BuildingManager.cs:240-258`
-
----
-
-#### `GetUpgradeCost()` (Building)
-获取建筑升级费用。
-
-**函数签名:**
-```csharp
-public int GetUpgradeCost(int buildingID, BuildingUpgradeType upgradeType)
-```
-
-**实现位置:** `BuildingManager.cs:266-276`
-
----
-
-#### `CanUpgrade()` (Building)
-检查建筑是否可以升级。
-
-**函数签名:**
-```csharp
-public bool CanUpgrade(int buildingID, BuildingUpgradeType upgradeType)
-```
-
-**实现位置:** `BuildingManager.cs:284-293`
-
----
-
-### 建筑信息获取
-
-#### `GetBuildingHP()`
-获取建筑当前 HP。
-
-**函数签名:**
-```csharp
-public int GetBuildingHP(int buildingID)
-```
-
-**实现位置:** `BuildingManager.cs:301-309`
-
----
-
-#### `GetBuildingState()`
-获取建筑状态。
-
-**函数签名:**
-```csharp
-public BuildingState GetBuildingState(int buildingID)
-```
-
-**返回值:**
-- `BuildingState.UnderConstruction` - 建造中
-- `BuildingState.Active` - 运行中
-- `BuildingState.Inactive` - 未运行
-- `BuildingState.Ruined` - 废墟
-
-**实现位置:** `BuildingManager.cs:314-322`
-
----
-
-#### `GetBuildProgress()`
-获取建造进度（0.0～1.0）。
-
-**函数签名:**
-```csharp
-public float GetBuildProgress(int buildingID)
-```
-
-**返回值:**
-- 0.0～1.0 范围（0.0=未开始，1.0=完成）
-
-**实现位置:** `BuildingManager.cs:327-335`
-
----
-
-#### `DoesBuildingExist()`
-检查建筑是否存在。
-
-**函数签名:**
-```csharp
-public bool DoesBuildingExist(int buildingID)
-```
-
-**实现位置:** `BuildingManager.cs:352-355`
-
----
-
----
-
-#### `GetPlayerBuildings()`
-获取指定玩家的所有建筑 ID。
-
-**函数签名:**
-```csharp
-public List<int> GetPlayerBuildings(int playerID)
-```
-
-**参数:**
-- `playerID`: 玩家 ID
-
-**返回值:**
-- 建筑 ID 列表
-
-**使用示例:**
-```csharp
-List<int> player1Buildings = buildingManager.GetPlayerBuildings(1);
-Debug.Log($"玩家1的建筑数: {player1Buildings.Count}");
-
-foreach (int buildingID in player1Buildings)
-{
-    BuildingState state = buildingManager.GetBuildingState(buildingID);
-    Debug.Log($"建筑ID={buildingID}, 状态={state}");
-}
-```
-
-**实现位置:** `BuildingManager.cs:373-379`
-
----
-
-#### `GetAllBuildingIDs()`
-获取所有建筑 ID。
-
-**函数签名:**
-```csharp
-public List<int> GetAllBuildingIDs()
-```
-
-**实现位置:** `BuildingManager.cs:384-387`
-
----
-
-#### `GetOperationalBuildings()`
-获取运行中的建筑 ID 列表。
-
-**函数签名:**
-```csharp
-public List<int> GetOperationalBuildings()
-```
-
-**实现位置:** `BuildingManager.cs:392-398`
-
----
-
-#### `GetBuildingsUnderConstruction()`
-获取建造中的建筑 ID 列表。
-
-**函数签名:**
-```csharp
-public List<int> GetBuildingsUnderConstruction()
-```
-
-**实现位置:** `BuildingManager.cs:403-409`
-
----
-
-### 建筑伤害处理
-
-#### `DamageBuilding()`
-对建筑造成伤害。
-
-**函数签名:**
-```csharp
-public bool DamageBuilding(int buildingID, int damage)
-```
-
-**参数:**
-- `buildingID`: 建筑 ID
-- `damage`: 伤害量
-
-**返回值:**
-- `true`: 造成伤害成功
-- `false`: 失败
-
-**实现位置:** `BuildingManager.cs:413-423`
-
----
-
-#### `RemoveBuilding()`
-强制删除建筑。
-
-**函数签名:**
-```csharp
-public bool RemoveBuilding(int buildingID)
-```
-
-**实现位置:** `BuildingManager.cs:403-418`
-
----
-
-### 建筑回合处理
-
-#### `ProcessTurnStart()` (Building)
-执行所有建筑的回合处理（资源生成等）。
-
-**函数签名:**
-```csharp
-public void ProcessTurnStart(int currentTurn)
-```
-
-**参数:**
-- `currentTurn`: 当前回合数
-
-**使用示例:**
-```csharp
-// 回合开始时调用
-buildingManager.ProcessTurnStart(currentTurn);
-```
-
-**实现位置:** `BuildingManager.cs:431-443`
-
----
-
-## 使用示例: 完整的游戏流程
-
-```csharp
-public class GameManager : MonoBehaviour
-{
-    [SerializeField] private PieceManager pieceManager;
-    [SerializeField] private BuildingManager buildingManager;
-
-    private int currentPlayerID = 1;
-    private int currentTurn = 0;
-
-    void Start()
-    {
-        // 生成农民
-        int farmerID = pieceManager.CreatePiece(
-            PieceType.Farmer,
-            Religion.Maya,
-            currentPlayerID,
-            new Vector3(0, 0, 0)
-        );
-
-        // 生成军队
-        int militaryID = pieceManager.CreatePiece(
-            PieceType.Military,
-            Religion.Maya,
-            currentPlayerID,
-            new Vector3(5, 0, 0)
-        );
-
-        // 生成建筑
-        int buildingID = buildingManager.CreateBuildingByName(
-            "祭坛",
-            currentPlayerID,
-            new Vector3(10, 0, 10)
-        );
-
-        // 将农民投入建造
-        buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager);
-
-        // 建筑升级
-        if (buildingManager.CanUpgrade(buildingID, BuildingUpgradeType.HP))
-        {
-            buildingManager.UpgradeBuilding(buildingID, BuildingUpgradeType.HP);
-        }
-
-        // 棋子升级
-        if (pieceManager.CanUpgrade(militaryID, PieceUpgradeType.HP))
-        {
-            pieceManager.UpgradePiece(militaryID, PieceUpgradeType.HP);
-        }
-    }
-
-    void OnTurnStart()
-    {
-        currentTurn++;
-
-        // 回合处理
-        pieceManager.ProcessTurnStart(currentPlayerID);
-        buildingManager.ProcessTurnStart(currentTurn);
-
-        // 回复各棋子的 AP
-        List<int> playerPieces = pieceManager.GetPlayerPieces(currentPlayerID);
-        foreach (int pieceID in playerPieces)
-        {
-            pieceManager.RecoverPieceAP(pieceID, 5.0f);
-        }
-    }
-
-    void OnAttackButtonClick(int attackerID, int targetID)
-    {
-        // 执行攻击
-        if (pieceManager.AttackEnemy(attackerID, targetID))
-        {
-            Debug.Log("攻击成功");
-        }
-    }
-}
-```
-
----
-
-## 数据结构
-
-### `syncBuildingData`
-建筑同步数据结构。
-
-```csharp
-[System.Serializable]
-public struct syncBuildingData
-{
-    // 基本信息
-    public int buildingID;
-    public string buildingName;
-    public int playerID;
-    public Vector3 position;
-
-    // 状态信息
-    public int currentHP;
-    public BuildingState state;
-    public int remainingBuildCost; // 剩余建造成本
-
-    // 升级等级
-    public int hpLevel;            // HP 等级 (0-3)
-    public int attackRangeLevel;   // 攻击范围等级 (0-3)
-    public int slotsLevel;         // 槽位数等级 (0-3)
-    public int buildCostLevel;     // 建造成本等级 (0-3)
-}
-```
-
----
-
-## 枚举类型（Enums）
-
-### PieceType
-```csharp
-public enum PieceType
-{
-    None,
-    Farmer,      // 农民
-    Military,    // 军队
-    Missionary,  // 宣教师
-    Pope         // 教皇
-}
-```
-
-### Religion
-```csharp
-public enum Religion
-{
-    None,
-    SilkReligion,           // 丝织教
-    RedMoonReligion,        // 红月教
-    MayaReligion,           // 玛雅外星人文明教
-    MadScientistReligion    // 疯狂科学家教
-}
-```
-
-### PieceUpgradeType
-```csharp
-public enum PieceUpgradeType
-{
-    HP,
-    AP
-}
-```
-
-### SpecialUpgradeType
-```csharp
-public enum SpecialUpgradeType
-{
-    FarmerSacrifice,           // 农民: 献祭回复量
-    MilitaryAttackPower,       // 军队: 攻击力
-    MissionaryOccupy,          // 宣教师: 占领成功率
-    MissionaryConvertEnemy,    // 宣教师: 魅惑成功率
-    PopeSwapCooldown,          // 教皇: 位置交换冷却
-    PopeBuff                   // 教皇: 增益效果
-}
-```
-
-### BuildingUpgradeType
-```csharp
-public enum BuildingUpgradeType
-{
-    HP,             // 最大 HP
-    AttackRange,    // 攻击范围
-    Slots,          // 槽位数
-    BuildCost       // 建造成本
-}
-```
-
-### BuildingState
-```csharp
-public enum BuildingState
-{
-    UnderConstruction,  // 建造中
-    Active,            // 运行中
-    Inactive,          // 未运行
-    Ruined            // 废墟
-}
-```
-
----
-
-## 网络同步流程示例
-
-以下是完整的网络同步实现示例：
-
-> **⚠️ 重要: 关于初始化**
->
-> 使用网络同步时，**必须对两个 Manager 都调用 `SetLocalPlayerID()`**。
-> 如果只设置其中一个，同步将无法正常工作。
->
-> ```csharp
-> // ✅ 正确的初始化
-> pieceManager.SetLocalPlayerID(localPlayerID);
-> buildingManager.SetLocalPlayerID(localPlayerID);
->
-> // ❌ 只设置一个会导致同步失败
-> pieceManager.SetLocalPlayerID(localPlayerID);
-> // 忘记设置 buildingManager
-> ```
-
-```csharp
-public class GameManager : MonoBehaviour
-{
-    [SerializeField] private PieceManager pieceManager;
-    [SerializeField] private BuildingManager buildingManager;
-    private int localPlayerID = 1;  // 本地玩家 ID
-    private NetworkManager networkManager;  // 网络管理器（示例）
-
-    void Start()
-    {
-        // ⚠️ 重要: 必须对两个 Manager 都设置 localPlayerID
-        pieceManager.SetLocalPlayerID(localPlayerID);
-        buildingManager.SetLocalPlayerID(localPlayerID);
-
-        // 订阅事件
-        pieceManager.OnPieceDied += OnOwnPieceDied;
-        buildingManager.OnBuildingDestroyed += OnOwnBuildingDestroyed;
-
-        // 注册网络回调
-        networkManager.OnReceivePieceCreate += OnReceiveEnemyPieceCreate;
-        networkManager.OnReceivePieceUpdate += OnReceiveEnemyPieceUpdate;
-        networkManager.OnReceivePieceDeath += OnReceiveEnemyPieceDeath;
-    }
-
-    // ===== 发送端逻辑 =====
-
-    /// <summary>
-    /// 创建己方棋子并发送给对方
-    /// </summary>
-    void CreateMyPiece()
-    {
-        // 1. 创建己方棋子
-        int pieceID = pieceManager.CreatePiece(
-            PieceType.Farmer,
-            Religion.Maya,
-            localPlayerID,
-            new Vector3(10, 0, 10)
-        );
-
-        if (pieceID >= 0)
-        {
-            // 2. 创建完整同步数据
-            syncPieceData data = pieceManager.CreateCompleteSyncData(pieceID, Religion.Maya);
-
-            // 3. 发送给对方
-            networkManager.SendPieceCreate(data);
+            SendToServer(message);
         }
     }
 
     /// <summary>
-    /// 己方棋子状态改变时发送更新
+    /// 发送单位添加消息
     /// </summary>
-    void UpdateMyPiece(int pieceID)
+    public void SendUnitAddMessage(int playerId, CardType unitType, int2 pos,
+        syncPieceData newUnitData, bool isUsed = false,
+        syncBuildingData? buildingData = null)
     {
-        // 1. 创建完整同步数据
-        syncPieceData data = pieceManager.CreateCompleteSyncData(pieceID, Religion.Maya);
-
-        // 2. 发送给对方
-        networkManager.SendPieceUpdate(data);
-    }
-
-    /// <summary>
-    /// 己方棋子死亡时的处理（自动触发）
-    /// </summary>
-    void OnOwnPieceDied(int deadPieceID)
-    {
-        Debug.Log($"己方棋子死亡: ID={deadPieceID}");
-
-        // 1. 获取死亡棋子的数据（HP=0）
-        syncPieceData? deathData = pieceManager.GetLastDeadPieceData();
-
-        // 2. 发送死亡通知给对方
-        if (deathData.HasValue)
+        UnitAddMessage addData = new UnitAddMessage
         {
-            networkManager.SendPieceDeath(deathData.Value);
-            Debug.Log($"已发送死亡通知: 棋子ID={deathData.Value.pieceID}");
-        }
-    }
+            PlayerId = playerId,
+            UnitType = (int)unitType,
+            PosX = pos.x,
+            PosY = pos.y,
+            NewUnitSyncData = newUnitData,
+            BuildingData = buildingData  // 添加建筑数据
+        };
 
-    // ===== 接收端逻辑 =====
-
-    /// <summary>
-    /// 接收并创建敌方棋子
-    /// </summary>
-    void OnReceiveEnemyPieceCreate(syncPieceData data)
-    {
-        // 直接根据同步数据创建敌方棋子
-        if (pieceManager.CreateEnemyPiece(data))
+        NetworkMessage msg = new NetworkMessage
         {
-            Debug.Log($"敌方棋子创建成功: ID={data.pieceID}");
+            MessageType = NetworkMessageType.UNIT_ADD,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(addData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_ADD 消息给所有客户端");
         }
         else
         {
-            Debug.LogError($"敌方棋子创建失败: ID={data.pieceID}");
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_ADD 消息到服务器");
         }
     }
 
     /// <summary>
-    /// 接收并更新敌方棋子状态
+    /// 发送单位移动消息
     /// </summary>
-    void OnReceiveEnemyPieceUpdate(syncPieceData data)
+    public void SendUnitMoveMessage(int playerId, int2 fromPos, int2 toPos, syncPieceData movedUnitData)
     {
-        // 同步敌方棋子状态
-        if (pieceManager.SyncEnemyPieceState(data))
+        UnitMoveMessage moveData = new UnitMoveMessage
         {
-            Debug.Log($"敌方棋子状态更新成功: ID={data.pieceID}");
+            PlayerId = playerId,
+            FromX = fromPos.x,
+            FromY = fromPos.y,
+            ToX = toPos.x,
+            ToY = toPos.y,
+            MovedUnitSyncData = movedUnitData
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_MOVE,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(moveData)
+        };
+
+        if (isServer)
+        {
+            // 服务器广播给所有客户端（排除自己）
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_MOVE 消息给所有客户端");
         }
         else
         {
-            Debug.LogWarning($"敌方棋子不存在，尝试创建: ID={data.pieceID}");
-            pieceManager.CreateEnemyPiece(data);
+            // 客户端发送给服务器
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_MOVE 消息到服务器");
         }
     }
 
     /// <summary>
-    /// 接收敌方棋子死亡通知
+    /// 发送单位移除消息
     /// </summary>
-    void OnReceiveEnemyPieceDeath(syncPieceData data)
+    public void SendUnitRemoveMessage(int playerId, int2 pos, int unitId)
     {
-        // 删除敌方棋子（不触发 OnPieceDied 事件）
-        if (pieceManager.HandleEnemyPieceDeath(data))
+        UnitRemoveMessage removeData = new UnitRemoveMessage
         {
-            Debug.Log($"敌方棋子已删除: ID={data.pieceID}");
+            PlayerId = playerId,
+            PosX = pos.x,
+            PosY = pos.y,
+            UnitID = unitId
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_REMOVE,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(removeData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_REMOVE 消息给所有客户端");
         }
         else
         {
-            Debug.LogWarning($"要删除的敌方棋子不存在: ID={data.pieceID}");
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_REMOVE 消息到服务器");
         }
     }
-
-    // ===== 示例：攻击流程 =====
 
     /// <summary>
-    /// 攻击敌方棋子的完整流程
+    /// 发送单位攻击消息
     /// </summary>
-    void AttackEnemyPiece(int myMilitaryID, int enemyPieceID)
+    public void SendUnitAttackMessage(
+        int attackerPlayerId,
+        int2 attackerPos,
+        int targetPlayerId,
+        int2 targetPos,
+        syncPieceData attackerData,
+        syncPieceData? targetData,
+        bool targetDestroyed,
+        int2? attackerOriginalPos = null,    // 【新增】原始位置（可选）
+        bool hasMoved = false)               // 【新增】是否移动标记
     {
-        // 1. 执行攻击
-        if (pieceManager.AttackEnemy(myMilitaryID, enemyPieceID))
+        // 如果没有提供原始位置，使用当前位置作为原始位置
+        int2 originalPos = attackerOriginalPos ?? attackerPos;
+
+        UnitAttackMessage attackData = new UnitAttackMessage
         {
-            Debug.Log("攻击成功");
+            AttackerPlayerId = attackerPlayerId,
+            AttackerPosX = attackerPos.x,
+            AttackerPosY = attackerPos.y,
 
-            // 2. 攻击成功后，发送己方棋子状态（AP消耗）
-            syncPieceData myData = pieceManager.CreateCompleteSyncData(myMilitaryID, Religion.Maya);
-            networkManager.SendPieceUpdate(myData);
+            // 【新增】设置原始位置
+            AttackerOriginalPosX = originalPos.x,
+            AttackerOriginalPosY = originalPos.y,
+            HasMoved = hasMoved,
 
-            // 3. 如果敌方棋子死亡，OnOwnPieceDied 会自动触发并发送死亡通知
-            // （这里不需要手动处理）
+            TargetPlayerId = targetPlayerId,
+            TargetPosX = targetPos.x,
+            TargetPosY = targetPos.y,
+            AttackerSyncData = attackerData,
+            TargetSyncData = targetData,
+            TargetDestroyed = targetDestroyed
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_ATTACK,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(attackData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_ATTACK 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_ATTACK 消息到服务器");
+        }
+    }
+
+    /// <summary>
+    /// 发送建筑攻击消息
+    /// </summary>
+    public void SendBuildingAttackMessage(
+        int attackerPlayerId,
+        int2 attackerPos,
+        int buildingOwnerId,
+        int2 buildingPos,
+        int buildingID,
+        syncPieceData attackerData,
+        int buildingRemainingHP,
+        bool buildingDestroyed)
+    {
+        BuildingAttackMessage attackData = new BuildingAttackMessage
+        {
+            AttackerPlayerId = attackerPlayerId,
+            AttackerPosX = attackerPos.x,
+            AttackerPosY = attackerPos.y,
+
+            BuildingOwnerId = buildingOwnerId,
+            BuildingPosX = buildingPos.x,
+            BuildingPosY = buildingPos.y,
+            BuildingID = buildingID,
+
+            AttackerSyncData = attackerData,
+            BuildingRemainingHP = buildingRemainingHP,
+            BuildingDestroyed = buildingDestroyed
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.BUILDING_ATTACK,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(attackData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 BUILDING_ATTACK 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 BUILDING_ATTACK 消息到服务器");
+        }
+    }
+
+
+
+    // 发送单位魅惑消息
+    public void SendUnitCharmMessage(
+        int missionaryPlayerId,
+        int missionaryID,
+        int2 missionaryPos,
+        int targetPlayerId,
+        int targetID,
+        int2 targetPos,
+        syncPieceData newUnitSyncData,
+        int charmedTurns = 3)
+    {
+        UnitCharmMessage charmData = new UnitCharmMessage
+        {
+            MissionaryPlayerId = missionaryPlayerId,
+            MissionaryID = missionaryID,
+            MissionaryPosX = missionaryPos.x,
+            MissionaryPosY = missionaryPos.y,
+
+            TargetPlayerId = targetPlayerId,
+            TargetID = targetID,
+            TargetPosX = targetPos.x,
+            TargetPosY = targetPos.y,
+
+            NewUnitSyncData = newUnitSyncData,
+            CharmedTurns = charmedTurns
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.UNIT_CHARM,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(charmData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 UNIT_CHARM 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 UNIT_CHARM 消息到服务器");
+        }
+    }
+
+    // 发送魅惑过期消息（归还控制权）
+    public void SendCharmExpireMessage(
+        int currentOwnerId,
+        int originalOwnerId,
+        int unitID,
+        int2 pos,
+        syncPieceData unitSyncData)
+    {
+        CharmExpireMessage expireData = new CharmExpireMessage
+        {
+            CurrentOwnerId = currentOwnerId,
+            OriginalOwnerId = originalOwnerId,
+            UnitID = unitID,
+            PosX = pos.x,
+            PosY = pos.y,
+            UnitSyncData = unitSyncData
+        };
+
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.CHARM_EXPIRE,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(expireData)
+        };
+
+        if (isServer)
+        {
+            BroadcastToClients(msg, localClientId);
+            Debug.Log($"[网络-服务器] 广播 CHARM_EXPIRE 消息给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送 CHARM_EXPIRE 消息到服务器");
+        }
+    }
+
+
+    // 发送消息到服务器
+    private void SendToServer(NetworkMessage message)
+    {
+        if (!isRunning || isServer) return;
+
+        message.SenderId = localClientId;
+        byte[] data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+        udpClient.Send(data, data.Length, serverEndPoint);
+    }
+
+    private void SendToClient(uint clientId, NetworkMessage message)
+    {
+        if (!clients.ContainsKey(clientId))
+        {
+            Debug.LogError($"clients 字典中不存在 clientId: {clientId}");
+            return;
+        }
+
+        try
+        {
+            byte[] data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+            udpClient.Send(data, data.Length, clients[clientId]);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"发送到客户端 {clientId} 失败: {ex.Message}");
+        }
+    }
+
+    // 设置准备状态
+    public void SetReadyStatus(bool ready)
+    {
+        Debug.Log("Ready? = " + ready);
+        isLocalReady = ready;
+
+        if (isServer)
+        {
+            // 服务器更新自己的准备状态
+            UpdateRoomPlayersList();
+            SendRoomStatusToAll();
+        }
+        else
+        {
+            // 客户端发送准备状态给服务器
+            PlayerReadyMessage readyMsg = new PlayerReadyMessage
+            {
+                PlayerId = localClientId,
+                IsReady = ready
+            };
+
+            NetworkMessage message = new NetworkMessage
+            {
+                MessageType = ready ? NetworkMessageType.PLAYER_READY : NetworkMessageType.PLAYER_NOT_READY,
+                SenderId = localClientId,
+                JsonData = JsonConvert.SerializeObject(readyMsg)
+            };
+
+            SendToServer(message);
+        }
+    }
+
+
+    private void BroadcastToClients(NetworkMessage message, uint excludeClientId)
+    {
+        //Debug.Log($"=== BroadcastToClients 开始 ===");
+        //Debug.Log($"消息类型: {message.MessageType}");
+        //Debug.Log($"排除ID: {excludeClientId}");
+        //Debug.Log($"当前是服务器: {isServer}");
+        //Debug.Log($"clients 状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
+
+
+        if (!isServer)
+        {
+            Debug.LogWarning("不是服务器，无法广播");
+            return;
+        }
+
+        if (clients == null)
+        {
+            Debug.LogError("clients 字典为 null!");
+            return;
+        }
+
+        if (clients.Count == 0)
+        {
+            Debug.LogError("clients 字典为空，没有客户端!");
+            return;
+        }
+
+        byte[] data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+
+        foreach (var client in clients)
+        {
+            if (client.Key != excludeClientId)
+            {
+                try
+                {
+                    udpClient.Send(data, data.Length, client.Value);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"发送到客户端 {client.Key} 失败: {e.Message}");
+                }
+            }
+        }
+
+        //Debug.Log($"=== BroadcastToClients 完成，共发送 {broadcastCount} 条 ===");
+    }
+
+
+    // *************************
+    //      消息处理
+    // *************************
+
+    private void ProcessMessage(NetworkMessage message)
+    {
+        Debug.Log($"=== ProcessMessage: 开始处理消息类型 {message.MessageType} ===");
+
+        // 触发事件
+        OnMessageReceived?.Invoke(message);
+        //Debug.Log($"已触发 OnMessageReceived 事件");
+
+        bool handled = false;
+
+        // 主要处理器
+        if (messageHandlers.ContainsKey(message.MessageType))
+        {
+            messageHandlers[message.MessageType]?.Invoke(message);
+            handled = true;
+        }
+        else
+        {
+            Debug.LogWarning($"未找到消息类型 {message.MessageType} 的主要处理器");
+        }
+
+        // 如果没有被处理，使用备用处理器
+        if (!handled)
+        {
+            Debug.Log($"消息 {message.MessageType} 未被主要处理器处理，使用备用处理器");
+
+        }
+
+        Debug.Log($"消息处理完成: {message.MessageType}");
+    }
+
+    // 连接消息
+    private void HandleConnect(NetworkMessage message)
+    {
+        //Debug.LogWarning("[客户端] 收到CONNECT消息,这不应该发生");
+    }
+
+    private void HandleConnected(NetworkMessage message)
+    {
+        // 客户端收到连接确认
+        ConnectedMessage data = JsonConvert.DeserializeObject<ConnectedMessage>(message.JsonData);
+        localClientId = data.AssignedClientId;
+        connectedPlayers = data.ExistingPlayerIds;
+
+        Debug.Log($"成功连接到服务器，分配ID: {localClientId}");
+        OnConnectedToServer?.Invoke();
+    }
+    private void HandlePlayerJoined(NetworkMessage message)
+    {
+        PlayerJoinedMessage data = JsonConvert.DeserializeObject<PlayerJoinedMessage>(message.JsonData);
+
+        if (!connectedPlayers.Contains(data.PlayerId))
+        {
+            connectedPlayers.Add(data.PlayerId);
+        }
+
+        Debug.Log($"玩家 {data.PlayerName} (ID: {data.PlayerId}, IP: {data.PlayerIP}) 加入游戏");
+    }
+
+    // 处理玩家离开
+    private void HandlePlayerLeft(NetworkMessage message)
+    {
+        // TODO: 玩家离开逻辑
+    }
+
+    // 处理玩家准备
+    private void HandlePlayerReady(NetworkMessage message)
+    {
+        if (isServer)
+        {
+            PlayerReadyMessage data = JsonConvert.DeserializeObject<PlayerReadyMessage>(message.JsonData);
+
+            Debug.Log($"[服务器] 收到玩家 {data.PlayerId} 的准备请求");
+            Debug.Log($"[服务器] clientReadyStatus包含该ID? {clientReadyStatus.ContainsKey(data.PlayerId)}");
+            Debug.Log($"[服务器] 当前房间人数: {roomPlayers.Count}");
+
+            if (clientReadyStatus.ContainsKey(data.PlayerId) && roomPlayers.Count >= 2)
+            {
+                clientReadyStatus[data.PlayerId] = true;
+                UpdateRoomPlayersList();
+                SendRoomStatusToAll();
+
+                Debug.Log($"玩家 {data.PlayerId} 准备完毕");
+            }
+            else
+            {
+                Debug.LogError($"[服务器] 找不到玩家 {data.PlayerId} 的准备状态记录");
+            }
+        }
+    }
+
+    // 处理玩家取消准备
+    private void HandlePlayerNotReady(NetworkMessage message)
+    {
+        if (isServer)
+        {
+            PlayerReadyMessage data = JsonConvert.DeserializeObject<PlayerReadyMessage>(message.JsonData);
+            if (clientReadyStatus.ContainsKey(data.PlayerId))
+            {
+                clientReadyStatus[data.PlayerId] = false;
+                UpdateRoomPlayersList();
+                SendRoomStatusToAll();
+                Debug.Log($"玩家 {data.PlayerId} 取消准备");
+            }
+        }
+    }
+
+    // 处理房间状态更新
+    private void HandleRoomStatusUpdate(NetworkMessage message)
+    {
+        RoomStatusUpdateMessage data = JsonConvert.DeserializeObject<RoomStatusUpdateMessage>(message.JsonData);
+        roomPlayers = data.Players;
+
+        foreach (var player in roomPlayers)
+        {
+            Debug.Log($"  - 玩家 {player.PlayerId}: {player.PlayerName}, 准备: {player.IsReady}");
+        }
+        OnRoomStatusUpdated?.Invoke(roomPlayers);
+        CheckAllPlayersReady();
+    }
+
+
+
+    // 添加重试协程
+    private IEnumerator RetryHandleTurnStart(NetworkMessage message, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        Debug.Log("=== 重试 HandleTurnStart ===");
+        HandleTurnStart(message);
+    }
+
+    //// 连接确认
+    //private void HandleConnected(NetworkMessage message)
+    //{
+    //    ConnectedMessage data = JsonConvert.DeserializeObject<ConnectedMessage>(message.JsonData);
+    //    localClientId = data.AssignedClientId;
+    //    connectedPlayers = data.ExistingPlayerIds;
+
+    //    Debug.Log($"[客户端] 已连接到服务器! 分配ID: {localClientId}");
+    //    OnConnectedToServer?.Invoke();
+    //}
+
+    //// 玩家加入
+    //private void HandlePlayerJoined(NetworkMessage message)
+    //{
+    //    PlayerJoinedMessage data = JsonConvert.DeserializeObject<PlayerJoinedMessage>(message.JsonData);
+
+    //    if (!connectedPlayers.Contains(data.PlayerId))
+    //    {
+    //        connectedPlayers.Add(data.PlayerId);
+    //        Debug.Log($"玩家 {data.PlayerId} ({data.PlayerName}) 加入游戏 - 当前玩家数: {connectedPlayers.Count}");
+    //    }
+    //}
+
+    // 游戏开始
+    private void HandleGameStart(NetworkMessage message)
+    {
+        //isGameStarted = true;
+        //Debug.Log("游戏开始!");
+        //OnGameStarted?.Invoke();
+        GameStartData data = JsonConvert.DeserializeObject<GameStartData>(message.JsonData);
+
+        Debug.Log($"游戏开始! 玩家数: {data.PlayerIds.Length}");
+
+        isGameStarted = true;
+        OnGameStarted?.Invoke();
+
+        // 通知GameManage初始化游戏
+        if (gameManage != null)
+        {
+            gameManage.InitGameWithNetworkData(data);
+        }
+        else
+        {
+            gameManage = GameManage.Instance;
+            if (gameManage != null)
+            {
+                gameManage.InitGameWithNetworkData(data);
+            }
+            else
+            {
+                Debug.LogError("无法找到 GameManage 来初始化游戏!");
+            }
+        }
+    }
+    // 添加回合开始消息
+    private void HandleTurnStart(NetworkMessage message)
+    {
+        try
+        {
+            //Debug.Log($"当前是服务器: {isServer}");
+            //Debug.Log($"消息发送者ID: {message.SenderId}");
+
+            var data = JsonConvert.DeserializeObject<TurnStartMessage>(message.JsonData);
+            Debug.Log($"目标玩家: {data.PlayerId}");
+
+            //// 多重查找 GameManage
+            //if (gameManage == null)
+            //{
+            //    Debug.Log("gameManage 为 null，尝试查找...");
+            //    gameManage = GameManage.Instance;
+            //}
+
+            //if (gameManage == null)
+            //{
+            //    Debug.Log("尝试通过 GameObject.Find 查找...");
+            //    GameObject gmObj = GameObject.Find("GameManager");
+            //    if (gmObj != null)
+            //    {
+            //        gameManage = gmObj.GetComponent<GameManage>();
+            //        Debug.Log($" 通过 GameObject.Find 找到 GameManage");
+            //    }
+            //    else
+            //    {
+            //        Debug.LogError("GameObject.Find 未找到 'GameManager' 对象");
+            //    }
+            //}
+
+            if (gameManage != null)
+            {
+                Debug.Log($" 调用 StartTurn({data.PlayerId})");
+                gameManage.StartTurn(data.PlayerId);
+                //Debug.Log($" StartTurn 调用完成");
+            }
+            else
+            {
+                Debug.LogError(" 无法找到 GameManage，延迟重试");
+
+                //// 列出场景中所有对象（调试用）
+                //GameObject[] allObjects = FindObjectsOfType<GameObject>();
+                //Debug.Log($"场景中共有 {allObjects.Length} 个 GameObject");
+
+                //bool foundGameManage = false;
+                //foreach (var obj in allObjects)
+                //{
+                //    if (obj.name.Contains("GameManage") || obj.name.Contains("GameManager"))
+                //    {
+                //        Debug.Log($"找到可能的对象: {obj.name}, 激活: {obj.activeInHierarchy}");
+                //        var gm = obj.GetComponent<GameManage>();
+                //        if (gm != null)
+                //        {
+                //            Debug.Log($" 这个对象有 GameManage 组件!");
+                //            gameManage = gm;
+                //            foundGameManage = true;
+                //            break;
+                //        }
+                //    }
+                //}
+
+                //if (!foundGameManage)
+                //{
+                //    Debug.LogError("场景中完全找不到 GameManage 组件!");
+                //    StartCoroutine(RetryHandleTurnStart(message, 0.5f));
+                //}
+                //else
+                //{
+                //    Debug.Log($" 通过遍历找到 GameManage，调用 StartTurn({data.PlayerId})");
+                //    gameManage.StartTurn(data.PlayerId);
+                //}
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($" 处理回合开始消息出错: {ex.Message}\n{ex.StackTrace}");
+        }
+    }
+
+    // 回合结束
+    private void HandleTurnEnd(NetworkMessage message)
+    {
+        Debug.Log($"=== HandleTurnEnd 被调用 ===");
+        //Debug.Log($"当前是服务器: {isServer}");
+        //Debug.Log($"gameManage 是否为空: {gameManage == null}");
+
+
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+        if (playerDataManager == null)
+        {
+            playerDataManager = PlayerDataManager.Instance;
+        }
+
+        TurnEndMessage data = JsonConvert.DeserializeObject<TurnEndMessage>(message.JsonData);
+
+        Debug.Log($"收到玩家 {data.PlayerId} 的回合结束消息");
+
+        //  转换为 PlayerData
+        PlayerData playerData = data.PlayerDataJson.ToPlayerData();
+
+        Debug.Log($"解析玩家数据成功，单位数: {playerData.GetUnitCount()}");
+
+        // 重新加载所有单位的 PieceDataSO
+        //for (int i = 0; i < playerData.PlayerUnits.Count; i++)
+        //{
+        //    PlayerUnitData unit = playerData.PlayerUnits[i];
+
+        //    if (unit.PlayerUnitDataSO.pieceID!=-1)
+        //    {
+        //        //PieceDataSO pieceData = LoadPieceDataSO(unit.UnitType);
+
+        //        //if (pieceData != null)
+        //        //{
+        //        //    unit.PlayerUnitDataSO = pieceData;
+        //        //    playerData.PlayerUnits[i] = unit;
+        //        //    Debug.Log($" 重新加载 {unit.UnitType} 的 PieceDataSO: {pieceData.name}");
+        //        //}
+        //        //else
+        //        //{
+        //        //    Debug.LogError($"❌ 无法加载 {unit.UnitType} 的 PieceDataSO");
+        //        //}
+        //    }
+        //}
+        // 更新数据
+        if (playerDataManager != null)
+        {
+            playerDataManager.UpdatePlayerData(data.PlayerId, playerData);
+        }
+
+
+        // 通知 GameManage 更新显示
+        if (gameManage != null)
+        {
+            // 调用 PlayerOperationManager 更新其他玩家显示
+            gameManage.UpdateOtherPlayerShow(data.PlayerId, playerData);
+            Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
+        }
+
+
+
+        // 如果是服务器,切换到下一个回合
+        if (isServer)
+        {
+            Debug.Log("[服务器] 处理回合切换...");
+
+            if (gameManage == null)
+            {
+                Debug.LogError("[服务器] gameManage 为 null!");
+                gameManage = GameManage.Instance;
+                if (gameManage == null)
+                {
+                    Debug.LogError("[服务器] 无法获取 GameManage.Instance!");
+                    return;
+                }
+            }
+
+            // 找到下一个玩家 - 正确的类型转换
+            int currentPlayerId = data.PlayerId;
+            Debug.Log($"[服务器] 当前结束回合的玩家: {currentPlayerId}");
+
+
+            // 在 connectedPlayers 中找到当前玩家的索引
+            int currentIndex = -1;
+            for (int i = 0; i < connectedPlayers.Count; i++)
+            {
+                Debug.Log($"[服务器] 检查 connectedPlayers[{i}] = {connectedPlayers[i]}");
+                if ((int)connectedPlayers[i] == currentPlayerId)
+                {
+                    currentIndex = i;
+                    Debug.Log($"[服务器] 找到当前玩家索引: {currentIndex}");
+                    break;
+                }
+            }
+
+            if (currentIndex == -1)
+            {
+                Debug.LogError($"找不到玩家 {currentPlayerId} 在connectedPlayers中");
+                Debug.LogError($"connectedPlayers: {string.Join(", ", connectedPlayers)}");
+                return;
+            }
+
+            int nextIndex = (currentIndex + 1) % connectedPlayers.Count;
+            int nextPlayerId = (int)connectedPlayers[nextIndex];
+
+            Debug.Log($"[服务器] 下一个玩家索引: {nextIndex}");
+            Debug.Log($"[服务器] 下一个玩家ID: {nextPlayerId}");
+            Debug.Log($"[服务器] 切换回合: 玩家 {currentPlayerId} -> 玩家 {nextPlayerId}");
+
+            // 创建回合开始消息
+            TurnStartMessage turnStartData = new TurnStartMessage
+            {
+                PlayerId = nextPlayerId
+            };
+
+            NetworkMessage turnStartMsg = new NetworkMessage
+            {
+                MessageType = NetworkMessageType.TURN_START,
+                SenderId = 0,
+                JsonData = JsonConvert.SerializeObject(turnStartData)
+            };
+
+            Debug.Log($"[服务器] 已创建 TURN_START 消息");
+            Debug.Log($"[服务器] 消息内容: {turnStartMsg.JsonData}");
+            Debug.Log($"[服务器] clients 字典状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
+
+            // 广播给所有客户端
+            if (clients != null && clients.Count > 0)
+            {
+                Debug.Log($"[服务器] 准备广播消息给 {clients.Count} 个客户端");
+
+                // 列出所有客户端
+                foreach (var client in clients)
+                {
+                    Debug.Log($"[服务器] 客户端 {client.Key}: {client.Value}");
+                }
+
+                // 广播（不排除任何客户端）
+                BroadcastToClients(turnStartMsg, uint.MaxValue);
+
+                Debug.Log($"[服务器]  BroadcastToClients 调用完成");
+            }
+            else
+            {
+                Debug.LogError($"[服务器]  clients 为空或没有客户端! clients={(clients == null ? "null" : $"Count={clients.Count}")}");
+            }
+
+            // 服务器自己也开始回合
+            Debug.Log($"[服务器] 服务器自己开始回合: {nextPlayerId}");
+            gameManage.StartTurn(nextPlayerId);
+
+            Debug.Log($"[服务器]  回合切换完成");
+        }
+        else
+        {
+            Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
+        }
+    }
+
+    /// <summary>
+    /// 统一的 PieceDataSO 加载方法
+    /// </summary>
+    //private PieceDataSO LoadPieceDataSO(CardType cardType)
+    //{
+    //    PieceDataSO pieceData = null;
+
+    //    // 方法1: 从 UnitListTable 加载
+    //    if (UnitListTable.Instance != null)
+    //    {
+    //        pieceData = UnitListTable.Instance.GetPieceDataByCardType(cardType);
+    //        if (pieceData != null)
+    //        {
+    //            return pieceData;
+    //        }
+    //    }
+
+    //    // 方法2: 从 Resources 加载
+    //    string resourcePath = GetResourcePathForCardType(cardType);
+    //    if (!string.IsNullOrEmpty(resourcePath))
+    //    {
+    //        pieceData = Resources.Load<PieceDataSO>(resourcePath);
+    //        if (pieceData != null)
+    //        {
+    //            return pieceData;
+    //        }
+    //    }
+
+    //    Debug.LogError($"无法加载 PieceDataSO for CardType: {cardType}");
+    //    return null;
+    //}
+
+    //private string GetResourcePathForCardType(CardType cardType)
+    //{
+    //    switch (cardType)
+    //    {
+    //        case CardType.Farmer: return "Cyou/Prefab/farmer";
+    //        case CardType.Solider: return "Cyou/Prefab/military";
+    //        case CardType.Missionary: return "Cyou/Prefab/Missionary";
+    //        case CardType.Pope: return "Cyou/Prefab/pope";
+    //        default: return null;
+    //    }
+    //}
+
+
+
+    // 单位移动
+    private void HandleUnitMove(NetworkMessage message)
+    {
+        UnitMoveMessage data = JsonConvert.DeserializeObject<UnitMoveMessage>(message.JsonData);
+
+        int2 fromPos = new int2(data.FromX, data.FromY);
+        int2 toPos = new int2(data.ToX, data.ToY);
+
+        Debug.Log($"[网络] 玩家 {data.PlayerId} 移动单位: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        if (playerDataManager == null)
+        {
+            playerDataManager = PlayerDataManager.Instance;
+        }
+
+        // ===== 修复：不再使用MoveUnit，直接更新数据 =====
+        if (playerDataManager != null)
+        {
+            // 方法1：尝试使用MoveUnit
+            bool moveSuccess = playerDataManager.MoveUnit(data.PlayerId, fromPos, toPos);
+
+            if (moveSuccess)
+            {
+                // 移动成功，更新同步数据
+                playerDataManager.UpdateUnitSyncDataByPos(data.PlayerId, toPos, data.MovedUnitSyncData);
+                Debug.Log($"[网络] PlayerDataManager 已更新单位移动数据");
+            }
+            else
+            {
+                // ===== 关键修复：MoveUnit失败时，直接修改单位数据 =====
+                Debug.LogWarning($"[网络] MoveUnit失败，尝试直接更新数据（可能是交换操作）");
+
+                // 获取PlayerData
+                PlayerData playerData = playerDataManager.GetPlayerData(data.PlayerId);
+
+                // 查找目标位置是否已经有单位（从消息中的syncData判断）
+                bool found = false;
+
+                for (int i = 0; i < playerData.PlayerUnits.Count; i++)
+                {
+                    PlayerUnitData unit = playerData.PlayerUnits[i];
+
+                    // 通过UnitID匹配（syncData中的pieceID）
+                    if (unit.PlayerUnitDataSO.pieceID == data.MovedUnitSyncData.pieceID)
+                    {
+                        Debug.Log($"[网络] 通过UnitID找到单位: {unit.PlayerUnitDataSO.pieceID}，当前位置({unit.Position.x},{unit.Position.y})");
+
+                        // 创建更新后的单位数据
+                        PlayerUnitData updatedUnit = new PlayerUnitData(
+                            unit.UnitID,
+                            unit.UnitType,
+                            toPos,  // 新位置
+                            data.MovedUnitSyncData,  // 新的同步数据
+                            unit.bUnitIsActivated,
+                            unit.bCanDoAction,
+                            unit.bIsCharmed,
+                            unit.charmedRemainingTurns,
+                            unit.originalOwnerID,
+                            unit.BuildingData
+                        );
+
+                        // 直接更新
+                        playerData.PlayerUnits[i] = updatedUnit;
+                        found = true;
+
+                        Debug.Log($"[网络] 成功通过直接更新方式移动单位到({toPos.x},{toPos.y}) {updatedUnit.UnitID}");
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    Debug.LogError($"[网络] 无法找到要移动的单位: pieceID={data.MovedUnitSyncData.pieceID}");
+                }
+            }
+        }
+
+        // ===== 关键！！！必须调用这个方法来更新视觉效果 =====
+        // 通知 PlayerOperationManager 处理视觉效果
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkMove(data);
+        }
+    }
+
+
+
+    // 单位添加
+    private void HandleUnitAdd(NetworkMessage message)
+    {
+        UnitAddMessage data = JsonConvert.DeserializeObject<UnitAddMessage>(message.JsonData);
+
+        int2 pos = new int2(data.PosX, data.PosY);
+        CardType unitType = (CardType)data.UnitType;
+
+        Debug.Log($"[网络] 玩家 {data.PlayerId} 添加单位: {unitType} at ({pos.x},{pos.y})");
+
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // 添加到 PlayerDataManager
+        if (playerDataManager != null)
+        {
+            // 使用 syncPieceData 添加单位
+            playerDataManager.AddUnit(data.PlayerId, unitType, pos, data.NewUnitSyncData, null);
+
+            Debug.Log($"[网络] PlayerDataManager 已添加单位数据");
+        }
+
+        // 通知 PlayerOperationManager 创建视觉对象
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkAddUnit(data);
+        }
+
+
+    }
+
+    // 单位移除
+    private void HandleUnitRemove(NetworkMessage message)
+    {
+        UnitRemoveMessage data = JsonConvert.DeserializeObject<UnitRemoveMessage>(message.JsonData);
+
+        int2 pos = new int2(data.PosX, data.PosY);
+
+        Debug.Log($"玩家 {data.PlayerId} 移除单位 at ({pos.x},{pos.y})");
+
+        if (playerDataManager != null)
+        {
+            playerDataManager.RemoveUnit(data.PlayerId, pos);
+        }
+
+        // 先通知 PlayerOperationManager 处理 GameObject
+        if (gameManage != null && gameManage._PlayerOperation != null)
+        {
+            gameManage._PlayerOperation.HandleNetworkRemove(data);
+        }
+
+        // 从 PlayerDataManager 移除
+        if (playerDataManager != null)
+        {
+            bool removeSuccess = playerDataManager.RemoveUnit(data.PlayerId, pos);
+
+            if (removeSuccess)
+            {
+                Debug.Log($"[网络] PlayerDataManager 已移除单位数据");
+            }
+        }
+    }
+
+    // 单位攻击
+    private void HandleUnitAttack(NetworkMessage message)
+    {
+        UnitAttackMessage data = JsonConvert.DeserializeObject<UnitAttackMessage>(message.JsonData);
+
+        int2 attackerPos = new int2(data.AttackerPosX, data.AttackerPosY);
+        int2 targetPos = new int2(data.TargetPosX, data.TargetPosY);
+
+        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击 ({targetPos.x},{targetPos.y}) ");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // 更新 PlayerDataManager 中的数据
+        if (playerDataManager != null)
+        {
+            // 更新攻击者的同步数据
+            bool attackerUpdated = playerDataManager.UpdateUnitSyncDataByPos(
+                data.AttackerPlayerId, attackerPos, data.AttackerSyncData);
+
+            if (attackerUpdated)
+            {
+                Debug.Log($"[网络] 攻击者数据已更新");
+            }
+
+            // 先通知 PlayerOperationManager 处理
+            // 这样 HandleNetworkAttack 可以找到 UnitID 并从 PieceManager 移除
+            if (gameManage != null && gameManage._PlayerOperation != null)
+            {
+                gameManage._PlayerOperation.HandleNetworkAttack(data);
+            }
+
+            // 然后再处理 PlayerDataManager 的数据移除/更新
+            if (data.TargetDestroyed)
+            {
+                // 目标被摧毁，从 PlayerDataManager 移除
+                bool targetRemoved = playerDataManager.RemoveUnit(data.TargetPlayerId, targetPos);
+
+                if (targetRemoved)
+                {
+                    Debug.Log($"[网络] 目标单位已从PlayerDataManager移除");
+                }
+                else
+                {
+                    Debug.LogWarning($"[网络] ✗ 从PlayerDataManager移除目标失败");
+                }
+            }
+            else if (data.TargetSyncData.HasValue)
+            {
+                // 目标存活，更新同步数据
+                bool targetUpdated = playerDataManager.UpdateUnitSyncDataByPos(
+                    data.TargetPlayerId, targetPos, data.TargetSyncData.Value);
+
+                if (targetUpdated)
+                {
+                    Debug.Log($"[网络] 目标数据已更新");
+                }
+            }
+        }
+    }
+
+    // 建筑攻击
+    private void HandleBuildingAttack(NetworkMessage message)
+    {
+        BuildingAttackMessage data = JsonConvert.DeserializeObject<BuildingAttackMessage>(message.JsonData);
+
+        int2 attackerPos = new int2(data.AttackerPosX, data.AttackerPosY);
+        int2 buildingPos = new int2(data.BuildingPosX, data.BuildingPosY);
+
+        Debug.Log($"[网络] 玩家 {data.AttackerPlayerId} 攻击建筑 ID={data.BuildingID} at ({buildingPos.x},{buildingPos.y})");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // 更新 PlayerDataManager 中的攻击者数据
+        if (playerDataManager != null)
+        {
+            // 更新攻击者的同步数据
+            bool attackerUpdated = playerDataManager.UpdateUnitSyncDataByPos(
+                data.AttackerPlayerId, attackerPos, data.AttackerSyncData);
+
+            if (attackerUpdated)
+            {
+                Debug.Log($"[网络] 攻击者数据已更新");
+            }
+
+            // 通知 PlayerOperationManager 处理建筑攻击
+            if (gameManage != null && gameManage._PlayerOperation != null)
+            {
+                gameManage._PlayerOperation.HandleNetworkBuildingAttack(data);
+            }
+
+            // 如果建筑被摧毁，从 PlayerDataManager 和 BuildingManager 移除
+            if (data.BuildingDestroyed)
+            {
+                // 从 PlayerDataManager 移除建筑数据
+                bool buildingRemoved = playerDataManager.RemoveUnit(data.BuildingOwnerId, buildingPos);
+
+                if (buildingRemoved)
+                {
+                    Debug.Log($"[网络] 建筑已从PlayerDataManager移除");
+                }
+                else
+                {
+                    Debug.LogWarning($"[网络] ✗ 从PlayerDataManager移除建筑失败");
+                }
+
+                // 从 BuildingManager 移除建筑
+                if (GameManage.Instance._BuildingManager != null)
+                {
+                    GameManage.Instance._BuildingManager.RemoveBuilding(data.BuildingID);
+                    Debug.Log($"[网络] 建筑ID={data.BuildingID}已从BuildingManager移除");
+                }
+            }
+            else
+            {
+                // 建筑存活，更新建筑HP
+                if (GameManage.Instance._BuildingManager != null)
+                {
+                    Buildings.Building building = GameManage.Instance._BuildingManager.GetBuilding(data.BuildingID);
+                    if (building != null)
+                    {
+                        building.SetHP(data.BuildingRemainingHP);
+                        Debug.Log($"[网络] 建筑HP已更新为 {data.BuildingRemainingHP}");
+                    }
+                }
+            }
+        }
+    }
+
+    // 单位魅惑
+    private void HandleUnitCharm(NetworkMessage message)
+    {
+        UnitCharmMessage data = JsonConvert.DeserializeObject<UnitCharmMessage>(message.JsonData);
+
+        int2 missionaryPos = new int2(data.MissionaryPosX, data.MissionaryPosY);
+        int2 targetPos = new int2(data.TargetPosX, data.TargetPosY);
+
+        Debug.Log($"[网络] 玩家 {data.MissionaryPlayerId} 的传教士魅惑单位 at ({targetPos.x},{targetPos.y})");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        // ===== 新增：确保目标单位数据存在 =====
+        if (playerDataManager != null)
+        {
+            // 检查目标单位是否存在于PlayerDataManager中
+            PlayerUnitData? targetUnit = playerDataManager.FindUnit(data.TargetPlayerId, targetPos);
+
+            if (!targetUnit.HasValue)
+            {
+                Debug.LogWarning($"[网络魅惑] 目标单位不存在于PlayerDataManager，可能需要先创建");
+
+                // 如果目标单位不存在，可能需要先从NewUnitSyncData创建
+                // 注意：这种情况通常不应该发生，说明同步顺序有问题
+                // 但为了健壮性，我们可以尝试添加单位
+                CardType unitType = CardType.None;
+                // 根据syncPieceData推断单位类型
+                switch (data.NewUnitSyncData.piecetype)
+                {
+                    case PieceType.Pope:
+                        unitType = CardType.Pope;
+                        break;
+                    case PieceType.Missionary:
+                        unitType = CardType.Missionary;
+                        break;
+                    case PieceType.Military:
+                        unitType = CardType.Solider;
+                        break;
+                    case PieceType.Farmer:
+                        unitType = CardType.Farmer;
+                        break;
+
+                }
+                playerDataManager.AddUnit(
+                    data.TargetPlayerId,
+                    unitType,
+                    targetPos,
+                    data.NewUnitSyncData,
+                    null
+                );
+
+                Debug.Log($"[网络魅惑] 已添加缺失的目标单位数据");
+            }
+        }
+
+
+        if (playerDataManager != null && gameManage != null && gameManage._PlayerOperation != null)
+        {
+            // 通知 PlayerOperationManager 处理魅惑
+            gameManage._PlayerOperation.HandleNetworkCharm(data);
+        }
+    }
+
+    // 魅惑过期（归还控制权）
+    private void HandleCharmExpire(NetworkMessage message)
+    {
+        CharmExpireMessage data = JsonConvert.DeserializeObject<CharmExpireMessage>(message.JsonData);
+
+        int2 pos = new int2(data.PosX, data.PosY);
+
+        Debug.Log($"[网络] 单位 {data.UnitID} at ({pos.x},{pos.y}) 魅惑过期，归还给玩家 {data.OriginalOwnerId}");
+
+        // 确保管理器存在
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        if (playerDataManager != null && gameManage != null && gameManage._PlayerOperation != null)
+        {
+            // 通知 PlayerOperationManager 处理魅惑过期
+            gameManage._PlayerOperation.HandleNetworkCharmExpire(data);
+        }
+    }
+
+    // Ping/Pong(心跳检测)
+    private void HandlePing(NetworkMessage message)
+    {
+        NetworkMessage pong = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.PONG,
+            SenderId = localClientId
+        };
+
+        if (isServer)
+        {
+            SendToClient(message.SenderId, pong);
+        }
+        else
+        {
+            SendToServer(pong);
+        }
+    }
+
+    private void HandlePong(NetworkMessage message)
+    {
+        // 可以用来计算延迟
+        long latency = DateTime.Now.Ticks - message.Timestamp;
+        Debug.Log($"延迟: {latency / 10000}ms");
+    }
+
+    // *************************
+    //      辅助函数
+    // *************************
+
+    private uint GetClientId(IPEndPoint endPoint)
+    {
+        foreach (var kvp in clients)
+        {
+            if (kvp.Value.Equals(endPoint))
+                return kvp.Key;
+        }
+        return 0;
+    }
+
+    public void Shutdown()
+    {
+        Debug.Log("Server Over!");
+
+        isRunning = false;
+
+        if (networkThread != null && networkThread.IsAlive)
+        {
+            networkThread.Join(1000);
+        }
+
+        if (udpClient != null)
+        {
+            udpClient.Close();
+            udpClient = null;
+        }
+
+        Debug.Log("网络系统已关闭");
+        OnDisconnected?.Invoke();
+    }
+
+    // *************************
+    //      运行时配置
+    // *************************
+
+    //public void SetConfig(bool asServer, string ip, int networkPort, int maxPlayerCount = 2)
+    //{
+    //    if (isRunning)
+    //    {
+    //        Debug.LogWarning("请在启动前设置配置!");
+    //        return;
+    //    }
+
+    //    isServer = asServer;
+    //    serverIP = ip;
+    //    port = networkPort;
+    //    maxPlayers = maxPlayerCount;
+    //}
+
+    //public void SetPlayerName(string name)
+    //{
+    //    playerName = name;
+    //}
+}
+
+// *************************
+//   主线程调度器 
+// *************************
+public class MainThreadDispatcher : MonoBehaviour
+{
+    private static MainThreadDispatcher instance;
+    private static readonly Queue<Action> executionQueue = new Queue<Action>();
+
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+            // 2025.11.17 Guoning
+            // DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void Update()
+    {
+        lock (executionQueue)
+        {
+            while (executionQueue.Count > 0)
+            {
+                executionQueue.Dequeue().Invoke();
+            }
+        }
+    }
+
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
+            Debug.Log("MainThreadDispatcher已销毁");
+        }
+    }
+    public static void Enqueue(Action action)
+    {
+        if (action == null) return;
+
+        lock (executionQueue)
+        {
+            executionQueue.Enqueue(action);
         }
     }
 }
-```
-
-### 同步流程总结
-
-**创建棋子流程:**
-1. 发送端：`CreatePiece()` → `CreateCompleteSyncData()` → 发送网络消息
-2. 接收端：接收消息 → `CreateEnemyPiece()`
-
-**更新棋子流程:**
-1. 发送端：修改状态 → `CreateCompleteSyncData()` → 发送网络消息
-2. 接收端：接收消息 → `SyncEnemyPieceState()`
-
-**棋子死亡流程:**
-1. 发送端：棋子死亡 → `OnPieceDied` 事件触发 → `GetLastDeadPieceData()` → 发送死亡通知
-2. 接收端：接收死亡通知 → `HandleEnemyPieceDeath()`
-
-**关键设计:**
-- ✅ 使用 `localPlayerID` 区分己方和敌方棋子
-- ✅ 死亡处理分离（发送端触发事件，接收端直接删除）
-- ✅ 防止无限循环（接收端不触发 OnPieceDied 事件）
-- ✅ 数据完整性（syncPieceData 包含所有必要状态）
-
----
-
-## 数据结构
-
-### `syncPieceData`
-棋子同步数据结构。
-
-```csharp
-public struct syncPieceData
-{
-    // 基本信息
-    public int pieceID;
-    public PieceType pieceType;
-    public Religion religion;
-    public SerializableVector3 piecePos;
-
-    // 状态信息
-    public int currentPID;             // 当前所属玩家 ID（魅惑后可能改变）
-    public int currentHP;
-    public int charmedTurnsRemaining;  // 魅惑剩余回合数（网络同步用）
-
-    // 等级信息
-    public int currentHPLevel;         // HP 等级 (0-3)
-    public int swapCooldownLevel;      // 教皇: 位置交换CD等级 (0-2)
-    public int buffLevel;              // 教皇: 增益等级 (0-3)
-    public int occupyLevel;            // 宣教师: 占领等级 (0-3)
-    public int convertEnemyLevel;      // 宣教师: 魅惑等级 (0-3)
-    public int sacrificeLevel;         // 农民: 献祭等级 (0-2)
-    public int attackPowerLevel;       // 军队: 攻击力等级 (0-3)
-
-    // 辅助属性: 从 pieceID 计算原始所属玩家
-    public int OriginalPlayerID => pieceID / 10000;
-}
-```
-
-**魅惑相关字段说明:**
-- `currentPID`: 被魅惑的棋子会设置为魅惑者的玩家 ID
-- `charmedTurnsRemaining`: 魅惑解除前的剩余回合数（0 表示未被魅惑）
-- `OriginalPlayerID`: 从 pieceID 计算得出的原始所属玩家（pieceID / 10000）。不会因魅惑而改变
-
-### `swapPieceData`
-棋子位置交换数据结构。
-
-```csharp
-public struct swapPieceData
-{
-    public int pieceID1;
-    public Vector3 position1;
-    public int pieceID2;
-    public Vector3 position2;
-}
-```
-
----
-
-## 总结
-
-### PieceManager的功能
-
-- ✅ **ID 基础管理**: 无需关注具体类型即可操作
-- ✅ **网络同步对应**: 统一管理所有棋子（allPieces 字典）
-- ✅ **同步数据自动生成**: 各种操作后返回 `syncPieceData`
-- ✅ **发送/接收分离**: 防止无限循环的清晰设计
-- ✅ **事件驱动**: 棋子死亡等自动通知
-
-### BuildingManager的功能
-
-- ✅ **ID 基础管理**: 建筑不依赖类型进行管理
-- ✅ **网络同步对应**: 己方和敌方建筑分离管理
-- ✅ **完整状态同步**: `syncBuildingData` 包含建筑的所有信息
-- ✅ **破坏处理分离**: 发送端和接收端不同的处理流程
-- ✅ **事件驱动**: 建筑破坏・完成自动通知
-
-所有操作都基于 ID 统一管理，使 GameManager 的代码简洁易读。网络同步通过 `syncPieceData` 和 `syncBuildingData` 结构实现完整状态传输，避免了数据不一致问题。

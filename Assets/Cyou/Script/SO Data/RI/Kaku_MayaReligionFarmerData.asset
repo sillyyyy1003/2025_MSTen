@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f17ecceae147d6b47977b095c87dc7f0, type: 3}
+  m_Name: Kaku_MayaReligionFarmerData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  originalPID: 0
+  religion: 0
+  pieceName: "\u746A\u96C5\u5916\u661F\u4EBA\u6587\u660E\u6559_\u8FB2\u6C11"
+  populationCost: 2
+  resourceCost: 2
+  initialLevel: 0
+  aPRecoveryRate: 10
+  moveAPCost: 0
+  moveSpeed: 1
+  canAttack: 0
+  attackPower: 0
+  attackRange: 0
+  attackCooldown: 1
+  attackAPCost: 20
+  maxHPByLevel: 03000000040000000500000005000000
+  maxAPByLevel: 03000000050000000500000005000000
+  attackPowerByLevel: 00000000000000000000000000000000
+  hpUpgradeCost: 040000000500000000000000
+  apUpgradeCost: 050000000600000000000000
+  piecePrefab: {fileID: 6161320943670931638, guid: eb79d7a64d4165a4dbd3f33b2f34a1a7,
+    type: 3}
+  buildingSpeedModifier: 1
+  productEfficiency: 1
+  devotionAPCost: 1
+  maxSacrificeLevel: 020000000300000003000000
+  maxAPRecoveryLevel: 000000000000000000000000
+  sacrificeUpgradeCost: 0500000000000000
+  apRecoveryUpgradeCost: 0000000000000000

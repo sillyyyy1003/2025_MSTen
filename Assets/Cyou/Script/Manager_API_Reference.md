@@ -207,64 +207,6 @@ if (PieceManager.Instance.SyncEnemyPieceState(updateData))
 
 ---
 
-#### 各種同期データ生成関数
-
-以下の関数は、各種操作後に同期データを生成してネットワークに送信するために使用します。
-
-##### `ChangeHPData()`
-```csharp
-public syncPieceData ChangeHPData(int pieceID, int hp)
-```
-
-##### `ChangeHPLevelData()`
-```csharp
-public syncPieceData ChangeHPLevelData(int pieceID, int hplevel)
-```
-
-##### `ChangeFarmerLevelData()`
-```csharp
-public syncPieceData ChangeFarmerLevelData(int pieceID, int sacrificelevel)
-```
-
-##### `ChangeMilitaryAtkLevelData()`
-```csharp
-public syncPieceData ChangeMilitaryAtkLevelData(int pieceID, int atklevel)
-```
-
-##### `ChangePopeSwapCDLevelData()`
-```csharp
-public syncPieceData ChangePopeSwapCDLevelData(int pieceID, int cdlevel)
-```
-
-##### `ChangePopeBuffLevelData()`
-```csharp
-public syncPieceData ChangePopeBuffLevelData(int pieceID, int bufflevel)
-```
-
-##### `ChangeMissionaryConvertLevelData()`
-```csharp
-public syncPieceData ChangeMissionaryConvertLevelData(int pieceID, int convertlevel)
-```
-
-##### `ChangeMissionaryOccupyLevelData()`
-```csharp
-public syncPieceData ChangeMissionaryOccupyLevelData(int pieceID, int occupylevel)
-```
-
-##### `ChangePieceCurrentPID()`
-```csharp
-public syncPieceData ChangePieceCurrentPID(int pieceID, int currentpid)
-```
-
-##### `ChangePiecePosData()`
-```csharp
-public syncPieceData ChangePiecePosData(int pieceID, Vector3 position)
-```
-
-**実装箇所:** `PieceManager.cs:110-203`
-
----
-
 ### アップグレード管理
 
 #### `UpgradePiece()`
@@ -484,6 +426,63 @@ public List<int> GetPlayerPiecesByType(int playerID, PieceType pieceType)
 
 ---
 
+#### `GetUnitOperationCostByType()`
+駒の操作に必要なAPコストを取得します。
+
+**シグネチャ:**
+```csharp
+public int GetUnitOperationCostByType(int pieceID, GameData.OperationType type)
+```
+
+**パラメータ:**
+- `pieceID`: 駒ID
+- `type`: 操作タイプ（`GameData.OperationType`）
+  - `OperationType.Move` - 移動（全駒共通）
+  - `OperationType.Attack` - 攻撃（軍隊のみ）
+  - `OperationType.Occupy` - 領地占領（宣教師のみ）
+  - `OperationType.Convert` - 敵魅惑（宣教師のみ）
+  - `OperationType.Sacrifice` - 回復スキル（農民のみ）
+
+**戻り値:**
+- 成功: APコスト（正の整数）
+- 失敗: -1（駒が存在しない、または指定した操作をサポートしていない）
+
+**使用例:**
+```csharp
+// 軍隊の攻撃APコストを取得
+int attackCost = PieceManager.Instance.GetUnitOperationCostByType(militaryID, GameData.OperationType.Attack);
+if (attackCost > 0)
+{
+    Debug.Log($"攻撃には{attackCost} APが必要です");
+
+    // APが足りるかチェック
+    int currentAP = PieceManager.Instance.GetPieceAP(militaryID);
+    if (currentAP >= attackCost)
+    {
+        // 攻撃実行
+        PieceManager.Instance.AttackEnemy(militaryID, targetID);
+    }
+}
+
+// 宣教師の魅惑APコストを取得
+int convertCost = PieceManager.Instance.GetUnitOperationCostByType(missionaryID, GameData.OperationType.Convert);
+
+// 農民の回復APコストを取得
+int sacrificeCost = PieceManager.Instance.GetUnitOperationCostByType(farmerID, GameData.OperationType.Sacrifice);
+
+// 移動APコスト（全駒共通）
+int moveCost = PieceManager.Instance.GetUnitOperationCostByType(pieceID, GameData.OperationType.Move);
+```
+
+**重要な機能:**
+- 各駒のDataSOから適切なAPコストを自動取得
+- 不正な組み合わせ（例: 農民で攻撃）の場合は-1を返してエラーログを出力
+- 行動実行前のAP確認に使用することで、不要なエラーを防止できる
+
+**実装箇所:** `PieceManager.cs:1016-1074`
+
+---
+
 ### 駒の行動
 
 #### `AttackEnemy()`
@@ -585,6 +584,10 @@ public bool OccupyTerritory(int missionaryID, Vector3 targetPosition)
 #### `SacrificeToPiece()`
 農民が他の駒を回復（獻祭）し、同期データを返します。
 
+**陣営による動作の違い:**
+- **鏡湖教**: ターゲットのAPを回復
+- **その他の陣営**: ターゲットのHPを回復
+
 **シグネチャ:**
 ```csharp
 public syncPieceData? SacrificeToPiece(int farmerID, int targetID)
@@ -595,10 +598,15 @@ public syncPieceData? SacrificeToPiece(int farmerID, int targetID)
 - `targetID`: 回復対象の駒ID
 
 **戻り値:**
-- 成功: `syncPieceData`（ターゲットの現在HPを含む）
+- 成功: `syncPieceData`（ターゲットの現在HP/APを含む）
 - 失敗: null
 
-**実装箇所:** `PieceManager.cs:880-901`
+**実装詳細:**
+- 鏡湖教の農民: `Farmer.SacrificeAPRecovery()`を呼び出してAPを回復
+- 他の陣営の農民: `Farmer.Sacrifice()`を呼び出してHPを回復
+- 回復量は農民の獻祭レベル（`sacrificeLevel`）に応じて変化
+
+**実装箇所:** `PieceManager.cs:1093-1131`
 
 ---
 
@@ -1137,7 +1145,7 @@ if (myBuildingData.HasValue)
 - 基本情報：buildingID, buildingName, playerID
 - 位置と状態：position, currentHP, state
 - 建築情報：remainingBuildCost
-- アップグレードレベル：hpLevel, attackRangeLevel, slotsLevel, buildCostLevel
+- アップグレードレベル：hpLevel, attackRangeLevel, slotsLevel
 
 **実装箇所:** `BuildingManager.cs:420-458`
 
@@ -1402,326 +1410,286 @@ void HandleBuildingDestruction(int destroyedBuildingID)
 
 ---
 
-### 建築処理
+### 建築処理（資源コスト取得）
 
-#### `AddFarmerToConstruction()`
-建物の建築を進めます（農民を投入）。
-
-**シグネチャ:**
-```csharp
-public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
-```
-
-**実装箇所:** `BuildingManager.cs:109-161`
-
----
-
-#### `CancelConstruction()`
-建築をキャンセルします。
+#### `GetBuildingCost(string buildingName)`
+建物名から建築に必要な資源コストを取得します。
 
 **シグネチャ:**
 ```csharp
-public bool CancelConstruction(int buildingID)
+public int GetBuildingCost(string buildingName)
 ```
 
-**実装箇所:** `BuildingManager.cs:168-177`
+**パラメータ:**
+- `buildingName`: 建物名
+
+**戻り値:**
+- 資源コスト（見つからない場合は-1）
+
+**使用例:**
+```csharp
+int cost = buildingManager.GetBuildingCost("祭壇");
+if (cost > 0)
+{
+    Debug.Log($"祭壇の建築コスト: {cost} 資源");
+}
+```
+
+**実装箇所:** `BuildingManager.cs:364-373`
 
 ---
 
-### 建物建築フローの詳細
+#### `GetBuildingCost(int buildingID)`
+建物IDから建築に必要な資源コストを取得します。
 
-このセクションでは、建物の建築開始から完成まで、そして完成した建物情報をGameManagerに渡して同期するまでの完全なフローを詳しく説明します。
-
-#### フロー図
-
-```
-GameManager
-    │
-    ├─ CreateBuilding() → BuildingManager
-    │                         │
-    │                         ├─ 建物生成（UnderConstruction状態）
-    │                         └─ Building.Initialize()
-    │                               │
-    │                               └─ remainingBuildCost設定
-    │
-    ├─ AddFarmerToConstruction() → BuildingManager
-    │                                  │
-    │                                  ├─ 農民のAP消費
-    │                                  └─ Building.ProgressConstruction()
-    │                                        │
-    │                                        ├─ remainingBuildCost を減少
-    │                                        └─ 0になったら CompleteConstruction()
-    │                                              │
-    │                                              ├─ state を Inactive に変更
-    │                                              └─ OnBuildingCompleted イベント発火
-    │                                                    ↓
-    │                        BuildingManager.HandleBuildingCompleted()
-    │                                                    │
-    │                                                    └─ OnBuildingCompleted イベント発火
-    │                                                          ↓
-    ├─ OnBuildingCompleted() ← GameManager がイベント受信
-    │        │
-    │        ├─ CreateCompleteSyncData() → BuildingManager
-    │        │                                  │
-    │        │                                  └─ syncBuildingData 生成
-    │        │
-    │        └─ ネットワーク送信
-```
-
-#### ステップバイステップの説明
-
-**ステップ1: 建築開始（GameManager → BuildingManager）**
-
-GameManagerが `CreateBuilding()` を呼び出して建物を生成します。この時点で建物は `UnderConstruction` 状態で作成されます。
-
+**シグネチャ:**
 ```csharp
-// GameManager側のコード
-BuildingDataSO buildingData = // 建物データを取得
-int buildingID = buildingManager.CreateBuilding(buildingData, playerID, position);
+public int GetBuildingCost(int buildingID)
 ```
 
-**ステップ2: 建物の初期化（Building内部）**
+**パラメータ:**
+- `buildingID`: 建物ID
 
-BuildingManagerは建物Prefabを生成し、`Building.Initialize()` を呼び出します。この時に：
-- `playerID` が建物の所有者として設定される
-- `remainingBuildCost` が初期建築コストに設定される
-- 建物の状態が `UnderConstruction` になる
-- `OnBuildingCompleted` イベントに購読する
+**戻り値:**
+- 資源コスト（見つからない場合は-1）
 
+**使用例:**
 ```csharp
-// Building.cs内部
-public void Initialize(BuildingDataSO data, int ownerPlayerID)
+int cost = buildingManager.GetBuildingCost(buildingID);
+if (cost > 0)
 {
-    buildingData = data;
-    playerID = ownerPlayerID; // 所有者を設定
-
-    currentHp = data.maxHp;
-    remainingBuildCost = data.buildingAPCost;
-    currentState = BuildingState.UnderConstruction;
-
-    // スロット初期化など...
+    Debug.Log($"建物ID {buildingID} の建築コスト: {cost} 資源");
 }
 ```
 
-**注意:** Building は自身の PlayerID を保持するため、BuildingManager で別途 `buildingOwners` 辞書を管理する必要はありません。
+**実装箇所:** `BuildingManager.cs:380-389`
 
-**ステップ3: 建築進行（GameManager → BuildingManager → Building）**
+---
 
-GameManagerが農民を投入して建築を進めます：
+#### `GetBuildingCostsByReligion(Religion religion)`
+指定された宗教のすべての建物の資源コストを取得します。
 
+**シグネチャ:**
 ```csharp
-// GameManager側のコード
-bool success = buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager);
+public Dictionary<string, int> GetBuildingCostsByReligion(Religion religion)
 ```
 
-BuildingManagerは農民のAPを消費してから、`Building.ProgressConstruction()` を呼び出します：
+**パラメータ:**
+- `religion`: 宗教
+
+**戻り値:**
+- 建物名と資源コストのDictionary（見つからない場合は空のDictionary）
+
+**使用例:**
+```csharp
+Dictionary<string, int> costs = buildingManager.GetBuildingCostsByReligion(Religion.MirrorLakeReligion);
+
+foreach (var kvp in costs)
+{
+    Debug.Log($"{kvp.Key}: {kvp.Value} 資源");
+}
+// 出力例:
+// 祭壇: 100 資源
+// 農場: 50 資源
+```
+
+**実装箇所:** `BuildingManager.cs:396-423`
+
+---
+
+#### `GetBuildingDataByReligion(Religion religion)`
+指定された宗教の建物データを直接取得します。
+
+**シグネチャ:**
+```csharp
+public BuildingDataSO GetBuildingDataByReligion(Religion religion)
+```
+
+**パラメータ:**
+- `religion`: 宗教
+
+**戻り値:**
+- BuildingDataSO（見つからない場合はnull）
+
+**使用例:**
+```csharp
+// 宗教から直接BuildingDataSOを取得
+BuildingDataSO buildingData = buildingManager.GetBuildingDataByReligion(Religion.SilkReligion);
+
+if (buildingData != null)
+{
+    int cost = buildingData.buildingResourceCost; // 18
+    string name = buildingData.buildingName; // "絲織教_特殊建築"
+    Debug.Log($"{name} のコスト: {cost} 資源");
+}
+```
+
+**実装箇所:** `BuildingManager.cs:424-441`
+
+---
+
+### 建築コスト取得の使用例
+
+建物を建築する際は、事前に資源コストを確認してから、資源を消費して建物を生成します。
+
+#### 基本的な使い方
 
 ```csharp
-// BuildingManager.cs内部
-public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
+public class GameManager : MonoBehaviour
 {
-    // 農民のAPを確認・消費
-    if (pieceManager.ConsumePieceAP(farmerID, farmer.Data.devotionAPCost))
+    [SerializeField] private BuildingManager buildingManager;
+    private int currentResources = 500; // プレイヤーの所持資源
+
+    /// <summary>
+    /// 建物を建築
+    /// </summary>
+    void BuildBuilding(string buildingName)
     {
-        // 建築を進行
-        building.ProgressConstruction(progressAmount);
+        // 1. 建築コストを取得
+        int cost = buildingManager.GetBuildingCost(buildingName);
+
+        if (cost < 0)
+        {
+            Debug.LogError($"建物 {buildingName} が見つかりません");
+            return;
+        }
+
+        // 2. 資源が足りるかチェック
+        if (currentResources < cost)
+        {
+            Debug.LogWarning($"資源不足: 必要 {cost}, 所持 {currentResources}");
+            return;
+        }
+
+        // 3. 資源を消費
+        currentResources -= cost;
+        Debug.Log($"資源を消費: {cost} (残り: {currentResources})");
+
+        // 4. 建物を生成
+        syncBuildingData? buildingData = buildingManager.CreateBuildingByName(
+            buildingName,
+            playerID: 1,
+            new Vector3(10, 0, 10)
+        );
+
+        if (buildingData.HasValue)
+        {
+            Debug.Log($"建物建築成功: {buildingName} (ID: {buildingData.Value.buildingID})");
+
+            // ネットワーク経由で相手に送信
+            NetworkSend("CreateBuilding", buildingData.Value);
+        }
     }
 }
 ```
 
-**ステップ4: 建築コスト減少（Building内部）**
-
-`Building.ProgressConstruction()` は `remainingBuildCost` を減少させ、0になったら完成処理を呼び出します：
+#### 宗教別の建物コストを一括取得
 
 ```csharp
-// Building.cs内部
-public void ProgressConstruction(int amount)
+/// <summary>
+/// 特定の宗教のすべての建物コストを表示
+/// </summary>
+void ShowBuildingCosts(Religion religion)
 {
-    remainingBuildCost -= amount;
+    Dictionary<string, int> costs = buildingManager.GetBuildingCostsByReligion(religion);
 
-    if (remainingBuildCost <= 0)
+    Debug.Log($"=== {religion} の建物コスト ===");
+    foreach (var kvp in costs)
     {
-        remainingBuildCost = 0;
-        CompleteConstruction();
+        Debug.Log($"{kvp.Key}: {kvp.Value} 資源");
     }
 }
+
+// 使用例
+ShowBuildingCosts(Religion.MayaReligion);
+// 出力:
+// === MayaReligion の建物コスト ===
+// 祭壇: 100 資源
+// 農場: 50 資源
+// 要塞: 150 資源
 ```
 
-**ステップ5: 建築完成（Building内部）**
-
-`Building.CompleteConstruction()` が呼ばれると：
-- 状態を `Inactive` に変更
-- `OnBuildingCompleted` イベントを発火
-
-```csharp
-// Building.cs内部
-private void CompleteConstruction()
-{
-    currentState = BuildingState.Inactive;
-    Debug.Log($"建物建築完了: {Data.buildingName} (ID: {buildingID})");
-
-    // イベント発火
-    OnBuildingCompleted?.Invoke(buildingID);
-}
-```
-
-**ステップ6: BuildingManagerでイベント受信**
-
-BuildingManagerは `HandleBuildingCompleted()` で建物完成イベントを受け取り、GameManagerに通知します：
-
-```csharp
-// BuildingManager.cs内部
-private void HandleBuildingCompleted(int buildingID)
-{
-    Debug.Log($"BuildingManager: 建物完成を検知 ID={buildingID}");
-
-    // GameManagerにイベントを発火
-    OnBuildingCompleted?.Invoke(buildingID);
-}
-```
-
-**ステップ7: GameManagerで完成通知を受信し、ネットワーク送信**
-
-GameManagerは `OnBuildingCompleted` イベントを購読して、完成した建物の情報を取得し、ネットワーク経由で相手に送信します：
-
-```csharp
-// GameManager側のコード
-void OnBuildingCompleted(int buildingID)
-{
-    Debug.Log($"己方の建物が完成: ID={buildingID}");
-
-    // 完成した建物の完全な同期データを取得
-    syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-
-    if (data.HasValue)
-    {
-        // ネットワーク経由で相手に送信
-        networkManager.SendBuildingComplete(data.Value);
-        Debug.Log($"建物完成通知を送信: ID={buildingID}");
-    }
-}
-```
-
-#### 完全な実装例
-
-以下は、GameManagerでの完全な実装例です：
+#### 建物生成の完全なフロー
 
 ```csharp
 public class NetworkGameManager : MonoBehaviour
 {
     [SerializeField] private BuildingManager buildingManager;
-    [SerializeField] private PieceManager pieceManager;
-    private NetworkManager networkManager;
     private int localPlayerID = 1;
+    private int currentResources = 1000;
 
     void Start()
     {
         // 初期化
         buildingManager.SetLocalPlayerID(localPlayerID);
-        pieceManager.SetLocalPlayerID(localPlayerID);
 
         // 建物完成イベントを購読
         buildingManager.OnBuildingCompleted += OnBuildingCompleted;
 
         // 建物破壊イベントを購読
         buildingManager.OnBuildingDestroyed += OnBuildingDestroyed;
-
-        // ネットワークメッセージ受信を設定
-        networkManager.OnBuildingCompleteReceived += OnEnemyBuildingCompleteReceived;
     }
 
-    // === 己方の建物建築フロー ===
-
     /// <summary>
-    /// 建物の建築を開始
+    /// 建物を建築
     /// </summary>
-    void StartBuildingConstruction()
+    void StartBuilding(string buildingName, Vector3 position)
     {
-        // 1. 建物を生成（UnderConstruction状態）
-        BuildingDataSO buildingData = GetBuildingData("祭壇");
-        int buildingID = buildingManager.CreateBuilding(buildingData, localPlayerID, new Vector3(10, 0, 10));
+        // 建築コストを取得
+        int cost = buildingManager.GetBuildingCost(buildingName);
 
-        if (buildingID >= 0)
+        if (cost < 0)
         {
-            Debug.Log($"建物建築開始: ID={buildingID}");
+            Debug.LogError($"建物 {buildingName} が見つかりません");
+            return;
+        }
 
-            // 建物生成通知を相手に送信
-            syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-            if (data.HasValue)
-            {
-                networkManager.SendBuildingCreate(data.Value);
-            }
+        // 資源チェック
+        if (currentResources < cost)
+        {
+            Debug.LogWarning($"資源不足: 必要 {cost}, 所持 {currentResources}");
+            return;
+        }
+
+        // 資源を消費して建物を生成
+        currentResources -= cost;
+
+        syncBuildingData? data = buildingManager.CreateBuildingByName(
+            buildingName,
+            localPlayerID,
+            position
+        );
+
+        if (data.HasValue)
+        {
+            Debug.Log($"建物建築完了: {buildingName} (コスト: {cost})");
+
+            // ネットワーク経由で相手に送信
+            NetworkSend("CreateBuilding", data.Value);
         }
     }
 
     /// <summary>
-    /// 農民を投入して建築を進行
-    /// </summary>
-    void ProgressBuildingConstruction(int buildingID, int farmerID)
-    {
-        // 2. 農民を投入（APを消費して建築進行）
-        if (buildingManager.AddFarmerToConstruction(buildingID, farmerID, pieceManager))
-        {
-            Debug.Log($"建築進行中: buildingID={buildingID}, farmerID={farmerID}");
-
-            // 建築進行状況を相手に送信
-            syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
-            if (data.HasValue)
-            {
-                networkManager.SendBuildingUpdate(data.Value);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 建物完成時の処理（イベントから自動呼び出し）
+    /// 建物完成時の処理
     /// </summary>
     void OnBuildingCompleted(int buildingID)
     {
-        Debug.Log($"己方の建物が完成: ID={buildingID}");
-
-        // 3. 完成通知を相手に送信
         syncBuildingData? data = buildingManager.CreateCompleteSyncData(buildingID);
         if (data.HasValue)
         {
-            networkManager.SendBuildingComplete(data.Value);
-            Debug.Log($"建物完成通知を送信: ID={buildingID}");
+            NetworkSend("BuildingComplete", data.Value);
         }
     }
 
     /// <summary>
-    /// 建物破壊時の処理（イベントから自動呼び出し）
+    /// 建物破壊時の処理
     /// </summary>
     void OnBuildingDestroyed(int buildingID)
     {
-        Debug.Log($"己方の建物が破壊: ID={buildingID}");
-
-        // 破壊データを取得して送信
         syncBuildingData? data = buildingManager.GetLastDestroyedBuildingData();
         if (data.HasValue)
         {
-            networkManager.SendBuildingDestruction(data.Value);
-        }
-    }
-
-    // === 敵方の建物受信フロー ===
-
-    /// <summary>
-    /// 敵方の建物完成通知を受信
-    /// </summary>
-    void OnEnemyBuildingCompleteReceived(syncBuildingData data)
-    {
-        Debug.Log($"敵方の建物完成通知受信: ID={data.buildingID}");
-
-        // 既に建物が存在する場合は状態を同期
-        if (buildingManager.DoesBuildingExist(data.buildingID))
-        {
-            buildingManager.SyncEnemyBuildingState(data);
-        }
-        else
-        {
-            // 建物が存在しない場合は新規作成
-            buildingManager.CreateEnemyBuilding(data);
+            NetworkSend("BuildingDestroyed", data.Value);
         }
     }
 }
@@ -1729,27 +1697,27 @@ public class NetworkGameManager : MonoBehaviour
 
 #### 重要なポイント
 
-1. **建築状態の遷移**
-   - `UnderConstruction` → `Inactive` → `Active`
-   - 完成直後は `Inactive`（農民が配置されると `Active` になる）
+1. **資源消費システム**
+   - 建物生成前に必ず `GetBuildingCost()` でコストを確認
+   - 資源が足りない場合は建物を生成できない
+   - 資源を消費してから `CreateBuilding()` を呼び出す
 
-2. **イベント駆動設計**
-   - Building → BuildingManager → GameManager という階層でイベントが伝播
-   - 各層が疎結合で独立して動作
+2. **建物は即座に完成**
+   - 資源を消費すると建物は `Active` 状態で即座に生成される
+   - 以前のようなAP投入による段階的な建築は不要
 
 3. **syncBuildingDataの使用**
-   - `remainingBuildCost` で建築進捗を含む
+   - `buildingResourceCost` で建築コストを含む
    - `state` で現在の建物状態を含む
    - 完全な状態を一つの構造体で表現
 
 4. **ネットワーク同期のタイミング**
-   - 建築開始時: 建物生成を通知
-   - 建築進行時: 進捗状況を更新（オプション）
-   - 建築完成時: 完成通知を送信（重要）
+   - 建物生成時: 建物生成を通知
+   - 状態変更時: アップグレード、ダメージなどを通知
 
-5. **両方のManagerを初期化する**
-   - `buildingManager.SetLocalPlayerID()` と `pieceManager.SetLocalPlayerID()` の両方が必要
-   - これにより己方/敵方の建物・駒を正しく区別できる
+5. **宗教別コスト管理**
+   - `GetBuildingCostsByReligion()` で宗教のすべての建物コストを一括取得
+   - UI表示などに便利
 
 ---
 
@@ -1783,7 +1751,89 @@ public bool UpgradeBuilding(int buildingID, BuildingUpgradeType upgradeType)
 
 ### 建物の情報取得
 
-各種情報取得関数については、BuildingManagerのインターフェースを参照してください。
+#### `GetMyBuilding()`
+自分の建物インスタンスを取得します。
+
+**シグネチャ:**
+```csharp
+public Building GetMyBuilding(int buildingID)
+```
+
+**パラメータ:**
+- `buildingID`: 建物ID
+
+**戻り値:**
+- 成功: Buildingインスタンス
+- 失敗: null
+
+**使用例:**
+```csharp
+Building myBuilding = buildingManager.GetMyBuilding(buildingID);
+if (myBuilding != null)
+{
+    Debug.Log($"建物HP: {myBuilding.CurrentHP}");
+}
+```
+
+**実装箇所:** `BuildingManager.cs:761-768`
+
+---
+
+#### `GetEnemyBuilding()`
+敵の建物インスタンスを取得します。
+
+**シグネチャ:**
+```csharp
+public Building GetEnemyBuilding(int buildingID)
+```
+
+**パラメータ:**
+- `buildingID`: 建物ID
+
+**戻り値:**
+- 成功: Buildingインスタンス
+- 失敗: null
+
+**使用例:**
+```csharp
+Building enemyBuilding = buildingManager.GetEnemyBuilding(buildingID);
+if (enemyBuilding != null)
+{
+    Debug.Log($"敵建物HP: {enemyBuilding.CurrentHP}");
+}
+```
+
+**実装箇所:** `BuildingManager.cs:775-782`
+
+---
+
+#### `GetBuilding()`
+建物インスタンスを取得します（己方・敵方両方から検索）。
+
+**シグネチャ:**
+```csharp
+public Building GetBuilding(int buildingID)
+```
+
+**パラメータ:**
+- `buildingID`: 建物ID
+
+**戻り値:**
+- 成功: Buildingインスタンス
+- 失敗: null
+
+**使用例:**
+```csharp
+Building building = buildingManager.GetBuilding(buildingID);
+if (building != null)
+{
+    Debug.Log($"建物が見つかりました: {building.Data.buildingName}");
+}
+```
+
+**注意:** 自分の建物と敵の建物を区別する必要がある場合は、`GetMyBuilding()`または`GetEnemyBuilding()`を使用してください。
+
+**実装箇所:** `BuildingManager.cs:789-795`
 
 ---
 
@@ -1872,6 +1922,34 @@ public enum SpecialUpgradeType
     PopeBuff                   // 教皇: バフ効果
 }
 ```
+
+### OperationType
+駒の操作タイプ（APコスト取得用）。
+
+```csharp
+public enum OperationType
+{
+    Move,       // 移動（全駒共通）
+    Attack,     // 攻撃（軍隊のみ）
+    Occupy,     // 領地占領（宣教師のみ）
+    Convert,    // 敵魅惑（宣教師のみ）
+    Sacrifice   // 回復スキル（農民のみ）
+}
+```
+
+**使用方法:**
+`GetUnitOperationCostByType()` 関数と組み合わせて使用します。
+
+```csharp
+using GameData; // OperationType は GameData namespace に定義されています
+
+// 各種操作のAPコストを取得
+int attackCost = PieceManager.Instance.GetUnitOperationCostByType(militaryID, OperationType.Attack);
+int moveCost = PieceManager.Instance.GetUnitOperationCostByType(pieceID, OperationType.Move);
+int convertCost = PieceManager.Instance.GetUnitOperationCostByType(missionaryID, OperationType.Convert);
+```
+
+**定義箇所:** `GameDataEnums.cs:52-59`
 
 ---
 
@@ -2011,7 +2089,6 @@ public struct syncBuildingData
     public int hpLevel;            // HP等級 (0-3)
     public int attackRangeLevel;   // 攻撃範囲等級 (0-3)
     public int slotsLevel;         // スロット数等級 (0-3)
-    public int buildCostLevel;     // 建造コスト等級 (0-3)
 }
 ```
 

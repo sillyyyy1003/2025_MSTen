@@ -35,12 +35,14 @@ public class Pope : Piece
         base.Initialize(data, playerID);
     }
 
+    ///この関数は廃止されました
     /// <summary>
     /// 味方駒と位置を交換する
     /// 行動力を消費せず、クールタイムのみ
     /// </summary>
     public bool SwapPositionWith(Piece targetPiece)
     {
+
         if (targetPiece == null || !targetPiece.IsAlive)
         {
             Debug.LogWarning("交換対象が無効です");
@@ -59,42 +61,16 @@ public class Pope : Piece
             return false;
         }
 
-        ///今後ターン数を使って計算へ移行
-        // クールタイムチェック
-        if (Time.time - lastSwapTime < popeData.swapCooldown[UpgradeLevel])
-        {
-            Debug.LogWarning($"クールタイム中です。残り: {popeData.swapCooldown[UpgradeLevel] - (Time.time - lastSwapTime):F1}秒");
-            return false;
-        }
-
         // 位置を交換
         Vector3 tempPosition = transform.position;
         transform.position = targetPiece.transform.position;
         targetPiece.transform.position = tempPosition;
 
-        lastSwapTime = Time.time;
 
         Debug.Log($"教皇が{targetPiece.Data.pieceName}と位置を交換しました");
         return true;
     }
 
-    /// <summary>
-    /// 残りクールタイムを取得
-    /// ここもターン数へ移行待ち
-    /// </summary>
-    public float GetRemainingCooldown()
-    {
-        float elapsed = Time.time - lastSwapTime;
-        return Mathf.Max(0, popeData.swapCooldown[UpgradeLevel] - elapsed);
-    }
-
-    /// <summary>
-    /// 位置交換が可能かチェック
-    /// </summary>
-    public bool CanSwap()
-    {
-        return GetRemainingCooldown() <= 0;
-    }
 
     #region アップグレード管理
 
@@ -161,11 +137,16 @@ public class Pope : Piece
         return true;
     }
 
-    /// <summary>
-    /// バフ効果をアップグレードする（リソース消費は呼び出し側で行う）
-    /// </summary>
-    /// <returns>アップグレード成功したらtrue</returns>
-    public bool UpgradeBuff()
+    //25.11.28 ri add get max cool down
+    public int GetMaxSwapCooldown()
+    {
+        return popeData.swapCooldown[swapCooldownLevel];
+    }
+        /// <summary>
+        /// バフ効果をアップグレードする（リソース消費は呼び出し側で行う）
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeBuff()
     {
         // 最大レベルチェック
         if (buffLevel >= 3)
@@ -204,19 +185,19 @@ public class Pope : Piece
     /// <summary>
     /// 指定項目のアップグレードコストを取得
     /// </summary>
-    public int GetPopeUpgradeCost(PopeUpgradeType type)
+    public int GetPopeUpgradeCost(int level, SpecialUpgradeType type)
     {
         switch (type)
         {
-            case PopeUpgradeType.SwapCooldown:
-                if (swapCooldownLevel >= 2 || popeData.swapCooldownUpgradeCost == null || swapCooldownLevel >= popeData.swapCooldownUpgradeCost.Length)
+            case SpecialUpgradeType.PopeSwapCooldown:
+                if (level >= 2 || popeData.swapCooldownUpgradeCost == null || level >= popeData.swapCooldownUpgradeCost.Length)
                     return -1;
-                return popeData.swapCooldownUpgradeCost[swapCooldownLevel];
+                return popeData.swapCooldownUpgradeCost[level];
 
-            case PopeUpgradeType.Buff:
-                if (buffLevel >= 3 || popeData.buffUpgradeCost == null || buffLevel >= popeData.buffUpgradeCost.Length)
+            case SpecialUpgradeType.PopeBuff:
+                if (level >= 3 || popeData.buffUpgradeCost == null || level >= popeData.buffUpgradeCost.Length)
                     return -1;
-                return popeData.buffUpgradeCost[buffLevel];
+                return popeData.buffUpgradeCost[level];
 
             default:
                 return -1;
@@ -226,9 +207,9 @@ public class Pope : Piece
     /// <summary>
     /// 指定項目がアップグレード可能かチェック
     /// </summary>
-    public bool CanUpgradePope(PopeUpgradeType type)
+    public bool CanUpgradePope(int level, SpecialUpgradeType type)
     {
-        int cost = GetPopeUpgradeCost(type);
+        int cost = GetPopeUpgradeCost(level, type);
         return cost > 0;
     }
 
@@ -264,13 +245,4 @@ public class Pope : Piece
         OnPopeDeath?.Invoke();
         base.Die();
     }
-}
-
-/// <summary>
-/// 教皇のアップグレード項目タイプ
-/// </summary>
-public enum PopeUpgradeType
-{
-    SwapCooldown,   // 位置交換CD
-    Buff            // バフ効果
 }

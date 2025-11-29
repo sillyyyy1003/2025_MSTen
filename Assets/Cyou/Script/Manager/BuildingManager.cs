@@ -30,6 +30,10 @@ public class BuildingManager : MonoBehaviour
     private List<BuildingDataSO> allBuildingTypes = new List<BuildingDataSO>(); // 全建物（自分+相手、検索用）
     private List<BuildingDataSO> buildableBuildingTypes = new List<BuildingDataSO>(); // 自分が建設可能な建物のみ
 
+    private Dictionary<BuildingUpgradeType, int> buildingUpgradeData = new Dictionary<BuildingUpgradeType, int>();//建物の各項目のアップグレードレベル
+
+    private bool isUpgraded = false;
+
 
     //25.11.11 RI add GameObject
     private GameObject buildingObject;
@@ -41,6 +45,14 @@ public class BuildingManager : MonoBehaviour
     public event Action<int, int> OnResourceGenerated; // (建物ID, 資源量)
 
     #region 初期化
+
+    private void Awake()
+    {
+        foreach (BuildingUpgradeType parameter in Enum.GetValues(typeof(BuildingUpgradeType)))
+        {
+            buildingUpgradeData[parameter] = 0;
+        }
+    }
 
     /// <summary>
     /// ローカルプレイヤーIDを設定（己方/敵方を区別するため）
@@ -174,9 +186,62 @@ public class BuildingManager : MonoBehaviour
         Debug.Log($"建物を生成しました: ID={pieceID}, Name={buildingData.buildingName}, PlayerID={playerID}");
         OnBuildingCreated?.Invoke(pieceID);
 
+        if (isUpgraded)
+        {
+            if (ApplyUpgradeLevelToNew(building))
+            {
+                Debug.Log("新たに生成された建物に現存のアップグレードレベルを適用しました。");
+            }
+        }
+
         // 同期データを作成して返す
         return CreateCompleteSyncData(pieceID);
     }
+
+
+    //25.11.18 RI add create building by religion
+    /// <summary>
+    /// 建物名から建物を生成（便利メソッド）
+    /// </summary>
+    /// <param name="buildingName">建物名</param>
+    /// <param name="playerID">プレイヤーID</param>
+    /// <param name="position">生成位置</param>
+    /// <returns>生成された建物の同期データ（失敗時はnull）</returns>
+    public syncBuildingData? CreateBuildingByReligion(Religion buildingReligion, int playerID, int pieceID, Vector3 position)
+    {
+        string buildingName="";
+        switch (buildingReligion)
+        {
+            case Religion.RedMoonReligion:
+                buildingName = "紅月教_特殊建築";
+                break;
+            case Religion.SilkReligion:
+                buildingName = "絲織教_特殊建築";
+                break;
+            case Religion.MadScientistReligion:
+                buildingName = "瘋狂科學家教_特殊建築";
+                break;
+            case Religion.MayaReligion:
+                buildingName = "瑪雅外星人文明教_特殊建築";
+                break;
+
+            default:return null;
+        }
+
+
+        //25.11.11 RI add piece ID
+        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
+
+        if (buildingData == null)
+        {
+            Debug.LogError($"建設可能な建物データが見つかりません: {buildingName}");
+            return null;
+        }
+
+        return CreateBuilding(buildingData, playerID, pieceID, position);
+    }
+
+
 
     /// <summary>
     /// 建物名から建物を生成（便利メソッド）
@@ -264,11 +329,6 @@ public class BuildingManager : MonoBehaviour
             building.SetSlotsLevel(sbd.slotsLevel);
         }
 
-        if (sbd.buildCostLevel > 0)
-        {
-            building.SetBuildCostLevel(sbd.buildCostLevel);
-        }
-
         // 建築進捗を設定
         if (sbd.state == BuildingState.UnderConstruction && sbd.remainingBuildCost > 0)
         {
@@ -290,88 +350,131 @@ public class BuildingManager : MonoBehaviour
 
     #endregion
 
-    #region 建築処理
+    #region 建築処理（資源コスト取得）
 
     /// <summary>
-    /// 建物の建築を進める（農民を投入）
+    /// 建物名から建築に必要な資源コストを取得
     /// </summary>
-    /// <param name="buildingID">建物ID</param>
-    /// <param name="farmerID">投入する農民の駒ID</param>
-    /// <param name="pieceManager">PieceManagerの参照</param>
-    /// <returns>建築進行成功したらtrue</returns>
-    public bool AddFarmerToConstruction(int buildingID, int farmerID, PieceManager pieceManager)
+    /// <param name="buildingName">建物名</param>
+    /// <returns>資源コスト（見つからない場合は-1）</returns>
+    public int GetBuildingCost(string buildingName)
     {
-        if (!buildings.TryGetValue(buildingID, out Building building))
+        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
+        if (buildingData == null)
         {
-            Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return false;
+            Debug.LogError($"建物データが見つかりません: {buildingName}");
+            return -1;
         }
-
-        if (building.State != BuildingState.UnderConstruction)
-        {
-            Debug.LogError($"建物ID={buildingID}は建築中ではありません（状態: {building.State}）");
-            return false;
-        }
-
-        // PieceManagerから農民を取得
-        if (!pieceManager.DoesPieceExist(farmerID))
-        {
-            Debug.LogError($"農民が見つかりません: ID={farmerID}");
-            return false;
-        }
-
-        // 農民のAPを取得
-        float farmerAP = pieceManager.GetPieceAP(farmerID);
-        if (farmerAP <= 0)
-        {
-            Debug.LogError($"農民ID={farmerID}のAPが不足しています");
-            return false;
-        }
-
-        // 建築を進める
-        int apToConsume = Mathf.Min(Mathf.FloorToInt(farmerAP), building.RemainingBuildCost);
-
-        // 農民のAPを消費（PieceManagerを通じて）
-        if (!pieceManager.ConsumePieceAP(farmerID, apToConsume))
-        {
-            Debug.LogError($"農民ID={farmerID}のAP消費に失敗しました");
-            return false;
-        }
-
-        // 建築を進める
-        bool isCompleted = building.ProgressConstruction(apToConsume);
-
-        if (isCompleted)
-        {
-            Debug.Log($"建物ID={buildingID}の建築が完了しました！");
-        }
-        else
-        {
-            Debug.Log($"建物ID={buildingID}の建築が進みました（残りコスト: {building.RemainingBuildCost}）");
-        }
-
-        return true;
+        return buildingData.buildingResourceCost;
     }
 
     /// <summary>
-    /// 建築をキャンセル
+    /// 建物IDから建築に必要な資源コストを取得
     /// </summary>
     /// <param name="buildingID">建物ID</param>
-    /// <returns>キャンセル成功したらtrue</returns>
-    public bool CancelConstruction(int buildingID)
+    /// <returns>資源コスト（見つからない場合は-1）</returns>
+    public int GetBuildingCost(int buildingID)
     {
-        if (!buildings.TryGetValue(buildingID, out Building building))
+        Building building = GetMyBuilding(buildingID);
+        if (building == null)
         {
             Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return false;
+            return -1;
+        }
+        return building.Data.buildingResourceCost;
+    }
+
+    /// <summary>
+    /// 指定された宗教のすべての建物の資源コストを取得
+    /// </summary>
+    /// <param name="religion">宗教</param>
+    /// <returns>建物名と資源コストのDictionary（見つからない場合は空のDictionary）</returns>
+    public Dictionary<string, int> GetBuildingCostsByReligion(Religion religion)
+    {
+        Dictionary<string, int> costs = new Dictionary<string, int>();
+
+        if (buildingRegistry == null)
+        {
+            Debug.LogError("BuildingRegistryが設定されていません");
+            return costs;
         }
 
-        return building.CancelConstruction();
+        List<BuildingDataSO> buildings = buildingRegistry.GetBuildingsByReligion(religion);
+        if (buildings == null || buildings.Count == 0)
+        {
+            Debug.LogWarning($"宗教 {religion} に属する建物が見つかりません");
+            return costs;
+        }
+
+        foreach (BuildingDataSO buildingData in buildings)
+        {
+            if (buildingData != null)
+            {
+                costs[buildingData.buildingName] = buildingData.buildingResourceCost;
+            }
+        }
+
+        return costs;
+    }
+
+    /// <summary>
+    /// 指定された宗教の建物データを取得
+    /// </summary>
+    /// <param name="religion">宗教</param>
+    /// <returns>BuildingDataSO（見つからない場合はnull）</returns>
+    public BuildingDataSO GetBuildingDataByReligion(Religion religion)
+    {
+        if (buildingRegistry == null)
+        {
+            Debug.LogError("BuildingRegistryが設定されていません");
+            return null;
+        }
+
+        List<BuildingDataSO> buildings = buildingRegistry.GetBuildingsByReligion(religion);
+        if (buildings == null || buildings.Count == 0)
+        {
+            Debug.LogWarning($"宗教 {religion} に属する建物が見つかりません");
+            return null;
+        }
+
+        // 各宗教には1つの特殊建築しかないため、最初の要素を返す
+        return buildings[0];
     }
 
     #endregion
 
     #region 農民配置
+
+    // 25.11.26 RI add EnterBuilding new logic
+    public bool NewEnterBuilding(int buildingID, int farmerAP)
+    {
+        if (!buildings.TryGetValue(buildingID, out Building building))
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return false;
+        } 
+     
+        if(!building.FarmerEnter(farmerAP))
+        {
+            Debug.LogWarning("Slot is Full! cant in");
+            return false;
+        }
+      
+
+        return true;  
+    }
+    
+ 
+    //public int GetBuildingCreateResource()
+    //{
+    //    int res=0;
+    //   foreach (var a in buildings)
+    //    {
+    //        res += a.Value.NewGetResource();
+    //    }
+    //    return res;
+    //}
+  
 
     /// <summary>
     /// 農民を建物に配置
@@ -473,11 +576,6 @@ public class BuildingManager : MonoBehaviour
             building.SetSlotsLevel(sbd.slotsLevel);
         }
 
-        if (sbd.buildCostLevel > 0)
-        {
-            building.SetBuildCostLevel(sbd.buildCostLevel);
-        }
-
         // 建築進捗を同期
         if (sbd.state == BuildingState.UnderConstruction && sbd.remainingBuildCost >= 0)
         {
@@ -528,6 +626,7 @@ public class BuildingManager : MonoBehaviour
 
     /// <summary>
     /// 建物の項目をアップグレード
+    /// すべての自分の建物にアップグレードを適用
     /// </summary>
     /// <param name="buildingID">建物ID</param>
     /// <param name="upgradeType">アップグレード項目</param>
@@ -540,20 +639,78 @@ public class BuildingManager : MonoBehaviour
             return false;
         }
 
-        switch (upgradeType)
+        bool anySuccess = false;
+
+        // すべての自分の建物にアップグレードを適用
+        foreach (var kvp in buildings)
         {
-            case BuildingUpgradeType.HP:
-                return building.UpgradeHP();
-            case BuildingUpgradeType.AttackRange:
-                return building.UpgradeAttackRange();
-            case BuildingUpgradeType.Slots:
-                return building.UpgradeSlots();
-            case BuildingUpgradeType.BuildCost:
-                return building.UpgradeBuildCost();
-            default:
-                Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
-                return false;
+            Building targetBuilding = kvp.Value;
+            bool success = false;
+
+            switch (upgradeType)
+            {
+                case BuildingUpgradeType.BuildingHP:
+                    success = targetBuilding.UpgradeHP();
+                    break;
+                case BuildingUpgradeType.attackRange:
+                    success = targetBuilding.UpgradeAttackRange();
+                    break;
+                case BuildingUpgradeType.slotsLevel:
+                    success = targetBuilding.UpgradeSlots();
+                    break;
+                default:
+                    Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+                    return false;
+            }
+
+            if (success)
+            {
+                anySuccess = true;
+                Debug.Log($"建物ID={kvp.Key}の{upgradeType}をアップグレードしました");
+            }
         }
+
+        if (anySuccess)
+        {
+            if (!buildingUpgradeData.ContainsKey(upgradeType)) buildingUpgradeData[upgradeType] = 0;
+            buildingUpgradeData[upgradeType]++;
+            isUpgraded = true;
+        }
+        return anySuccess;
+    }
+
+    /// <summary>
+    /// 新しく作られた建物に現在のアップグレードレベルを適用する
+    /// </summary>
+    public bool ApplyUpgradeLevelToNew(Building building)
+    {
+        if (building == null) return false;
+
+        bool anyApplied = false;
+
+        int hpLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.BuildingHP) ? buildingUpgradeData[BuildingUpgradeType.BuildingHP] : 0;
+        int attackRangeLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.attackRange) ? buildingUpgradeData[BuildingUpgradeType.attackRange] : 0;
+        int slotsLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.slotsLevel) ? buildingUpgradeData[BuildingUpgradeType.slotsLevel] : 0;
+
+        for (int i = 0; i < hpLevel; i++)
+        {
+            if (building.UpgradeHP()) anyApplied = true;
+        }
+        for (int i = 0; i < attackRangeLevel; i++)
+        {
+            if (building.UpgradeAttackRange()) anyApplied = true;
+        }
+        for (int i = 0; i < slotsLevel; i++)
+        {
+            if (building.UpgradeSlots()) anyApplied = true;
+        }
+
+        if (anyApplied)
+        {
+            Debug.Log($"新しい建物ID={building.BuildingID}に現在のアップグレードレベルを適用しました");
+        }
+
+        return anyApplied;
     }
 
     /// <summary>
@@ -570,7 +727,8 @@ public class BuildingManager : MonoBehaviour
             return -1;
         }
 
-        return building.GetUpgradeCost(upgradeType);
+        int level = buildingUpgradeData.ContainsKey(upgradeType) ? buildingUpgradeData[upgradeType] : 0;
+        return building.GetUpgradeCost(level, upgradeType);
     }
 
     /// <summary>
@@ -586,12 +744,26 @@ public class BuildingManager : MonoBehaviour
             return false;
         }
 
-        return building.CanUpgrade(upgradeType);
+        int level = buildingUpgradeData.ContainsKey(upgradeType) ? buildingUpgradeData[upgradeType] : 0;
+        return building.CanUpgrade(level, upgradeType);
     }
 
     #endregion
 
     #region 建物の情報取得
+
+    /// <summary>
+    /// 25.11.26 RI Add 建物のAllHPを取得
+    /// </summary>
+    public int GetBuildingAllHP(int buildingID)
+    {
+        if (!buildings.TryGetValue(buildingID, out Building building))
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return -1;
+        }
+        return building.GetAllHP(); ;
+    }
 
     /// <summary>
     /// 建物の現在HPを取得
@@ -641,21 +813,44 @@ public class BuildingManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 自分の建物を取得
+    /// </summary>
+    /// <param name="buildingID">建物ID</param>
+    /// <returns>Buildingインスタンス（見つからない場合はnull）</returns>
+    public Building GetMyBuilding(int buildingID)
+    {
+        if (buildings.TryGetValue(buildingID, out Building building))
+        {
+            return building;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 敵の建物を取得
+    /// </summary>
+    /// <param name="buildingID">建物ID</param>
+    /// <returns>Buildingインスタンス（見つからない場合はnull）</returns>
+    public Building GetEnemyBuilding(int buildingID)
+    {
+        if (enemyBuildings.TryGetValue(buildingID, out Building building))
+        {
+            return building;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// 建物インスタンスを取得（己方・敵方両方から検索）
     /// </summary>
     /// <param name="buildingID">建物ID</param>
     /// <returns>Buildingインスタンス（見つからない場合はnull）</returns>
     public Building GetBuilding(int buildingID)
     {
-        if (buildings.TryGetValue(buildingID, out Building building))
-        {
-            return building;
-        }
-        if (enemyBuildings.TryGetValue(buildingID, out building))
-        {
-            return building;
-        }
-        return null;
+        Building building = GetMyBuilding(buildingID);
+        if (building != null) return building;
+
+        return GetEnemyBuilding(buildingID);
     }
 
     /// <summary>
@@ -869,21 +1064,39 @@ public class BuildingManager : MonoBehaviour
     /// すべての建物のターン処理（資源生成など）
     /// </summary>
     /// <param name="currentTurn">現在のターン数</param>
-    public void ProcessTurnStart(int currentTurn)
+    public int ProcessTurnStart()
     {
         var operationalBuildings = GetOperationalBuildings();
+        int lastTurnResourceTotal = 0;
 
         foreach (int buildingID in operationalBuildings)
         {
             if (buildings.TryGetValue(buildingID, out Building building))
             {
-                building.ProcessTurn(currentTurn);
+                // 25.11.28 Ri add new turn process
+                //lastTurnResourceTotal+=building.ProcessTurn();
+                lastTurnResourceTotal += building.NewGetResource();
             }
+
         }
 
-        Debug.Log($"ターン{currentTurn}: {operationalBuildings.Count}個の建物が処理されました");
+        Debug.Log($"前ターンにて{lastTurnResourceTotal}の資源が生成されました。");
+        return lastTurnResourceTotal;
     }
 
+    // 25.11.28 ri add building is actived
+    public bool GetIsActived(int buildingID)
+    {
+        bool actived = true;
+        if (buildings.TryGetValue(buildingID, out Building building))
+        {
+            if(!building.GetBuildingActived())
+            {
+                actived = false;
+            }
+        }
+        return actived;
+    }
     #endregion
 }
 
@@ -909,7 +1122,6 @@ public struct syncBuildingData
     public int hpLevel;            // HP等級 (0-3)
     public int attackRangeLevel;   // 攻撃範囲等級 (0-3)
     public int slotsLevel;         // スロット数等級 (0-3)
-    public int buildCostLevel;     // 建造コスト等級 (0-3)
 
     /// <summary>
     /// Buildingインスタンスから完全なsyncBuildingDataを生成
@@ -929,8 +1141,14 @@ public struct syncBuildingData
             // アップグレードレベル
             hpLevel = building.HPLevel,
             attackRangeLevel = building.AttackRangeLevel,
-            slotsLevel = building.SlotsLevel,
-            buildCostLevel = building.BuildCostLevel
+            slotsLevel = building.SlotsLevel
         };
     }
+}
+
+public enum BuildingUpgradeType
+{
+    BuildingHP,//建物のHP
+    attackRange,//建物の攻撃範囲
+    slotsLevel//建物が持っているスロット数
 }

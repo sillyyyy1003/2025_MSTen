@@ -231,8 +231,6 @@ List<BuildingDataSO> buildings = buildingRegistry.GetBuildingsByReligions(
 ##### 基本属性
 - **buildingName**: 建物名（例：「絲織教_特殊建築」）
 - **maxHp**: 最大HP
-- **buildStartAPCost**: 建築開始に必要なAP
-- **buildingAPCost**: 建築完了に必要なAP
 - **resourceGenInterval**: 資源生成間隔（ターン数）
 - **cellType**: 配置可能な地形タイプ（通常/金鉱等）
 
@@ -244,7 +242,6 @@ List<BuildingDataSO> buildings = buildingRegistry.GetBuildingsByReligions(
 - **generationType**: 資源生成タイプ（通常/特殊等）
 - **baseProductionAmount**: 基本生産量
 - **goldenProductionAmount**: 金鉱地での生産量
-- **apCostperTurn**: 毎ターンの農民AP消費量
 - **productionMultiplier**: 生産量倍率（通常は1.0）
 
 ##### アップグレードレベルごとのデータ
@@ -256,8 +253,6 @@ List<BuildingDataSO> buildings = buildingRegistry.GetBuildingsByReligions(
   - 例：`[0, 1, 2]` = 無し、範囲1、範囲2
 - **maxSlotsByLevel**: レベル別最大スロット数
   - 例：`[3, 5, 5]`
-- **buildingAPCostByLevel**: レベル別建築コスト
-  - 例：`[9, 6, 3]`
 
 ##### 各項目のアップグレードコスト
 各配列は2つの要素を持ち、レベル0→1、1→2のコストを表します。
@@ -266,7 +261,6 @@ List<BuildingDataSO> buildings = buildingRegistry.GetBuildingsByReligions(
   - 例：`[6, 8]` = 0→1:6資源、1→2:8資源
 - **attackRangeUpgradeCost**: 攻撃範囲強化の資源コスト
 - **slotsUpgradeCost**: スロット数強化の資源コスト
-- **buildCostUpgradeCost**: 建築コスト軽減の資源コスト
 
 ##### Prefab
 - **buildingPrefab**: 実際のゲームオブジェクトPrefab

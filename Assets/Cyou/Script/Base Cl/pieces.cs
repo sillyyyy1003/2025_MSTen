@@ -9,7 +9,7 @@ namespace GamePieces
     /// <summary>
     /// 駒の基底クラス - ScriptableObjectからデータを参照
     /// </summary>
-    public abstract class Piece : VisualGameObject
+    public abstract class Piece : MonoBehaviour
     {
         [SerializeField] protected PieceDataSO pieceData;
 
@@ -33,6 +33,10 @@ namespace GamePieces
         public int CharmedTurnsRemaining => charmedTurnsRemaining;
         public bool IsCharmed => charmedTurnsRemaining > 0;
 
+        // ==== 教皇の位置交換スキルCD関連 ===
+        private int popeSwapPosRemaining = 0;
+        public int PopeSwapPosRemaining => popeSwapPosRemaining;
+        public bool canPopeSwapPos => popeSwapPosRemaining <= 0;
 
 
         // ===== イベント =====
@@ -124,21 +128,13 @@ namespace GamePieces
         }
 
 
-        private IEnumerator RevertCharmAfterTurns(int charmTurns,int originalPID)
+        ///クールダウンに必要なターン数を設定
+        public void SetPopeSwap(int turns)
         {
-            int remainingTurns=charmTurns;
-            //int endTurn = remainingTurns + DemoUITest.GetTurn();//魅惑が解除されるターンの数字
-
-            while (remainingTurns > 0)
-            {
-                yield return new WaitUntil(() =>1 >= 0);//GameManagerからターンの終了宣告を貰う
-                    remainingTurns--;
-            }
-
-            currentPID = originalPID;
-            OnUncharmed?.Invoke(this);
-            Debug.Log($"{OriginalPID}の駒{this.pieceData.pieceName}の魅惑が解けました");
+            popeSwapPosRemaining = turns;
+            Debug.Log($"教皇駒ID={this.PieceID}は位置交換スキルを発動し、スキルは{popeSwapPosRemaining}ターンのクールダウン期間に入りました");
         }
+
 
         /// <summary>
         /// 魅惑状態にする（PieceManagerから呼び出し）
@@ -175,9 +171,21 @@ namespace GamePieces
             return false;
         }
 
+        public bool ProcessPopeSwapCD()
+        {
+            if (popeSwapPosRemaining > 0)
+            {
+                popeSwapPosRemaining--;
+                Debug.Log($"教皇駒ID={PieceID}の位置交換スキル発動可能までの残りターン: {popeSwapPosRemaining}");
+                return true;
+            }
+
+            //Debug.Log($"教皇駒ID={PieceID}は今位置交換スキル発動可能です。");
+            return true;
+        }
+
         protected virtual void SetupComponents()
         {
-            // SetupVisualComponents(); // Prefabの外見をそのまま使用するため不要
             // Prefabの外見をそのまま使用するため、動的な適用は不要
         }
 
@@ -378,21 +386,21 @@ namespace GamePieces
         }
 
         /// <summary>
-        /// 指定項目のアップグレードコストを取得
+        /// HP&AP項目のアップグレードコストを取得
         /// </summary>
-        public int GetUpgradeCost(PieceUpgradeType type)
+        public int GetUpgradeCost(int level,PieceUpgradeType type)
         {
             switch (type)
             {
                 case PieceUpgradeType.HP:
-                    if (hpLevel >= 3 || pieceData.hpUpgradeCost == null || hpLevel >= pieceData.hpUpgradeCost.Length)
+                    if (level >= 3 || pieceData.hpUpgradeCost == null || level >= pieceData.hpUpgradeCost.Length)
                         return -1; // アップグレード不可
-                    return pieceData.hpUpgradeCost[hpLevel];
+                    return pieceData.hpUpgradeCost[level+1];
 
                 case PieceUpgradeType.AP:
-                    if (apLevel >= 3 || pieceData.apUpgradeCost == null || apLevel >= pieceData.apUpgradeCost.Length)
+                    if (level >= 3 || pieceData.apUpgradeCost == null || level >= pieceData.apUpgradeCost.Length)
                         return -1; // アップグレード不可
-                    return pieceData.apUpgradeCost[apLevel];
+                    return pieceData.apUpgradeCost[level+1];
 
                 default:
                     return -1;
@@ -400,11 +408,11 @@ namespace GamePieces
         }
 
         /// <summary>
-        /// 指定項目がアップグレード可能かチェック
+        /// HP&AP項目がアップグレード可能かチェック
         /// </summary>
-        public bool CanUpgrade(PieceUpgradeType type)
+        public bool CanUpgrade(int level,PieceUpgradeType type)
         {
-            int cost = GetUpgradeCost(type);
+            int cost = GetUpgradeCost(level,type);
             return cost > 0;
         }
 
@@ -453,28 +461,24 @@ namespace GamePieces
         protected virtual void Die()
         {
             ChangeState(PieceState.Dead);
-            OnPieceDeath?.Invoke(this);
-            Destroy(gameObject);
+            // 25.11.27 RI 修改销毁逻辑
+            //OnPieceDeath?.Invoke(this);
+            //Destroy(gameObject);
             //StartCoroutine(DeathAnimation());//死亡アニメーションも一応
         }
         
         protected virtual IEnumerator DeathAnimation()
         {
-            float fadeTime = 1f;
-            float elapsedTime = 0;
-            
-            if (spriteRenderer != null)
+            // 死亡アニメーションはプレハブ側のAnimatorに任せる
+            // 必要に応じてAnimatorのトリガーを呼び出す
+            Animator animator = GetComponent<Animator>();
+            if (animator != null)
             {
-                Color originalColor = spriteRenderer.color;
-                while (elapsedTime < fadeTime)
-                {
-                    float alpha = Mathf.Lerp(1, 0, elapsedTime / fadeTime);
-                    spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
-                    elapsedTime += Time.deltaTime;
-                    yield return null;
-                }
+                animator.SetTrigger("Death");
+                // アニメーション完了を待つ（アニメーションの長さに応じて調整）
+                yield return new WaitForSeconds(1f);
             }
-            
+
             Destroy(gameObject);
         }
         
@@ -495,9 +499,6 @@ namespace GamePieces
         Dead        // 死亡
     }
 
-    /// <summary>
-    /// アップグレード項目タイプ
-    /// </summary>
 
 
 }

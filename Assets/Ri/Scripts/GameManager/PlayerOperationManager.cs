@@ -9,6 +9,11 @@ using System.Dynamic;
 using GameData;
 using GamePieces;
 using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
+using GameData.UI;
+using Buildings;
+
+
 #if UNITY_EDITORR
 using static UnityEditor.PlayerSettings;
 using Mono.Cecil;
@@ -22,10 +27,10 @@ using UnityEngine.Rendering.Universal;
 public class PlayerOperationManager : MonoBehaviour
 {
     //2025.11.13 Guoning
-	static readonly int cellHighlightingId = Shader.PropertyToID("_CellHighlighting");
+    static readonly int cellHighlightingId = Shader.PropertyToID("_CellHighlighting");
 
-	// HexGrid的引用
-	public HexGrid _HexGrid;
+    // HexGrid的引用
+    public HexGrid _HexGrid;
 
     private Camera GameCamera;
 
@@ -38,8 +43,6 @@ public class PlayerOperationManager : MonoBehaviour
     // 点击到的格子的id
     private int ClickCellid;
 
-    // 点击到准备建造建筑的格子的id
-    private int ClickBuildingCellid;
 
     // 射线检测指定为cell层级
     private int RayTestLayerMask = 1 << 6;
@@ -62,13 +65,15 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 本地玩家的所有单位GameObject (key: 位置, value: GameObject)
     private Dictionary<int2, GameObject> localPlayerUnits = new Dictionary<int2, GameObject>();
-
+    
     // 其他玩家的单位GameObject
     private Dictionary<int, Dictionary<int2, GameObject>> otherPlayersUnits = new Dictionary<int, Dictionary<int2, GameObject>>();
 
-    // 玩家数据管理器引用
-    //private PlayerDataManager playerDataManager;
-
+    // 建筑废墟id
+    private int RuinID = 0;
+    // 建筑废墟字典
+    private Dictionary<int, Dictionary<int, GameObject>> BuildingRuins = new Dictionary<int, Dictionary<int, GameObject>>();
+    
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
 
@@ -88,8 +93,23 @@ public class PlayerOperationManager : MonoBehaviour
     private float lastClickTime;
     private int clickCount = 0;
 
-    // === Event 定义区域 ===
-    public event System.Action<int, CardType> OnUnitChoosed;
+	//2025.11.28 检测右键长按
+	public Image fillImage;
+	private float longPressThreshold = 1.2f;
+	private float rightClickTimer = 0f;
+	private bool isPressing = false;
+
+
+
+
+	// === Event 定义区域 ===
+	public event System.Action<int, CardType> OnUnitChoosed;
+
+
+    // 单位相关
+    // 教皇移动冷却时间
+    private int PopeSwatCooldown;
+
 
     // *************************
     //         公有属性
@@ -110,33 +130,80 @@ public class PlayerOperationManager : MonoBehaviour
     void Start()
     {
         GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();
-
-
-
-
-
     }
-
 
 
     // Update is called once per frame
     void Update()
     {
+        // 鼠标判定
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
-			
-            //2025.11.13 Guoning 修改鼠标移动留痕与点击判断
-            if(Input.GetMouseButton(0)|| Input.GetMouseButton(1))
-                HandleMouseInput();
-			else UpdateCellHighlightData(GetCellUnderCursor());
-            
-			//HandleMouseInput();
 
-		}
-        if (Input.GetKeyDown(KeyCode.B)
-            && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
+            //2025.11.13 Guoning 修改鼠标移动留痕与点击判断
+			if (Input.GetMouseButton(0) || Input.GetMouseButton(1) ||
+                    Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                HandleMouseInput();
+            else UpdateCellHighlightData(GetCellUnderCursor());
+
+            //HandleMouseInput();
+
+        }
+
+
+        //// 建造建筑
+        //if (Input.GetKeyDown(KeyCode.B)
+        //    && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
+        //{
+        //    CreateBuilding();
+        //    //ClickBuildingCellid = ClickCellid;
+
+        //}
+
+        //// 测试建筑升级
+        //if (Input.GetKeyDown(KeyCode.B)
+        //    && PlayerDataManager.Instance.nowChooseUnitType == CardType.Building)
+        //{
+        //    UnitUpgrade(TechTree.HP,CardType.Building);
+        //    //ClickBuildingCellid = ClickCellid;
+
+        //}
+        //// 测试红月被动
+        //if (Input.GetKeyDown(KeyCode.R)
+        //    && SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion)
+        //{
+        //    PlayerDataManager.Instance.DeadUnitCount = 12 ;
+
+        //    PlayerDataManager.Instance.bRedMoonSkill = true;
+
+        //    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits.Count; i++)
+        //    {
+        //        int hp =0;
+        //        syncPieceData newData = new syncPieceData();
+        //        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitType!=CardType.Building)
+        //        {
+        //            hp = PieceManager.Instance.GetPieceAllHP(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID) / 5;
+        //            if (hp == 0)
+        //                hp += 1;
+        //            newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
+                   
+        //            PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
+        //            unit.PlayerUnitDataSO = newData;
+        //            PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
+                   
+        //            Debug.Log( "Heal HP is " + hp);
+        //        }
+        //    }
+        //    //ClickBuildingCellid = ClickCellid;
+
+        //}
+
+
+        // 农民献祭
+        if (Input.GetKeyDown(KeyCode.T)
+            && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
         {
-            CreateBuilding();
+            FarmerSacrifice();
             //ClickBuildingCellid = ClickCellid;
 
         }
@@ -153,10 +220,10 @@ public class PlayerOperationManager : MonoBehaviour
                 _HexGrid.GetCell(LastSelectingCellID).Walled = true;
                 PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
                 HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
-				
+
                 // 2025.11.14 Guoning 音声再生
-				SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
-			}
+                SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+            }
             else
             {
                 Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
@@ -168,54 +235,81 @@ public class PlayerOperationManager : MonoBehaviour
 	//       追加高亮选择处理
 	// *************************
 	void UpdateCellHighlightData(HexCell cell)
-	{
-		if (cell == null)
-		{
-			ClearCellHighlightData();
-			return;
-		}
-
-		// Works up to brush size 6.
-		Shader.SetGlobalVector(
-			cellHighlightingId,
-			new Vector4(
-				cell.Coordinates.HexX,
-				cell.Coordinates.HexZ,
-				0.5f,
-				HexMetrics.wrapSize
-			)
-		);
-	}
-
-	void ClearCellHighlightData() =>
-		Shader.SetGlobalVector(cellHighlightingId, new Vector4(0f, 0f, -1f, 0f));
-	HexCell GetCellUnderCursor() =>
-		_HexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-	// *************************
-	//       追加高亮选择处理
-	// *************************
+    {
 
 
+        if (cell == null)
+        {
+            ClearCellHighlightData();
+            return;
+        }
+
+        // Works up to brush size 6.
+        Shader.SetGlobalVector(
+            cellHighlightingId,
+            new Vector4(
+                cell.Coordinates.HexX,
+                cell.Coordinates.HexZ,
+                0.5f,
+                HexMetrics.wrapSize
+            )
+        );
+    }
+
+    void ClearCellHighlightData() =>
+        Shader.SetGlobalVector(cellHighlightingId, new Vector4(0f, 0f, -1f, 0f));
+    HexCell GetCellUnderCursor() =>
+        _HexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
+    // *************************
+    //       追加高亮选择处理
+    // *************************
+
+
+    // 初始化玩家
+    public void InitPlayer(int playerId, int startBoardID)
+    {
+        localPlayerId = playerId;
+        PlayerBoardInforDict = GameManage.Instance.GetPlayerBoardInfor();
+
+        // 从PlayerDataManager获取数据
+        localPlayerData = PlayerDataManager.Instance.GetPlayerData(playerId);
+
+        Debug.Log($"PlayerOperationManager: 初始化玩家 {playerId}");
 
 
 
-	// *************************
-	//        输入处理
-	// *************************
+        // 创建玩家拥有的单位
+        CreatePlayerPope(startBoardID);
 
-	#region =====输入处理=====
-	private void HandleMouseInput()
+        // 添加数据变化事件
+        if (PlayerDataManager.Instance != null)
+        {
+            PlayerDataManager.Instance.OnUnitAdded += OnUnitAddedHandler;
+            PlayerDataManager.Instance.OnUnitRemoved += OnUnitRemovedHandler;
+            PlayerDataManager.Instance.OnUnitMoved += OnUnitMovedHandler;
+        }
+
+    }
+
+
+
+    // *************************
+    //        输入处理
+    // *************************
+
+    #region =====输入处理=====
+    private void HandleMouseInput()
     {
         if (GameManage.Instance.IsPointerOverUIElement())
         {
             return;
         }
 
-		// 2025.11.13 GuoNing 清除高亮数据 
-		ClearCellHighlightData();
+        // 2025.11.13 GuoNing 清除高亮数据 
+        ClearCellHighlightData();
 
-		// 左键点击 - 选择单位
-		if (Input.GetMouseButtonDown(0) && bCanContinue)
+        // 左键点击 - 选择单位
+        if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
             _HexGrid.GetCell(selectCellID).DisableHighlight();
 
@@ -249,16 +343,225 @@ public class PlayerOperationManager : MonoBehaviour
 
         }
 
-        // 右键点击 - 移动/攻击
+        //右键点击 - 移动 / 攻击
+        //if (Input.GetMouseButtonDown(1) && bCanContinue)
+        //{
+        //    _HexGrid.GetCell(selectCellID).DisableHighlight();
+        //    HandleRightClick();
+        //}
+
         if (Input.GetMouseButtonDown(1) && bCanContinue)
         {
-            _HexGrid.GetCell(selectCellID).DisableHighlight();
-            HandleRightClick();
+            isPressing = true;
+            rightClickTimer = 0f;
+            fillImage.gameObject.SetActive(true);
         }
+
+        if (isPressing && Input.GetMouseButton(1) && bCanContinue)
+        {
+            rightClickTimer += Time.deltaTime;
+            fillImage.fillAmount = Mathf.Clamp(rightClickTimer,0,longPressThreshold) / longPressThreshold;
+		}
+
+
+        // 松开
+        if (isPressing && Input.GetMouseButtonUp(1) && bCanContinue)
+		{
+		
+			if (rightClickTimer < longPressThreshold) OnRightClickShortPress();
+			else OnRightClickLongPress();
+
+			isPressing = false;
+			rightClickTimer = 0f;
+			fillImage.gameObject.SetActive(false);
+		}
     }
 
-   
-    private void HandleLeftClick(bool isDoubleClick)
+
+    private void OnRightClickShortPress()
+    {
+     
+		if (SelectingUnit == null) return;
+
+		Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
+		RaycastHit hit;
+
+		// 射线检测
+		if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
+		{
+			ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().Index;
+			int2 targetPos = GameManage.Instance.FindCell(ClickCellid).Cells2DPos;
+
+			// 获取当前选中单位的位置
+			int2 currentPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
+
+			// 检查目标位置
+			if (PlayerDataManager.Instance.IsPositionOccupied(targetPos))
+			{
+				int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
+
+                // Pope交换位置
+                if (ownerId == localPlayerId &&
+                    PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+                {
+
+                    PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
+                    if (targetUnit.HasValue && !targetUnit.Value.IsBuilding())
+                    {
+                        if (!PieceManager.Instance.CanSwapPositions(PlayerDataManager.Instance.nowChooseUnitID, targetUnit.Value.UnitID))
+                        {
+                            Debug.Log("[Pope交换] 无法交换，尚未冷却");
+                            return;
+                        }
+                        ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
+                        return;
+                    }
+                }
+
+                // 农民进入己方建筑
+                if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+				{
+					// 检查目标位置是否是建筑
+					PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
+                    if (targetUnit.HasValue && targetUnit.Value.IsBuilding() &&
+                          GameManage.Instance._BuildingManager.NewEnterBuilding(
+                           PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos),
+                           PieceManager.Instance.GetPieceAP(PlayerDataManager.Instance.nowChooseUnitID)
+                          ))
+                    {
+                        Debug.Log("[农民进建筑] 农民尝试进入己方建筑");
+						ExecuteFarmerEnterBuilding(currentPos, targetPos, ClickCellid);
+						return;
+					}
+					else
+					{
+
+						Debug.LogWarning("[农民进建筑] 格子已满，无法进入!");
+					}
+				}
+
+				// 传教士魅惑敌方单位
+				if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary && IsAdjacentPosition(currentPos, targetPos))
+				{
+					Debug.Log("[魅惑] 传教士尝试魅惑敌方单位");
+
+					// 检查AP（魅惑需要消耗AP）
+					if (!CheckUnitHasEnoughAP(currentPos, 1))
+					{
+						Debug.Log("[魅惑] AP不足，无法魅惑");
+						return;
+					}
+
+					ExecuteCharm(targetPos, ownerId);
+					return;
+				}
+
+				// 军事单位攻击敌方单位
+				if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Solider)
+				{
+					//  新逻辑：检查是否在攻击范围（相邻格）
+					if (IsAdjacentPosition(currentPos, targetPos))
+					{
+						// 在攻击范围内，直接攻击
+						Debug.Log("[攻击] 目标在攻击范围内，执行攻击");
+
+						// 检查AP（攻击需要消耗1点AP）
+						if (!CheckUnitHasEnoughAP(currentPos, 1))
+						{
+							Debug.Log("[攻击] AP不足，无法攻击");
+							return;
+						}
+
+						ExecuteAttack(targetPos, ClickCellid);
+					}
+					else
+					{
+						// 不在攻击范围内，无法攻击也无法移动到敌方单位位置
+						Debug.Log("[攻击] 目标不在相邻格，无法攻击。请先移动到敌方单位旁边再攻击。");
+						return;
+					}
+
+				}
+				else
+				{
+					Debug.Log("不能移动到已占用的位置");
+				}
+			}
+			else
+			{
+				// 教皇无法移动
+				if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+				{
+					return;
+				}
+				// 传教士移动
+				if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+				{
+
+					if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
+					{
+						MoveToSelectCell(ClickCellid);
+					}
+					else
+					{
+						Debug.LogWarning("Missionary  Cant Move To That Cell!");
+					}
+
+				}
+				// 农民移动
+				else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+				{
+					if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
+					{
+						MoveToSelectCell(ClickCellid);
+					}
+					else
+					{
+						Debug.LogWarning("Farmer  Cant Move To That Cell!");
+					}
+
+				}
+				else
+					MoveToSelectCell(ClickCellid);
+			}
+		}
+
+	}
+
+    private void OnRightClickLongPress()
+    {
+       
+		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+		{
+			FarmerSacrifice();
+			//ClickBuildingCellid = ClickCellid;
+
+		}
+
+		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+		{
+			// 传教士占领
+			// 通过PieceManager判断
+			if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
+			    && _HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1)
+			    && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
+			{
+
+				_HexGrid.GetCell(LastSelectingCellID).Walled = true;
+				PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
+				HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
+
+				// 2025.11.14 Guoning 音声再生
+				SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+			}
+			else
+			{
+				Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
+			}
+		}
+	}
+
+	private void HandleLeftClick(bool isDoubleClick)
     {
         Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
@@ -285,18 +588,18 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
-              
-                    foreach (Transform child in SelectingUnit.transform)
+                foreach (Transform child in SelectingUnit.transform)
+                {
+                    // 运行时动态添加组件
+                    if (child.gameObject.GetComponent<ChangeMaterial>() == null)
                     {
-                        // 运行时动态添加组件
-                        if (child.gameObject.GetComponent<ChangeMaterial>() == null)
-                        {
-                            child.gameObject.AddComponent<ChangeMaterial>();
+                        child.gameObject.AddComponent<ChangeMaterial>();
                         child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
-                        }
-                        child.GetComponent<ChangeMaterial>().Outline();
+                        child.gameObject.GetComponent<ChangeMaterial>().InitMat();
                     }
-
+                  
+                }
+            
                 //SelectingUnit.GetComponent<ChangeMaterial>().Outline();
                 LastSelectingCellID = ClickCellid;
 
@@ -305,18 +608,24 @@ public class PlayerOperationManager : MonoBehaviour
                 PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
 
                 OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
+
+                foreach (Transform child in SelectingUnit.transform)
+                {
+                    
+                    child.GetComponent<ChangeMaterial>().Outline();
+                    //Debug.Log("add outline");
+                }
                 Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
             }
 
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
             {
-                ClickBuildingCellid = -1;
                 Debug.Log("Get Enemy Unit " + clickPos);
                 PlayerUnitDataInterface.Instance.SetEnemyUnitPosition(clickPos);
             }
             else
             {
-
+               //Debug.Log("owner Player is "+PlayerDataManager.Instance.GetCellOwner(ClickCellid));
                 // 点击了空地或其他玩家单位
                 ReturnToDefault();
                 SelectingUnit = null;
@@ -351,148 +660,158 @@ public class PlayerOperationManager : MonoBehaviour
             SelectedEmptyCellID = -1;
         }
     }
-    private void HandleRightClick()
-    {
-        if (SelectingUnit == null) return;
+    //private void HandleRightClick()
+    //{
+    //    if (SelectingUnit == null) return;
 
-        Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
+    //    Ray ray = GameCamera.ScreenPointToRay(Input.mousePosition);
+    //    RaycastHit hit;
 
-        // 射线检测
-        if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
-        {
-            ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().Index;
-            int2 targetPos = GameManage.Instance.FindCell(ClickCellid).Cells2DPos;
+    //    // 射线检测
+    //    if (Physics.Raycast(ray, out hit, Mathf.Infinity, RayTestLayerMask))
+    //    {
+    //        ClickCellid = hit.collider.gameObject.GetComponent<HexCell>().Index;
+    //        int2 targetPos = GameManage.Instance.FindCell(ClickCellid).Cells2DPos;
 
-            // 获取当前选中单位的位置
-            int2 currentPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
+    //        // 获取当前选中单位的位置
+    //        int2 currentPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
 
-            // 检查目标位置
-            if (PlayerDataManager.Instance.IsPositionOccupied(targetPos))
-            {
-                int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
+    //        // 检查目标位置
+    //        if (PlayerDataManager.Instance.IsPositionOccupied(targetPos))
+    //        {
+    //            int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
 
-                // Pope交换位置
-                if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
-                {
-                    if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
-                    {
-                        PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
-                        if (targetUnit.HasValue && !targetUnit.Value.IsBuilding())
-                        {
-                            if (!CheckUnitHasEnoughAP(currentPos, 1))
-                            {
-                                Debug.Log("[Pope交换] AP不足");
-                                return;
-                            }
-                            ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
-                            return;
-                        }
+    //            // Pope交换位置
+    //            if (ownerId == localPlayerId &&
+    //                PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+    //            {
+                  
+    //                    PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
+    //                    if (targetUnit.HasValue && !targetUnit.Value.IsBuilding())
+    //                    {
+    //                        if (!PieceManager.Instance.CanSwapPositions(PlayerDataManager.Instance.nowChooseUnitID, targetUnit.Value.UnitID))
+    //                        {
+    //                            Debug.Log("[Pope交换] 无法交换，尚未冷却");
+    //                            return;
+    //                        }
+                           
+    //                        ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
+    //                        return;
+    //                    }
 
-                    }
 
 
-                }
+    //            }
 
-                // 农民进入己方建筑
-                if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
-                {
-                    // 检查目标位置是否是建筑
-                    PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
-                    if (targetUnit.HasValue && targetUnit.Value.IsBuilding())
-                    {
-                        Debug.Log("[农民进建筑] 农民尝试进入己方建筑");
-                        ExecuteFarmerEnterBuilding(currentPos, targetPos, ClickCellid);
-                        return;
-                    }
-                }
+    //            // 农民进入己方建筑
+    //            if (ownerId == localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+    //            {
+    //                // 检查目标位置是否是建筑
+    //                PlayerUnitData? targetUnit = PlayerDataManager.Instance.FindUnit(ownerId, targetPos);
+    //                if (targetUnit.HasValue && targetUnit.Value.IsBuilding()&&
+    //                      GameManage.Instance._BuildingManager.NewEnterBuilding(
+    //                          PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos), 
+    //                      PieceManager.Instance.GetPieceAP(PlayerDataManager.Instance.nowChooseUnitID)
+    //                      ))
+    //                {
+                        
+    //                    Debug.Log("[农民进建筑] 农民尝试进入己方建筑");
+    //                    ExecuteFarmerEnterBuilding(currentPos, targetPos, ClickCellid);
+    //                    return;
+    //                }
+    //                else
+    //                {
 
-                // 传教士魅惑敌方单位
-                if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary && IsAdjacentPosition(currentPos, targetPos))
-                {
-                    Debug.Log("[魅惑] 传教士尝试魅惑敌方单位");
+    //                    Debug.LogWarning("[农民进建筑] 格子已满，无法进入!");
+    //                }
+    //            }
 
-                    // 检查AP（魅惑需要消耗AP）
-                    if (!CheckUnitHasEnoughAP(currentPos, 1))
-                    {
-                        Debug.Log("[魅惑] AP不足，无法魅惑");
-                        return;
-                    }
+    //            // 传教士魅惑敌方单位
+    //            if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary && IsAdjacentPosition(currentPos, targetPos))
+    //            {
+    //                Debug.Log("[魅惑] 传教士尝试魅惑敌方单位");
 
-                    ExecuteCharm(targetPos, ownerId);
-                    return;
-                }
+    //                // 检查AP（魅惑需要消耗AP）
+    //                if (!CheckUnitHasEnoughAP(currentPos, 1))
+    //                {
+    //                    Debug.Log("[魅惑] AP不足，无法魅惑");
+    //                    return;
+    //                }
 
-                // 军事单位攻击敌方单位
-                if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Solider)
-                {
-                    //  新逻辑：检查是否在攻击范围（相邻格）
-                    if (IsAdjacentPosition(currentPos, targetPos))
-                    {
-                        // 在攻击范围内，直接攻击
-                        Debug.Log("[攻击] 目标在攻击范围内，执行攻击");
+    //                ExecuteCharm(targetPos, ownerId);
+    //                return;
+    //            }
 
-                        // 检查AP（攻击需要消耗1点AP）
-                        if (!CheckUnitHasEnoughAP(currentPos, 1))
-                        {
-                            Debug.Log("[攻击] AP不足，无法攻击");
-                            return;
-                        }
+    //            // 军事单位攻击敌方单位
+    //            if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Solider)
+    //            {
+    //                //  新逻辑：检查是否在攻击范围（相邻格）
+    //                if (IsAdjacentPosition(currentPos, targetPos))
+    //                {
+    //                    // 在攻击范围内，直接攻击
+    //                    Debug.Log("[攻击] 目标在攻击范围内，执行攻击");
 
-                        ExecuteAttack(targetPos, ClickCellid);
-                    }
-                    else
-                    {
-                        // 不在攻击范围内，无法攻击也无法移动到敌方单位位置
-                        Debug.Log("[攻击] 目标不在相邻格，无法攻击。请先移动到敌方单位旁边再攻击。");
-                        return;
-                    }
+    //                    // 检查AP（攻击需要消耗1点AP）
+    //                    if (!CheckUnitHasEnoughAP(currentPos, 1))
+    //                    {
+    //                        Debug.Log("[攻击] AP不足，无法攻击");
+    //                        return;
+    //                    }
 
-                }
-                else
-                {
-                    Debug.Log("不能移动到已占用的位置");
-                }
-            }
-            else
-            {
-                // 教皇无法移动
-                if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
-                {
-                    return;
-                }
-                    // 传教士移动
-                    if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
-                {
+    //                    ExecuteAttack(targetPos, ClickCellid);
+    //                }
+    //                else
+    //                {
+    //                    // 不在攻击范围内，无法攻击也无法移动到敌方单位位置
+    //                    Debug.Log("[攻击] 目标不在相邻格，无法攻击。请先移动到敌方单位旁边再攻击。");
+    //                    return;
+    //                }
 
-                    if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
-                    {
-                        MoveToSelectCell(ClickCellid);
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Missionary  Cant Move To That Cell!");
-                    }
+    //            }
+    //            else
+    //            {
+    //                Debug.Log("不能移动到已占用的位置");
+    //            }
+    //        }
+    //        else
+    //        {
+    //            // 教皇无法移动
+    //            if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+    //            {
+    //                return;
+    //            }
+    //            // 传教士移动
+    //            if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+    //            {
 
-                }
-                // 农民移动
-                else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
-                {
-                    if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
-                    {
-                        MoveToSelectCell(ClickCellid);
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Farmer  Cant Move To That Cell!");
-                    }
+    //                if (_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(targetPos.x, targetPos.y), 3))
+    //                {
+    //                    MoveToSelectCell(ClickCellid);
+    //                }
+    //                else
+    //                {
+    //                    Debug.LogWarning("Missionary  Cant Move To That Cell!");
+    //                }
 
-                }
-                else
-                    MoveToSelectCell(ClickCellid);
-            }
-        }
-    }
+    //            }
+    //            // 农民移动
+    //            else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+    //            {
+    //                if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(ClickCellid))
+    //                {
+    //                    MoveToSelectCell(ClickCellid);
+    //                }
+    //                else
+    //                {
+    //                    Debug.LogWarning("Farmer  Cant Move To That Cell!");
+    //                }
+
+    //            }
+    //            else
+    //                MoveToSelectCell(ClickCellid);
+    //        }
+    //    }
+    //}
 
     // 返回当前摄像机聚焦的单位id
     public int GetFocusedUnitID()
@@ -504,7 +823,6 @@ public class PlayerOperationManager : MonoBehaviour
     //         公有函数
     // *************************
 
-    #region =====创建相关=====
 
 
     // 显示当前农民所在位置，等待点选后消耗行动力创建建筑
@@ -518,107 +836,9 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
-    /// <summary>
-    /// 尝试在当前选中的空格子创建单位
-    /// </summary>
-    /// <param name="unitType">要创建的单位类型</param>
-    /// <returns>是否成功创建</returns>
-    public bool TryCreateUnit(CardType unitType)
-    {
-        // 检查是否选中了空格子或领土内
-        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
-        {
-            Debug.LogWarning("未选中任何空格子");
-            return false;
-        }
-
-        // 获取选中格子的信息
-        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
-        int2 cellPos = cellInfo.Cells2DPos;
-
-        // 再次确认该位置是空的
-        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
-        {
-            Debug.LogWarning("该格子已有单位");
-            SelectedEmptyCellID = -1;
-            return false;
-        }
-
-        // 创建单位
-
-        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
-
-        // 清除选择
-        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
-        SelectedEmptyCellID = -1;
-
-        return true;
-    }
-
-    // 在外部指定的格子创建单位
-    public bool TryCreateUnit(CardType unitType, int cellID)
-    {
-        // 检查是否选中了空格子
-        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
-        {
-            Debug.LogWarning("未选中任何空格子");
-            return false;
-        }
-
-        // 获取选中格子的信息
-        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
-        int2 cellPos = cellInfo.Cells2DPos;
-
-        // 再次确认该位置是空的
-        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
-        {
-            Debug.LogWarning("该格子已有单位");
-            SelectedEmptyCellID = -1;
-            return false;
-        }
-
-        // 在领土内创建单位
-
-        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
-
-        // 清除选择
-        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
-        SelectedEmptyCellID = -1;
-
-        return true;
-    }
-
-    #endregion
-
-    /// <summary>
-    /// 初始化玩家
-    /// </summary>
-    /// <param name="playerId">玩家ID</param>
-    /// <param name="startBoardID">玩家初始位置格子id</param>
-    public void InitPlayer(int playerId, int startBoardID)
-    {
-        localPlayerId = playerId;
-        PlayerBoardInforDict = GameManage.Instance.GetPlayerBoardInfor();
-
-        // 从PlayerDataManager获取数据
-        localPlayerData = PlayerDataManager.Instance.GetPlayerData(playerId);
-
-        Debug.Log($"PlayerOperationManager: 初始化玩家 {playerId}");
 
 
 
-        // 创建玩家拥有的单位
-        CreatePlayerPope(startBoardID);
-
-        // 添加数据变化事件
-        if (PlayerDataManager.Instance != null)
-        {
-            PlayerDataManager.Instance.OnUnitAdded += OnUnitAddedHandler;
-            PlayerDataManager.Instance.OnUnitRemoved += OnUnitRemovedHandler;
-            PlayerDataManager.Instance.OnUnitMoved += OnUnitMovedHandler;
-        }
-
-    }
 
     // *************************
     //        回合相关
@@ -633,19 +853,51 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = true;
 
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
+      
+
+        // 获取建筑资源
+        int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
+        res += GameManage.Instance._BuildingManager.ProcessTurnStart();
+        PlayerDataManager.Instance.SetPlayerResourses(res);
+        PlayerUnitDataInterface.Instance.GetPopeSwapCooldown();
+        Debug.Log("你的回合开始!获取资源行动 " + res+" 目前资源: " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
+
+        List<PlayerUnitData> buildingsToDestroy = new List<PlayerUnitData>();
+
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            // 若有建筑则增加resource
+            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction + " Resource is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
             if (unit.UnitType == CardType.Building)
             {
-                int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
-                res += 5;
-                PlayerDataManager.Instance.SetPlayerResourses(res);
+                bool actived = GameManage.Instance._BuildingManager.GetIsActived(unit.UnitID);
+                if (!actived)
+                {
+                    buildingsToDestroy.Add(unit);
+                }
+                //Debug.Log("THIS BUILDING ACTIVED IS " + GameManage.Instance._BuildingManager.GetIsActived(unit.UnitID));
             }
-            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction+ " Resource is "+ PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
         }
 
+        // 步骤2: 遍历完成后,再统一销毁
+        foreach (var building in buildingsToDestroy)
+        {
+            DestroyInactivatedBuilding(building);  // 现在可以安全删除了
+        }
+
+       
+
+        // 回合开始计算被动
+        if (SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion
+            &&PlayerDataManager.Instance.bRedMoonSkill)
+        {
+            PlayerDataManager.Instance.RedMoonSkillCount +=1;
+            if (PlayerDataManager.Instance.RedMoonSkillCount >= 3)
+            {
+                PlayerDataManager.Instance.RedMoonSkillCount = 0;
+                PlayerDataManager.Instance.bRedMoonSkill = false;
+            }
+        }
 
     }
 
@@ -667,8 +919,12 @@ public class PlayerOperationManager : MonoBehaviour
         SelectingUnit = null;
         SelectedEmptyCellID = -1;
 
+        // 更新NowChoose
+        PlayerDataManager.Instance.nowChooseUnitID = -1;
+        PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
 
-        Debug.Log("你的回合结束!");
+
+        //Debug.Log("你的回合结束!");
 
         // 更新本地玩家数据到PlayerDataManager
         localPlayerData = PlayerDataManager.Instance.GetPlayerData(localPlayerId);
@@ -717,6 +973,8 @@ public class PlayerOperationManager : MonoBehaviour
                 if (_HexGrid.GetCell(cellId) != null)
                 {
                     _HexGrid.GetCell(cellId).Walled = true;
+
+                   
                 }
             }
         }
@@ -776,7 +1034,9 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.LogWarning($"[显示更新] 创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}) player ID:{unit.PlayerUnitDataSO.currentPID} unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
             CreateEnemyUnit(playerId, unit);
-        }
+
+		
+		}
 
         Debug.Log($"[显示更新] 玩家 {playerId} 显示更新完成，当前单位数: {otherPlayersUnits[playerId].Count}");
     }
@@ -790,7 +1050,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 获得初始领地
     private void GetStartWall(int cellID)
     {
-        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(cellID);
+        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(cellID, true);
         foreach (var i in pos)
         {
             if (_HexGrid.GetCell(i).enabled)
@@ -805,11 +1065,8 @@ public class PlayerOperationManager : MonoBehaviour
     {
         BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(cellId);
         int2 position = cellInfo.Cells2DPos;
-        Vector3 worldPos = new Vector3(
-            cellInfo.Cells3DPos.x,
-           cellInfo.Cells3DPos.y + 2.5f,
-           cellInfo.Cells3DPos.z
-        );
+        Vector3 worldPos = cellInfo.Cells3DPos;
+
 
 
         // 选择对应的预制体
@@ -819,16 +1076,29 @@ public class PlayerOperationManager : MonoBehaviour
         {
             case CardType.Farmer:
                 pieceType = PieceType.Farmer;
+                PlayerDataManager.Instance.NowPopulation +=
+                    PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer,SceneStateManager.Instance.PlayerReligion);
+           
 
                 break;
             case CardType.Solider:
                 pieceType = PieceType.Military;
+                PlayerDataManager.Instance.NowPopulation +=
+                 PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
+
+             
+
                 break;
             case CardType.Missionary:
                 pieceType = PieceType.Missionary;
+                PlayerDataManager.Instance.NowPopulation +=
+               PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
                 break;
             case CardType.Pope:
-                pieceType = PieceType.Pope;
+                pieceType = PieceType.Pope; 
+                PlayerDataManager.Instance.NowPopulation +=
+               PieceManager.Instance.GetPiecePopulationCost(PieceType.Pope, SceneStateManager.Instance.PlayerReligion);
+             
                 GetStartWall(cellId);
 
                 // init Hex Cell List
@@ -862,10 +1132,15 @@ public class PlayerOperationManager : MonoBehaviour
 
 
         // 添加到数据管理器
-        PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
+        // 2025.11.26 Guoning 追加HP显示
+        //PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
+        // 生成ID，创建单位
+        int unitID = PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
+        // 生成StatusUI
+        UnitStatusUIManager.Instance.CreateStatusUI(unitID, unitData.currentHP,unitData.currentAP, pieceObj.transform, unitType);
 
-        // 保存本地引用
-        localPlayerUnits[position] = pieceObj;
+		// 保存本地引用
+		localPlayerUnits[position] = pieceObj;
         GameManage.Instance.SetCellObject(position, pieceObj);
 
         Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
@@ -902,11 +1177,47 @@ public class PlayerOperationManager : MonoBehaviour
         localPlayerUnits.Clear();
 
         CreateUnitAtPosition(CardType.Pope, startBoardID);
-
+        PopeSwatCooldown = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[0].PlayerUnitDataSO.swapCooldownLevel;
 
         GameManage.Instance._GameCamera.GetPlayerPosition(GameManage.Instance.FindCell(startBoardID).Cells3DPos);
 
     }
+
+
+
+    // 尝试在当前选中的空格子创建单位
+    public bool TryCreateUnit(CardType unitType)
+    {
+        // 检查是否选中了空格子或领土内
+        if (SelectedEmptyCellID == -1 || !_HexGrid.GetCell(SelectedEmptyCellID).Walled)
+        {
+            Debug.LogWarning("未选中任何空格子");
+            return false;
+        }
+
+        // 获取选中格子的信息
+        BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(SelectedEmptyCellID);
+        int2 cellPos = cellInfo.Cells2DPos;
+
+        // 再次确认该位置是空的
+        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
+        {
+            Debug.LogWarning("该格子已有单位");
+            SelectedEmptyCellID = -1;
+            return false;
+        }
+
+        // 创建单位
+
+        CreateUnitAtPosition(unitType, SelectedEmptyCellID);
+
+        // 清除选择
+        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
+        SelectedEmptyCellID = -1;
+
+        return true;
+    }
+
     // 创建敌方单位
     private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
     {
@@ -950,7 +1261,9 @@ public class PlayerOperationManager : MonoBehaviour
                     unit = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     unit.transform.position = worldPos;
                 }
-                Debug.Log($"敌方建筑创建成功");
+                // 创建UI
+                UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
+				Debug.Log($"敌方建筑创建成功");
             }
             else
             {
@@ -976,7 +1289,7 @@ public class PlayerOperationManager : MonoBehaviour
             unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
             unit.transform.position = new Vector3(
                 unit.transform.position.x,
-                unit.transform.position.y + 6.5f,
+                unit.transform.position.y ,
                 unit.transform.position.z
             );
 
@@ -990,10 +1303,12 @@ public class PlayerOperationManager : MonoBehaviour
             otherPlayersUnits[playerId][unitData.Position] = unit;
             GameManage.Instance.SetCellObject(unitData.Position, unit);
 
-            //Debug.Log("开始查询敌方单位位置");
-            //PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+			//Debug.Log("开始查询敌方单位位置");
+			//PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+			// 创建UI
+			UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
 
-        }
+		}
     }
 
     #endregion
@@ -1017,7 +1332,373 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
+    // 单位升级
+    public bool UnitUpgrade(TechTree tech, CardType type)
+    {
+        Debug.Log("进行升级: 科技树: " + tech + " 单位种类: " + type);
+        List<PlayerUnitData> list = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits;
+        syncPieceData newData = new syncPieceData();
+        syncBuildingData newBuildingData = new syncBuildingData();
+        List<int> ID = new List<int>();
+        for (int i=0;i<list.Count;i++)
+        {
+            ID.Add(list[i].UnitID);
+        }
+        switch (tech)
+        {
+            case TechTree.HP:
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
+                    {
+                         newData = (syncPieceData)PieceManager.Instance.UpgradePiece(
+                            PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.HP);
+                        break;
+                    }
+                    else if (list[i].UnitType == CardType.Building)
+                    {
+                        // Building Upgrade
+                        if(GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildingHP))
+                        {
 
+                            newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
+                            PlayerDataManager.Instance.nowChooseUnitID);
+                            Debug.LogWarning("Building ID : " + newBuildingData.buildingID + " Upgrade HP! "+ newBuildingData.currentHP);
+
+                            break;
+
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Building ID : "+ PlayerDataManager.Instance.nowChooseUnitID+" Upgrade Failed!");
+                      
+                        }
+
+                    }
+                }
+
+                for (int j = 0; j < list.Count; j++)
+                {
+                    if (list[j].UnitType != CardType.Building && list[j].UnitType == type)
+                    {
+                        PlayerUnitData unit = list[j];
+                        unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[j];
+                        list[j] = unit;
+                        Debug.Log("j= "+j+"Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
+                            " dataSO HP is " + list[j].PlayerUnitDataSO.currentHPLevel);
+                    }
+                    else if (list[j].UnitType == CardType.Building)
+                    {
+                        PlayerUnitData unit = list[j];
+                        unit.BuildingData= newBuildingData;
+                        unit.PlayerUnitDataSO.pieceID = ID[j];
+                        list[j] = unit;
+                        Debug.Log("j= " + j + "Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
+                            " dataSO HP is " + list[j].BuildingData.Value.currentHP);
+
+                    }
+                }
+                   
+
+                return true;
+            case TechTree.AP:
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
+                    {
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePiece(
+                           PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
+                        break;
+                    }
+                    else
+                    {
+                        //list[i].SetBuildingUnitDataSO((syncBuildingData)GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.HP));
+
+                    }
+                }
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
+                        list[i] = unit;
+                        Debug.Log("j= " + i + " Upgrade after Unit ID is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.pieceID +
+                        " dataSO AP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHPLevel);
+
+                    }
+                    else
+                    {
+
+                    }
+                }
+                //PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
+                return true;
+            case TechTree.Occupy:
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Missionary)
+                    {
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryOccupy);
+                        break;
+                       
+                    }
+                }
+
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
+                        list[i] = unit;
+                      
+                    }
+                    else
+                    {
+
+                    }
+                }
+
+                return true;
+            case TechTree.Conversion:
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Missionary)
+                    {
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryConvertEnemy);
+                        break;
+                    }
+                }
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Missionary)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
+                        list[i] = unit;
+                    }
+                 
+                }
+
+                return true;
+            case TechTree.ATK:
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Solider)
+                    {
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MilitaryAttackPower);
+                        break;
+                    }
+                }
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Solider)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
+                        list[i] = unit;
+                    }
+
+                }
+                return true;
+            case TechTree.Sacrifice:
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Farmer)
+                    {
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.FarmerSacrifice);
+                        break;
+                     
+                    }
+                }
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Farmer)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
+                        list[i] = unit;
+                    }
+
+                }
+                return true;
+            case TechTree.AttackPosition:
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                     if (list[i].UnitType == CardType.Building)
+                    {
+                        // Building Upgrade
+                        if (GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.attackRange))
+                        {
+                            newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
+                            PlayerDataManager.Instance.nowChooseUnitID);
+                            break;
+
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Building ID : " + PlayerDataManager.Instance.nowChooseUnitID + " Upgrade Failed!");
+
+                        }
+
+                    }
+                }
+
+                for (int j = 0; j < list.Count; j++)
+                {
+                    if (list[j].UnitType == CardType.Building)
+                    {
+                        PlayerUnitData unit = list[j];
+                        newBuildingData.buildingID = ID[j];
+                        unit.BuildingData = newBuildingData;
+                        unit.PlayerUnitDataSO.pieceID = ID[j];
+                        list[j] = unit;
+                        Debug.Log("j= " + j + "Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
+                            " dataSO AttackPosition is " + list[j].BuildingData.Value.attackRangeLevel);
+
+                    }
+                }
+
+                return false;
+            case TechTree.AltarCount:
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Building)
+                    {
+                        // Building Upgrade
+                        if (GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.slotsLevel))
+                        {
+                            newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
+                            PlayerDataManager.Instance.nowChooseUnitID);
+                            break;
+
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Building ID : " + PlayerDataManager.Instance.nowChooseUnitID + " Upgrade Failed!");
+
+                        }
+
+                    }
+                }
+
+                for (int j = 0; j < list.Count; j++)
+                {
+                    if (list[j].UnitType == CardType.Building)
+                    {
+                        PlayerUnitData unit = list[j];
+                        newBuildingData.buildingID = ID[j];
+                        unit.BuildingData = newBuildingData;
+                        unit.PlayerUnitDataSO.pieceID = ID[j];
+                        list[j] = unit;
+                        Debug.Log("j= " + j + "Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
+                            " dataSO AttackPosition is " + list[j].BuildingData.Value.slotsLevel);
+
+                    }
+                }
+                return true;
+            case TechTree.ConstructionCost:
+                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildingHP);
+                return true;
+            case TechTree.MovementCD:
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Pope)
+                    {
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeSwapCooldown);
+                        break;
+                    }
+                }
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Pope)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
+                        list[i] = unit;
+                    }
+
+                }
+                return true;
+            case TechTree.Buff:
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Pope)
+                    {
+                        newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
+                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeBuff);
+                        break;
+                   
+                    }
+                }
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].UnitType == CardType.Pope)
+                    {
+                        PlayerUnitData unit = list[i];
+                        unit.PlayerUnitDataSO = newData;
+                        unit.PlayerUnitDataSO.pieceID = ID[i];
+                        list[i] = unit;
+                    }
+
+                }
+                return true;
+            //case TechTree.Heresy:
+            //    PieceManager.Instance.UpgradePieceSpecial(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
+
+            default:
+                return false;
+        }
+    }
+
+    // 取消选择单位的描边
+    private void ReturnToDefault()
+    {
+        if (SelectingUnit != null)
+        {
+            foreach (Transform child in SelectingUnit.transform)
+            {
+
+                child.GetComponent<ChangeMaterial>().Default();
+            }
+
+
+            //var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
+
+            //if (changeMaterial != null)
+            //{
+            //    changeMaterial.Default();
+            //}
+            Debug.Log("unit name: " + SelectingUnit.name);
+        }
+    }
+    private void ChooseEmptyCell(int cell)
+    {
+        _HexGrid.GetCell(cell).EnableHighlight(Color.red);
+    }
+
+    // *************************
+    //      单位动作相关
+    // *************************
 
 
     // 移动到选择的棋盘
@@ -1032,8 +1713,13 @@ public class PlayerOperationManager : MonoBehaviour
         int2 toPos = PlayerBoardInforDict[targetCellId].Cells2DPos;
 
         PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, fromPos);
-        Debug.Log("now unit " + unitData.Value.UnitID+ "AP is" + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
-        if (PieceManager.Instance.GetPieceAP(unitData.Value.UnitID) > 0)
+        Debug.Log("now unit " + unitData.Value.UnitID + "AP is" + PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+       
+        if (PlayerDataManager.Instance.nowChooseUnitType!=CardType.Farmer&&PieceManager.Instance.GetPieceAP(unitData.Value.UnitID) > 0)
+        {
+            _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+        }
+        else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
         {
             _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
         }
@@ -1061,7 +1747,7 @@ public class PlayerOperationManager : MonoBehaviour
                 // 根据路径坐标找到对应的格子信息
                 Vector3 waypoint = new Vector3(
                    listCellPos[i].Position.x,
-                   listCellPos[i].Position.y + 2.5f,
+                   listCellPos[i].Position.y,
                     listCellPos[i].Position.z
                     );
 
@@ -1104,7 +1790,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // ============= 移动消耗AP逻辑 ============
                 PlayerUnitData? unitData = PlayerDataManager.Instance.FindUnit(localPlayerId, toPos);
-                if (unitData.HasValue)
+                if (unitData.HasValue&&unitData.Value.UnitType!=CardType.Farmer)
                 {
                     int pieceID = unitData.Value.PlayerUnitDataSO.pieceID;
 
@@ -1155,41 +1841,81 @@ public class PlayerOperationManager : MonoBehaviour
 
     }
 
-    // 取消选择单位的描边
-    private void ReturnToDefault()
+    // 献祭
+    public void FarmerSacrifice()
     {
-        if (SelectingUnit != null)
+        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(selectCellID, false);
+        int farmerID = PlayerDataManager.Instance.nowChooseUnitID;
+        int2 farmerPos = PlayerDataManager.Instance.GetUnitDataById(farmerID).Value.Position;
+        foreach (var i in pos)
         {
-            foreach (Transform child in SelectingUnit.transform)
+            PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
+
+            if (data != null && data.Value.UnitType != CardType.Building)
             {
-               
-                child.GetComponent<ChangeMaterial>().Default();
+                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType);
+                PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
+            }
+        }
+
+        {
+            // 若有献祭动画，则将此段代码置于动画结束回调
+            // 数据处理后让农民消失
+            Debug.Log($"[农民献祭] 农民已献祭，开始消失");
+
+            // 1. 从PlayerDataManager移除农民（使用原始位置farmerPos）
+            bool removed = PlayerDataManager.Instance.RemoveUnit(localPlayerId, farmerPos);
+
+            if (removed)
+            {
+                Debug.Log($"[农民献祭] 已从PlayerDataManager移除农民");
+            }
+            GameObject farmerObj = SelectingUnit;
+            // 2. 销毁农民GameObject（不影响建筑）
+            if (farmerObj != null)
+            {
+                // 播放消失动画（淡出效果）
+                farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
+                {
+                    Destroy(farmerObj);
+                    Debug.Log($"[农民献祭] 农民GameObject已销毁");
+                });
+
+                // 从本地单位字典中移除农民（使用原始位置）
+                if (localPlayerUnits.ContainsKey(farmerPos))
+                {
+                    localPlayerUnits.Remove(farmerPos);
+                }
             }
 
+            // 3. 从PieceManager移除
+            PieceManager.Instance.RemovePiece(farmerID);
 
-            //var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
-          
-            //if (changeMaterial != null)
-            //{
-            //    changeMaterial.Default();
-            //}
-            Debug.Log("unit name: " + SelectingUnit.name);
+            // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
+            GameManage.Instance.SetCellObject(farmerPos, null);
+
+            // 5. 网络同步农民消失（使用农民的原始位置）
+            SyncFarmerEnterBuilding(farmerID, farmerPos);
+
+            Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已献祭并消失");
+
+            // 重置选择状态
+            ReturnToDefault();
+            SelectingUnit = null;
+            bCanContinue = true;
         }
-    }
-    private void ChooseEmptyCell(int cell)
-    {
-        _HexGrid.GetCell(cell).EnableHighlight(Color.red);
+
     }
 
-    // *************************
-    //      单位动作相关
-    // *************************
+
+
+
 
     // 生成建筑
     private void CreateBuilding()
     {
-        syncBuildingData? buildDataNullable = (syncBuildingData)GameManage.Instance._BuildingManager.CreateBuildingByName(
-                      "紅月教_特殊建築", localPlayerId,
+        syncBuildingData? buildDataNullable = (syncBuildingData)GameManage.Instance._BuildingManager.CreateBuildingByReligion(
+                      SceneStateManager.Instance.PlayerReligion, localPlayerId,
                       PlayerDataManager.Instance.GenerateUnitID(),
                       PlayerBoardInforDict[SelectedEmptyCellID].Cells3DPos);
 
@@ -1208,7 +1934,7 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 currentPID = localPlayerId,
                 pieceID = buildData.buildingID,
-                piecetype = ConvertCardTypeToPieceType(CardType.Building),  // 假设有Building类型，或用特殊值 
+                piecetype = PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(CardType.Building),  // 假设有Building类型，或用特殊值 
             };
 
             // 创建PlayerUnitData，包含buildingData
@@ -1336,7 +2062,11 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.LogError("[Pope交换] 找不到目标单位数据");
             return;
         }
-
+        //if(!PieceManager.Instance.CanSwapPositions(popeUnitData.Value.UnitID,PlayerDataManager.Instance.GetUnitIDBy2DPos(targetPos)))
+        //{
+        //    Debug.Log("Piece Pope CantSwap!");
+        //    return;
+        //}
         // 检查目标是否为建筑
         if (targetUnitData.Value.IsBuilding())
         {
@@ -1366,9 +2096,6 @@ public class PlayerOperationManager : MonoBehaviour
         Vector3 popeWorldPos = PlayerBoardInforDict[LastSelectingCellID].Cells3DPos;
         Vector3 targetWorldPos = PlayerBoardInforDict[targetCellId].Cells3DPos;
 
-        // 调整高度
-        popeWorldPos.y += 2.5f;
-        targetWorldPos.y += 2.5f;
 
         // 创建交换动画序列
         Sequence swapSequence = DOTween.Sequence();
@@ -1468,26 +2195,18 @@ public class PlayerOperationManager : MonoBehaviour
             // 5. 更新LastSelectingCellID为Pope的新位置
             LastSelectingCellID = targetCellId;
 
-            // 6. 消耗Pope的AP
-            int popeID = popeUnitData.Value.PlayerUnitDataSO.pieceID;
-            bool apConsumed = PieceManager.Instance.ConsumePieceAP(popeID, 1);
+            //// 6. 消耗Pope的AP
+            //int popeID = popeUnitData.Value.PlayerUnitDataSO.pieceID;
 
-            if (apConsumed)
-            {
-                Debug.Log($"[Pope交换] Pope消耗1 AP，剩余AP: {PieceManager.Instance.GetPieceAP(popeID)}");
-
-                // 检查AP是否为0
-                Piece popePiece = PieceManager.Instance.GetPiece(popeID);
-                if (popePiece != null && popePiece.CurrentAP <= 0)
-                {
-                    PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, targetPos, false);
-                    Debug.Log($"[Pope交换] Pope AP为0，bCanDoAction设置为false");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[Pope交换] Pope AP消耗失败");
-            }
+                //// 检查AP是否为0
+                //Piece popePiece = PieceManager.Instance.GetPiece(popeID);
+                //if (popePiece != null && popePiece.CurrentAP <= 0)
+                //{
+                //    PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, targetPos, false);
+                //    Debug.Log($"[Pope交换] Pope AP为0，bCanDoAction设置为false");
+                //}
+            
+          
 
             // 7. 网络同步 - 发送交换位置消息
             // ===== 关键修复：必须使用交换后的数据 =====
@@ -1557,7 +2276,7 @@ public class PlayerOperationManager : MonoBehaviour
 
 
 
-    #region ===农民进入建筑===
+       #region ===农民进入建筑===
     // 农民进入建筑
     private void ExecuteFarmerEnterBuilding(int2 farmerPos, int2 buildingPos, int buildingCellId)
     {
@@ -1578,6 +2297,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         int farmerID = farmerData.Value.UnitID;
         int farmerPieceID = farmerData.Value.PlayerUnitDataSO.pieceID;
+        int ap = PieceManager.Instance.GetPieceAP(farmerID);
 
         // 保存农民的GameObject引用（在移动前）
         GameObject farmerObj = SelectingUnit;
@@ -1598,6 +2318,10 @@ public class PlayerOperationManager : MonoBehaviour
             // 2. 销毁农民GameObject（不影响建筑）
             if (farmerObj != null)
             {
+                // 更新血条显示
+                UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
+                PlayerDataManager.Instance.nowChooseUnitID = -1;
+                PlayerDataManager.Instance.nowChooseUnitType=CardType.None;
                 // 播放消失动画（淡出效果）
                 farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
                 {
@@ -1612,12 +2336,14 @@ public class PlayerOperationManager : MonoBehaviour
                 }
             }
 
+          
             // 3. 从PieceManager移除
             PieceManager.Instance.RemovePiece(farmerPieceID);
 
             // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
             GameManage.Instance.SetCellObject(farmerPos, null);
 
+         
             // 5. 网络同步农民消失（使用农民的原始位置）
             SyncFarmerEnterBuilding(farmerID, farmerPos);
 
@@ -1785,66 +2511,126 @@ public class PlayerOperationManager : MonoBehaviour
         int attackerPieceID = attackerData.Value.PlayerUnitDataSO.pieceID;
         int targetPieceID = targetData.Value.PlayerUnitDataSO.pieceID;
 
-        Debug.Log($"[ExecuteAttack] 战斗开始 - 攻击者ID:{attackerPieceID} 攻击 目标ID:{targetPieceID}");
-
-        //  在移动完成后才计算战斗结果
-        syncPieceData? targetSyncData = PieceManager.Instance.AttackEnemy(attackerPieceID, targetPieceID);
-
-        if (!targetSyncData.HasValue)
+        // 攻击的是单位
+        if (PieceManager.Instance.AttackPieceOrBuilding(attackerPieceID, targetPieceID))
         {
-            Debug.LogError("[ExecuteAttack] PieceManager.AttackEnemy 调用失败！");
-            bCanContinue = true;
-            return;
-        }
+            Debug.Log($"[ExecuteAttack] 战斗开始 - 攻击者ID:{attackerPieceID} 攻击 目标ID:{targetPieceID}");
 
-        bool updateSuccess = PlayerDataManager.Instance.UpdateUnitSyncDataByPos(
-                targetOwnerId,
-                targetPos,
-                targetSyncData.Value);
+            //  在移动完成后才计算战斗结果
+            syncPieceData? targetSyncData = PieceManager.Instance.AttackEnemy(attackerPieceID, targetPieceID);
 
-        if (updateSuccess)
-        {
-            Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
-        }
-        else
-        {
-            Debug.LogError($"[ExecuteAttack] ✗ 同步目标HP失败！");
-        }
-
-
-        // 消耗攻击者的AP（攻击消耗1 AP）
-        //PieceManager.Instance.ConsumePieceAP(attackerPieceID, 1);
-
-        // 判断目标是否死亡
-        bool targetDied = targetSyncData.Value.currentHP <= 0;
-        Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
-
-        if (targetDied)
-        {
-            // 目标死亡，攻击者前进到目标位置
-            Debug.Log("[ExecuteAttack] 目标死亡，攻击者前进到目标位置");
-            ExecuteMoveToDeadTargetPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId);
-        }
-        else
-        {
-            // 目标存活，停在当前位置
-            Debug.Log("[ExecuteAttack] 目标存活，攻击者停留在当前位置");
-
-            // 播放受击动画
-            if (targetUnit != null)
+            if (!targetSyncData.HasValue)
             {
-                // 震动效果
-                targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
-
-                // 可选：显示伤害数字
-                // ShowDamageNumber(targetUnit.transform.position, damage);
+                Debug.LogError("[ExecuteAttack] PieceManager.AttackEnemy 调用失败！");
+                bCanContinue = true;
+                return;
             }
 
-            // 网络同步攻击
-            SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, false);
+            bool updateSuccess = PlayerDataManager.Instance.UpdateUnitSyncDataByPos(
+                    targetOwnerId,
+                    targetPos,
+                    targetSyncData.Value);
 
-            bCanContinue = true;
+            if (updateSuccess)
+            {
+                Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
+            }
+            else
+            {
+                Debug.LogError($"[ExecuteAttack] ✗ 同步目标HP失败！");
+            }
+
+
+            // 判断目标是否死亡
+            bool targetDied = targetSyncData.Value.currentHP <= 0;
+            Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
+
+            if (targetDied)
+            {
+                // 目标死亡，攻击者前进到目标位置
+                Debug.Log("[ExecuteAttack] 目标死亡，攻击者前进到目标位置");
+                ExecuteMoveToDeadTargetPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId);
+            }
+            else
+            {
+                // 目标存活，停在当前位置
+                Debug.Log("[ExecuteAttack] 目标存活，攻击者停留在当前位置");
+
+                // 播放受击动画
+                if (targetUnit != null)
+                {
+                    // 震动效果
+                    targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
+
+                    // 可选：显示伤害数字
+                    // ShowDamageNumber(targetUnit.transform.position, damage);
+                }
+
+                // 网络同步攻击
+                SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, false);
+
+                bCanContinue = true;
+            }
         }
+        // 攻击的是建筑
+        else
+        {
+            // ===== 攻击建筑 - 执行新逻辑 =====
+            Debug.Log($"[ExecuteAttack] 攻击建筑 - 攻击者ID:{attackerPieceID} 攻击建筑ID:{targetPieceID}");
+
+            // 从BuildingManager获取建筑实例
+            Buildings.Building targetBuilding = GameManage.Instance._BuildingManager.GetBuilding(targetPieceID);
+            if (targetBuilding == null)
+            {
+                Debug.LogError($"[ExecuteAttack] 找不到建筑ID:{targetPieceID}");
+                bCanContinue = true;
+                return;
+            }
+
+            // 执行攻击建筑逻辑
+            bool attackSuccess = PieceManager.Instance.AttackBuilding(attackerPieceID, targetBuilding);
+            if (!attackSuccess)
+            {
+                Debug.LogError("[ExecuteAttack] 攻击建筑失败！");
+                bCanContinue = true;
+                return;
+            }
+
+            // 判断建筑是否被摧毁
+            bool buildingDestroyed = !targetBuilding.IsAlive || targetBuilding.CurrentHP <= 0;
+            Debug.Log($"[ExecuteAttack] 攻击建筑完成 - 建筑剩余HP: {targetBuilding.CurrentHP}, 是否被摧毁: {buildingDestroyed}");
+
+            // 播放建筑受击动画
+            if (targetUnit != null)
+            {
+                targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
+            }
+
+            if (buildingDestroyed)
+            {
+                // 建筑被摧毁，攻击者前进到建筑位置
+                ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
+
+                // 创建废墟
+                GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0], GameManage.Instance.FindCell(targetCellId).Cells3DPos, Quaternion.identity);
+                // 保存废墟引用
+                if (!BuildingRuins.ContainsKey(localPlayerId))
+                {
+                    BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
+                }
+                BuildingRuins[localPlayerId][RuinID] = ruin;
+                RuinID++;
+
+            }
+            else
+            {
+                // 建筑存活，同步攻击建筑消息
+                SyncLocalBuildingAttack(attackerPos, targetPos, targetOwnerId, targetPieceID, targetBuilding.CurrentHP, false);
+                bCanContinue = true;
+            }
+        }
+
+
     }
 
 
@@ -1852,6 +2638,80 @@ public class PlayerOperationManager : MonoBehaviour
     // 新增方法5：ExecuteMoveToDeadTargetPosition
     // 目标死亡后，攻击者前进到目标位置
     // ============================================
+
+    /// <summary>
+    /// 建筑被摧毁后，攻击者前进一格到建筑位置
+    /// </summary>
+    private void ExecuteMoveToDestroyedBuildingPosition(
+        int2 fromPos,
+        int2 toPos,
+        int targetCellId,
+        GameObject targetUnit,
+        int targetOwnerId,
+        Buildings.Building targetBuilding)
+    {
+        // 计算移动路径（只有一格的距离）
+        Vector3 startPos = SelectingUnit.transform.position;
+        Vector3 targetWorldPos = GameManage.Instance.FindCell(targetCellId).Cells3DPos;
+        targetWorldPos.y += 2.5f;
+
+        // 创建移动动画
+        Sequence moveSequence = DOTween.Sequence();
+
+        // 弧形路径
+        Vector3 midPoint = (startPos + targetWorldPos) / 2f;
+        midPoint.y += 5.0f;
+        Vector3[] path = new Vector3[] { startPos, midPoint, targetWorldPos };
+
+        moveSequence.Append(SelectingUnit.transform.DOPath(path, MoveSpeed, PathType.CatmullRom)
+            .SetEase(Ease.Linear));
+
+        // 同时播放建筑摧毁动画
+        if (targetUnit != null)
+        {
+            moveSequence.Join(targetUnit.transform.DOScale(0f, 0.5f));
+            moveSequence.Join(targetUnit.transform.DORotate(
+                new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+        }
+
+        // 动画完成后的处理
+        moveSequence.OnComplete(() =>
+        {
+            // 1. 发送攻击建筑消息
+            SyncLocalBuildingAttack(fromPos, toPos, targetOwnerId, targetBuilding.BuildingID, 0, true);
+
+            // 2. 销毁建筑GameObject
+            if (targetUnit != null) Destroy(targetUnit);
+
+            // 3. 从BuildingManager移除建筑
+            GameManage.Instance._BuildingManager.RemoveBuilding(targetBuilding.BuildingID);
+
+            // 4. 从PlayerDataManager移除建筑数据
+            PlayerDataManager.Instance.RemoveUnit(targetOwnerId, toPos);
+
+            // 5. 移动攻击者数据
+            PlayerDataManager.Instance.MoveUnit(localPlayerId, fromPos, toPos);
+
+            // 6. 更新本地单位字典
+            localPlayerUnits.Remove(fromPos);
+            localPlayerUnits[toPos] = SelectingUnit;
+
+            // 7. 从目标玩家的单位字典中移除
+            if (otherPlayersUnits.ContainsKey(targetOwnerId))
+            {
+                otherPlayersUnits[targetOwnerId].Remove(toPos);
+            }
+
+            // 8. 更新GameManage的格子对象
+            GameManage.Instance.MoveCellObject(fromPos, toPos);
+
+            // 9. 更新选中的格子ID
+            LastSelectingCellID = targetCellId;
+
+            bCanContinue = true;
+        });
+    }
+
 
     /// <summary>
     /// 目标死亡后，攻击者前进一格到目标位置
@@ -1866,7 +2726,6 @@ public class PlayerOperationManager : MonoBehaviour
         // 计算移动路径（只有一格的距离）
         Vector3 startPos = SelectingUnit.transform.position;
         Vector3 targetWorldPos = GameManage.Instance.FindCell(targetCellId).Cells3DPos;
-        targetWorldPos.y += 2.5f;
 
         // 创建移动动画
         Sequence moveSequence = DOTween.Sequence();
@@ -1956,7 +2815,240 @@ public class PlayerOperationManager : MonoBehaviour
         });
     }
 
+    // 处理网络建筑攻击消息
+    public void HandleNetworkBuildingAttack(BuildingAttackMessage msg)
+    {
+        if (msg.AttackerPlayerId == localPlayerId)
+        {
+            Debug.Log("[网络建筑攻击] 这是本地玩家的攻击，已处理");
+            return;
+        }
 
+        int2 attackerPos = new int2(msg.AttackerPosX, msg.AttackerPosY);
+        int2 buildingPos = new int2(msg.BuildingPosX, msg.BuildingPosY);
+
+        Debug.Log($"[网络建筑攻击] 玩家 {msg.AttackerPlayerId} 攻击建筑 ID={msg.BuildingID} at ({buildingPos.x},{buildingPos.y})");
+        Debug.Log($"[网络建筑攻击] 攻击者位置: ({attackerPos.x},{attackerPos.y}), 建筑是否被摧毁: {msg.BuildingDestroyed}");
+
+        // 获取攻击者GameObject
+        GameObject attackerObj = null;
+        if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId) &&
+            otherPlayersUnits[msg.AttackerPlayerId].ContainsKey(attackerPos))
+        {
+            attackerObj = otherPlayersUnits[msg.AttackerPlayerId][attackerPos];
+        }
+
+        if (attackerObj == null)
+        {
+            Debug.LogWarning($"[网络建筑攻击] 找不到攻击者GameObject at ({attackerPos.x},{attackerPos.y})");
+            return;
+        }
+
+        // 获取建筑GameObject
+        GameObject buildingObj = null;
+        if (msg.BuildingOwnerId == localPlayerId && localPlayerUnits.ContainsKey(buildingPos))
+        {
+            buildingObj = localPlayerUnits[buildingPos];
+        }
+        else if (otherPlayersUnits.ContainsKey(msg.BuildingOwnerId) &&
+                 otherPlayersUnits[msg.BuildingOwnerId].ContainsKey(buildingPos))
+        {
+            buildingObj = otherPlayersUnits[msg.BuildingOwnerId][buildingPos];
+        }
+
+        if (buildingObj == null)
+        {
+            Debug.LogWarning($"[网络建筑攻击] 找不到建筑GameObject at ({buildingPos.x},{buildingPos.y})");
+            return;
+        }
+
+        if (msg.BuildingDestroyed)
+        {
+            // ===== 建筑被摧毁，攻击者前进到建筑位置 =====
+            Debug.Log($"[网络建筑攻击] 建筑被摧毁，攻击者将前进到建筑位置");
+
+            // 播放建筑摧毁动画
+            Sequence destroySequence = DOTween.Sequence();
+            destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
+            destroySequence.Join(buildingObj.transform.DORotate(
+                new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+
+            destroySequence.OnComplete(() =>
+            {
+                // 1. 销毁建筑GameObject
+                Destroy(buildingObj);
+                Debug.Log($"[网络建筑攻击] 建筑GameObject已销毁");
+
+                // 2. 从单位字典中移除建筑
+                if (msg.BuildingOwnerId == localPlayerId && localPlayerUnits.ContainsKey(buildingPos))
+                {
+                    localPlayerUnits.Remove(buildingPos);
+                }
+                else if (otherPlayersUnits.ContainsKey(msg.BuildingOwnerId) &&
+                         otherPlayersUnits[msg.BuildingOwnerId].ContainsKey(buildingPos))
+                {
+                    otherPlayersUnits[msg.BuildingOwnerId].Remove(buildingPos);
+                }
+
+                // 3. 创建废墟
+                GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0],
+                    GameManage.Instance.GetCell2D(buildingPos).Cells3DPos,
+                    Quaternion.identity);
+
+                // 保存废墟引用
+                if (!BuildingRuins.ContainsKey(localPlayerId))
+                {
+                    BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
+                }
+                BuildingRuins[localPlayerId][RuinID] = ruin;
+                RuinID++;
+
+                // 4. 攻击者前进到建筑位置
+                HandleAttackerMoveToDestroyedBuilding(
+                    attackerObj,
+                    msg.AttackerPlayerId,
+                    attackerPos,
+                    buildingPos
+                );
+            });
+        }
+        else
+        {
+            // ===== 建筑存活，只播放受击动画 =====
+            Debug.Log($"[网络建筑攻击] 建筑存活，播放受击动画");
+
+            // 播放受击动画
+            buildingObj.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
+
+            // 更新建筑HP
+            Buildings.Building building = GameManage.Instance._BuildingManager.GetBuilding(msg.BuildingID);
+            if (building != null)
+            {
+                building.SetHP(msg.BuildingRemainingHP);
+                Debug.Log($"[网络建筑攻击] 建筑 {building.BuildingID} 受到攻击，剩余HP: {building.CurrentHP}");
+            }
+        }
+
+        Debug.Log($"[网络建筑攻击] 攻击处理完成");
+    }
+
+    // ========================================
+    // 辅助方法：处理攻击者移动到被摧毁建筑的位置
+    // ========================================
+    private void HandleAttackerMoveToDestroyedBuilding(
+        GameObject attackerObj,
+        int attackerPlayerId,
+        int2 attackerCurrentPos,
+        int2 buildingPos)
+    {
+        Debug.Log($"[HandleAttackerMoveToDestroyedBuilding] 攻击者从 ({attackerCurrentPos.x},{attackerCurrentPos.y}) 前进到 ({buildingPos.x},{buildingPos.y})");
+
+        // 获取目标世界坐标
+        Vector3 targetWorldPos = GameManage.Instance.GetCell2D(buildingPos).Cells3DPos;
+        targetWorldPos.y += 2.5f;
+
+        // 更新字典：从原位置移除，添加到新位置
+        if (attackerPlayerId == localPlayerId)
+        {
+            localPlayerUnits.Remove(attackerCurrentPos);
+            localPlayerUnits[buildingPos] = attackerObj;
+        }
+        else if (otherPlayersUnits.ContainsKey(attackerPlayerId))
+        {
+            otherPlayersUnits[attackerPlayerId].Remove(attackerCurrentPos);
+            otherPlayersUnits[attackerPlayerId][buildingPos] = attackerObj;
+        }
+
+        // 更新GameManage的格子对象
+        GameManage.Instance.SetCellObject(attackerCurrentPos, null);
+        GameManage.Instance.SetCellObject(buildingPos, attackerObj);
+
+        // 播放前进动画（弧形路径）
+        Vector3 startPos = attackerObj.transform.position;
+        Vector3 midPoint = (startPos + targetWorldPos) / 2f;
+        midPoint.y += 5.0f;
+
+        Sequence moveSeq = DOTween.Sequence();
+        moveSeq.Append(attackerObj.transform.DOPath(
+            new Vector3[] { startPos, midPoint, targetWorldPos },
+            MoveSpeed * 0.5f,
+            PathType.CatmullRom
+        ).SetEase(Ease.Linear));
+
+        moveSeq.OnComplete(() =>
+        {
+            Debug.Log($"[HandleAttackerMoveToDestroyedBuilding] 攻击者前进动画完成");
+        });
+    }
+
+    /// <summary>
+    /// 处理网络同步的建筑摧毁消息
+    /// </summary>
+    public void HandleNetworkBuildingDestruction(BuildingDestructionMessage msg)
+    {
+        if (msg.BuildingOwnerId == localPlayerId)
+        {
+            Debug.Log("[网络建筑摧毁] 这是本地玩家的建筑,已处理");
+            return;
+        }
+
+        int2 buildingPos = new int2(msg.BuildingPosX, msg.BuildingPosY);
+
+        Debug.Log($"[网络建筑摧毁] 玩家 {msg.BuildingOwnerId} 的建筑 ID={msg.BuildingID} at ({buildingPos.x},{buildingPos.y}) 被摧毁");
+
+        // 获取建筑GameObject
+        GameObject buildingObj = null;
+        if (otherPlayersUnits.ContainsKey(msg.BuildingOwnerId) &&
+            otherPlayersUnits[msg.BuildingOwnerId].ContainsKey(buildingPos))
+        {
+            buildingObj = otherPlayersUnits[msg.BuildingOwnerId][buildingPos];
+        }
+
+        if (buildingObj == null)
+        {
+            Debug.LogWarning($"[网络建筑摧毁] 找不到建筑GameObject at ({buildingPos.x},{buildingPos.y})");
+            return;
+        }
+
+        // 播放建筑摧毁动画
+        Sequence destroySequence = DOTween.Sequence();
+        destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
+        destroySequence.Join(buildingObj.transform.DORotate(
+            new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+
+        destroySequence.OnComplete(() =>
+        {
+            // 1. 销毁建筑GameObject
+            Destroy(buildingObj);
+            Debug.Log($"[网络建筑摧毁] 建筑GameObject已销毁");
+
+            // 2. 从单位字典中移除建筑
+            if (otherPlayersUnits.ContainsKey(msg.BuildingOwnerId) &&
+                otherPlayersUnits[msg.BuildingOwnerId].ContainsKey(buildingPos))
+            {
+                otherPlayersUnits[msg.BuildingOwnerId].Remove(buildingPos);
+            }
+
+            // 3. 创建废墟
+            GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0],
+                GameManage.Instance.GetCell2D(buildingPos).Cells3DPos,
+                Quaternion.identity);
+
+            // 保存废墟引用
+            if (!BuildingRuins.ContainsKey(msg.BuildingOwnerId))
+            {
+                BuildingRuins[msg.BuildingOwnerId] = new Dictionary<int, GameObject>();
+            }
+            BuildingRuins[msg.BuildingOwnerId][RuinID] = ruin;
+            RuinID++;
+
+            Debug.Log($"[网络建筑摧毁] 废墟已创建");
+        });
+
+        Debug.Log($"[网络建筑摧毁] 摧毁处理完成");
+    }
+
+    // 处理网络攻击消息
     public void HandleNetworkAttack(UnitAttackMessage msg)
     {
         if (msg.AttackerPlayerId == localPlayerId)
@@ -1968,7 +3060,7 @@ public class PlayerOperationManager : MonoBehaviour
         int2 attackerPos = new int2(msg.AttackerPosX, msg.AttackerPosY);
         int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
 
-        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 攻击 玩家 {msg.TargetPlayerId}");
+        Debug.Log($"[网络攻击] 玩家 {msg.AttackerPlayerId} 单位 {msg.AttackerSyncData.pieceID} 攻击 玩家 {msg.TargetPlayerId} 单位 {msg.TargetSyncData.Value.pieceID} ");
         Debug.Log($"[网络攻击] 攻击者位置: ({attackerPos.x},{attackerPos.y}), 目标位置: ({targetPos.x},{targetPos.y})");
 
         // 获取攻击者GameObject
@@ -2041,6 +3133,8 @@ public class PlayerOperationManager : MonoBehaviour
 
                     if (msg.TargetDestroyed)
                     {
+                      
+
                         // 目标死亡，攻击者继续前进到目标位置
                         HandleTargetDestroyedAfterAttack(
                             attackerObj,
@@ -2069,6 +3163,42 @@ public class PlayerOperationManager : MonoBehaviour
 
             if (msg.TargetDestroyed)
             {
+                // 先处理处理血量
+                UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetSyncData.Value.pieceID);
+
+                //计算己方死亡单位 (红月教)
+                PlayerDataManager.Instance.DeadUnitCount += 1;
+
+                // 触发回血被动
+                if (SceneStateManager.Instance.PlayerReligion == Religion.RedMoonReligion 
+                    && PlayerDataManager.Instance.DeadUnitCount >= 12
+                    &&!PlayerDataManager.Instance.bRedMoonSkill)
+                {
+                    PlayerDataManager.Instance.bRedMoonSkill= true;
+
+                    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits.Count; i++)
+                    {
+                        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID != msg.TargetSyncData.Value.pieceID)
+                        {
+                           
+                            syncPieceData newData = new syncPieceData();
+                            if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitType != CardType.Building)
+                            {
+                                int hp = PieceManager.Instance.GetPieceAllHP(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID) / 5;
+                                if (hp == 0)
+                                    hp += 1;
+                                newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
+
+                                PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
+                                unit.PlayerUnitDataSO = newData;
+                                PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
+
+                                Debug.Log("Heal HP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHP);
+                            }
+                        }
+                    }
+                }
+
                 // 目标死亡，攻击者前进到目标位置
                 HandleTargetDestroyedAfterAttack(
                     attackerObj,
@@ -2083,6 +3213,8 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 // 目标存活，只播放受击动画
                 HandleTargetSurvivedAfterAttack(targetObj, msg);
+                // 处理血量
+               UnitStatusUIManager.Instance.UpdateHPByID(msg.TargetSyncData.Value.pieceID,msg.TargetSyncData.Value.currentHP);
             }
         }
 
@@ -2173,7 +3305,6 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 攻击者前进到目标位置
         Vector3 targetWorldPos = GameManage.Instance.GetCell2D(targetPos).Cells3DPos;
-        targetWorldPos.y += 2.5f;
 
         // 更新字典
         if (attackerPlayerId == localPlayerId)
@@ -2190,6 +3321,8 @@ public class PlayerOperationManager : MonoBehaviour
         // 更新GameManage
         GameManage.Instance.SetCellObject(attackerCurrentPos, null);
         GameManage.Instance.SetCellObject(targetPos, attackerObj);
+
+       
 
         // 播放前进动画
         attackerObj.transform.DOMove(targetWorldPos, MoveSpeed * 0.5f).OnComplete(() =>
@@ -2222,6 +3355,12 @@ public class PlayerOperationManager : MonoBehaviour
                 targetPos,
                 msg.TargetSyncData.Value
             );
+
+            // 同步HP
+            PieceManager.Instance.SyncPieceHP(msg.TargetSyncData.Value);
+
+
+
 
             if (updateSuccess)
             {
@@ -2344,8 +3483,8 @@ public class PlayerOperationManager : MonoBehaviour
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
-			// 2025.11.14 Guoning 添加魅惑音效
-			SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+            // 2025.11.14 Guoning 添加魅惑音效
+            SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 
             Debug.Log($"[ExecuteCharm] 单位GameObject已转移到本地玩家控制");
         }
@@ -2480,7 +3619,7 @@ public class PlayerOperationManager : MonoBehaviour
     private GameObject CreateUnitGameObject(int playerId, PlayerUnitData unitData)
     {
         // 获取单位类型对应的预制体
-        PieceType pieceType = ConvertCardTypeToPieceType(unitData.UnitType);
+        PieceType pieceType =PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(unitData.UnitType);
 
         // 使用PieceManager创建单位
         bool success = PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
@@ -2686,7 +3825,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 选择位置不为空，处理教皇交换逻辑
             if (otherPlayersUnits[msg.PlayerId].ContainsKey(toPos))
             {
-                GameObject targetObj= otherPlayersUnits[msg.PlayerId][toPos];
+                GameObject targetObj = otherPlayersUnits[msg.PlayerId][toPos];
 
                 // 更新本地gameobj字典
                 otherPlayersUnits[msg.PlayerId][fromPos] = targetObj;
@@ -2771,7 +3910,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 Debug.Log($"[HandleNetworkMove] 视觉移动完成: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
             }
-            
+
         }
         else
         {
@@ -2907,6 +4046,139 @@ public class PlayerOperationManager : MonoBehaviour
 
 
     /// <summary>
+    /// 本地玩家攻击建筑后调用此方法进行网络同步
+    /// </summary>
+    private void SyncLocalBuildingAttack(
+        int2 attackerPos,
+        int2 buildingPos,
+        int buildingOwnerId,
+        int buildingID,
+        int remainingHP,
+        bool buildingDestroyed)
+    {
+        // 检查网络连接
+        if (NetGameSystem.Instance == null || !NetGameSystem.Instance.bIsConnected)
+        {
+            return;
+        }
+
+        // 获取攻击者数据
+        PlayerUnitData? attackerData = PlayerDataManager.Instance.FindUnit(localPlayerId, attackerPos);
+        if (!attackerData.HasValue)
+        {
+            Debug.LogWarning($"[SyncLocalBuildingAttack] 找不到攻击者数据 at ({attackerPos.x},{attackerPos.y})");
+            return;
+        }
+
+        // 发送网络消息
+        NetGameSystem.Instance.SendBuildingAttackMessage(
+            localPlayerId,
+            attackerPos,
+            buildingOwnerId,
+            buildingPos,
+            buildingID,
+            attackerData.Value.PlayerUnitDataSO,
+            remainingHP,
+            buildingDestroyed
+        );
+    }
+
+    /// <summary>
+    /// 处理建筑的摧毁逻辑
+    /// </summary>
+    private void DestroyInactivatedBuilding(PlayerUnitData buildingUnit)
+    {
+        int2 buildingPos = buildingUnit.Position;
+        int buildingID = buildingUnit.UnitID;
+
+        Debug.Log($"[建筑摧毁] 建筑 ID={buildingID} 在位置 ({buildingPos.x},{buildingPos.y}) 因未激活而被摧毁");
+
+        // 1. 获取建筑GameObject
+        GameObject buildingObj = null;
+        if (localPlayerUnits.ContainsKey(buildingPos))
+        {
+            buildingObj = localPlayerUnits[buildingPos];
+        }
+
+        if (buildingObj != null)
+        {
+            // 2. 播放建筑摧毁动画
+            Sequence destroySequence = DOTween.Sequence();
+            destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
+            destroySequence.Join(buildingObj.transform.DORotate(
+                new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+
+            destroySequence.OnComplete(() =>
+            {
+                // 3. 销毁建筑GameObject
+                Destroy(buildingObj);
+                Debug.Log($"[建筑摧毁] 建筑GameObject已销毁");
+
+                // 4. 从单位字典中移除建筑
+                if (localPlayerUnits.ContainsKey(buildingPos))
+                {
+                    localPlayerUnits.Remove(buildingPos);
+                }
+
+                // 5. 创建废墟
+                GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0],
+                    GameManage.Instance.GetCell2D(buildingPos).Cells3DPos,
+                    Quaternion.identity);
+
+                // 6. 保存废墟引用
+                if (!BuildingRuins.ContainsKey(localPlayerId))
+                {
+                    BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
+                }
+
+                // 获取当前cell的ID
+                int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
+
+                // 保存废墟
+                BuildingRuins[localPlayerId][RuinID] = ruin;
+
+                // 7. 记录cellID到PlayerDataManager (不需要网络同步)
+                PlayerDataManager.Instance.AddPlayerRuinCell(cellID);
+
+                RuinID++;
+
+                Debug.Log($"[建筑摧毁] 废墟已创建,cellID: {cellID}");
+            });
+        }
+
+        // 8. 从PlayerDataManager中移除建筑单位
+        PlayerDataManager.Instance.RemoveUnit(localPlayerId, buildingPos);
+
+        // 9. 从BuildingManager中移除建筑
+        GameManage.Instance._BuildingManager.RemoveBuilding(buildingID);
+
+        // 10. 网络同步:发送建筑摧毁消息
+        SyncBuildingDestruction(buildingPos, buildingID);
+
+        Debug.Log($"[建筑摧毁] 摧毁逻辑处理完成");
+    }
+    /// <summary>
+    /// 同步建筑摧毁到网络
+    /// </summary>
+    private void SyncBuildingDestruction(int2 buildingPos, int buildingID)
+    {
+        // 检查网络连接
+        if (NetGameSystem.Instance == null || !NetGameSystem.Instance.bIsConnected)
+        {
+            return; // 单机模式或未连接,不发送
+        }
+
+        // 发送网络消息
+        NetGameSystem.Instance.SendBuildingDestructionMessage(
+            localPlayerId,
+            buildingPos,
+            buildingID
+        );
+
+        Debug.Log($"[SyncBuildingDestruction] 已发送建筑摧毁同步消息");
+    }
+
+    /// <summary>
     /// 本地玩家攻击后调用此方法进行网络同步
     /// 在攻击完成后调用
     /// 注意:在新的逻辑中,攻击者必须已在相邻格,不会发生移动
@@ -2930,10 +4202,9 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 获取目标数据（如果存活）
         PlayerUnitData? targetData = null;
-        if (!targetDestroyed)
-        {
+       
             targetData = PlayerDataManager.Instance.FindUnit(targetPlayerId, targetPos);
-        }
+        
 
         // 发送网络消息 - 攻击者位置不变,所以不传递移动参数
         NetGameSystem.Instance.SendUnitAttackMessage(
@@ -3079,36 +4350,6 @@ public class PlayerOperationManager : MonoBehaviour
 
 
 
-    // 将 CardType 转换为 PieceType
-    private PieceType ConvertCardTypeToPieceType(CardType cardType)
-    {
-        switch (cardType)
-        {
-            case CardType.Farmer: return PieceType.Farmer;
-            case CardType.Solider: return PieceType.Military;
-            case CardType.Missionary: return PieceType.Missionary;
-            case CardType.Pope: return PieceType.Pope;
-            case CardType.Building: return PieceType.Building;
-            default:
-                Debug.LogError($"未知的 CardType: {cardType}");
-                return PieceType.None;
-        }
-    }
-
-    // 将 PieceType 转换为 CardType
-    private CardType ConvertPieceTypeToCardType(PieceType pieceType)
-    {
-        switch (pieceType)
-        {
-            case PieceType.Farmer: return CardType.Farmer;
-            case PieceType.Military: return CardType.Solider;
-            case PieceType.Missionary: return CardType.Missionary;
-            case PieceType.Pope: return CardType.Pope;
-            default:
-                Debug.LogError($"未知的 PieceType: {pieceType}");
-                return CardType.Farmer; // 默认返回Farmer
-        }
-    }
 
 
 

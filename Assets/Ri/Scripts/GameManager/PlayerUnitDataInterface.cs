@@ -7,6 +7,10 @@ using GameData;
 using GameData.UI;
 using Unity.Mathematics;
 using TMPro;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Linq;
+
+
 #if UNITY_EDITOR
 using Mono.Cecil.Cil;
 #endif
@@ -16,7 +20,6 @@ using System.Runtime.Versioning;
 // 玩家单位数据接口，负责被外部调用以获取需要数据
 public class PlayerUnitDataInterface : MonoBehaviour
 {
-    public PlayerOperationManager _PlayerOpManager;
 
     // 单例
     public static PlayerUnitDataInterface Instance { get; private set; }
@@ -27,7 +30,8 @@ public class PlayerUnitDataInterface : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+			//2025.11.17 Guoning
+			//DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -40,9 +44,9 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     void Start()
     {
-        if (_PlayerOpManager!=null)
+        if (GameManage.Instance._PlayerOperation != null)
         {
-            _PlayerOpManager.OnUnitChoosed += OnUnitChoosed;
+            GameManage.Instance._PlayerOperation.OnUnitChoosed += OnUnitChoosed;
 
         }
 
@@ -72,21 +76,49 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     }
 
+
+
     // 拿到点击的敌方单位id
     private void GetEmemyUnitID(int unitid)
     {
         EnemyID=unitid;
     }
-        // *****************************
-        // **********接口部分***********
-        // *****************************
+    // *****************************
+    // **********接口部分***********
+    // *****************************
 
-        /// <summary>
-        /// 拿到某种棋子的已上场的key列表
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public List<int> GetUnitIDListByType(CardType type)
+    // 获取创建某种宗教的某类棋子所需要的资源值
+    public int GetCreateUnitResoursesCost(Religion religion,CardType type)
+    {
+        if (type == CardType.Building) 
+        {
+            return GameManage.Instance._BuildingManager.GetBuildingDataByReligion(religion).buildingResourceCost;
+		}
+
+		return PieceManager.Instance.GetPieceResourceCost(ConvertCardTypeToPieceType(type), religion);
+
+	}
+    // 根据行动类型 获得某种行动所需消耗的行动力
+    public int GetUnitOperationCostByType(OperationType type)
+    {
+        return PieceManager.Instance.GetUnitOperationCostByType(PlayerDataManager.Instance.nowChooseUnitID,type);
+    }
+
+    // 拿到教皇移动冷却
+    public int2 GetPopeSwapCooldown()
+    {
+        if(NetGameSystem.Instance.bIsServer)
+            return PieceManager.Instance.GetPopeSwapCooldown(GameManage.Instance.LocalPlayerID);
+        else
+            return PieceManager.Instance.GetPopeSwapCooldown(GameManage.Instance.LocalPlayerID*10000);
+
+    }
+    /// <summary>
+    /// 拿到某种棋子的已上场的key列表
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public List<int> GetUnitIDListByType(CardType type)
     {
         return PlayerDataManager.Instance.GetActivateUnitKey(type);
     }
@@ -94,7 +126,6 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // 拿到一个棋子的数据
     public Piece GetUnitData(int id)
     {
-
         //PlayerDataManager.Instance.GetUnitDataById(id).Value.PlayerUnitDataSO
 
         return PieceManager.Instance.GetPiece(id);
@@ -207,7 +238,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         }
 
         // 尝试创建单位
-        if (_PlayerOpManager.TryCreateUnit(type))
+        if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
         {
 
             GameUIManager.Instance.ActivateDeckCardByType(type);
@@ -259,6 +290,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (tech)
         {
             case TechTree.HP:
+
                 return 1;
             case TechTree.AP:
                 return 1;
@@ -297,29 +329,37 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (tech)
         {
             case TechTree.HP:
-                return true;
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.HP, type);
             case TechTree.AP:
-                return true;
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AP, type);
             case TechTree.Occupy:
-                return true;
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Occupy, type);
             case TechTree.Conversion:
-                return true;
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Conversion, type);
             case TechTree.ATK:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.ATK, type);
             case TechTree.Sacrifice:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Sacrifice, type);
             case TechTree.AttackPosition:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AttackPosition, type);
             case TechTree.AltarCount:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.AltarCount, type);
             case TechTree.ConstructionCost:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.ConstructionCost, type);
             case TechTree.MovementCD:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.MovementCD, type);
             case TechTree.Buff:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Buff, type);
             case TechTree.Heresy:
-                return true;
+
+                return GameManage.Instance._PlayerOperation.UnitUpgrade(TechTree.Heresy, type);
             default:
                 return false;
         }
@@ -327,12 +367,21 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     }
 
-    // 购买某种棋子直接生成到地图
-    public bool BuyUnitToMapByType(CardType type)
+    public int GetCurrentPopulation()
+    {
+        return PlayerDataManager.Instance.NowPopulation;
+    }
+    public int GetCurrentUnitPopulationCostByType(CardType type)
     {
 
-        int ResourcesCost= PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
+        return PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type), SceneStateManager.Instance.PlayerReligion);
 
+    }
+        // 购买某种棋子直接生成到地图
+    public bool BuyUnitToMapByType(CardType type)
+    {
+		// 检查资源是否足够
+		int ResourcesCost = PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
         int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
         if (ResourcesCount < ResourcesCost)
         {
@@ -340,22 +389,130 @@ public class PlayerUnitDataInterface : MonoBehaviour
             return false;
         }
 
-        // 尝试创建单位
-        if (_PlayerOpManager.TryCreateUnit(type))
+
+        // 检查人口是否足够
+		// 当前玩家人口上限
+		int currentPlayerPopulationTotal = PlayerDataManager.Instance.PopulationCost;
+		// 当前玩家已用人口
+		int currentPlayerPopulationUsed = PlayerDataManager.Instance.NowPopulation;
+		// 棋子所需要的人口
+		int currentUnitPopulationCost = 0;
+		if (type != CardType.Building)
+			currentUnitPopulationCost = PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type), SceneStateManager.Instance.PlayerReligion);
+
+		if (currentUnitPopulationCost > currentPlayerPopulationTotal - currentPlayerPopulationUsed)
         {
-
-            ResourcesCount -= ResourcesCost;
-            PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
-            return true;
-
+            Debug.LogWarning("人口不足!");
+            return false;
         }
         else
         {
-            Debug.LogWarning("创建失败 - 请先选择一个空格子");
-            return false;
-        }
+            // 尝试创建单位
+            if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
+            {
+                ResourcesCount -= ResourcesCost;
+                PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+                return true;
+            }
+            else
+            {
 
+				Debug.LogWarning("创建失败 - 请先选择一个空格子");
+				return false;
+			}
+
+		}
     }
 
 
+	/// <summary>
+	/// 购买某种棋子直接生成到地图检测资源是否足够、人口是否足够
+	/// </summary>
+	/// <param name="type"></param>
+	/// <returns></returns>
+	public bool TryBuyUnitToMapByType(CardType type)
+    {
+		// 检查资源是否足够
+		Religion playerReligion = SceneStateManager.Instance.PlayerReligion;
+        int ResourcesCost = 0;
+        if (type == CardType.Building)
+        {
+            ResourcesCost = GameManage.Instance._BuildingManager.GetBuildingDataByReligion(playerReligion).buildingResourceCost;
+        }
+        else
+        {
+			ResourcesCost = PlayerDataManager.Instance.GetCreateUnitResoursesCost(type);
+        }
+  
+
+        int ResourcesCount = PlayerDataManager.Instance.GetPlayerResource();
+		if (ResourcesCount < ResourcesCost)
+		{
+			Debug.LogWarning("资源不足!");
+			return false;
+		}
+
+		// 检查人口是否足够
+		// 当前玩家人口上限
+		int currentPlayerPopulationTotal = PlayerDataManager.Instance.PopulationCost;
+		// 当前玩家已用人口
+		int currentPlayerPopulationUsed = PlayerDataManager.Instance.NowPopulation;
+		// 棋子所需要的人口
+		int currentUnitPopulationCost = 0;
+		if (type != CardType.Building)
+			currentUnitPopulationCost = PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type), SceneStateManager.Instance.PlayerReligion);
+
+		if (currentUnitPopulationCost > currentPlayerPopulationTotal - currentPlayerPopulationUsed)
+		{
+			Debug.LogWarning("人口不足!");
+			return false;
+		}
+		else
+		{
+			// 尝试创建单位
+			if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
+			{
+				ResourcesCount -= ResourcesCost;
+				PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+				return true;
+			}
+			else
+			{
+				Debug.LogWarning("创建失败 - 请先选择一个空格子");
+				return false;
+			}
+		}
+	}
+
+
+	// 将 CardType 转换为 PieceType
+	public PieceType ConvertCardTypeToPieceType(CardType cardType)
+    {
+        switch (cardType)
+        {
+            case CardType.Farmer: return PieceType.Farmer;
+            case CardType.Solider: return PieceType.Military;
+            case CardType.Missionary: return PieceType.Missionary;
+            case CardType.Pope: return PieceType.Pope;
+            case CardType.Building: return PieceType.Building;
+            default:
+                Debug.LogError($"未知的 CardType: {cardType}");
+                return PieceType.None;
+        }
+    }
+
+    // 将 PieceType 转换为 CardType
+    public CardType ConvertPieceTypeToCardType(PieceType pieceType)
+    {
+        switch (pieceType)
+        {
+            case PieceType.Farmer: return CardType.Farmer;
+            case PieceType.Military: return CardType.Solider;
+            case PieceType.Missionary: return CardType.Missionary;
+            case PieceType.Pope: return CardType.Pope;
+            default:
+                Debug.LogError($"未知的 PieceType: {pieceType}");
+                return CardType.Farmer; // 默认返回Farmer
+        }
+    }
 }

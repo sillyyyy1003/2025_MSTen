@@ -12,8 +12,7 @@ public class BuildingDataSOEditor : Editor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("religion"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("buildingName"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("maxHp"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("buildStartAPCost"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("buildingAPCost"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("buildingResourceCost"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceGenInterval"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("cellType"));
 
@@ -27,7 +26,6 @@ public class BuildingDataSOEditor : Editor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("generationType"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("baseProductionAmount"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("goldenProductionAmount"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("apCostperTurn"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("productionMultiplier"));
 
         EditorGUILayout.Space();
@@ -58,15 +56,6 @@ public class BuildingDataSOEditor : Editor
         {
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(slotsUpgradeCost, new GUIContent("祭壇格子数アップグレード花費"), true);
-            EditorGUI.indentLevel--;
-        }
-
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("buildingAPCostByLevel"), new GUIContent("建築APコスト"), true);
-        SerializedProperty buildCostUpgradeCost = serializedObject.FindProperty("buildCostUpgradeCost");
-        if (buildCostUpgradeCost != null)
-        {
-            EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(buildCostUpgradeCost, new GUIContent("建造花費アップグレード花費"), true);
             EditorGUI.indentLevel--;
         }
 

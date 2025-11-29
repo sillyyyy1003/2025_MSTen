@@ -1,6 +1,7 @@
 ﻿using SoundSystem;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.UIElements.Experimental;
 
 public class SoundManager : MonoBehaviour
@@ -102,6 +103,8 @@ public class SoundManager : MonoBehaviour
 	/// シングルトンインスタンス
 	/// </summary>
 	public static SoundManager Instance { get; private set; }
+
+
 
 	//--------------------------------------------------------------------------------
 	// メソッド
@@ -548,6 +551,18 @@ public class SoundManager : MonoBehaviour
     /// </summary>
     /// <param name="_volume"></param>
     public void SetSEVolume(float _volume) { volumeSettings.seVolume = _volume; }
+
+
+	/// <summary>
+	/// 整数设定BGM音量
+	/// </summary>
+	/// <param name="_volume"></param>
+
+	public void SetIntBGMVolume(int _volume)
+    {
+	    float volume = _volume / 10f;
+        SetBGMVolume(volume);
+    }
 
 
 	//--------------------------------------------------------------------------------

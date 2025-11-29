@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   piecePrefabResourcePath: Cyou/Prefab/pope
   originalPID: 0
+  religion: 0
   pieceName: "\u7D72\u7E54\u6559_\u6559\u7687"
   populationCost: 5
   resourceCost: 10
@@ -26,24 +27,12 @@ MonoBehaviour:
   attackRange: 0
   attackCooldown: 1
   attackAPCost: 20
-  maxHPByLevel:
-  - 5
-  - 7
-  - 9
-  - 9
-  maxAPByLevel:
-  - 5
-  - 3
-  - 3
-  - 3
-  attackPowerByLevel:
-  - 0
-  - 0
-  - 0
-  - 0
+  maxHPByLevel: 05000000070000000900000009000000
+  maxAPByLevel: 05000000030000000300000003000000
+  attackPowerByLevel: 00000000000000000000000000000000
   hpUpgradeCost: 060000000800000000000000
   apUpgradeCost: 060000000000000000000000
-  piecePrefab: {fileID: 8868254160552346048, guid: 1724c1e5396873943a03922f74eff83a,
+  piecePrefab: {fileID: 7018129620868149870, guid: 82e6288eb601d3b4088c6cc3ed15f8e1,
     type: 3}
   swapCooldown: 05000000030000000300000003000000
   hpBuff: 00000000000000000000000000000000

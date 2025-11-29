@@ -59,9 +59,13 @@ public struct PlayerUnitData
         originalOwnerID = originalOwner;
         BuildingData = buildingData;
     }
-    public void ChangeUnitDataSO(syncPieceData unitData)
+    public void SetUnitDataSO(syncPieceData unitData)
     {
         PlayerUnitDataSO = unitData;
+    }
+    public void SetBuildingUnitDataSO(syncBuildingData unitData)
+    {
+        BuildingData = unitData;
     }
     public void SetCanDoAction(bool canDo)
     {
@@ -106,10 +110,12 @@ public struct PlayerData
     {
         PlayerID = playerId;
         PlayerUnits = new List<PlayerUnitData>();
-        Resources = 100;
+        Resources = 100; //2025.11.25 GuoNing  修改为32
         PlayerReligion = SceneStateManager.Instance.PlayerReligion;
         PlayerOwnedCells = new List<int>();
     }
+
+    //
     public bool UpdateUnitSyncDataByPos(int2 position, syncPieceData newData)
     {
         for (int i = 0; i < PlayerUnits.Count; i++)
@@ -124,6 +130,8 @@ public struct PlayerData
         }
         return false;
     }
+
+
     public void AddOwnedCell(int id)
     {
         PlayerOwnedCells.Add(id);
@@ -224,6 +232,17 @@ public struct PlayerData
         return null;
     }
 
+    // 根据格子查找单位
+    public PlayerUnitData? FindUnitAt(int cellID)
+    {
+        foreach (var unit in PlayerUnits)
+        {
+            if (unit.Position.Equals(GameManage.Instance.FindCell(cellID).Cells2DPos))
+                return unit;
+        }
+        return null;
+    }
+
     // 根据ID查找单位
     public PlayerUnitData? FindUnitById(int unitId)
     {
@@ -273,10 +292,29 @@ public class PlayerDataManager : MonoBehaviour
     private Dictionary<int, int> unitIdToPlayerIdMap = new Dictionary<int, int>();
 
     // 当前选择中的单位id
-    public int nowChooseUnitID;
+    public int nowChooseUnitID=-1;
 
     // 当前选择中的单位类型
-    public CardType nowChooseUnitType;
+    public CardType nowChooseUnitType=CardType.None;
+
+    // 本地玩家数据(不参与数据同步)
+    // 人口上限
+    public int PopulationCost { get; private set; }
+    public int NowPopulation=0; 
+    // 玩家拥有的废墟所在的cellID (新增,不需要网络同步)
+    public List<int> PlayerRuinCells=new List<int>();
+
+    // 单位死亡数
+    public int DeadUnitCount=0;
+    public int RedMoonSkillCount;
+    public bool bRedMoonSkill=false;
+   
+    // 进入建筑的农民数量
+    public int BuildingFarmerCount;
+
+    // 镜湖教 触发次数
+    public int MirrorSkillCount=0;
+
 
     // 建筑
     [SerializeField] private BuildingRegistry buildingRegistry;
@@ -293,12 +331,15 @@ public class PlayerDataManager : MonoBehaviour
     // 事件: 单位移动
     public event Action<int, int2, int2> OnUnitMoved;
 
+
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+			//2025.11.17 Guoning
+			//DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -337,6 +378,7 @@ public class PlayerDataManager : MonoBehaviour
         if (!allPlayersData.ContainsKey(playerId))
         {
             allPlayersData[playerId] = new PlayerData(playerId);
+         
             //allPlayersData[playerId].SetReligion();
             Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }
@@ -347,9 +389,35 @@ public class PlayerDataManager : MonoBehaviour
         PieceManager.Instance.SetPieceRligion(allPlayersData[playerId].PlayerReligion);
     
     }
+    // 设置人口 放置在Create之后
+    public void SetPlayerPopulationCost()
+    { 
+        
+            switch (allPlayersData[GameManage.Instance.LocalPlayerID].PlayerReligion)
+            {
+                case Religion.MadScientistReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.MirrorLakeReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.RedMoonReligion:
+                    // 同时设置被动回合
+                    RedMoonSkillCount = 0;
+                    PopulationCost = 26;
+                    break;
+                case Religion.SilkReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.MayaReligion:
+                    PopulationCost = 20;
+                    break;
 
-    // 获取玩家数据
-    public PlayerData GetPlayerData(int playerId)
+            }
+            Debug.Log(" PopulationCost is " + PopulationCost);
+    }
+        // 获取玩家数据
+        public PlayerData GetPlayerData(int playerId)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
@@ -585,6 +653,29 @@ public class PlayerDataManager : MonoBehaviour
         return GameManage.Instance.GetCellObject(pos).transform.position;
     }
 
+    /// <summary>
+    /// 添加玩家的废墟cellID
+    /// </summary>
+    public void AddPlayerRuinCell(int cellID)
+    {
+        PlayerRuinCells.Add(cellID);
+    }
+
+    /// <summary>
+    /// 获取玩家的废墟cellID列表
+    /// </summary>
+    public List<int> GetPlayerRuinCells()
+    {
+        return PlayerRuinCells;
+    }
+
+    /// <summary>
+    /// 移除玩家的废墟cellID
+    /// </summary>
+    public void RemovePlayerRuinCell(int cellID)
+    {
+        PlayerRuinCells.Remove(cellID);
+    }
 
     // 添加单位(种类与位置) - 返回生成的UnitID
     public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject = null, bool bUnitIsActivated = true)
@@ -610,39 +701,6 @@ public class PlayerDataManager : MonoBehaviour
         }
         return -1; // 失败返回-1
     }
-
-    ///// <summary>
-    ///// 添加单位时使用 syncPieceData（重载版本）
-    ///// 这是网络同步版本的 AddUnit
-    ///// </summary>
-    //public void AddUnit(int playerId, CardType type, int2 pos, syncPieceData pieceData, GameObject unitObject)
-    //{
-    //    if (allPlayersData.ContainsKey(playerId))
-    //    {
-    //        PlayerData data = allPlayersData[playerId];
-
-    //        // 使用 syncPieceData 创建单位
-    //        data.AddUnit(nextUnitId, type, pos, pieceData, unitObject);
-
-    //        // 记录ID映射
-    //        unitIdToPlayerIdMap[nextUnitId] = playerId;
-
-    //        allPlayersData[playerId] = data;
-
-    //        // 触发事件
-    //        PlayerUnitData unitData = new PlayerUnitData(nextUnitId, type, pos, pieceData, unitObject);
-    //        OnUnitAdded?.Invoke(playerId, unitData);
-    //        OnPlayerDataChanged?.Invoke(playerId, data);
-
-    //        nextUnitId++;
-
-    //        Debug.Log($"[PlayerDataManager] 玩家 {playerId} 添加单位: {type} at ({pos.x},{pos.y}), UnitID={nextUnitId - 1}, PieceID={pieceData.pieceID}");
-    //    }
-    //    else
-    //    {
-    //        Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
-    //    }
-    //}
 
     // 更新单位的GameObject引用
     public bool UpdateUnitGameObject(int playerId, int unitId, GameObject unitObject)
@@ -806,6 +864,32 @@ public class PlayerDataManager : MonoBehaviour
         return -1;
     }
 
+    // 通过UnitID获取单位所在的格子id
+    public int GetCellIdByUnitId(int unitId)
+    {
+        // 先找到单位所属的玩家
+        if (!unitIdToPlayerIdMap.ContainsKey(unitId))
+        {
+            Debug.LogWarning($"PlayerDataManager: 找不到ID为 {unitId} 的单位");
+            return -1;
+        }
+
+        int playerId = unitIdToPlayerIdMap[unitId];
+
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+
+            // 获取单位位置（用于事件）
+            PlayerUnitData? unitData = data.FindUnitById(unitId);
+
+            
+            return GameManage.Instance.GetCell2D(unitData.Value.Position).id;
+        }
+        return -1;
+
+    }
+
     // 检查UnitID是否存在
     public bool UnitIdExists(int unitId)
     {
@@ -938,6 +1022,29 @@ public class PlayerDataManager : MonoBehaviour
         return -1; // 没有单位
     }
 
+    // 获取某个格子id返回所属玩家ID
+    public int GetUnitOwner(int cellID)
+    {
+        foreach (var kvp in allPlayersData)
+        {
+            if (kvp.Value.FindUnitAt(cellID) != null)
+                return kvp.Key;
+        }
+        return -1; // 没有单位
+    }
+
+    // 拿到格子的所属玩家id
+    public int GetCellOwner(int cellID)
+    {
+        foreach (var kvp in allPlayersData)
+        {
+            if (kvp.Value.PlayerOwnedCells.Contains(cellID))
+                return kvp.Key;
+        }
+        return -1; // 没有所属
+    }
+
+    // 设置玩家资源
     public void SetPlayerResourses(int newResources)
     {
         int playerId = GameManage.Instance.LocalPlayerID;
@@ -951,8 +1058,7 @@ public class PlayerDataManager : MonoBehaviour
         data.Resources = newResources;
         allPlayersData[playerId] = data;
 
-        Debug.Log($"Player {playerId} Resources updated to {newResources}");
-
+        //Debug.Log($"Player {playerId} Resources updated to {newResources}");
     }
 
     public int GetCreateUnitResoursesCost(CardType type)
@@ -977,7 +1083,7 @@ public class PlayerDataManager : MonoBehaviour
     // *************************
     //     魅惑单位管理
     // *************************
-
+    #region == Charmed ==
     /// <summary>
     /// 设置单位为被魅惑状态
     /// </summary>
@@ -1259,4 +1365,4 @@ public struct CharmExpireInfo
     public int OriginalOwnerID;
     public PlayerUnitData UnitData;
 }
-
+#endregion
