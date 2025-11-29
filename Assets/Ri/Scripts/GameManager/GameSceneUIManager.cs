@@ -309,11 +309,13 @@ public class GameSceneUIManager : MonoBehaviour
     public void OnGameStarted()
     {
         // 切换到游戏UI
-    
         if (GameUIObject != null)
         {
             GameUIObject.SetActive(true);
         }
+
+        // 更新所有UI相关数据
+        GameUIManager.Instance.Initialize();
 
 		Debug.Log("游戏开始，切换到游戏界面");
     }

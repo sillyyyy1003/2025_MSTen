@@ -337,7 +337,8 @@ public class GameUIManager : MonoBehaviour
 
     public void TurnStart()
     {
-        Initialize();
+        //2025.11.29 UI的更新在OnGameStarted里进行
+        //Initialize();
 
         Debug.Log($" 回合开始：玩家 {localPlayerId}");
 
@@ -459,7 +460,7 @@ public class GameUIManager : MonoBehaviour
 
 
     // === 内部更新 ===
-    private void Initialize()
+    public void Initialize()
     {
         if (isInitialize) return;
 
