@@ -179,18 +179,14 @@ public class GameManage : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        // 检测F1键投降
-        if (Input.GetKeyDown(KeyCode.F1))
+        // 测试F11键投降
+        if (Input.GetKeyDown(KeyCode.F11))
         {
             // 只有在游戏进行中且是本地玩家的回合时才能投降
-            if (bIsInGaming && IsMyTurn)
+            if (bIsInGaming)
             {
                 Debug.Log($"[投降] 玩家 {_LocalPlayerID} 按下F1键请求投降");
                 RequestSurrender();
-            }
-            else if (bIsInGaming && !IsMyTurn)
-            {
-                Debug.LogWarning("[投降] 不是你的回合,无法投降!");
             }
             else
             {
