@@ -228,6 +228,7 @@ public class GameManage : MonoBehaviour
     {
         Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
         OnGameEnded?.Invoke(winnerPlayerId);
+        //ResultUIManager.Instance.GetVictoryPlayerID(winnerPlayerId);
         GameOver(winnerPlayerId);
     }
 
