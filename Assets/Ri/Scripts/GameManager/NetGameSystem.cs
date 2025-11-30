@@ -1031,10 +1031,24 @@ public class NetGameSystem : MonoBehaviour
         IPEndPoint remoteEP = new IPEndPoint(IPAddress.Any, broadcastPort);
         DateTime startTime = DateTime.Now;
 
-        while ((DateTime.Now - startTime).TotalSeconds < 5) // 搜索5秒
+        while ((DateTime.Now - startTime).TotalSeconds < 5)
         {
             try
             {
+                // ===== 添加 null 检查 =====
+                if (broadcastClient == null)
+                {
+                    Debug.LogWarning("[客户端] broadcastClient 已被释放，停止搜索");
+                    break;
+                }
+
+                if (discoveredServers == null)
+                {
+                    Debug.LogError("[客户端] discoveredServers 为 null");
+                    break;
+                }
+                // ===== 检查结束 =====
+
                 if (broadcastClient.Available > 0)
                 {
                     byte[] data = broadcastClient.Receive(ref remoteEP);
@@ -1044,6 +1058,13 @@ public class NetGameSystem : MonoBehaviour
 
                     if (broadcastMsg != null)
                     {
+                        // 再次检查 discoveredServers
+                        if (discoveredServers == null)
+                        {
+                            Debug.LogError("[客户端] discoveredServers 在操作过程中变为 null");
+                            break;
+                        }
+
                         // 检查是否已存在
                         ServerInfo existingServer = discoveredServers.Find(s =>
                             s.ServerIP == broadcastMsg.ServerIP && s.Port == broadcastMsg.Port);
@@ -1072,7 +1093,10 @@ public class NetGameSystem : MonoBehaviour
                             // 通知UI更新
                             MainThreadDispatcher.Enqueue(() =>
                             {
-                                OnServersDiscovered?.Invoke(discoveredServers);
+                                if (OnServersDiscovered != null)  // 添加检查
+                                {
+                                    OnServersDiscovered.Invoke(discoveredServers);
+                                }
                             });
                         }
                     }
@@ -1082,7 +1106,8 @@ public class NetGameSystem : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[客户端] 发现服务器错误: {ex.Message}");
+                // ===== 改进错误日志 =====
+                Debug.LogError($"[客户端] 发现服务器错误: {ex.Message}\n堆栈跟踪: {ex.StackTrace}");
                 break;
             }
         }
