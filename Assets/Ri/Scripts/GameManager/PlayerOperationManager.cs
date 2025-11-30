@@ -2544,12 +2544,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 判断目标是否死亡
             bool targetDied = targetSyncData.Value.currentHP <= 0;
             Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
-            // 判断教皇死亡
-            if (targetDied&& targetSyncData.Value.piecetype==PieceType.Pope)
-            {
-                GameManage.Instance.TriggerGameEnded(localPlayerId);
-                
-            }
+          
                 if (targetDied)
             {
                 // 目标死亡，攻击者前进到目标位置
@@ -3213,6 +3208,12 @@ public class PlayerOperationManager : MonoBehaviour
                     targetObj,
                     msg.TargetPlayerId
                 );
+
+                if (msg.TargetSyncData.Value.piecetype==PieceType.Pope)
+                {
+                    // 触发结束
+                    GameManage.Instance.TriggerGameEnded(localPlayerId);
+                }
             }
             else
             {
