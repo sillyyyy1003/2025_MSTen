@@ -18,7 +18,6 @@ public class BuildingManager : MonoBehaviour
     // ===== 建物の管理 =====
     private Dictionary<int, Building> buildings = new Dictionary<int, Building>(); // 己方の建物
     private Dictionary<int, Building> enemyBuildings = new Dictionary<int, Building>(); // 敵方の建物
-    private int nextBuildingID = 0;
 
     // ===== 破壊データのキャッシュ =====
     private syncBuildingData? lastDestroyedBuildingData = null;

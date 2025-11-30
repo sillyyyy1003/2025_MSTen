@@ -41,11 +41,7 @@ namespace GamePieces
 
         // ===== イベント =====
 
-        //GameManagerとの連絡用
-        public static event Action<Piece, Piece> OnAnyCharmed;    // グローバルイベント
-        public static event Action<Piece> OnAnyUncharmed;         // グローバルイベント
-
-        public event Action<Piece> OnPieceDeath;
+        //public event Action<Piece> OnPieceDeath;
         public event Action<Piece,Piece> OnCharmed;//(魅惑された駒、魅惑した駒)
         public event Action<Piece> OnUncharmed;//魅惑状態が解除して元の陣営に戻った駒
 

@@ -182,16 +182,6 @@ public class PieceManager : MonoBehaviour
     public event Action<int> OnEnemyPieceCreated;      // 敵駒ID
 
 
-    public event Action<int, int> OnPieceHPChanged;
-    public event Action<int, int> OnPieceHPLevelUpgraded;
-    public event Action<int, int> OnPopeSwapCDLevelUpgraded;
-    public event Action<int, int> OnPopeBuffLevelUpgraded;
-    public event Action<int, int> OnMissionaryOccupyLevelUpgraded;
-    public event Action<int, int> OnMissionaryConvertLevelUpgraded;
-    public event Action<int, int> OnFarmerSacrificeLevelUpgraded;
-    public event Action<int, int> OnMilitaryAttackLevelUpgraded;
-
-
 
     void Awake()
     {
@@ -356,7 +346,7 @@ public class PieceManager : MonoBehaviour
         nextPieceID++;
 
         // 死亡イベントを購読
-        piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
+        //piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
 
         Debug.Log($"駒を生成しました: ID={pieceID}, Type={pieceType}, Religion={religion}, PlayerID={playerID}");
         OnPieceCreated?.Invoke(pieceID);
@@ -432,7 +422,7 @@ public class PieceManager : MonoBehaviour
             allPiecesSyncData.Add(spd.pieceID, spd);
 
         // 死亡イベントを購読
-        piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
+        //piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
 
         // syncPieceDataから状態を設定
         try
