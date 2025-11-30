@@ -3211,8 +3211,8 @@ public class PlayerOperationManager : MonoBehaviour
 
                 if (msg.TargetSyncData.Value.piecetype==PieceType.Pope)
                 {
-                    // 触发结束
-                    GameManage.Instance.TriggerGameEnded(localPlayerId);
+                    // 发送游戏结束消息，原因为教皇死亡
+                    NetGameSystem.Instance.SendGameOverMessage(GameManage.Instance.OtherPlayerID, localPlayerId, "POPE DEAD");
                 }
             }
             else
