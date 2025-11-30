@@ -176,13 +176,60 @@ public class GameManage : MonoBehaviour
     }
 
 
+    // Update is called once per frame
+    private void Update()
+    {
+        // 测试F11键投降
+        if (Input.GetKeyDown(KeyCode.F11))
+        {
+            // 只有在游戏进行中且是本地玩家的回合时才能投降
+            if (bIsInGaming)
+            {
+                Debug.Log($"[投降] 玩家 {_LocalPlayerID} 按下F1键请求投降");
+                RequestSurrender();
+            }
+            else
+            {
+                Debug.LogWarning("[投降] 游戏未开始,无法投降!");
+            }
+        }
+    }
+    /// <summary>
+    /// 请求投降
+    /// </summary>
+    private void RequestSurrender()
+    {
+        if (NetGameSystem.Instance == null)
+        {
+            Debug.LogError("[投降] NetGameSystem未初始化!");
+            return;
+        }
 
+        // 确定获胜者ID (对手ID)
+        int winnerPlayerId = OtherPlayerID;
+
+        Debug.Log($"[投降] 玩家 {_LocalPlayerID} 投降，玩家 {winnerPlayerId} 获胜");
+
+        // 发送游戏结束消息，原因为投降
+        NetGameSystem.Instance.SendGameOverMessage(winnerPlayerId, _LocalPlayerID, "surrender");
+
+        // 本地也触发游戏结束
+        OnGameEnded?.Invoke(winnerPlayerId);
+    }
     // Update is called once per frame
 
 
     // *************************
     //        游戏流程函数
     // *************************
+
+    // 触发游戏结束事件
+    public void TriggerGameEnded(int winnerPlayerId)
+    {
+        Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
+        OnGameEnded?.Invoke(winnerPlayerId);
+        GameOver(winnerPlayerId);
+    }
 
     // 房间状态待机管理
     public void CheckIsServer(bool server)

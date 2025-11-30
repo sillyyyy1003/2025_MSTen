@@ -250,6 +250,17 @@ public class TurnStartMessage
 {
     public int PlayerId;
 }
+
+
+// 游戏结束消息
+[Serializable]
+public class GameOverMessage
+{
+    public int WinnerPlayerId;     // 获胜的玩家ID
+    public int LoserPlayerId;      // 失败的玩家ID
+    public string Reason;          // 结束原因: "surrender"(投降), "building_destroyed"(建筑摧毁), "disconnect"(断线) 等
+}
+
 #endregion
 
 #region 序列化玩家数据
@@ -603,6 +614,7 @@ public class NetGameSystem : MonoBehaviour
                
                 // 游戏流程相关
                 { NetworkMessageType.GAME_START, HandleGameStart },
+                { NetworkMessageType.GAME_OVER, HandleGameOver },  // 游戏结束 (包括投降)  ← 统一处理
                 { NetworkMessageType.TURN_START, HandleTurnStart },
                 { NetworkMessageType.TURN_END, HandleTurnEnd },
                  // 单位相关
@@ -1019,10 +1031,24 @@ public class NetGameSystem : MonoBehaviour
         IPEndPoint remoteEP = new IPEndPoint(IPAddress.Any, broadcastPort);
         DateTime startTime = DateTime.Now;
 
-        while ((DateTime.Now - startTime).TotalSeconds < 5) // 搜索5秒
+        while ((DateTime.Now - startTime).TotalSeconds < 5)
         {
             try
             {
+                // ===== 添加 null 检查 =====
+                if (broadcastClient == null)
+                {
+                    Debug.LogWarning("[客户端] broadcastClient 已被释放，停止搜索");
+                    break;
+                }
+
+                if (discoveredServers == null)
+                {
+                    Debug.LogError("[客户端] discoveredServers 为 null");
+                    break;
+                }
+                // ===== 检查结束 =====
+
                 if (broadcastClient.Available > 0)
                 {
                     byte[] data = broadcastClient.Receive(ref remoteEP);
@@ -1032,6 +1058,13 @@ public class NetGameSystem : MonoBehaviour
 
                     if (broadcastMsg != null)
                     {
+                        // 再次检查 discoveredServers
+                        if (discoveredServers == null)
+                        {
+                            Debug.LogError("[客户端] discoveredServers 在操作过程中变为 null");
+                            break;
+                        }
+
                         // 检查是否已存在
                         ServerInfo existingServer = discoveredServers.Find(s =>
                             s.ServerIP == broadcastMsg.ServerIP && s.Port == broadcastMsg.Port);
@@ -1060,7 +1093,10 @@ public class NetGameSystem : MonoBehaviour
                             // 通知UI更新
                             MainThreadDispatcher.Enqueue(() =>
                             {
-                                OnServersDiscovered?.Invoke(discoveredServers);
+                                if (OnServersDiscovered != null)  // 添加检查
+                                {
+                                    OnServersDiscovered.Invoke(discoveredServers);
+                                }
                             });
                         }
                     }
@@ -1070,7 +1106,8 @@ public class NetGameSystem : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[客户端] 发现服务器错误: {ex.Message}");
+                // ===== 改进错误日志 =====
+                Debug.LogError($"[客户端] 发现服务器错误: {ex.Message}\n堆栈跟踪: {ex.StackTrace}");
                 break;
             }
         }
@@ -1752,7 +1789,42 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log($"[网络-客户端] 发送 CHARM_EXPIRE 消息到服务器");
         }
     }
+    /// <summary>
+    /// 发送游戏结束消息
+    /// </summary>
+    /// <param name="winnerPlayerId">获胜玩家ID</param>
+    /// <param name="loserPlayerId">失败玩家ID</param>
+    /// <param name="reason">结束原因: "surrender"(投降), "building_destroyed"(建筑摧毁), "disconnect"(断线) 等</param>
+    public void SendGameOverMessage(int winnerPlayerId, int loserPlayerId, string reason = "surrender")
+    {
+        GameOverMessage gameOverData = new GameOverMessage
+        {
+            WinnerPlayerId = winnerPlayerId,
+            LoserPlayerId = loserPlayerId,
+            Reason = reason
+        };
 
+        NetworkMessage msg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.GAME_OVER,
+            SenderId = localClientId,
+            JsonData = JsonConvert.SerializeObject(gameOverData)
+        };
+
+        Debug.Log($"[网络] 发送游戏结束消息: 获胜者={winnerPlayerId}, 失败者={loserPlayerId}, 原因={reason}");
+
+        if (isServer)
+        {
+            // 服务器先处理自己的游戏结束
+            HandleGameOver(msg);
+            Debug.Log($"[网络-服务器] 处理游戏结束消息并广播给所有客户端");
+        }
+        else
+        {
+            SendToServer(msg);
+            Debug.Log($"[网络-客户端] 发送游戏结束消息到服务器");
+        }
+    }
     #endregion
     // 发送消息到服务器
     private void SendToServer(NetworkMessage message)
@@ -2201,7 +2273,37 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
         }
     }
+    // 处理游戏结束消息
+    private void HandleGameOver(NetworkMessage message)
+    {
+        Debug.Log($"=== HandleGameOver 被调用 ===");
 
+        if (gameManage == null)
+        {
+            gameManage = GameManage.Instance;
+        }
+
+        GameOverMessage data = JsonConvert.DeserializeObject<GameOverMessage>(message.JsonData);
+
+        Debug.Log($"游戏结束! 获胜者: 玩家 {data.WinnerPlayerId}, 失败者: 玩家 {data.LoserPlayerId}, 原因: {data.Reason}");
+
+        // 触发游戏结束事件
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            if (gameManage != null)
+            {
+                Debug.Log($"触发游戏结束事件，获胜者: {data.WinnerPlayerId}");
+                gameManage.TriggerGameEnded(data.WinnerPlayerId);
+            }
+        });
+
+        // 如果是服务器，广播游戏结束消息给所有客户端
+        if (isServer && clients != null && clients.Count > 0)
+        {
+            Debug.Log($"[服务器] 广播游戏结束消息给所有客户端");
+            BroadcastToClients(message, uint.MaxValue);
+        }
+    }
     #region 处理具体单位操作消息
     // 单位移动
     private void HandleUnitMove(NetworkMessage message)
