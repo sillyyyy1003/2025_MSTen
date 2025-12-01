@@ -14,7 +14,7 @@ using static UnityEngine.GraphicsBuffer;
 public enum CardType
 {
     Missionary,//传教士
-    Solider,//士兵
+    Soldier,//士兵
     Farmer,//农民
     Building,//建筑
 	Pope,//教皇

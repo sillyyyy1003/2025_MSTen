@@ -111,7 +111,7 @@ public class GameSceneUIManager : MonoBehaviour
         {
             //NetGameSystem.Instance.OnRoomStatusUpdated += UpdateRoomDisplay;
             NetGameSystem.Instance.OnAllPlayersReady += OnAllPlayersReadyChanged;
-            NetGameSystem.Instance.OnGameStarted += loadUI.StartRealLoading; // 网络宣布游戏开始时开始真实加载
+			NetGameSystem.Instance.OnGameStarted += () => loadUI.StartRealLoading(false);// 网络宣布游戏开始时开始真实加载
         }
 
 		// 显示Loading画面和Loading文字
@@ -323,8 +323,8 @@ public class GameSceneUIManager : MonoBehaviour
         {
            // NetGameSystem.Instance.OnRoomStatusUpdated -= UpdateRoomDisplay;
             NetGameSystem.Instance.OnAllPlayersReady -= OnAllPlayersReadyChanged;
-            NetGameSystem.Instance.OnGameStarted -= loadUI.StartRealLoading; ;
-        }
+			NetGameSystem.Instance.OnGameStarted -= () => loadUI.StartRealLoading(false);
+		}
     }
     // *************************
     //         公有函数

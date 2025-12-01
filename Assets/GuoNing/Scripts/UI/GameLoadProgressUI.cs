@@ -68,8 +68,6 @@ public class GameLoadProgressUI : MonoBehaviour
 
 	public void StartFakeLoading(bool isSingle = false)
 	{
-		// 纠正摄像头的位置
-		GameManage.Instance._GameCamera.SetCanUseCamera(true);
 
 		// 防止重复播放
 		fakeLoadingTween?.Kill();
@@ -86,15 +84,14 @@ public class GameLoadProgressUI : MonoBehaviour
 			.SetEase(Ease.Linear)
 			.OnComplete(() =>
 			{
-				GameManage.Instance._GameCamera.SetCanUseCamera(false); // 锁定摄像头
 				Debug.Log("[客户端] 假 Loading 完成，等待玩家到齐");
-				if (isSingle) StartRealLoading();
+				if (isSingle) StartRealLoading(isSingle);
 			});
 	}
 
 
 
-	public void StartRealLoading()
+	public void StartRealLoading(bool isSingle=false)
 	{
 		// 防止重复播放
 		realLoadingTween?.Kill();
@@ -126,7 +123,7 @@ public class GameLoadProgressUI : MonoBehaviour
 
 					GameManage.Instance.SetIsGamingOrNot(true);             // 设置为游戏中状态
 					GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
-					GameManage.Instance.StartFirstTurn();                     // 开始第一回合
+					if(!isSingle)GameManage.Instance.StartFirstTurn();                     // 开始第一回合
 					//======在这里追加其他的游戏开始操作
 
 					// 2025.11.14 Guoning 播放音乐

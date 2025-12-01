@@ -1069,7 +1069,7 @@ public class PlayerDataManager : MonoBehaviour
                 return 3;
             case CardType.Farmer:
                 return 2;
-            case CardType.Solider:
+            case CardType.Soldier:
                 return 5;
             case CardType.Building:
                 return 3;

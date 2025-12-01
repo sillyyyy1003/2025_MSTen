@@ -119,7 +119,7 @@ public class UnitStatusUI : MonoBehaviour
 			case CardType.Missionary:
 				pieceIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.HPBar_Icon, "Temp_missionary");
 				break;
-			case CardType.Solider:
+			case CardType.Soldier:
 				pieceIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.HPBar_Icon, "Temp_soldier");
 				break;
 			case CardType.Farmer:
