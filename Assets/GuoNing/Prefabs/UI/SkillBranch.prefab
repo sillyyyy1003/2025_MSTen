@@ -50,4 +50,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nodePrefab: {fileID: 2580932673850421373, guid: a172858c3bd7adc49a0429382e0bf948,
     type: 3}
-  VerticalSpacing: 200
+  VerticalSpacing: 120

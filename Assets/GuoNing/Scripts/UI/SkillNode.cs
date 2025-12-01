@@ -1,4 +1,4 @@
-using GameData;
+﻿using GameData;
 using GameData.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,15 +13,16 @@ public class SkillNode : MonoBehaviour
 	[SerializeField]
 	private Image mask;
 	[SerializeField]
-	private TMP_Text text;
+	private TMP_Text text;	// 用于显示简易技能说明
 
 	private RectTransform levelUpPanel;
 	private LevelUpButton levelUpButton;
 
-	public PieceType type { get; private set; }
-	public TechTree techTree {get;private set;}
+	// 用于判定当前等级所需的变量
+	[SerializeField] PieceType pieceType;
+	[SerializeField] TechTree techTree;
+	[SerializeField] int skillIndex;
 
-	private int skillIndex;
 	public int SkillIndex => skillIndex;
 
 	private void Start()
@@ -29,14 +30,22 @@ public class SkillNode : MonoBehaviour
 		skillButton.onClick.AddListener(OnSkillButtonClick);
 	}
 
-	public void Initialize(Sprite sprite, string skillDescription, int _skillIndex, RectTransform _levelUpPanel, LevelUpButton _button)
+	public void Initialize(Sprite sprite, string skillDescription, int _skillIndex, PieceType _pieceType, TechTree _techTree, RectTransform _levelUpPanel, LevelUpButton _button)
 	{
 		skillButton.image.sprite = sprite;
 		text.text = skillDescription;
+	
 		skillIndex = _skillIndex;
+		pieceType = _pieceType;
+		techTree = _techTree;
 
 		levelUpPanel = _levelUpPanel;
 		levelUpButton = _button;
+
+		if (SkillTreeUIManager.Instance.GetCurrentLevel(pieceType,techTree) == _skillIndex)
+		{
+			UnlockSkillNode();
+		}
 	}
 
 	public void UnlockSkillNode()
@@ -46,19 +55,203 @@ public class SkillNode : MonoBehaviour
 
 	private void OnSkillButtonClick()
 	{
-		// ��ʾ���
+		// 显示面板
 		levelUpPanel.gameObject.SetActive(true);
-		
-		// ����������¼���levelUpButton��
+		levelUpButton.GetComponent<Button>().interactable = false;
+		// 先判断是不是当前级别的
+		int currentLevel = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, techTree);
+		TMP_Text label = levelUpButton.GetComponentInChildren<TMP_Text>();
+		Debug.Log("[SkillNode]CurrentLevel" + currentLevel);
+		Debug.Log("[SkillNode]Skill level:" + SkillIndex);
+		// ------------------------------------------------
+		// ⭐ ① index=0：初始等级，永远解锁，不需要升级
+		// ------------------------------------------------
+		if (skillIndex == 0)
+		{
+			if (label) label.text = "Unlocked";
+			return;
+		}
 
+		// ------------------------------------------------
+		// ⭐ ② 已解锁等级：skillIndex < currentLevel
+		// ------------------------------------------------
+		if (skillIndex < currentLevel)
+		{
+			if (label) label.text = "Unlocked";
+			return;
+		}
+
+		// ------------------------------------------------
+		// ⭐ ③ “当前可升级等级”：skillIndex == currentLevel
+		// ------------------------------------------------
+		if (skillIndex == currentLevel + 1) 
+		{
+			int cost = GetUpgradeCostBytechType(skillIndex - 1);
+			if (label) label.text = $"Resume {cost} point";
+
+			int resource = PlayerDataManager.Instance.GetPlayerResource();
+			if (resource >= cost)
+			{
+				levelUpButton.GetComponent<Button>().interactable = true;
+				levelUpButton.SetButton(OnLevelUpButtonClicked);
+			}
+			return;
+		}
+
+		// ------------------------------------------------
+		// ⭐ ④ 未来等级：skillIndex > currentLevel
+		// ------------------------------------------------
+		if (label) label.text = "？";
 	}
 
 	public void OnLevelUpButtonClicked()
 	{
+		SkillTreeUIManager.Instance.UpgradeCurrentLevel(pieceType,techTree);
+
 		UnlockSkillNode();
 
-		//UnitListTable.PieceDetail pd =
-		//	new UnitListTable.PieceDetail(PieceType, SceneStateManager.Instance.PlayerReligion);
+		// Update 棋子数据和UIBar数据
+		UpgradePieces(techTree, pieceType);
+
+		// UpdateUI
+		// 消耗资源
+		int cost = GetUpgradeCostBytechType(skillIndex);
+		int playerID = GameManage.Instance.LocalPlayerID;
+		int res = PlayerDataManager.Instance.GetPlayerData(playerID).Resources;
+		res -= cost;
+		PlayerDataManager.Instance.SetPlayerResourses(res);
+		GameUIManager.Instance.UpdateResourcesData();
 	}
-	
+
+
+	// 单位升级
+	public bool UpgradePieces(TechTree tech, PieceType type)
+	{
+		Debug.Log("进行升级: 科技树: " + tech + " 单位种类: " + type);
+
+		int playerID = GameManage.Instance.LocalPlayerID;
+
+		var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+		var unitList = playerData.PlayerUnits;
+
+		// --- 执行 Upgrade ---
+		switch (tech)
+		{
+			case TechTree.HP:
+				if (type != PieceType.Building)
+				{
+					return PieceManager.Instance.UpgradePiece(type, PieceUpgradeType.HP);
+				}
+				else
+				{
+					return GameManage.Instance._BuildingManager.UpgradeBuilding(BuildingUpgradeType.BuildingHP);
+				}
+			case TechTree.AP:
+				return PieceManager.Instance.UpgradePiece(type, PieceUpgradeType.AP);
+			case TechTree.Occupy:
+				return PieceManager.Instance.UpgradePieceSpecial(type, SpecialUpgradeType.MissionaryOccupy);
+				
+			case TechTree.Conversion:
+				return PieceManager.Instance.UpgradePieceSpecial(type, SpecialUpgradeType.MissionaryConvertEnemy);
+			case TechTree.ATK:
+				return PieceManager.Instance.UpgradePieceSpecial(type, SpecialUpgradeType.MilitaryAttackPower);
+
+			case TechTree.Sacrifice:
+				return PieceManager.Instance.UpgradePieceSpecial(type, SpecialUpgradeType.FarmerSacrifice);
+
+			case TechTree.MovementCD:
+				return PieceManager.Instance.UpgradePieceSpecial(type, SpecialUpgradeType.PopeSwapCooldown);
+
+			// --- Building Upgrade ---
+			case TechTree.AttackPosition:
+				return GameManage.Instance._BuildingManager.UpgradeBuilding(BuildingUpgradeType.attackRange);
+
+			case TechTree.AltarCount:
+				return GameManage.Instance._BuildingManager.UpgradeBuilding( BuildingUpgradeType.slotsLevel);
+		
+			default:
+				Debug.LogError("Unsupported TechTree: " + tech);
+				return false;
+		}
+
+	}
+
+	private int GetUpgradeCostBytechType(int level)
+	{
+		UnitListTable.PieceDetail pd =
+		new UnitListTable.PieceDetail(pieceType, SceneStateManager.Instance.PlayerReligion);
+
+		var so = UnitListTable.Instance.GetPieceDataSO(pieceType, pd);
+		switch (pieceType)
+		{ 
+			case PieceType.Pope:
+				{
+					var popeData = so as PopeDataSO;
+				
+					if (techTree == TechTree.HP)
+						return popeData.hpUpgradeCost[level];
+
+					if (techTree == TechTree.MovementCD)
+						return popeData.swapCooldownUpgradeCost[level];
+
+					return 0;
+				}
+			case PieceType.Missionary:
+
+				{
+					var MissionaryData = so as MissionaryDataSO;
+				
+					if (techTree == TechTree.HP)
+						return MissionaryData.hpUpgradeCost[level];
+
+					if (techTree == TechTree.AP)
+						return  MissionaryData.apUpgradeCost[level];
+
+					if(techTree ==TechTree.Occupy)
+						return MissionaryData.occupyUpgradeCost[level];
+
+					if(techTree ==TechTree.Conversion)
+						return MissionaryData.convertEnemyUpgradeCost[level];
+
+					return 0;
+				}
+			case PieceType.Farmer:
+				{
+					var FarmerData= so as FarmerDataSO;
+				
+					if(techTree == TechTree.HP)
+						return FarmerData.hpUpgradeCost[level];
+					if(techTree==TechTree.Occupy)
+						return FarmerData.apUpgradeCost[level];
+					if(techTree==TechTree.Sacrifice)
+						return FarmerData.sacrificeUpgradeCost[level];
+					return 0;
+				}
+			case PieceType.Military:
+				{
+					var MilitaryData = so as MilitaryDataSO;
+				
+					if(techTree == TechTree.HP)
+						return MilitaryData.hpUpgradeCost[level];
+					if (techTree == TechTree.AP)
+						return MilitaryData.apUpgradeCost[level];
+					if(techTree==TechTree.ATK)
+						return MilitaryData.attackPowerUpgradeCost[level];
+					return 0;
+				}
+
+			case PieceType.Building:
+				{
+					BuildingDataSO buildingData = GameManage.Instance._BuildingManager.GetBuildingDataByReligion(SceneStateManager.Instance.PlayerReligion);
+				
+					if (techTree== TechTree.HP)
+						return buildingData.hpUpgradeCost[level];
+					if (techTree == TechTree.AltarCount)
+						return buildingData.slotsUpgradeCost[level];
+					return 0;
+				}
+			default:	return 0;
+		}
+		
+	}
 }

@@ -290,7 +290,6 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (tech)
         {
             case TechTree.HP:
-
                 return 1;
             case TechTree.AP:
                 return 1;
@@ -491,7 +490,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (cardType)
         {
             case CardType.Farmer: return PieceType.Farmer;
-            case CardType.Solider: return PieceType.Military;
+            case CardType.Soldier: return PieceType.Military;
             case CardType.Missionary: return PieceType.Missionary;
             case CardType.Pope: return PieceType.Pope;
             case CardType.Building: return PieceType.Building;
@@ -507,7 +506,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (pieceType)
         {
             case PieceType.Farmer: return CardType.Farmer;
-            case PieceType.Military: return CardType.Solider;
+            case PieceType.Military: return CardType.Soldier;
             case PieceType.Missionary: return CardType.Missionary;
             case PieceType.Pope: return CardType.Pope;
             default:

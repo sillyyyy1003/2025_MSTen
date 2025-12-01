@@ -139,16 +139,20 @@ public class PlayerOperationManager : MonoBehaviour
         // 鼠标判定
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
+            // 2025.12.02 解决点击到UI时还有操作
 
-            //2025.11.13 Guoning 修改鼠标移动留痕与点击判断
-			if (Input.GetMouseButton(0) || Input.GetMouseButton(1) ||
+            if (!EventSystem.current.IsPointerOverGameObject())
+            {
+                //2025.11.13 Guoning 修改鼠标移动留痕与点击判断
+                if (Input.GetMouseButton(0) || Input.GetMouseButton(1) ||
                     Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
-                HandleMouseInput();
-            else UpdateCellHighlightData(GetCellUnderCursor());
+                    HandleMouseInput();
+                else UpdateCellHighlightData(GetCellUnderCursor());
+            }
 
-            //HandleMouseInput();
+			//HandleMouseInput();
 
-        }
+		}
 
 
         //// 建造建筑
@@ -457,7 +461,7 @@ public class PlayerOperationManager : MonoBehaviour
 				}
 
 				// 军事单位攻击敌方单位
-				if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Solider)
+				if (ownerId != localPlayerId && PlayerDataManager.Instance.nowChooseUnitType == CardType.Soldier)
 				{
 					//  新逻辑：检查是否在攻击范围（相邻格）
 					if (IsAdjacentPosition(currentPos, targetPos))
@@ -1081,7 +1085,7 @@ public class PlayerOperationManager : MonoBehaviour
            
 
                 break;
-            case CardType.Solider:
+            case CardType.Soldier:
                 pieceType = PieceType.Military;
                 PlayerDataManager.Instance.NowPopulation +=
                  PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
@@ -1331,9 +1335,11 @@ public class PlayerOperationManager : MonoBehaviour
         }
 
     }
+   
 
-    // 单位升级
-    public bool UnitUpgrade(TechTree tech, CardType type)
+
+	// 单位升级
+	public bool UnitUpgrade(TechTree tech, CardType type)
     {
         Debug.Log("进行升级: 科技树: " + tech + " 单位种类: " + type);
         List<PlayerUnitData> list = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits;
@@ -1494,7 +1500,7 @@ public class PlayerOperationManager : MonoBehaviour
             case TechTree.ATK:
                 for (int i = 0; i < list.Count; i++)
                 {
-                    if (list[i].UnitType == CardType.Solider)
+                    if (list[i].UnitType == CardType.Soldier)
                     {
                         newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
                             PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MilitaryAttackPower);
@@ -1504,7 +1510,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 for (int i = 0; i < list.Count; i++)
                 {
-                    if (list[i].UnitType == CardType.Solider)
+                    if (list[i].UnitType == CardType.Soldier)
                     {
                         PlayerUnitData unit = list[i];
                         unit.PlayerUnitDataSO = newData;
@@ -1669,6 +1675,9 @@ public class PlayerOperationManager : MonoBehaviour
                 return false;
         }
     }
+
+
+
 
     // 取消选择单位的描边
     private void ReturnToDefault()

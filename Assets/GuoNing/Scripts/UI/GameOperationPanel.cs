@@ -75,8 +75,8 @@ public class GameOperationPanel : MonoBehaviour
 
 	void Update()
 	{
-		
-		if(GameManage.Instance.GetIsGamingOrNot() == false)
+
+		if (GameManage.Instance.GetIsGamingOrNot() == false || GameManage.Instance._GameCamera.bCanUseCamera == false) 
 		{
 			// 关闭面板
 			StorePanelTransform.gameObject.SetActive(false);
@@ -100,10 +100,11 @@ public class GameOperationPanel : MonoBehaviour
 				CloseStorePanel();
 			}
 
+			// 当选择对象发生变化的时候 更新操作面板
+			UpdateOperationPanelInfo();
 		}
 
-		// 当选择对象发生变化的时候 更新操作面板
-		UpdateOperationPanelInfo();
+		
 	}
 
 	/// <summary>随时更新操作面板</summary>
@@ -146,7 +147,7 @@ public class GameOperationPanel : MonoBehaviour
 				HandlePope(cell, pos, isLocalPlayer);
 				break;
 
-			case CardType.Solider:
+			case CardType.Soldier:
 				HandleSolider(cell, pos, isLocalPlayer);
 				break;
 		}
@@ -232,7 +233,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyArmy()
 	{
-		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Solider))
+		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Soldier))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 	}
@@ -396,7 +397,7 @@ public class GameOperationPanel : MonoBehaviour
 		GameData.Religion playerReligion = SceneStateManager.Instance.PlayerReligion;
 
 		CostText[(int)BuyType.Missionary].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Missionary).ToString();
-		CostText[(int)BuyType.Army].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Solider).ToString();
+		CostText[(int)BuyType.Army].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Soldier).ToString();
 		CostText[(int)BuyType.Farmer].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Farmer).ToString();
 		CostText[(int)BuyType.Building].text =
 			unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Building).ToString();

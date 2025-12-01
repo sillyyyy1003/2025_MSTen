@@ -68,8 +68,6 @@ public class GameLoadProgressUI : MonoBehaviour
 
 	public void StartFakeLoading(bool isSingle = false)
 	{
-		// 纠正摄像头的位置
-		GameManage.Instance._GameCamera.SetCanUseCamera(true);
 
 		// 防止重复播放
 		fakeLoadingTween?.Kill();
@@ -86,7 +84,6 @@ public class GameLoadProgressUI : MonoBehaviour
 			.SetEase(Ease.Linear)
 			.OnComplete(() =>
 			{
-				GameManage.Instance._GameCamera.SetCanUseCamera(false); // 锁定摄像头
 				Debug.Log("[客户端] 假 Loading 完成，等待玩家到齐");
 				if (isSingle) StartRealLoading(isSingle);
 			});

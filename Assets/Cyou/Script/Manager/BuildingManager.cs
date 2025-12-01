@@ -620,18 +620,63 @@ public class BuildingManager : MonoBehaviour
         return syncBuildingData.CreateFromBuilding(building);
     }
 
-    #endregion
+	#endregion
 
-    #region アップグレード関連
+	#region アップグレード関連
 
-    /// <summary>
-    /// 建物の項目をアップグレード
-    /// すべての自分の建物にアップグレードを適用
-    /// </summary>
-    /// <param name="buildingID">建物ID</param>
-    /// <param name="upgradeType">アップグレード項目</param>
-    /// <returns>成功したらtrue</returns>
-    public bool UpgradeBuilding(int buildingID, BuildingUpgradeType upgradeType)
+	// 2025.12.01 追加只通过升级类型升级
+	public bool UpgradeBuilding(BuildingUpgradeType upgradeType)
+	{
+		bool anySuccess = false;
+
+		// すべての自分の建物にアップグレードを適用
+		foreach (var kvp in buildings)
+		{
+			Building targetBuilding = kvp.Value;
+			bool success = false;
+
+			switch (upgradeType)
+			{
+				case BuildingUpgradeType.BuildingHP:
+					success = targetBuilding.UpgradeHP();
+					break;
+				case BuildingUpgradeType.attackRange:
+					success = targetBuilding.UpgradeAttackRange();
+					break;
+				case BuildingUpgradeType.slotsLevel:
+					success = targetBuilding.UpgradeSlots();
+					break;
+				default:
+					Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+					return false;
+			}
+
+			if (success)
+			{
+				anySuccess = true;
+				Debug.Log($"建物ID={kvp.Key}の{upgradeType}をアップグレードしました");
+			}
+		}
+
+		if (anySuccess)
+		{
+			if (!buildingUpgradeData.ContainsKey(upgradeType)) buildingUpgradeData[upgradeType] = 0;
+			buildingUpgradeData[upgradeType]++;
+			isUpgraded = true;
+		}
+		return anySuccess;
+	}
+
+
+
+	/// <summary>
+	/// 建物の項目をアップグレード
+	/// すべての自分の建物にアップグレードを適用
+	/// </summary>
+	/// <param name="buildingID">建物ID</param>
+	/// <param name="upgradeType">アップグレード項目</param>
+	/// <returns>成功したらtrue</returns>
+	public bool UpgradeBuilding(int buildingID, BuildingUpgradeType upgradeType)
     {
         if (!buildings.TryGetValue(buildingID, out Building building))
         {

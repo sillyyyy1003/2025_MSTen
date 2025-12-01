@@ -214,7 +214,7 @@ public class UISpriteHelper : MonoBehaviour
         {
             case CardType.Missionary:
                 return GetSprite(UISpriteID.Icon_Missionary);
-            case CardType.Solider:
+            case CardType.Soldier:
                 return GetSprite(UISpriteID.Icon_Solider);
             case CardType.Farmer:
                 return GetSprite(UISpriteID.Icon_Farmer);

@@ -78,13 +78,14 @@ public class GameUIManager : MonoBehaviour
 
 
     [Header("UI Elements")]
-    public Image religionIcon;                 // 宗教图标
-    public TextMeshProUGUI resourcesValue;     // 资源值
+    public Button ReligionIcon;                      // 宗教图标
+    public TextMeshProUGUI resourcesValue;          // 资源值
     public TextMeshProUGUI activateMissionaryValue; // 传教士激活数
     public TextMeshProUGUI activateSoliderValue;    // 士兵激活数
     public TextMeshProUGUI activateFarmerValue;     // 农民激活数
     public TextMeshProUGUI allUnitValue;       // 当前人口 / 人口上限
 	public Button EndTurn;
+    public RectTransform ReligionInfoPanel;         // 宗教信息和科技树
 
 	[Header("Timer")]
 	public Image TimeImage;     // TimeImage
@@ -155,7 +156,10 @@ public class GameUIManager : MonoBehaviour
             timer.OnTimePoolStarted += () => Debug.Log("开始使用倒计时池");
         }
 
+        ReligionIcon.onClick.AddListener(() => HandleReligionIconClick());
         EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
+
+        ReligionInfoPanel.gameObject.SetActive(false);  // 初始默认常隐
 
         //InactiveUnit.onClick.AddListener(() => HandleInactiveUnitButtonPressed());
 
@@ -220,7 +224,7 @@ public class GameUIManager : MonoBehaviour
         {
             case CardType.Missionary:
                 return MissionaryUnits;
-            case CardType.Solider:
+            case CardType.Soldier:
                 return SoliderUnits;
             case CardType.Farmer:
                 return FarmerUnits;
@@ -244,7 +248,7 @@ public class GameUIManager : MonoBehaviour
         {
             case CardType.Missionary:
                 return ActivateMissionaryCount;
-            case CardType.Solider:
+            case CardType.Soldier:
                 return ActivateSoliderCount;
             case CardType.Farmer:
                 return ActivateFarmerCount;
@@ -266,7 +270,7 @@ public class GameUIManager : MonoBehaviour
         {
             case CardType.Missionary:
                 return DeckMissionaryCount;
-            case CardType.Solider:
+            case CardType.Soldier:
                 return DeckSoliderCount;
             case CardType.Farmer:
                 return DeckFarmerCount;
@@ -289,7 +293,7 @@ public class GameUIManager : MonoBehaviour
 
                 return true;
 
-            case CardType.Solider:
+            case CardType.Soldier:
                 DeckSoliderCount++;
 
                 return true;
@@ -319,7 +323,7 @@ public class GameUIManager : MonoBehaviour
                 DeckMissionaryCount--;
                 return true;
 
-            case CardType.Solider:
+            case CardType.Soldier:
                 if (DeckSoliderCount <= 0) return false;
 
                 DeckSoliderCount--;
@@ -358,7 +362,7 @@ public class GameUIManager : MonoBehaviour
 		//UpdateAllUnitCountData();
 
 		UpdateUIUnitDataListFromInterface(CardType.Missionary);
-        UpdateUIUnitDataListFromInterface(CardType.Solider);
+        UpdateUIUnitDataListFromInterface(CardType.Soldier);
         UpdateUIUnitDataListFromInterface(CardType.Farmer);
         UpdateUIUnitDataListFromInterface(CardType.Building);
         UpdateUIUnitDataListFromInterface(CardType.Pope);
@@ -524,7 +528,7 @@ public class GameUIManager : MonoBehaviour
         DeckBuildingCount = 0;
 
         UpdateUIUnitDataListFromInterface(CardType.Missionary);
-        UpdateUIUnitDataListFromInterface(CardType.Solider);
+        UpdateUIUnitDataListFromInterface(CardType.Soldier);
         UpdateUIUnitDataListFromInterface(CardType.Farmer);
         UpdateUIUnitDataListFromInterface(CardType.Building);
         UpdateUIUnitDataListFromInterface(CardType.Pope);
@@ -568,7 +572,7 @@ public class GameUIManager : MonoBehaviour
 
                     MissionaryUnits = uiList;
                     return;
-                case CardType.Solider:
+                case CardType.Soldier:
                     SoliderUnits = uiList;
 
                     return;
@@ -600,7 +604,7 @@ public class GameUIManager : MonoBehaviour
                 ActivateMissionaryCount = count;
                 activateMissionaryValue.text = ActivateMissionaryCount.ToString();
                 return;
-            case CardType.Solider:
+            case CardType.Soldier:
                 ActivateSoliderCount = count;
                 activateSoliderValue.text = ActivateSoliderCount.ToString();
                 return;
@@ -625,7 +629,7 @@ public class GameUIManager : MonoBehaviour
             case CardType.Missionary:
                 MissionaryUnits.Clear();
                 break;
-            case CardType.Solider:
+            case CardType.Soldier:
                 SoliderUnits.Clear();
                 break;
             case CardType.Farmer:
@@ -643,7 +647,7 @@ public class GameUIManager : MonoBehaviour
 
     private void SetPlayerReligionIcon(Religion religion)
     {
-        religionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
+        ReligionIcon.image.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
     }
 
     /*
@@ -665,7 +669,7 @@ public class GameUIManager : MonoBehaviour
     }
     */
 
-    private void UpdateResourcesData()
+    public void UpdateResourcesData()
     {
         Resources = PlayerDataManager.Instance.GetPlayerResource();
         resourcesValue.text = Resources.ToString();
@@ -800,12 +804,20 @@ public class GameUIManager : MonoBehaviour
 
 		// 更新单位数据列表
 		UpdateUIUnitDataListFromInterface(CardType.Missionary);
-        UpdateUIUnitDataListFromInterface(CardType.Solider);
+        UpdateUIUnitDataListFromInterface(CardType.Soldier);
         UpdateUIUnitDataListFromInterface(CardType.Farmer);
         UpdateUIUnitDataListFromInterface(CardType.Building);
         UpdateUIUnitDataListFromInterface(CardType.Pope);
 
     }
+
+    private void HandleReligionIconClick()
+    {
+        // 只有在游戏进程中时才有效
+        if(GameManage.Instance.GetIsGamingOrNot())
+            ReligionInfoPanel.gameObject.SetActive(true);
+
+	}
 
 }
 

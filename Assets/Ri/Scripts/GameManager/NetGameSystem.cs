@@ -2579,7 +2579,7 @@ public class NetGameSystem : MonoBehaviour
                         unitType = CardType.Missionary;
                         break;
                     case PieceType.Military:
-                        unitType = CardType.Solider;
+                        unitType = CardType.Soldier;
                         break;
                     case PieceType.Farmer:
                         unitType = CardType.Farmer;
