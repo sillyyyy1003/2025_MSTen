@@ -1,10 +1,11 @@
-using UnityEngine;
+using Buildings;
+using GameData;
+using GamePieces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using GameData;
-using GamePieces;
-using Buildings;
+using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 /// <summary>
 /// 建物管理クラス
@@ -653,6 +654,19 @@ public class BuildingManager : MonoBehaviour
 			if (success)
 			{
 				anySuccess = true;
+				syncBuildingData newBuildingData = new syncBuildingData();
+				newBuildingData = (syncBuildingData)CreateCompleteSyncData(targetBuilding.BuildingID);
+				
+                int playerID = GameManage.Instance.LocalPlayerID;
+				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetBuilding.BuildingID);
+				if (index >= 0)
+				{
+					var unit = playerData.PlayerUnits[index];  // 拷贝
+					unit.BuildingData = newBuildingData;          // 修改拷贝
+					unit.PlayerUnitDataSO.pieceID = targetBuilding.BuildingID;
+					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+				}
 				Debug.Log($"建物ID={kvp.Key}の{upgradeType}をアップグレードしました");
 			}
 		}

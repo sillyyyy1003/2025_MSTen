@@ -130,9 +130,12 @@ public class SkillNode : MonoBehaviour
 		Debug.Log("进行升级: 科技树: " + tech + " 单位种类: " + type);
 
 		int playerID = GameManage.Instance.LocalPlayerID;
-
-		var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
-		var unitList = playerData.PlayerUnits;
+		List<PlayerUnitData> list = PlayerDataManager.Instance.GetPlayerData(playerID).PlayerUnits;
+		List<int> ID = new List<int>();
+		for (int i = 0; i < list.Count; i++)
+		{
+			ID.Add(list[i].UnitID);
+		}
 
 		// --- 执行 Upgrade ---
 		switch (tech)

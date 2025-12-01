@@ -613,7 +613,22 @@ public class PieceManager : MonoBehaviour
 
 			if (success)
 			{
-                // 更新UI
+                // 创建新的同步数据
+                syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
+
+                // 更新同步数据
+				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
+				if (index >= 0)
+				{
+					var unit = playerData.PlayerUnits[index];  // 拷贝
+					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
+                    unit.PlayerUnitDataSO.pieceID = targetID;  
+					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+				}
+
+
+				// 更新UI
 				if (UnitStatusUIManager.Instance != null)
                 {
                     UnitStatusUIManager.Instance.UpdateHPByID(targetID, targetPiece.CurrentHP, targetPiece.CurrentMaxHP);
@@ -683,6 +698,19 @@ public class PieceManager : MonoBehaviour
 			if (success)
 			{
 				anySuccess = true;
+				// 创建新的同步数据
+				syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
+
+				// 更新同步数据
+				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
+				if (index >= 0)
+				{
+					var unit = playerData.PlayerUnits[index];  // 拷贝
+					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
+					unit.PlayerUnitDataSO.pieceID = targetID;
+					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+				}
 			}
 		}
 
