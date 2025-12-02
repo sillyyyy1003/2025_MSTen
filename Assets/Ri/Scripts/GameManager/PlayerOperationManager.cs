@@ -3796,6 +3796,14 @@ public class PlayerOperationManager : MonoBehaviour
             PieceManager.Instance.AddConvertedUnit(msg.OriginalOwnerId, msg.UnitID);
 
             Debug.Log($"[网络魅惑过期] 单位GameObject已归还 - 从玩家{msg.CurrentOwnerId}到玩家{msg.OriginalOwnerId}");
+
+
+            UnitStatusUIManager.Instance.CreateStatusUI(msg.UnitID,
+                 PieceManager.Instance.GetPieceAllHP(msg.UnitID),
+                  PieceManager.Instance.GetPieceAP(msg.UnitID),
+                   unitObj.transform,
+                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype));
+
         }
         else
         {
@@ -3852,7 +3860,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             Debug.Log($"[本地魅惑过期] 单位GameObject已归还给玩家{expireInfo.OriginalOwnerID}");
 
-            // 更新UI
+            // 更新UI    
+            UnitStatusUIManager.Instance.RemoveStatusUI(expireInfo.UnitID);
+
         }
         else
         {
