@@ -3531,11 +3531,20 @@ public class PlayerOperationManager : MonoBehaviour
             // 2025.11.14 Guoning 添加魅惑音效
             SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 
-            //更新AP
+            //更新传教士AP
             UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID,PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
 
-            // 更新魅惑来的自身单位AP
-            UnitStatusUIManager.Instance.UpdateAPByID(targetPieceID, PieceManager.Instance.GetPieceAP(targetPieceID));
+
+
+            // 更新魅惑来的单位HP和AP
+            UnitStatusUIManager.Instance.RemoveStatusUI(targetPieceID);
+
+            UnitStatusUIManager.Instance.CreateStatusUI(targetPieceID,
+                PieceManager.Instance.GetPieceAllHP(targetPieceID),
+                 PieceManager.Instance.GetPieceAP(targetPieceID),
+                  targetUnit.transform,
+                 PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
+
 
 
             Debug.Log($"[ExecuteCharm] 单位GameObject已转移到本地玩家控制");
@@ -3652,7 +3661,14 @@ public class PlayerOperationManager : MonoBehaviour
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
+            // 移除本地HP显示
+            UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
+
+
+
             Debug.Log($"[网络魅惑] 单位GameObject已转移 - 从玩家{msg.TargetPlayerId}到玩家{msg.MissionaryPlayerId}");
+     
+        
         }
         else
         {
@@ -3835,6 +3851,8 @@ public class PlayerOperationManager : MonoBehaviour
             }
 
             Debug.Log($"[本地魅惑过期] 单位GameObject已归还给玩家{expireInfo.OriginalOwnerID}");
+
+            // 更新UI
         }
         else
         {
