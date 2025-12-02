@@ -3663,6 +3663,10 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 移除本地HP显示
             UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
+         
+            // 添加本地敌方单位显示
+            UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, targetUnit.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype));
+            UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
 
 
 
@@ -3797,7 +3801,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             Debug.Log($"[网络魅惑过期] 单位GameObject已归还 - 从玩家{msg.CurrentOwnerId}到玩家{msg.OriginalOwnerId}");
 
-
+            // 添加本地HP显示
             UnitStatusUIManager.Instance.CreateStatusUI(msg.UnitID,
                  PieceManager.Instance.GetPieceAllHP(msg.UnitID),
                   PieceManager.Instance.GetPieceAP(msg.UnitID),
