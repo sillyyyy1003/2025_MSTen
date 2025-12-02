@@ -3810,6 +3810,8 @@ public class PlayerOperationManager : MonoBehaviour
                   PieceManager.Instance.GetPieceAP(msg.UnitID),
                    unitObj.transform,
                   PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype));
+            // 添加本地HP显示
+            UnitStatusUIManager.Instance.UpdateHPByID(msg.UnitID, (int)PieceManager.Instance.GetPieceHP(msg.UnitID)); 
 
         }
         else
