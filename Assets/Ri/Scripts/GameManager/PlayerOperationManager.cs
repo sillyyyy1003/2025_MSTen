@@ -84,8 +84,8 @@ public class PlayerOperationManager : MonoBehaviour
     private int selectCellID;
 
 
-    // 保存攻击前的原始位置（用于"移动+攻击"场景）
-    private int2? attackerOriginalPosition = null;
+    //// 保存攻击前的原始位置（用于"移动+攻击"场景）
+    //private int2? attackerOriginalPosition = null;
 
     // 双击检测
     // 定义双击的最大时间间隔

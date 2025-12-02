@@ -6,8 +6,8 @@ using UnityEngine.EventSystems;
 
 public class GameCamera : MonoBehaviour
 {
-    [Header("缩放设置")]
-    private float zoomSpeed = 2f;             // 滚轮缩放速度
+    //[Header("缩放设置")]
+    //private float zoomSpeed = 2f;             // 滚轮缩放速度
 
     [Header("视角设置 - 三档锁定")]
     private float minPitch = 30f;             // 档位1：平视
