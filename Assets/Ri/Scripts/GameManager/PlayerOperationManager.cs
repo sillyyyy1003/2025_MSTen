@@ -3872,14 +3872,14 @@ public class PlayerOperationManager : MonoBehaviour
             // 更新UI    
             UnitStatusUIManager.Instance.RemoveStatusUI(expireInfo.UnitID);
 
-            // 创建显示敌人的UI
-            // 更新UI    
-            UnitStatusUIManager.Instance.CreateStatusUI(expireInfo.UnitID,
-                PieceManager.Instance.GetPieceAllHP(expireInfo.UnitID),
-                  PieceManager.Instance.GetPieceAP(expireInfo.UnitID),
-                  unitObj.transform,
-                    expireInfo.UnitData.UnitType);
-            UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID,  (int)PieceManager.Instance.GetPieceHP(expireInfo.UnitID));
+            //// 创建显示敌人的UI
+            //// 更新UI    
+            //UnitStatusUIManager.Instance.CreateStatusUI(expireInfo.UnitID,
+            //    PieceManager.Instance.GetPieceAllHP(expireInfo.UnitID),
+            //      PieceManager.Instance.GetPieceAP(expireInfo.UnitID),
+            //      unitObj.transform,
+            //        expireInfo.UnitData.UnitType);
+            //UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID,  (int)PieceManager.Instance.GetPieceHP(expireInfo.UnitID));
 
         }
         else
