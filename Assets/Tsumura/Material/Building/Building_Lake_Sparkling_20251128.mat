@@ -150,7 +150,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 23.968628, g: 14.258998, b: 1.150495, a: 1}
+    - _Color: {r: 14.259475, g: 14.259475, b: 14.259475, a: 1}
     - _DeepWaterColor: {r: 0.21960777, g: 0.5029798, b: 1, a: 0.6745098}
     - _EdgeColor: {r: 8, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

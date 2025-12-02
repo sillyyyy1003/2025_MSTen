@@ -119,9 +119,9 @@ Material:
     - _EdgeWidth: 0.01
     - _EnvironmentReflections: 1
     - _Float: 0.32
-    - _FoamAmount: 0.78
-    - _FoamCutout: 1.73
-    - _FoamScale: 878.5
+    - _FoamAmount: 1.7
+    - _FoamCutout: 8.21
+    - _FoamScale: 1234.9
     - _FoamSpeed: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -144,19 +144,19 @@ Material:
     - _Surface: 0
     - _VoronoiRughness: 8
     - _VoronoiSpeed: 1
-    - _WaterDepth: 1.12
+    - _WaterDepth: 0.64
     - _WhitePower: 11.77
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 6.231392, g: 3.0287302, b: 0.83500654, a: 1}
-    - _DeepWaterColor: {r: 0.21960777, g: 0.5029798, b: 1, a: 0.6745098}
+    - _DeepWaterColor: {r: 0.21960774, g: 0.5029798, b: 1, a: 0.8666667}
     - _EdgeColor: {r: 8, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 0}
     - _Remap: {r: 0.6, g: 1, b: 0, a: 0}
-    - _ShallowWaterColor: {r: 0, g: 0.71780443, b: 1, a: 0.11372549}
+    - _ShallowWaterColor: {r: 0, g: 0.71780443, b: 1, a: 0.69411767}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _Speed: {r: 0, g: 0.5, b: 0, a: 0}
   m_BuildTextureStacks: []
