@@ -85,8 +85,8 @@ public class PlayerOperationManager : MonoBehaviour
     private int selectCellID;
 
 
-    // 保存攻击前的原始位置（用于"移动+攻击"场景）
-    private int2? attackerOriginalPosition = null;
+    //// 保存攻击前的原始位置（用于"移动+攻击"场景）
+    //private int2? attackerOriginalPosition = null;
 
     // 双击检测
     // 定义双击的最大时间间隔
@@ -561,6 +561,9 @@ public class PlayerOperationManager : MonoBehaviour
 				_HexGrid.GetCell(LastSelectingCellID).Walled = true;
 				PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
 				HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
+              
+                //更新AP
+                UnitStatusUIManager.Instance.UpdateAPByID(PlayerDataManager.Instance.nowChooseUnitID, PieceManager.Instance.GetPieceAP((PlayerDataManager.Instance.nowChooseUnitID)));
 
                 // 2025.12.02 Guoning 特效播放
                 EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position,UnityEngine.Quaternion.identity);
@@ -882,6 +885,10 @@ public class PlayerOperationManager : MonoBehaviour
         {
             unit.SetCanDoAction(true);
             Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction + " Resource is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
+
+            // 更新AP
+            UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID));
+
             if (unit.UnitType == CardType.Building)
             {
                 bool actived = GameManage.Instance._BuildingManager.GetIsActived(unit.UnitID);
@@ -1322,8 +1329,9 @@ public class PlayerOperationManager : MonoBehaviour
 			//PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
 			// 创建UI
 			UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
+            UnitStatusUIManager.Instance.UpdateHPByID(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP);
 
-		}
+        }
     }
 
     #endregion
@@ -1836,6 +1844,8 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         Debug.LogWarning($"[移动] 单位 PieceID:{pieceID} AP消耗失败");
                     }
+                  
+
                 }
 
 
@@ -1854,6 +1864,8 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[本地] 已发送移动消息到网络: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
                 }
             });
+
+        
         }
         else
         {
@@ -2573,6 +2585,10 @@ public class PlayerOperationManager : MonoBehaviour
                 // 目标死亡，攻击者前进到目标位置
                 Debug.Log("[ExecuteAttack] 目标死亡，攻击者前进到目标位置");
                 ExecuteMoveToDeadTargetPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId);
+
+                // 移除本地HP显示
+                UnitStatusUIManager.Instance.RemoveStatusUI(targetSyncData.Value.pieceID);
+
             }
             else
             {
@@ -2595,6 +2611,8 @@ public class PlayerOperationManager : MonoBehaviour
                 // 网络同步攻击
                 SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, false);
 
+                // 更新本地HP显示
+                UnitStatusUIManager.Instance.UpdateHPByID(targetSyncData.Value.pieceID, targetSyncData.Value.currentHP);
                 bCanContinue = true;
             }
         }
@@ -2650,16 +2668,21 @@ public class PlayerOperationManager : MonoBehaviour
                 BuildingRuins[localPlayerId][RuinID] = ruin;
                 RuinID++;
 
+                UnitStatusUIManager.Instance.RemoveStatusUI(targetBuilding.BuildingID);
             }
             else
             {
                 // 建筑存活，同步攻击建筑消息
                 SyncLocalBuildingAttack(attackerPos, targetPos, targetOwnerId, targetPieceID, targetBuilding.CurrentHP, false);
                 bCanContinue = true;
+
+                // 更新本地HP显示
+                UnitStatusUIManager.Instance.UpdateHPByID(targetBuilding.BuildingID, targetBuilding.CurrentHP);
+
             }
         }
-
-
+        // 更新AP
+        UnitStatusUIManager.Instance.UpdateAPByID(attackerPieceID,PieceManager.Instance.GetPieceAP(attackerPieceID));
     }
 
 
@@ -3240,6 +3263,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 if (msg.TargetSyncData.Value.piecetype==PieceType.Pope)
                 {
+                    Debug.Log("WINNER ID IS "+ GameManage.Instance.OtherPlayerID);
                     // 发送游戏结束消息，原因为教皇死亡
                     NetGameSystem.Instance.SendGameOverMessage(GameManage.Instance.OtherPlayerID, localPlayerId, "POPE DEAD");
                 }
@@ -3467,9 +3491,12 @@ public class PlayerOperationManager : MonoBehaviour
         Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
 
         // 调用PieceManager的ConvertEnemy方法
-        PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID);
+        if(PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID)==null)
+        {
+            Debug.Log("[ExecuteCharm] 魅惑失败");
+            return;
+        }
         syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
-
 
         Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
 
@@ -3520,6 +3547,22 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 2025.11.14 Guoning 添加魅惑音效
             SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+
+            //更新传教士AP
+            UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID,PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
+
+
+
+            // 更新魅惑来的单位HP和AP
+            UnitStatusUIManager.Instance.RemoveStatusUI(targetPieceID);
+
+            UnitStatusUIManager.Instance.CreateStatusUI(targetPieceID,
+                PieceManager.Instance.GetPieceAllHP(targetPieceID),
+                 PieceManager.Instance.GetPieceAP(targetPieceID),
+                  targetUnit.transform,
+                 PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
+
+
 
             Debug.Log($"[ExecuteCharm] 单位GameObject已转移到本地玩家控制");
         }
@@ -3635,7 +3678,18 @@ public class PlayerOperationManager : MonoBehaviour
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
+            // 移除本地HP显示
+            UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
+         
+            // 添加本地敌方单位显示
+            UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, targetUnit.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype));
+            UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
+
+
+
             Debug.Log($"[网络魅惑] 单位GameObject已转移 - 从玩家{msg.TargetPlayerId}到玩家{msg.MissionaryPlayerId}");
+     
+        
         }
         else
         {
@@ -3763,6 +3817,19 @@ public class PlayerOperationManager : MonoBehaviour
             PieceManager.Instance.AddConvertedUnit(msg.OriginalOwnerId, msg.UnitID);
 
             Debug.Log($"[网络魅惑过期] 单位GameObject已归还 - 从玩家{msg.CurrentOwnerId}到玩家{msg.OriginalOwnerId}");
+
+            // 创建显示敌人的UI
+            // 更新UI    
+            UnitStatusUIManager.Instance.RemoveStatusUI(msg.UnitID);
+              // 添加本地HP显示
+              UnitStatusUIManager.Instance.CreateStatusUI(msg.UnitID,
+                 PieceManager.Instance.GetPieceAllHP(msg.UnitID),
+                  PieceManager.Instance.GetPieceAP(msg.UnitID),
+                   unitObj.transform,
+                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype));
+            // 添加本地HP显示
+            UnitStatusUIManager.Instance.UpdateHPByID(msg.UnitID, (int)PieceManager.Instance.GetPieceHP(msg.UnitID)); 
+
         }
         else
         {
@@ -3818,6 +3885,19 @@ public class PlayerOperationManager : MonoBehaviour
             }
 
             Debug.Log($"[本地魅惑过期] 单位GameObject已归还给玩家{expireInfo.OriginalOwnerID}");
+
+            // 更新UI    
+            UnitStatusUIManager.Instance.RemoveStatusUI(expireInfo.UnitID);
+
+            //// 创建显示敌人的UI
+            // 更新UI    
+            UnitStatusUIManager.Instance.CreateStatusUI(expireInfo.UnitID,
+                PieceManager.Instance.GetPieceAllHP(expireInfo.UnitID),
+                  0,
+                  unitObj.transform,
+                    expireInfo.UnitData.UnitType);
+            UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID, (int)PieceManager.Instance.GetPieceHP(expireInfo.UnitID));
+
         }
         else
         {
@@ -3986,6 +4066,10 @@ public class PlayerOperationManager : MonoBehaviour
                     GameManage.Instance.SetCellObject(pos, unitObj);
 
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方建筑 ID:{msg.NewUnitSyncData.pieceID}");
+                  
+                    // 添加HP
+                    UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype));
+                    UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
 
 
                 }
@@ -4025,6 +4109,9 @@ public class PlayerOperationManager : MonoBehaviour
 
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
 
+                    // 添加HP
+                    UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype));
+                    UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
 
                 }
                 else
