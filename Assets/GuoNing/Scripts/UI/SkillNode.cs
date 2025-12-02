@@ -8,22 +8,28 @@ using UnityEngine.UI;
 
 public class SkillNode : MonoBehaviour
 {
+	//=========================================
+	//メンバー変数
+	//=========================================
+	// 用于判定当前等级所需的变量
+	PieceType pieceType;
+	TechTree techTree;
+	int skillIndex;
+	public int SkillIndex => skillIndex;
+
+	//=========================================
+	//プロパティ
+	//=========================================
 	[SerializeField]
 	private Button skillButton;
 	[SerializeField]
 	private Image mask;
 	[SerializeField]
 	private TMP_Text text;	// 用于显示简易技能说明
-
 	private RectTransform levelUpPanel;
 	private LevelUpButton levelUpButton;
 
-	// 用于判定当前等级所需的变量
-	[SerializeField] PieceType pieceType;
-	[SerializeField] TechTree techTree;
-	[SerializeField] int skillIndex;
 
-	public int SkillIndex => skillIndex;
 
 	private void Start()
 	{

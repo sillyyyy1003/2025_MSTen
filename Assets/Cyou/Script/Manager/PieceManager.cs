@@ -591,7 +591,6 @@ public class PieceManager : MonoBehaviour
 		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
 
 		bool anySuccess = false;
-		Piece firstSuccessPiece = null;
 
 		foreach (int targetID in sameProfessionPieces)
 		{
@@ -619,9 +618,9 @@ public class PieceManager : MonoBehaviour
                 // 更新同步数据
 				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
+				var unit = playerData.PlayerUnits[index];  // 拷贝
 				if (index >= 0)
 				{
-					var unit = playerData.PlayerUnits[index];  // 拷贝
 					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
                     unit.PlayerUnitDataSO.pieceID = targetID;  
 					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
@@ -634,6 +633,10 @@ public class PieceManager : MonoBehaviour
                     UnitStatusUIManager.Instance.UpdateHPByID(targetID, targetPiece.CurrentHP, targetPiece.CurrentMaxHP);
 					UnitStatusUIManager.Instance.UpdateAPByID(targetID, targetPiece.CurrentAP, targetPiece.CurrentMaxAP);
 				}
+
+                // 播放特效
+                EffectManager.Instance.PlayEffect(upgradeType, targetPiece.transform.position, Quaternion.identity);
+
 				anySuccess = true;
 			}
 		}

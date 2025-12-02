@@ -30,6 +30,20 @@ public class UnitStatusUIManager : MonoBehaviour
 		units.Add(id, ui);
 	}
 
+
+	public bool UpdateAPByIDInConsume(int id, int ap)
+	{
+		if (units.TryGetValue(id, out var ui))
+		{
+			int currentAp=ui.CurrentAP;
+			currentAp -= ap;
+			ui.SetAP(currentAp);
+			return true;
+		}
+		Debug.LogWarning($"StatusUI with ID {id} not found (AP).");
+		return false;
+	}
+
 	/// <summary>
 	/// 更新HPUI显示
 	/// </summary>

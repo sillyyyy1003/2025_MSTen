@@ -3,11 +3,19 @@ using GameData.UI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SkillBranch : MonoBehaviour
 {
+	//=========================================
+	//プロパティ
+	//=========================================
 	public SkillNode nodePrefab;
 	public float VerticalSpacing = 200;
+	public Image linePrefab;
+
+	public RectTransform lineRoot;
+	public RectTransform NodeRoot;
 
 	private List<SkillNode> skillNodes = new List<SkillNode>();
 	public void Initialize(Sprite sprite, TechTree type, PieceType pieceType,  int maxLevel, float verticalSpacing, RectTransform panel, LevelUpButton button)
@@ -19,7 +27,7 @@ public class SkillBranch : MonoBehaviour
 		for (int i = 0; i < maxLevel; i++) 
 		{ 
 			// 实例化预制件
-			SkillNode node = Instantiate(nodePrefab,this.transform);
+			SkillNode node = Instantiate(nodePrefab,NodeRoot);
 			// 设定文字
 			string skillDescription = GetTechText(type,i);
 			// 初始化Node
@@ -28,9 +36,48 @@ public class SkillBranch : MonoBehaviour
 			RectTransform rt = node.GetComponent<RectTransform>();
 			rt.anchoredPosition = new Vector2(0, -i * VerticalSpacing);
 			skillNodes.Add(node);
+
+			// ----如果不是第 0 个 Node，则连接上面的 Node----
+			if (i > 0)
+			{
+				CreateLineBetween(skillNodes[i - 1], skillNodes[i]);
+			}
 		}
 	}
 
+	/// <summary>
+	/// 创建两个 Node 之间的连线
+	/// </summary>
+	private void CreateLineBetween(SkillNode upperNode, SkillNode lowerNode)
+	{
+		Image line = Instantiate(linePrefab, lineRoot);
+
+		RectTransform upper = upperNode.GetComponent<RectTransform>();
+		RectTransform lower = lowerNode.GetComponent<RectTransform>();
+		RectTransform lineRT = line.GetComponent<RectTransform>();
+
+		// 设置为竖线模式
+		float lineWidth = lineRT.sizeDelta.x;
+		float distance = Mathf.Abs(lower.anchoredPosition.y - upper.anchoredPosition.y);
+
+		// 线段长度 = 节点中心到节点中心
+		lineRT.sizeDelta = new Vector2(lineWidth, distance);
+
+		// 线段位置 = 两点中间
+		float midY = (upper.anchoredPosition.y + lower.anchoredPosition.y) * 0.5f;
+		lineRT.anchoredPosition = new Vector2(0, midY);
+
+		// 确保是竖直方向
+		lineRT.localRotation = Quaternion.identity;
+	}
+
+
+	/// <summary>
+	/// 返回技能的简短描述
+	/// </summary>
+	/// <param name="type"></param>
+	/// <param name="index"></param>
+	/// <returns></returns>
 	private string GetTechText(TechTree type, int index)
 	{
 		int lv = index + 1;
