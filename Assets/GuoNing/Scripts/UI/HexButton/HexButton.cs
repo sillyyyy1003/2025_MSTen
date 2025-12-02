@@ -79,7 +79,6 @@ public class HexButton : MonoBehaviour
 			isHover = true;
 			if (!toggle.isOn)
 				UpdateVisual(hoverColor);
-			Debug.Log("Hovered toggle is:"+toggle.isOn);
 			
 		}
 		else if (!inside && isHover)

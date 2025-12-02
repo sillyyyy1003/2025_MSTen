@@ -14,6 +14,7 @@ using GameData.UI;
 using Buildings;
 
 
+
 #if UNITY_EDITORR
 using static UnityEditor.PlayerSettings;
 using Mono.Cecil;
@@ -457,6 +458,8 @@ public class PlayerOperationManager : MonoBehaviour
 					}
 
 					ExecuteCharm(targetPos, ownerId);
+					// 更新UI Status
+					UnitStatusUIManager.Instance.UpdateAPByIDInConsume(PlayerDataManager.Instance.nowChooseUnitID, 1);
 					return;
 				}
 
@@ -477,7 +480,11 @@ public class PlayerOperationManager : MonoBehaviour
 						}
 
 						ExecuteAttack(targetPos, ClickCellid);
-					}
+				        
+                        // 更新UI Status
+                        UnitStatusUIManager.Instance.UpdateAPByIDInConsume(PlayerDataManager.Instance.nowChooseUnitID,1);
+                    
+                    }
 					else
 					{
 						// 不在攻击范围内，无法攻击也无法移动到敌方单位位置
@@ -558,8 +565,11 @@ public class PlayerOperationManager : MonoBehaviour
                 //更新AP
                 UnitStatusUIManager.Instance.UpdateAPByID(PlayerDataManager.Instance.nowChooseUnitID, PieceManager.Instance.GetPieceAP((PlayerDataManager.Instance.nowChooseUnitID)));
 
-                // 2025.11.14 Guoning 音声再生
-                SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+                // 2025.12.02 Guoning 特效播放
+                EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position,UnityEngine.Quaternion.identity);
+
+				// 2025.11.14 Guoning 音声再生
+				SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 			}
 			else
 			{
@@ -1120,6 +1130,8 @@ public class PlayerOperationManager : MonoBehaviour
 
                 break;
             case CardType.Building:
+
+                //EffectManager.Instance.PlayEffect(EffectType.Building_Build, worldPos, Quaternion.identity); 
                 // 建筑使用独有逻辑
                 CreateBuilding();
 
@@ -1219,7 +1231,6 @@ public class PlayerOperationManager : MonoBehaviour
         }
 
         // 创建单位
-
         CreateUnitAtPosition(unitType, SelectedEmptyCellID);
 
         // 清除选择
@@ -1825,10 +1836,9 @@ public class PlayerOperationManager : MonoBehaviour
                             PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, toPos, false);
                             Debug.Log($"[移动] 单位 PieceID:{pieceID} AP为0，bCanDoAction设置为false");
                         }
-                        // 更新AP
-                        Debug.Log($"[本地] AP: ({piece.CurrentAP})");
-                        UnitStatusUIManager.Instance.UpdateAPByID(pieceID, piece.CurrentAP);
 
+                        // 更新APUI
+                        UnitStatusUIManager.Instance.UpdateAPByID(pieceID, piece.CurrentAP);
                     }
                     else
                     {
@@ -2593,6 +2603,9 @@ public class PlayerOperationManager : MonoBehaviour
 
                     // 可选：显示伤害数字
                     // ShowDamageNumber(targetUnit.transform.position, damage);
+
+                    // 2025.12.02 播放攻击特效
+                    EffectManager.Instance.PlayerEffect(OperationType.Attack, targetUnit.transform.position, targetUnit.transform.rotation);
                 }
 
                 // 网络同步攻击
@@ -2635,7 +2648,10 @@ public class PlayerOperationManager : MonoBehaviour
             if (targetUnit != null)
             {
                 targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
-            }
+
+				// 2025.12.02 播放攻击特效
+				EffectManager.Instance.PlayerEffect(OperationType.Attack, targetUnit.transform.position, targetUnit.transform.rotation);
+			}
 
             if (buildingDestroyed)
             {

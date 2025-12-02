@@ -70,13 +70,14 @@ public class GameOperationPanel : MonoBehaviour
 		}
 
 		OnCardTypeBought += HandleResourceUpdate;
+		OnCardTypeBought +=() => SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
 		UpdateCostText();
 	}
 
 	void Update()
 	{
 
-		if (GameManage.Instance.GetIsGamingOrNot() == false || GameManage.Instance._GameCamera.bCanUseCamera == false) 
+		if (GameManage.Instance.GetIsGamingOrNot() == false) 
 		{
 			// 关闭面板
 			StorePanelTransform.gameObject.SetActive(false);

@@ -15,9 +15,11 @@ public class UnitStatusUI : MonoBehaviour
 
 	private int maxHP;
 	private int currentHP;
+	public int CurrentHP => currentHP;
 
 	private int maxAP;
 	private int currentAP;
+	public int CurrentAP => currentAP;
 
 	//================================
 	// プロパティ

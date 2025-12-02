@@ -123,7 +123,7 @@ public class GameLoadProgressUI : MonoBehaviour
 
 					GameManage.Instance.SetIsGamingOrNot(true);             // 设置为游戏中状态
 					GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
-					if(!isSingle)GameManage.Instance.StartFirstTurn();                     // 开始第一回合
+					if(!isSingle)GameManage.Instance.StartFirstTurn();      // 开始第一回合
 					//======在这里追加其他的游戏开始操作
 
 					// 2025.11.14 Guoning 播放音乐
