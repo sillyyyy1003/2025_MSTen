@@ -321,18 +321,18 @@ public class GameManage : MonoBehaviour
         if (NetGameSystem.Instance != null && !NetGameSystem.Instance.bIsServer)
         {
             OtherPlayerID = 0;// 服务器默认是玩家0
-            _LocalPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
+            _LocalPlayerID = 1;
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
          
         }
         else
         {
-            OtherPlayerID = (int)NetGameSystem.Instance.bLocalClientId;
+            OtherPlayerID = 1;
             _LocalPlayerID = 0; // 服务器默认是玩家0
             SceneStateManager.Instance.PlayerID = _LocalPlayerID;
         }
 
-        Debug.Log($"本地玩家ID: {LocalPlayerID}");
+        Debug.Log($"本地玩家ID: {_LocalPlayerID} 另一玩家ID:  {OtherPlayerID}");
         // 设置人口上限
         _PlayerDataManager.SetPlayerPopulationCost();
         // 初始化buildingManager
