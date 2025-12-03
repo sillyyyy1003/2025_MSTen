@@ -1,6 +1,7 @@
 ﻿using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -32,7 +33,6 @@ public class ResultUIManager : MonoBehaviour
 		}
 		else
 		{
-
 			Destroy(gameObject);
 		}
 
@@ -107,7 +107,21 @@ public class ResultUIManager : MonoBehaviour
 
 	private void OnClickGameExitButton()
 	{
+		Debug.Log("Exit to Title Scene");
 		SceneController.Instance.SwitchToTitleScene();
+	}
+
+	private int GetVictoryPlayerIDBySurrender()
+	{
+		int localID = GameManage.Instance.LocalPlayerID;
+		int enemyID = GameManage.Instance.GetAllPlayerIds().FirstOrDefault(id => id != localID);
+		return enemyID;
+
+	}
+
+	public void Surrender()
+	{
+		GameManage.Instance.TriggerGameEnded(GetVictoryPlayerIDBySurrender());
 	}
 }
 

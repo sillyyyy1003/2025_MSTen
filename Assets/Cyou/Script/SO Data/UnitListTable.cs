@@ -1,5 +1,6 @@
 ﻿using GameData;
 using System;
+using System.Buffers.Text;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -137,318 +138,341 @@ public class UnitListTable : MonoBehaviour
         }
     }
 
-    //    // ==========================================
-    //    // 新增功能：通过资源路径查找（用于网络同步）
-    //    // ==========================================
+	public PieceDataSO GetPieceDataSO(PieceType type, PieceDetail pD)
+	{
+		PieceDataSO baseSO = GetPieceDataSO(pD);
+		switch (type)
+		{
+			case PieceType.Pope:
+				return baseSO as PopeDataSO;
 
-    //    /// <summary>
-    //    /// 通过资源路径获取 PieceDataSO（用于网络同步）
-    //    /// </summary>
-    //    public PieceDataSO GetPieceDataByPath(string resourcePath)
-    //    {
-    //        if (string.IsNullOrEmpty(resourcePath))
-    //        {
-    //            Debug.LogWarning("[UnitListTable] 资源路径为空！");
-    //            return null;
-    //        }
+			case PieceType.Missionary:
+				return baseSO as MissionaryDataSO;
 
-    //        if (pieceDataByPath.TryGetValue(resourcePath, out PieceDataSO data))
-    //        {
-    //            return data;
-    //        }
+			case PieceType.Farmer:
+				return baseSO as FarmerDataSO;
 
-    //        Debug.LogWarning($"[UnitListTable] 找不到资源路径 '{resourcePath}' 对应的 PieceData！");
-    //        return null;
-    //    }
+			case PieceType.Military:
+				return baseSO as MilitaryDataSO;
 
-    //    // ==========================================
-    //    // 新增功能：通过 CardType 查找
-    //    // ==========================================
+			default:
+				return baseSO; // fallback
+		}
+	}
 
-    //    /// <summary>
-    //    /// 通过 CardType 和 Religion 获取 PieceDataSO
-    //    /// </summary>
-    //    public PieceDataSO GetPieceDataByCardType(CardType cardType, Religion religion = Religion.None)
-    //    {
-    //        if (!pieceDataByCardType.ContainsKey(cardType))
-    //        {
-    //            Debug.LogWarning($"[UnitListTable] 找不到 CardType={cardType} 的数据！");
-    //            return null;
-    //        }
 
-    //        // 如果指定了 Religion，优先使用
-    //        if (religion != Religion.None && pieceDataByCardType[cardType].ContainsKey(religion))
-    //        {
-    //            return pieceDataByCardType[cardType][religion];
-    //        }
+	//    // ==========================================
+	//    // 新增功能：通过资源路径查找（用于网络同步）
+	//    // ==========================================
 
-    //        // 否则返回第一个可用的
-    //        foreach (var data in pieceDataByCardType[cardType].Values)
-    //        {
-    //            return data;
-    //        }
+	//    /// <summary>
+	//    /// 通过资源路径获取 PieceDataSO（用于网络同步）
+	//    /// </summary>
+	//    public PieceDataSO GetPieceDataByPath(string resourcePath)
+	//    {
+	//        if (string.IsNullOrEmpty(resourcePath))
+	//        {
+	//            Debug.LogWarning("[UnitListTable] 资源路径为空！");
+	//            return null;
+	//        }
 
-    //        Debug.LogWarning($"[UnitListTable] CardType={cardType} 没有可用的数据！");
-    //        return null;
-    //    }
+	//        if (pieceDataByPath.TryGetValue(resourcePath, out PieceDataSO data))
+	//        {
+	//            return data;
+	//        }
 
-    //    // ==========================================
-    //    // 新增功能：Prefab 管理
-    //    // ==========================================
+	//        Debug.LogWarning($"[UnitListTable] 找不到资源路径 '{resourcePath}' 对应的 PieceData！");
+	//        return null;
+	//    }
 
-    //    /// <summary>
-    //    /// 获取单位的 Prefab（带缓存）
-    //    /// </summary>
-    //    public GameObject GetPiecePrefab(PieceDetail pD)
-    //    {
-    //        PieceDataSO data = GetPieceDataSO(pD);
-    //        if (data == null) return null;
+	//    // ==========================================
+	//    // 新增功能：通过 CardType 查找
+	//    // ==========================================
 
-    //        return data.piecePrefab;
-    //    }
+	//    /// <summary>
+	//    /// 通过 CardType 和 Religion 获取 PieceDataSO
+	//    /// </summary>
+	//    public PieceDataSO GetPieceDataByCardType(CardType cardType, Religion religion = Religion.None)
+	//    {
+	//        if (!pieceDataByCardType.ContainsKey(cardType))
+	//        {
+	//            Debug.LogWarning($"[UnitListTable] 找不到 CardType={cardType} 的数据！");
+	//            return null;
+	//        }
 
-    //    /// <summary>
-    //    /// 通过资源路径获取 Prefab
-    //    /// </summary>
-    //    public GameObject GetPrefabByPath(string resourcePath)
-    //    {
-    //        // 检查缓存
-    //        if (prefabCache.TryGetValue(resourcePath, out GameObject cachedPrefab))
-    //        {
-    //            return cachedPrefab;
-    //        }
+	//        // 如果指定了 Religion，优先使用
+	//        if (religion != Religion.None && pieceDataByCardType[cardType].ContainsKey(religion))
+	//        {
+	//            return pieceDataByCardType[cardType][religion];
+	//        }
 
-    //        // 先尝试从 PieceDataSO 获取
-    //        PieceDataSO data = GetPieceDataByPath(resourcePath);
-    //        if (data != null && data.piecePrefab != null)
-    //        {
-    //            prefabCache[resourcePath] = data.piecePrefab;
-    //            return data.piecePrefab;
-    //        }
+	//        // 否则返回第一个可用的
+	//        foreach (var data in pieceDataByCardType[cardType].Values)
+	//        {
+	//            return data;
+	//        }
 
-    //        // 如果失败，尝试从 Resources 加载
-    //        GameObject prefab = Resources.Load<GameObject>(resourcePath);
-    //        if (prefab != null)
-    //        {
-    //            prefabCache[resourcePath] = prefab;
-    //            Debug.Log($"[UnitListTable] 从 Resources 加载 Prefab: {resourcePath}");
-    //            return prefab;
-    //        }
+	//        Debug.LogWarning($"[UnitListTable] CardType={cardType} 没有可用的数据！");
+	//        return null;
+	//    }
 
-    //        Debug.LogError($"[UnitListTable] 无法加载 Prefab: {resourcePath}");
-    //        return null;
-    //    }
+	//    // ==========================================
+	//    // 新增功能：Prefab 管理
+	//    // ==========================================
 
-    //    /// <summary>
-    //    /// 实例化单位 Prefab
-    //    /// </summary>
-    //    public GameObject InstantiatePiece(PieceDetail pD, Vector3 position, Quaternion rotation)
-    //    {
-    //        GameObject prefab = GetPiecePrefab(pD);
-    //        if (prefab == null)
-    //        {
-    //            Debug.LogError($"[UnitListTable] 无法实例化单位 - Prefab 为 null");
-    //            return null;
-    //        }
+	//    /// <summary>
+	//    /// 获取单位的 Prefab（带缓存）
+	//    /// </summary>
+	//    public GameObject GetPiecePrefab(PieceDetail pD)
+	//    {
+	//        PieceDataSO data = GetPieceDataSO(pD);
+	//        if (data == null) return null;
 
-    //        return Instantiate(prefab, position, rotation);
-    //    }
+	//        return data.piecePrefab;
+	//    }
 
-    //    // ==========================================
-    //    // 新增功能：网络同步支持
-    //    // ==========================================
+	//    /// <summary>
+	//    /// 通过资源路径获取 Prefab
+	//    /// </summary>
+	//    public GameObject GetPrefabByPath(string resourcePath)
+	//    {
+	//        // 检查缓存
+	//        if (prefabCache.TryGetValue(resourcePath, out GameObject cachedPrefab))
+	//        {
+	//            return cachedPrefab;
+	//        }
 
-    //    /// <summary>
-    //    /// 从网络消息创建单位（用于 HandleNetworkAddUnit）
-    //    /// </summary>
-    //    public PieceDataSO GetPieceDataForNetworkSync(string resourcePath, CardType cardType, Religion religion)
-    //    {
-    //        // 方法1: 通过资源路径查找（最推荐）
-    //        PieceDataSO data = GetPieceDataByPath(resourcePath);
-    //        if (data != null)
-    //        {
-    //            Debug.Log($"[UnitListTable] 通过路径找到: {data.pieceName}");
-    //            return data;
-    //        }
+	//        // 先尝试从 PieceDataSO 获取
+	//        PieceDataSO data = GetPieceDataByPath(resourcePath);
+	//        if (data != null && data.piecePrefab != null)
+	//        {
+	//            prefabCache[resourcePath] = data.piecePrefab;
+	//            return data.piecePrefab;
+	//        }
 
-    //        // 方法2: 通过 CardType 和 Religion 查找
-    //        data = GetPieceDataByCardType(cardType, religion);
-    //        if (data != null)
-    //        {
-    //            Debug.Log($"[UnitListTable] 通过 CardType 找到: {data.pieceName}");
-    //            return data;
-    //        }
+	//        // 如果失败，尝试从 Resources 加载
+	//        GameObject prefab = Resources.Load<GameObject>(resourcePath);
+	//        if (prefab != null)
+	//        {
+	//            prefabCache[resourcePath] = prefab;
+	//            Debug.Log($"[UnitListTable] 从 Resources 加载 Prefab: {resourcePath}");
+	//            return prefab;
+	//        }
 
-    //        // 方法3: 尝试从 Resources 加载
-    //        data = Resources.Load<PieceDataSO>(resourcePath);
-    //        if (data != null)
-    //        {
-    //            Debug.Log($"[UnitListTable] 从 Resources 加载: {data.pieceName}");
-    //            return data;
-    //        }
+	//        Debug.LogError($"[UnitListTable] 无法加载 Prefab: {resourcePath}");
+	//        return null;
+	//    }
 
-    //        Debug.LogError($"[UnitListTable] 网络同步失败 - 找不到单位数据: Path={resourcePath}, CardType={cardType}, Religion={religion}");
-    //        return null;
-    //    }
+	//    /// <summary>
+	//    /// 实例化单位 Prefab
+	//    /// </summary>
+	//    public GameObject InstantiatePiece(PieceDetail pD, Vector3 position, Quaternion rotation)
+	//    {
+	//        GameObject prefab = GetPiecePrefab(pD);
+	//        if (prefab == null)
+	//        {
+	//            Debug.LogError($"[UnitListTable] 无法实例化单位 - Prefab 为 null");
+	//            return null;
+	//        }
 
-    //    // ==========================================
-    //    // 辅助功能
-    //    // ==========================================
+	//        return Instantiate(prefab, position, rotation);
+	//    }
 
-    //    /// <summary>
-    //    /// 将 PieceType 转换为 CardType（根据你的项目调整）
-    //    /// </summary>
-    //    private bool TryConvertToCardType(PieceType pieceType, out CardType cardType)
-    //    {
-    //        // 根据你的枚举定义进行映射
-    //        // 这里提供一个示例实现
-    //        switch (pieceType)
-    //        {
-    //            case PieceType.Farmer:
-    //                cardType = CardType.Farmer;
-    //                return true;
-    //            case PieceType.Military:
-    //                cardType = CardType.Solider;
-    //                return true;
-    //            case PieceType.Missionary:
-    //                cardType = CardType.Missionary;
-    //                return true;
-    //            // 添加其他类型的映射
-    //            default:
-    //                cardType = default;
-    //                return false;
-    //        }
-    //    }
+	//    // ==========================================
+	//    // 新增功能：网络同步支持
+	//    // ==========================================
 
-    //    /// <summary>
-    //    /// 检查所有 PieceData 的配置是否正确
-    //    /// </summary>
-    //    public void ValidateAllPieceData()
-    //    {
-    //        Debug.Log("========== UnitListTable 验证 ==========");
+	//    /// <summary>
+	//    /// 从网络消息创建单位（用于 HandleNetworkAddUnit）
+	//    /// </summary>
+	//    public PieceDataSO GetPieceDataForNetworkSync(string resourcePath, CardType cardType, Religion religion)
+	//    {
+	//        // 方法1: 通过资源路径查找（最推荐）
+	//        PieceDataSO data = GetPieceDataByPath(resourcePath);
+	//        if (data != null)
+	//        {
+	//            Debug.Log($"[UnitListTable] 通过路径找到: {data.pieceName}");
+	//            return data;
+	//        }
 
-    //        int totalCount = 0;
-    //        int validPrefabCount = 0;
-    //        int validPathCount = 0;
-    //        int errorCount = 0;
+	//        // 方法2: 通过 CardType 和 Religion 查找
+	//        data = GetPieceDataByCardType(cardType, religion);
+	//        if (data != null)
+	//        {
+	//            Debug.Log($"[UnitListTable] 通过 CardType 找到: {data.pieceName}");
+	//            return data;
+	//        }
 
-    //        foreach (var entry in pieceDataEntries)
-    //        {
-    //            totalCount++;
+	//        // 方法3: 尝试从 Resources 加载
+	//        data = Resources.Load<PieceDataSO>(resourcePath);
+	//        if (data != null)
+	//        {
+	//            Debug.Log($"[UnitListTable] 从 Resources 加载: {data.pieceName}");
+	//            return data;
+	//        }
 
-    //            if (entry.PieceDataSO == null)
-    //            {
-    //                Debug.LogError($"[验证] Entry [{totalCount}] PieceDataSO 为 null!");
-    //                errorCount++;
-    //                continue;
-    //            }
+	//        Debug.LogError($"[UnitListTable] 网络同步失败 - 找不到单位数据: Path={resourcePath}, CardType={cardType}, Religion={religion}");
+	//        return null;
+	//    }
 
-    //            string info = $"[验证] {entry.PieceType} ({entry.Religion}) - {entry.PieceDataSO.pieceName}";
+	//    // ==========================================
+	//    // 辅助功能
+	//    // ==========================================
 
-    //            // 检查 Prefab
-    //            if (entry.PieceDataSO.piecePrefab != null)
-    //            {
-    //                validPrefabCount++;
-    //                info += " ✓ Prefab";
-    //            }
-    //            else
-    //            {
-    //                info += " ✗ Prefab 缺失";
-    //                errorCount++;
-    //            }
+	//    /// <summary>
+	//    /// 将 PieceType 转换为 CardType（根据你的项目调整）
+	//    /// </summary>
+	//    private bool TryConvertToCardType(PieceType pieceType, out CardType cardType)
+	//    {
+	//        // 根据你的枚举定义进行映射
+	//        // 这里提供一个示例实现
+	//        switch (pieceType)
+	//        {
+	//            case PieceType.Farmer:
+	//                cardType = CardType.Farmer;
+	//                return true;
+	//            case PieceType.Military:
+	//                cardType = CardType.Solider;
+	//                return true;
+	//            case PieceType.Missionary:
+	//                cardType = CardType.Missionary;
+	//                return true;
+	//            // 添加其他类型的映射
+	//            default:
+	//                cardType = default;
+	//                return false;
+	//        }
+	//    }
 
-    //            // 检查资源路径
-    //            if (!string.IsNullOrEmpty(entry.PieceDataSO.piecePrefabResourcePath))
-    //            {
-    //                validPathCount++;
-    //                info += $" ✓ Path: {entry.PieceDataSO.piecePrefabResourcePath}";
-    //            }
-    //            else
-    //            {
-    //                info += " ✗ 资源路径缺失";
-    //                errorCount++;
-    //            }
+	//    /// <summary>
+	//    /// 检查所有 PieceData 的配置是否正确
+	//    /// </summary>
+	//    public void ValidateAllPieceData()
+	//    {
+	//        Debug.Log("========== UnitListTable 验证 ==========");
 
-    //            Debug.Log(info);
-    //        }
+	//        int totalCount = 0;
+	//        int validPrefabCount = 0;
+	//        int validPathCount = 0;
+	//        int errorCount = 0;
 
-    //        Debug.Log($"========== 验证完成 ==========");
-    //        Debug.Log($"总计: {totalCount} | 有效Prefab: {validPrefabCount} | 有效路径: {validPathCount} | 错误: {errorCount}");
-    //    }
+	//        foreach (var entry in pieceDataEntries)
+	//        {
+	//            totalCount++;
 
-    //    /// <summary>
-    //    /// 获取所有已注册的 PieceDataSO
-    //    /// </summary>
-    //    public List<PieceDataSO> GetAllPieceData()
-    //    {
-    //        List<PieceDataSO> allData = new List<PieceDataSO>();
-    //        foreach (var entry in pieceDataEntries)
-    //        {
-    //            if (entry.PieceDataSO != null)
-    //            {
-    //                allData.Add(entry.PieceDataSO);
-    //            }
-    //        }
-    //        return allData;
-    //    }
+	//            if (entry.PieceDataSO == null)
+	//            {
+	//                Debug.LogError($"[验证] Entry [{totalCount}] PieceDataSO 为 null!");
+	//                errorCount++;
+	//                continue;
+	//            }
 
-    //    /// <summary>
-    //    /// 获取指定 Religion 的所有单位数据
-    //    /// </summary>
-    //    public List<PieceDataSO> GetPieceDataByReligion(Religion religion)
-    //    {
-    //        List<PieceDataSO> result = new List<PieceDataSO>();
+	//            string info = $"[验证] {entry.PieceType} ({entry.Religion}) - {entry.PieceDataSO.pieceName}";
 
-    //        foreach (var entry in pieceDataEntries)
-    //        {
-    //            if (entry.Religion == religion && entry.PieceDataSO != null)
-    //            {
-    //                result.Add(entry.PieceDataSO);
-    //            }
-    //        }
+	//            // 检查 Prefab
+	//            if (entry.PieceDataSO.piecePrefab != null)
+	//            {
+	//                validPrefabCount++;
+	//                info += " ✓ Prefab";
+	//            }
+	//            else
+	//            {
+	//                info += " ✗ Prefab 缺失";
+	//                errorCount++;
+	//            }
 
-    //        return result;
-    //    }
+	//            // 检查资源路径
+	//            if (!string.IsNullOrEmpty(entry.PieceDataSO.piecePrefabResourcePath))
+	//            {
+	//                validPathCount++;
+	//                info += $" ✓ Path: {entry.PieceDataSO.piecePrefabResourcePath}";
+	//            }
+	//            else
+	//            {
+	//                info += " ✗ 资源路径缺失";
+	//                errorCount++;
+	//            }
 
-    //#if UNITY_EDITOR
-    //    /// <summary>
-    //    /// 编辑器功能：自动设置所有 PieceDataSO 的资源路径
-    //    /// </summary>
-    //    [ContextMenu("自动设置所有资源路径")]
-    //    private void AutoSetResourcePaths()
-    //    {
-    //        foreach (var entry in pieceDataEntries)
-    //        {
-    //            if (entry.PieceDataSO != null && entry.PieceDataSO.piecePrefab != null)
-    //            {
-    //                // 如果资源路径为空，尝试自动生成
-    //                if (string.IsNullOrEmpty(entry.PieceDataSO.piecePrefabResourcePath))
-    //                {
-    //                    string prefabName = entry.PieceDataSO.piecePrefab.name;
-    //                    string suggestedPath = $"Prefabs/Units/{prefabName}";
+	//            Debug.Log(info);
+	//        }
 
-    //                    Debug.Log($"[自动设置] {entry.PieceDataSO.pieceName} → {suggestedPath}");
+	//        Debug.Log($"========== 验证完成 ==========");
+	//        Debug.Log($"总计: {totalCount} | 有效Prefab: {validPrefabCount} | 有效路径: {validPathCount} | 错误: {errorCount}");
+	//    }
 
-    //                    // 注意：这只是建议，实际需要手动在 Inspector 中设置
-    //                    // 因为 ScriptableObject 的字段在运行时不能直接修改并保存
-    //                }
-    //            }
-    //        }
+	//    /// <summary>
+	//    /// 获取所有已注册的 PieceDataSO
+	//    /// </summary>
+	//    public List<PieceDataSO> GetAllPieceData()
+	//    {
+	//        List<PieceDataSO> allData = new List<PieceDataSO>();
+	//        foreach (var entry in pieceDataEntries)
+	//        {
+	//            if (entry.PieceDataSO != null)
+	//            {
+	//                allData.Add(entry.PieceDataSO);
+	//            }
+	//        }
+	//        return allData;
+	//    }
 
-    //        Debug.Log("[自动设置] 完成！请在 Inspector 中检查并手动设置资源路径。");
-    //    }
+	//    /// <summary>
+	//    /// 获取指定 Religion 的所有单位数据
+	//    /// </summary>
+	//    public List<PieceDataSO> GetPieceDataByReligion(Religion religion)
+	//    {
+	//        List<PieceDataSO> result = new List<PieceDataSO>();
 
-    //    /// <summary>
-    //    /// 编辑器功能：验证配置
-    //    /// </summary>
-    //    [ContextMenu("验证所有配置")]
-    //    private void EditorValidate()
-    //    {
-    //        if (pieceDataDict == null || pieceDataDict.Count == 0)
-    //        {
-    //            InitializeDictionary();
-    //        }
-    //        ValidateAllPieceData();
-    //    }
-    //#endif
+	//        foreach (var entry in pieceDataEntries)
+	//        {
+	//            if (entry.Religion == religion && entry.PieceDataSO != null)
+	//            {
+	//                result.Add(entry.PieceDataSO);
+	//            }
+	//        }
+
+	//        return result;
+	//    }
+
+	//#if UNITY_EDITOR
+	//    /// <summary>
+	//    /// 编辑器功能：自动设置所有 PieceDataSO 的资源路径
+	//    /// </summary>
+	//    [ContextMenu("自动设置所有资源路径")]
+	//    private void AutoSetResourcePaths()
+	//    {
+	//        foreach (var entry in pieceDataEntries)
+	//        {
+	//            if (entry.PieceDataSO != null && entry.PieceDataSO.piecePrefab != null)
+	//            {
+	//                // 如果资源路径为空，尝试自动生成
+	//                if (string.IsNullOrEmpty(entry.PieceDataSO.piecePrefabResourcePath))
+	//                {
+	//                    string prefabName = entry.PieceDataSO.piecePrefab.name;
+	//                    string suggestedPath = $"Prefabs/Units/{prefabName}";
+
+	//                    Debug.Log($"[自动设置] {entry.PieceDataSO.pieceName} → {suggestedPath}");
+
+	//                    // 注意：这只是建议，实际需要手动在 Inspector 中设置
+	//                    // 因为 ScriptableObject 的字段在运行时不能直接修改并保存
+	//                }
+	//            }
+	//        }
+
+	//        Debug.Log("[自动设置] 完成！请在 Inspector 中检查并手动设置资源路径。");
+	//    }
+
+	//    /// <summary>
+	//    /// 编辑器功能：验证配置
+	//    /// </summary>
+	//    [ContextMenu("验证所有配置")]
+	//    private void EditorValidate()
+	//    {
+	//        if (pieceDataDict == null || pieceDataDict.Count == 0)
+	//        {
+	//            InitializeDictionary();
+	//        }
+	//        ValidateAllPieceData();
+	//    }
+	//#endif
 }

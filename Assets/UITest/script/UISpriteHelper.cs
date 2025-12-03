@@ -27,6 +27,7 @@ public enum UISpriteID
 	//2025.11.26 新增UI图标
 	Result_Bar,     // 结算界面条
     HPBar_Icon,     // 血条图标
+    MouseInteraction,   // 鼠标交互图标
 }
 
 [System.Serializable]
@@ -213,7 +214,7 @@ public class UISpriteHelper : MonoBehaviour
         {
             case CardType.Missionary:
                 return GetSprite(UISpriteID.Icon_Missionary);
-            case CardType.Solider:
+            case CardType.Soldier:
                 return GetSprite(UISpriteID.Icon_Solider);
             case CardType.Farmer:
                 return GetSprite(UISpriteID.Icon_Farmer);

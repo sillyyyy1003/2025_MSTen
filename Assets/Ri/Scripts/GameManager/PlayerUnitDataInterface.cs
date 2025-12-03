@@ -103,6 +103,16 @@ public class PlayerUnitDataInterface : MonoBehaviour
     {
         return PieceManager.Instance.GetUnitOperationCostByType(PlayerDataManager.Instance.nowChooseUnitID,type);
     }
+
+    // 拿到教皇移动冷却
+    public int2 GetPopeSwapCooldown()
+    {
+        if(NetGameSystem.Instance.bIsServer)
+            return PieceManager.Instance.GetPopeSwapCooldown(GameManage.Instance.LocalPlayerID);
+        else
+            return PieceManager.Instance.GetPopeSwapCooldown(GameManage.Instance.LocalPlayerID*10000);
+
+    }
     /// <summary>
     /// 拿到某种棋子的已上场的key列表
     /// </summary>
@@ -280,7 +290,6 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (tech)
         {
             case TechTree.HP:
-
                 return 1;
             case TechTree.AP:
                 return 1;
@@ -481,7 +490,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (cardType)
         {
             case CardType.Farmer: return PieceType.Farmer;
-            case CardType.Solider: return PieceType.Military;
+            case CardType.Soldier: return PieceType.Military;
             case CardType.Missionary: return PieceType.Missionary;
             case CardType.Pope: return PieceType.Pope;
             case CardType.Building: return PieceType.Building;
@@ -497,7 +506,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
         switch (pieceType)
         {
             case PieceType.Farmer: return CardType.Farmer;
-            case PieceType.Military: return CardType.Solider;
+            case PieceType.Military: return CardType.Soldier;
             case PieceType.Missionary: return CardType.Missionary;
             case PieceType.Pope: return CardType.Pope;
             default:

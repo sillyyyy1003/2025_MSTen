@@ -1,10 +1,11 @@
-using UnityEngine;
+using Buildings;
+using GameData;
+using GamePieces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using GameData;
-using GamePieces;
-using Buildings;
+using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 /// <summary>
 /// 建物管理クラス
@@ -18,7 +19,6 @@ public class BuildingManager : MonoBehaviour
     // ===== 建物の管理 =====
     private Dictionary<int, Building> buildings = new Dictionary<int, Building>(); // 己方の建物
     private Dictionary<int, Building> enemyBuildings = new Dictionary<int, Building>(); // 敵方の建物
-    private int nextBuildingID = 0;
 
     // ===== 破壊データのキャッシュ =====
     private syncBuildingData? lastDestroyedBuildingData = null;
@@ -456,6 +456,7 @@ public class BuildingManager : MonoBehaviour
      
         if(!building.FarmerEnter(farmerAP))
         {
+            Debug.LogWarning("Slot is Full! cant in");
             return false;
         }
       
@@ -464,25 +465,17 @@ public class BuildingManager : MonoBehaviour
     }
     
  
-    public int BuildingCreateResource()
-    {
-        int res = 0;
-       foreach(var a in buildings)
-        {
-            res += a.Value.GetNowActivedSlot()*2;
-        }
-        return res;
-    }
-    public bool SetSlotToCantUse(int buildingID)
-    {
-        if (!buildings.TryGetValue(buildingID, out Building building))
-        {
-            Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return false;
-        }
-        building.SetCantUse();
-        return true;
-    }
+    //public int GetBuildingCreateResource()
+    //{
+    //    int res=0;
+    //   foreach (var a in buildings)
+    //    {
+    //        res += a.Value.NewGetResource();
+    //    }
+    //    return res;
+    //}
+  
+
     /// <summary>
     /// 農民を建物に配置
     /// </summary>
@@ -627,18 +620,76 @@ public class BuildingManager : MonoBehaviour
         return syncBuildingData.CreateFromBuilding(building);
     }
 
-    #endregion
+	#endregion
 
-    #region アップグレード関連
+	#region アップグレード関連
 
-    /// <summary>
-    /// 建物の項目をアップグレード
-    /// すべての自分の建物にアップグレードを適用
-    /// </summary>
-    /// <param name="buildingID">建物ID</param>
-    /// <param name="upgradeType">アップグレード項目</param>
-    /// <returns>成功したらtrue</returns>
-    public bool UpgradeBuilding(int buildingID, BuildingUpgradeType upgradeType)
+	// 2025.12.01 追加只通过升级类型升级
+	public bool UpgradeBuilding(BuildingUpgradeType upgradeType)
+	{
+		bool anySuccess = false;
+
+		// すべての自分の建物にアップグレードを適用
+		foreach (var kvp in buildings)
+		{
+			Building targetBuilding = kvp.Value;
+			bool success = false;
+
+			switch (upgradeType)
+			{
+				case BuildingUpgradeType.BuildingHP:
+					success = targetBuilding.UpgradeHP();
+					break;
+				case BuildingUpgradeType.attackRange:
+					success = targetBuilding.UpgradeAttackRange();
+					break;
+				case BuildingUpgradeType.slotsLevel:
+					success = targetBuilding.UpgradeSlots();
+					break;
+				default:
+					Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+					return false;
+			}
+
+			if (success)
+			{
+				anySuccess = true;
+				syncBuildingData newBuildingData = new syncBuildingData();
+				newBuildingData = (syncBuildingData)CreateCompleteSyncData(targetBuilding.BuildingID);
+				
+                int playerID = GameManage.Instance.LocalPlayerID;
+				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetBuilding.BuildingID);
+				if (index >= 0)
+				{
+					var unit = playerData.PlayerUnits[index];  // 拷贝
+					unit.BuildingData = newBuildingData;          // 修改拷贝
+					unit.PlayerUnitDataSO.pieceID = targetBuilding.BuildingID;
+					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+				}
+				Debug.Log($"建物ID={kvp.Key}の{upgradeType}をアップグレードしました");
+			}
+		}
+
+		if (anySuccess)
+		{
+			if (!buildingUpgradeData.ContainsKey(upgradeType)) buildingUpgradeData[upgradeType] = 0;
+			buildingUpgradeData[upgradeType]++;
+			isUpgraded = true;
+		}
+		return anySuccess;
+	}
+
+
+
+	/// <summary>
+	/// 建物の項目をアップグレード
+	/// すべての自分の建物にアップグレードを適用
+	/// </summary>
+	/// <param name="buildingID">建物ID</param>
+	/// <param name="upgradeType">アップグレード項目</param>
+	/// <returns>成功したらtrue</returns>
+	public bool UpgradeBuilding(int buildingID, BuildingUpgradeType upgradeType)
     {
         if (!buildings.TryGetValue(buildingID, out Building building))
         {
@@ -770,19 +821,6 @@ public class BuildingManager : MonoBehaviour
             return -1;
         }
         return building.GetAllHP(); ;
-    }
-
-    /// <summary>
-    /// 25.11.26 RI Add 建物のslotを取得
-    /// </summary>
-    public int GetBuildingSlot(int buildingID)
-    {
-        if (!buildings.TryGetValue(buildingID, out Building building))
-        {
-            Debug.LogError($"建物が見つかりません: ID={buildingID}");
-            return -1;
-        }
-        return building.GetSlots();
     }
 
     /// <summary>
@@ -1093,14 +1131,30 @@ public class BuildingManager : MonoBehaviour
         {
             if (buildings.TryGetValue(buildingID, out Building building))
             {
-                lastTurnResourceTotal+=building.ProcessTurn();
+                // 25.11.28 Ri add new turn process
+                //lastTurnResourceTotal+=building.ProcessTurn();
+                lastTurnResourceTotal += building.NewGetResource();
             }
+
         }
 
         Debug.Log($"前ターンにて{lastTurnResourceTotal}の資源が生成されました。");
         return lastTurnResourceTotal;
     }
 
+    // 25.11.28 ri add building is actived
+    public bool GetIsActived(int buildingID)
+    {
+        bool actived = true;
+        if (buildings.TryGetValue(buildingID, out Building building))
+        {
+            if(!building.GetBuildingActived())
+            {
+                actived = false;
+            }
+        }
+        return actived;
+    }
     #endregion
 }
 

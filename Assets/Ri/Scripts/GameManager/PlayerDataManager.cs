@@ -292,15 +292,17 @@ public class PlayerDataManager : MonoBehaviour
     private Dictionary<int, int> unitIdToPlayerIdMap = new Dictionary<int, int>();
 
     // 当前选择中的单位id
-    public int nowChooseUnitID;
+    public int nowChooseUnitID=-1;
 
     // 当前选择中的单位类型
-    public CardType nowChooseUnitType;
+    public CardType nowChooseUnitType=CardType.None;
 
     // 本地玩家数据(不参与数据同步)
     // 人口上限
     public int PopulationCost { get; private set; }
-    public int NowPopulation=0;
+    public int NowPopulation=0; 
+    // 玩家拥有的废墟所在的cellID (新增,不需要网络同步)
+    public List<int> PlayerRuinCells=new List<int>();
 
     // 单位死亡数
     public int DeadUnitCount=0;
@@ -376,32 +378,7 @@ public class PlayerDataManager : MonoBehaviour
         if (!allPlayersData.ContainsKey(playerId))
         {
             allPlayersData[playerId] = new PlayerData(playerId);
-
-            // 设置人口上限
-            if(playerId==GameManage.Instance.LocalPlayerID)
-            {
-                switch (allPlayersData[playerId].PlayerReligion)
-                {
-                    case Religion.MadScientistReligion:
-                        PopulationCost = 20;
-                        break;
-                    case Religion.MirrorLakeReligion:
-                        PopulationCost = 20;
-                        break;
-                    case Religion.RedMoonReligion:
-                        // 同时设置被动回合
-                        RedMoonSkillCount = 0;
-                        PopulationCost = 26;
-                        break;
-                    case Religion.SilkReligion:
-                        PopulationCost = 20;
-                        break;
-                    case Religion.MayaReligion:
-                        PopulationCost = 20;
-                        break;
-                 
-                }
-            }
+         
             //allPlayersData[playerId].SetReligion();
             Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }
@@ -412,9 +389,35 @@ public class PlayerDataManager : MonoBehaviour
         PieceManager.Instance.SetPieceRligion(allPlayersData[playerId].PlayerReligion);
     
     }
+    // 设置人口 放置在Create之后
+    public void SetPlayerPopulationCost()
+    { 
+        
+            switch (allPlayersData[GameManage.Instance.LocalPlayerID].PlayerReligion)
+            {
+                case Religion.MadScientistReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.MirrorLakeReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.RedMoonReligion:
+                    // 同时设置被动回合
+                    RedMoonSkillCount = 0;
+                    PopulationCost = 26;
+                    break;
+                case Religion.SilkReligion:
+                    PopulationCost = 20;
+                    break;
+                case Religion.MayaReligion:
+                    PopulationCost = 20;
+                    break;
 
-    // 获取玩家数据
-    public PlayerData GetPlayerData(int playerId)
+            }
+            Debug.Log(" PopulationCost is " + PopulationCost);
+    }
+        // 获取玩家数据
+        public PlayerData GetPlayerData(int playerId)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
@@ -650,6 +653,29 @@ public class PlayerDataManager : MonoBehaviour
         return GameManage.Instance.GetCellObject(pos).transform.position;
     }
 
+    /// <summary>
+    /// 添加玩家的废墟cellID
+    /// </summary>
+    public void AddPlayerRuinCell(int cellID)
+    {
+        PlayerRuinCells.Add(cellID);
+    }
+
+    /// <summary>
+    /// 获取玩家的废墟cellID列表
+    /// </summary>
+    public List<int> GetPlayerRuinCells()
+    {
+        return PlayerRuinCells;
+    }
+
+    /// <summary>
+    /// 移除玩家的废墟cellID
+    /// </summary>
+    public void RemovePlayerRuinCell(int cellID)
+    {
+        PlayerRuinCells.Remove(cellID);
+    }
 
     // 添加单位(种类与位置) - 返回生成的UnitID
     public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject = null, bool bUnitIsActivated = true)
@@ -1032,7 +1058,7 @@ public class PlayerDataManager : MonoBehaviour
         data.Resources = newResources;
         allPlayersData[playerId] = data;
 
-        Debug.Log($"Player {playerId} Resources updated to {newResources}");
+        //Debug.Log($"Player {playerId} Resources updated to {newResources}");
     }
 
     public int GetCreateUnitResoursesCost(CardType type)
@@ -1043,7 +1069,7 @@ public class PlayerDataManager : MonoBehaviour
                 return 3;
             case CardType.Farmer:
                 return 2;
-            case CardType.Solider:
+            case CardType.Soldier:
                 return 5;
             case CardType.Building:
                 return 3;

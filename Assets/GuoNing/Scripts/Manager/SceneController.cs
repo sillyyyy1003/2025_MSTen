@@ -46,6 +46,18 @@ public class SceneController : MonoBehaviour
 		}
 	}
 
+	private void Start()
+	{
+		if(SoundManager.Instance != null)
+		{
+			// 当场景加载开始时停止BGM
+			OnSceneLoadStarted += (sceneName)=>
+			{
+				SoundManager.Instance.StopBGM();
+			};
+		}
+	}
+
 	public void SwitchScene(string sceneName, Action onComplete = null)
 	{
 		if (isLoading || sceneName == currentSceneName) return;
@@ -68,6 +80,8 @@ public class SceneController : MonoBehaviour
 
 		// 第一步：淡出效果
 		yield return FadeManager.Instance.FadeToBlack().WaitForCompletion();
+
+		Debug.Log($"场景加载开始: {sceneName}");
 
 		// 第二步：异步加载场景
 		AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);

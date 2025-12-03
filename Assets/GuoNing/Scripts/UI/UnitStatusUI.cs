@@ -15,9 +15,11 @@ public class UnitStatusUI : MonoBehaviour
 
 	private int maxHP;
 	private int currentHP;
+	public int CurrentHP => currentHP;
 
 	private int maxAP;
 	private int currentAP;
+	public int CurrentAP => currentAP;
 
 	//================================
 	// プロパティ
@@ -25,11 +27,15 @@ public class UnitStatusUI : MonoBehaviour
 	[Header("HP UI")]
 	[SerializeField] private Image hpImage;
 	[SerializeField] private TMP_Text hpText;
-	[SerializeField] private Image pieceIcon;
+	[SerializeField] private RectTransform hpBarTransform;
 
 	[Header("AP UI")]
 	[SerializeField] private Image apImage;
+	[SerializeField] private RectTransform apBarTransform;
 	[SerializeField] private TMP_Text apText;
+
+	[Header("PieceIcon")]
+	[SerializeField] private Image pieceIcon;
 
 	//================================
 	// メソッド
@@ -93,6 +99,12 @@ public class UnitStatusUI : MonoBehaviour
 
 	private void UpdateAPUI()
 	{
+		if (maxAP == 0)
+		{
+			apBarTransform.gameObject.SetActive(false);
+			return;
+		}
+
 		if (apImage != null)
 			apImage.fillAmount = maxAP > 0 ? (float)currentAP / maxAP : 0f;
 
@@ -109,7 +121,7 @@ public class UnitStatusUI : MonoBehaviour
 			case CardType.Missionary:
 				pieceIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.HPBar_Icon, "Temp_missionary");
 				break;
-			case CardType.Solider:
+			case CardType.Soldier:
 				pieceIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.HPBar_Icon, "Temp_soldier");
 				break;
 			case CardType.Farmer:

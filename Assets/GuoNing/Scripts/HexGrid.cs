@@ -444,7 +444,7 @@ public class HexGrid : MonoBehaviour
 			HexCell current = cells[currentPathToIndex];
 			while (current.Index != currentPathFromIndex)
 			{
-				current.SetLabel(null);
+				//current.SetLabel(null);
 				current.DisableHighlight();
 				current = cells[current.PathFromIndex];
 			}
@@ -467,7 +467,7 @@ public class HexGrid : MonoBehaviour
 			while (current.Index != currentPathFromIndex)
 			{
 				int turn = (current.Distance - 1) / speed;
-				current.SetLabel(turn.ToString());
+				//current.SetLabel(turn.ToString());
 				current.EnableHighlight(Color.white);
 				current = cells[current.PathFromIndex];
 			}
