@@ -25,7 +25,10 @@ public class SkillNode : MonoBehaviour
 	[SerializeField]
 	private Image mask;
 	[SerializeField]
-	private TMP_Text text;	// 用于显示简易技能说明
+	private TMP_Text text;		// 用于显示简易技能说明
+	[SerializeField]	
+	private Image iconImage;	// 用于显示技能图标
+
 	private RectTransform levelUpPanel;
 	private LevelUpButton levelUpButton;
 
@@ -38,7 +41,7 @@ public class SkillNode : MonoBehaviour
 
 	public void Initialize(Sprite sprite, string skillDescription, int _skillIndex, PieceType _pieceType, TechTree _techTree, RectTransform _levelUpPanel, LevelUpButton _button)
 	{
-		skillButton.image.sprite = sprite;
+		iconImage.sprite = sprite;
 		text.text = skillDescription;
 	
 		skillIndex = _skillIndex;
