@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Net;
 using UnityEngine;
 using GameData;
+using System.Net.NetworkInformation;
 
 
 // 场景状态管理，需要切换场景保存参数时使用
@@ -72,7 +73,7 @@ public class SceneStateManager : MonoBehaviour
             PlayerIP = GetLocalIPv4();
 
             // 2025.11.17 Guoning 如果是服务器 则生成地图序列编号
-            ChosseRandomMap();
+            ChooseRandomMap();
 
         }
         else
@@ -80,12 +81,13 @@ public class SceneStateManager : MonoBehaviour
             SavePlayerName("MisumiUika");
             PlayerIP = GetLocalIPv4();
         }
+
         bIsServer = isServer;
 
 
         // 2025.11.17 Guoning 随机选择宗教
         // 2025.11.17 RI 现有宗教单位数不足以随机，暂时注释
-        //ChooseRandomReligion();
+        ChooseRandomReligion();
 
 	}
 
@@ -128,16 +130,38 @@ public class SceneStateManager : MonoBehaviour
     string GetLocalIPv4()
     {
         string localIP = "";
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList)
+
+        // 获取所有网络接口
+        NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+        foreach (NetworkInterface ni in interfaces)
         {
-            // 只要 IPv4，且不是回环地址
-            if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+            // 跳过非活动、回环和虚拟网卡
+            if (ni.OperationalStatus != OperationalStatus.Up)
+                continue;
+            if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                continue;
+            // 跳过VMware等虚拟网卡
+            if (ni.Description.Contains("VMware") ||
+                ni.Description.Contains("VirtualBox") ||
+                ni.Description.Contains("Hyper-V") ||
+                ni.Name.Contains("VMnet"))
+                continue;
+
+            // 获取该网卡的IP信息
+            IPInterfaceProperties ipProps = ni.GetIPProperties();
+            foreach (UnicastIPAddressInformation ip in ipProps.UnicastAddresses)
             {
-                localIP = ip.ToString();
-                break;
+                // 只要IPv4地址
+                if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    localIP = ip.Address.ToString();
+                    Debug.Log($"找到网卡: {ni.Name} ({ni.Description}) - IP: {localIP}");
+                    return localIP; // 找到第一个物理网卡就返回
+                }
             }
         }
+        Debug.Log("ip is "+ string.IsNullOrEmpty(localIP));
         return string.IsNullOrEmpty(localIP) ? "未找到局域网 IPv4 地址" : localIP;
     }
 
@@ -147,7 +171,8 @@ public class SceneStateManager : MonoBehaviour
     private void ChooseRandomReligion()
     {
         // 生成一个随机值（目前为1~4 之后扩展到1~8）
-        int religion = Random.Range(1, 4);
+
+        int religion = Random.Range(1, 3);
         PlayerReligion = (Religion)religion;
 
     }
@@ -155,7 +180,7 @@ public class SceneStateManager : MonoBehaviour
     /// <summary>
     /// 随机选择地图
     /// </summary>
-    private void ChosseRandomMap()
+    private void ChooseRandomMap()
     {
 		// map 1001~1010
 		mapSerialNumber = Random.Range(1001, 1010);

@@ -7,6 +7,7 @@ using GamePieces;
 using DG.Tweening.Core.Easing;
 using UnityEngine.UIElements;
 using DG.Tweening;
+using static UnityEngine.GraphicsBuffer;
 
 //25.11.4 RI 添加序列化Vector3 变量
 
@@ -181,16 +182,6 @@ public class PieceManager : MonoBehaviour
     public event Action<int> OnEnemyPieceCreated;      // 敵駒ID
 
 
-    public event Action<int, int> OnPieceHPChanged;
-    public event Action<int, int> OnPieceHPLevelUpgraded;
-    public event Action<int, int> OnPopeSwapCDLevelUpgraded;
-    public event Action<int, int> OnPopeBuffLevelUpgraded;
-    public event Action<int, int> OnMissionaryOccupyLevelUpgraded;
-    public event Action<int, int> OnMissionaryConvertLevelUpgraded;
-    public event Action<int, int> OnFarmerSacrificeLevelUpgraded;
-    public event Action<int, int> OnMilitaryAttackLevelUpgraded;
-
-
 
     void Awake()
     {
@@ -246,7 +237,28 @@ public class PieceManager : MonoBehaviour
         return localPlayerID;
     }
 
+    //25.11.21 RI add Get Pope swap cooldown
+    public Unity.Mathematics.int2 GetPopeSwapCooldown(int pieceID)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+        int max = 0;
+        switch (piece)
+        {
+            case Pope pope:
+                max = pope.GetMaxSwapCooldown();
+                break;
 
+        }
+        //Debug.Log("pope now swap cooldown is "+ piece.PopeSwapPosRemaining+" max cooldown is "+max);
+
+        Unity.Mathematics.int2 popeCoolDown = new Unity.Mathematics.int2(piece.PopeSwapPosRemaining, max);
+
+        return popeCoolDown;
+    }
     //25.11.21 RI add Get Pope swap cooldown
     public bool GetCanPopeSwap(int pieceID)
     {
@@ -255,12 +267,15 @@ public class PieceManager : MonoBehaviour
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return false;
         }
-        switch (piece)
+     
+        if (piece.PopeSwapPosRemaining > 0)
         {
-            case Pope pope:
-                return true;
+            return false;
         }
-         return false;
+
+        return true;
+
+      
     }
 
     #region 駒の生成
@@ -331,7 +346,7 @@ public class PieceManager : MonoBehaviour
         nextPieceID++;
 
         // 死亡イベントを購読
-        piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
+        //piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
 
         Debug.Log($"駒を生成しました: ID={pieceID}, Type={pieceType}, Religion={religion}, PlayerID={playerID}");
         OnPieceCreated?.Invoke(pieceID);
@@ -407,7 +422,7 @@ public class PieceManager : MonoBehaviour
             allPiecesSyncData.Add(spd.pieceID, spd);
 
         // 死亡イベントを購読
-        piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
+        //piece.OnPieceDeath += (deadPiece) => HandlePieceDeath(deadPiece.PieceID);
 
         // syncPieceDataから状態を設定
         try
@@ -549,18 +564,174 @@ public class PieceManager : MonoBehaviour
         }
     }
 
-    #endregion
+	#endregion
 
-    #region アップグレード関連
+	#region アップグレード関連
+	//================追加Upgrade方法================
+	//2025.12.01 Guoning
 
     /// <summary>
-    /// 駒の共通項目（HP/AP）をアップグレード
-    /// 指定された駒と同じ職業のすべての自分の駒にアップグレードを適用
+    /// 通过PieceType和升级类型来给所有棋子升级
     /// </summary>
-    /// <param name="pieceID">駒ID</param>
-    /// <param name="upgradeType">アップグレード項目</param>
-    /// <returns>成功したらsyncPieceDataを返す</returns>
-    public syncPieceData? UpgradePiece(int pieceID, PieceUpgradeType upgradeType)
+    /// <param name="pieceType">棋子类型</param>
+    /// <param name="upgradeType">升级类型</param>
+    /// <returns></returns>
+	public bool UpgradePiece(PieceType pieceType, PieceUpgradeType upgradeType)
+	{
+
+		//// 指定された駒の職業を取得
+		PieceType targetPieceType = pieceType;
+		if (targetPieceType == PieceType.None)
+		{
+			Debug.LogError($"駒の職業が不明です.");
+			return false;
+		}
+        // 同じ職業のすべての自分の駒を取得
+        int playerID = GameManage.Instance.LocalPlayerID;
+		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
+
+		bool anySuccess = false;
+
+		foreach (int targetID in sameProfessionPieces)
+		{
+			if (!allPieces.TryGetValue(targetID, out Piece targetPiece)) continue;
+
+			bool success = false;
+			switch (upgradeType)
+			{
+				case PieceUpgradeType.HP:
+					success = targetPiece.UpgradeHP();
+					break;
+				case PieceUpgradeType.AP:
+					success = targetPiece.UpgradeAP();
+					break;
+				default:
+					Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+                    return false;
+			}
+
+			if (success)
+			{
+                // 创建新的同步数据
+                syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
+
+                // 更新同步数据
+				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
+				var unit = playerData.PlayerUnits[index];  // 拷贝
+				if (index >= 0)
+				{
+					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
+                    unit.PlayerUnitDataSO.pieceID = targetID;  
+					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+				}
+
+
+				// 更新UI
+				if (UnitStatusUIManager.Instance != null)
+                {
+                    UnitStatusUIManager.Instance.UpdateHPByID(targetID, targetPiece.CurrentHP, targetPiece.CurrentMaxHP);
+					UnitStatusUIManager.Instance.UpdateAPByID(targetID, targetPiece.CurrentAP, targetPiece.CurrentMaxAP);
+				}
+
+                // 播放特效
+                EffectManager.Instance.PlayEffect(upgradeType, targetPiece.transform.position, Quaternion.identity);
+
+				anySuccess = true;
+			}
+		}
+
+		return anySuccess;
+	}
+
+	/// <summary>
+	/// 駒の職業別専用項目をアップグレード
+	/// 指定された駒と同じ職業のすべての自分の駒にアップグレードを適用
+	/// </summary>
+	/// <param name="pieceID">駒ID</param>
+	/// <param name="specialUpgradeType">職業別アップグレード項目</param>
+	/// <returns>成功したらsyncPieceDataを返す</returns>
+	public bool UpgradePieceSpecial(PieceType pieceType, SpecialUpgradeType specialUpgradeType)
+	{
+        // 指定された駒の職業を取得
+		PieceType targetPieceType = pieceType;
+		if (targetPieceType == PieceType.None)
+		{
+			Debug.LogError($"駒の職業が不明です.");
+			return false;
+		}
+		// 同じ職業のすべての自分の駒を取得
+		int playerID = GameManage.Instance.LocalPlayerID;
+		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
+
+		bool anySuccess = false;;
+
+		foreach (int targetID in sameProfessionPieces)
+		{
+			if (!allPieces.TryGetValue(targetID, out Piece targetPiece)) continue;
+
+			bool success = false;
+			switch (targetPiece)
+			{
+				case Farmer farmer:
+					if (specialUpgradeType == SpecialUpgradeType.FarmerSacrifice)
+						success = farmer.UpgradeSacrifice();
+					break;
+
+				case MilitaryUnit military:
+					if (specialUpgradeType == SpecialUpgradeType.MilitaryAttackPower)
+						success = military.UpgradeAttackPower();
+					break;
+
+				case Missionary missionary:
+					if (specialUpgradeType == SpecialUpgradeType.MissionaryOccupy)
+						success = missionary.UpgradeOccupy();
+					else if (specialUpgradeType == SpecialUpgradeType.MissionaryConvertEnemy)
+						success = missionary.UpgradeConvertEnemy();
+					break;
+
+				case Pope pope:
+					if (specialUpgradeType == SpecialUpgradeType.PopeSwapCooldown)
+						success = pope.UpgradeSwapCooldown();
+					else if (specialUpgradeType == SpecialUpgradeType.PopeBuff)
+						success = pope.UpgradeBuff();
+					break;
+			}
+
+			if (success)
+			{
+				anySuccess = true;
+				// 创建新的同步数据
+				syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
+
+				// 更新同步数据
+				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
+				if (index >= 0)
+				{
+					var unit = playerData.PlayerUnits[index];  // 拷贝
+					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
+					unit.PlayerUnitDataSO.pieceID = targetID;
+					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+				}
+			}
+		}
+
+        return anySuccess;
+	}
+	//================追加Upgrade方法================
+
+
+
+
+	/// <summary>
+	/// 駒の共通項目（HP/AP）をアップグレード
+	/// 指定された駒と同じ職業のすべての自分の駒にアップグレードを適用
+	/// </summary>
+	/// <param name="pieceID">駒ID</param>
+	/// <param name="upgradeType">アップグレード項目</param>
+	/// <returns>成功したらsyncPieceDataを返す</returns>
+	public syncPieceData? UpgradePiece(int pieceID, PieceUpgradeType upgradeType)
     {
         if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
@@ -837,7 +1008,6 @@ public class PieceManager : MonoBehaviour
                 Debug.LogError($"駒の職業が明確になっていません:ID={pieceID}");
                 return -1;
         }    
-    
     }
 
     /// <summary>
@@ -1019,13 +1189,15 @@ public class PieceManager : MonoBehaviour
             .ToList();
     }
 
-    /// <summary>
-    /// 駒の操作に必要なAPコストを取得
-    /// </summary>
-    /// <param name="pieceID">駒ID</param>
-    /// <param name="type">操作タイプ</param>
-    /// <returns>APコスト（取得失敗時は-1）</returns>
-    public int GetUnitOperationCostByType(int pieceID, GameData.OperationType type)
+  
+
+	/// <summary>
+	/// 駒の操作に必要なAPコストを取得
+	/// </summary>
+	/// <param name="pieceID">駒ID</param>
+	/// <param name="type">操作タイプ</param>
+	/// <returns>APコスト（取得失敗時は-1）</returns>
+	public int GetUnitOperationCostByType(int pieceID, GameData.OperationType type)
     {
         if (!allPieces.TryGetValue(pieceID, out Piece piece))
         {
@@ -1118,8 +1290,9 @@ public class PieceManager : MonoBehaviour
             };
         }
 
+        //25.11.27 RI 修改销毁逻辑
         // 駒を削除（内部処理）
-        RemovePieceInternal(pieceID, piece);
+        //RemovePieceInternal(pieceID, piece);
 
         // GameManagerに通知（己方の駒の場合のみ）
         if (isLocalPiece)
@@ -1535,10 +1708,10 @@ public class PieceManager : MonoBehaviour
 
         if (pope.PopeSwapPosRemaining > 0)
         {
-            Debug.LogError($"駒ID={popeID}の位置交換スキルはクールダウン中です。");
+            Debug.LogWarning($"駒ID={popeID}の位置交換スキルはクールダウン中です。");
             return false;
         }
-        
+        SetPopeSwapCD(popeID);
         return true;
     }
 
@@ -1709,7 +1882,7 @@ public class PieceManager : MonoBehaviour
             if (allPieces.TryGetValue(pieceID, out Piece piece))
             {
                 //25.11.9  RI 添加测试debug
-                Debug.Log($"駒ID={pieceID} ");
+                //Debug.Log($"駒ID={pieceID} ");
 
                 // AP回復
                 piece.RecoverAP(piece.Data.aPRecoveryRate);

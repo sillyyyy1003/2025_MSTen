@@ -41,11 +41,7 @@ namespace GamePieces
 
         // ===== イベント =====
 
-        //GameManagerとの連絡用
-        public static event Action<Piece, Piece> OnAnyCharmed;    // グローバルイベント
-        public static event Action<Piece> OnAnyUncharmed;         // グローバルイベント
-
-        public event Action<Piece> OnPieceDeath;
+        //public event Action<Piece> OnPieceDeath;
         public event Action<Piece,Piece> OnCharmed;//(魅惑された駒、魅惑した駒)
         public event Action<Piece> OnUncharmed;//魅惑状態が解除して元の陣営に戻った駒
 
@@ -180,7 +176,7 @@ namespace GamePieces
                 return true;
             }
 
-            Debug.Log($"教皇駒ID={PieceID}は今位置交換スキル発動可能です。");
+            //Debug.Log($"教皇駒ID={PieceID}は今位置交換スキル発動可能です。");
             return true;
         }
 
@@ -339,8 +335,7 @@ namespace GamePieces
             currentMaxHP = newMaxHP;
             currentHP = newMaxHP * hpRatio; // 割合を維持してHPを再計算
 
-
-
+           
             Debug.Log($"{pieceData.pieceName} のHPがレベル{hpLevel}にアップグレードしました（最大HP: {currentMaxHP}）");
             return true;
         }
@@ -461,8 +456,9 @@ namespace GamePieces
         protected virtual void Die()
         {
             ChangeState(PieceState.Dead);
-            OnPieceDeath?.Invoke(this);
-            Destroy(gameObject);
+            // 25.11.27 RI 修改销毁逻辑
+            //OnPieceDeath?.Invoke(this);
+            //Destroy(gameObject);
             //StartCoroutine(DeathAnimation());//死亡アニメーションも一応
         }
         

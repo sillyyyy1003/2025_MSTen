@@ -216,7 +216,7 @@ public class TitleUIManager : MonoBehaviour
 		}
 
 
-		SceneManager.LoadScene("MainGame");
+		SceneController.Instance.SwitchScene("MainGame");
 	}
 
 
@@ -234,7 +234,8 @@ public class TitleUIManager : MonoBehaviour
 		{
 			Debug.LogError("SceneStateManager.Instance is null!");
 		}
-		SceneManager.LoadScene("MainGame");
+
+		SceneController.Instance.SwitchScene("MainGame");
 
 	}
 

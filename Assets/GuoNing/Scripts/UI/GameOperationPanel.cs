@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 
 /// <summary>
@@ -27,6 +28,7 @@ public class GameOperationPanel : MonoBehaviour
 	public Canvas uiCanvas;
 	public RectTransform StorePanelTransform;
 	public RectTransform ActionPanelTransform;
+	public Image MouseImage;
 	[Header("Text")]
 	public TMP_Text OperationPanelText;
 	public TMP_Text[] CostText= new TMP_Text[4];
@@ -68,13 +70,14 @@ public class GameOperationPanel : MonoBehaviour
 		}
 
 		OnCardTypeBought += HandleResourceUpdate;
+		OnCardTypeBought +=() => SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
 		UpdateCostText();
 	}
 
 	void Update()
 	{
-		
-		if(GameManage.Instance.GetIsGamingOrNot() == false)
+
+		if (GameManage.Instance.GetIsGamingOrNot() == false) 
 		{
 			// 关闭面板
 			StorePanelTransform.gameObject.SetActive(false);
@@ -98,10 +101,11 @@ public class GameOperationPanel : MonoBehaviour
 				CloseStorePanel();
 			}
 
+			// 当选择对象发生变化的时候 更新操作面板
+			UpdateOperationPanelInfo();
 		}
 
-		// 当选择对象发生变化的时候 更新操作面板
-		UpdateOperationPanelInfo();
+		
 	}
 
 	/// <summary>随时更新操作面板</summary>
@@ -144,7 +148,7 @@ public class GameOperationPanel : MonoBehaviour
 				HandlePope(cell, pos, isLocalPlayer);
 				break;
 
-			case CardType.Solider:
+			case CardType.Soldier:
 				HandleSolider(cell, pos, isLocalPlayer);
 				break;
 		}
@@ -230,7 +234,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyArmy()
 	{
-		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Solider))
+		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Soldier))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 	}
@@ -252,10 +256,12 @@ public class GameOperationPanel : MonoBehaviour
 			var target = dataManager.FindUnit(dataManager.GetUnitOwner(pos), pos);
 			if (target.HasValue && target.Value.IsBuilding())
 			{
+				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 				ShowPanel("建物入る.");
 			}
 			else
 			{
+				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Cure);
 				ShowPanel("治療：" + cost);
 			}
@@ -266,6 +272,7 @@ public class GameOperationPanel : MonoBehaviour
 	{
 		if (!isLocal)
 		{
+			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
 			ShowPanel("伝教：" + cost);
 			return;
@@ -277,6 +284,7 @@ public class GameOperationPanel : MonoBehaviour
 			int cellOwner = dataManager.GetCellOwner(cell.Index);
 			if (cellOwner != GameManage.Instance.LocalPlayerID)
 			{
+				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int occupy = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Occupy);
 				ShowPanel("占領:" + occupy);
 			}
@@ -291,6 +299,7 @@ public class GameOperationPanel : MonoBehaviour
 		// 如果冷却未结束 则不能交换位置则显示冷却信息
 		if (!PieceManager.Instance.GetCanPopeSwap(dataManager.nowChooseUnitID))
 		{
+			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			ShowPanel("Switch is not ready!");
 			return;
 		}
@@ -301,6 +310,7 @@ public class GameOperationPanel : MonoBehaviour
 			// 教皇无法自己交换自己
 			if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) != cell.Index)
 			{
+				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 				ShowPanel("位置交換:2");
 			}
 		}
@@ -310,6 +320,7 @@ public class GameOperationPanel : MonoBehaviour
 	{
 		if (!isLocal)
 		{
+			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Attack);
 			ShowPanel("攻撃：" + cost);
 		}
@@ -335,6 +346,7 @@ public class GameOperationPanel : MonoBehaviour
 			return;
 		}
 
+		MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 		int moveCost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Move);
 		ShowPanel("移動:" + moveCost);
 	}
@@ -386,7 +398,7 @@ public class GameOperationPanel : MonoBehaviour
 		GameData.Religion playerReligion = SceneStateManager.Instance.PlayerReligion;
 
 		CostText[(int)BuyType.Missionary].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Missionary).ToString();
-		CostText[(int)BuyType.Army].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Solider).ToString();
+		CostText[(int)BuyType.Army].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Soldier).ToString();
 		CostText[(int)BuyType.Farmer].text = unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Farmer).ToString();
 		CostText[(int)BuyType.Building].text =
 			unitDataInterface.GetCreateUnitResoursesCost(playerReligion, CardType.Building).ToString();

@@ -27,8 +27,6 @@ namespace Buildings
 
 
         // 25.11.26 RI add now slot count and cant use slot
-        private int nowActivedSlotCount = 0;
-        private int nowCantUseSlotCount = 0;
         // ===== 各項目の個別レベル =====
         private int hpLevel = 0;            // HP レベル (0-2)
         private int attackRangeLevel = 0;   // 攻撃範囲レベル (0-2)
@@ -36,6 +34,7 @@ namespace Buildings
 
         // 配置された農民のリスト
         private List<FarmerSlot> farmerSlots = new List<FarmerSlot>();
+        private List<NewFarmerSlot> newFarmerSlots = new List<NewFarmerSlot>();
 
         // 25.11.26 RI add slots
         private int slots =0;
@@ -57,6 +56,10 @@ namespace Buildings
             1f - (float)remainingBuildCost / buildingData.buildingResourceCost : 1f;
         public int RemainingBuildCost => remainingBuildCost;
         public List<FarmerSlot> FarmerSlots => farmerSlots;
+
+        //25.11.28 Ri add new FarmerSlots
+        public List<NewFarmerSlot> NewFarmerSlots => newFarmerSlots;
+
         public int UpgradeLevel => upgradeLevel;
         public int HPLevel => hpLevel;
         public int AttackRangeLevel => attackRangeLevel;
@@ -92,6 +95,8 @@ namespace Buildings
                 for (int i = 0; i < initialSlots; i++)
                 {
                     farmerSlots.Add(new FarmerSlot());
+                    // RT 25.11.28 AddNewSlot
+                    newFarmerSlots.Add(new NewFarmerSlot());
                 }
             }
 
@@ -360,6 +365,19 @@ namespace Buildings
                 currentSkillUses = newMaxSlots;
             }
 
+            // 25.11.28 RI add new farmer Slot
+            if (newMaxSlots > newFarmerSlots.Count)
+            {
+                // スロット数を増やす
+                int slotsToAdd = newMaxSlots - newFarmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    newFarmerSlots.Add(new NewFarmerSlot());
+                }
+                currentSkillUses = newMaxSlots;
+            }
+
+
             Debug.Log($"建物のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHp}, スロット数={newMaxSlots}");
 
             // 新しい機能のログ
@@ -481,22 +499,56 @@ namespace Buildings
         //25.11.26 RI add new FarmerEnter
         public bool FarmerEnter(int ap)
         {
-            nowActivedSlotCount += 1;
-            if (nowActivedSlotCount+nowCantUseSlotCount >= slots)
+            Debug.Log("empty slot count is "+newFarmerSlots.Count+" farmer ap is "+ap);
+            bool hasEmptySlot = false; ;
+            for (int i=0;i<newFarmerSlots.Count;i++)
             {
-                nowActivedSlotCount -= 1;
-                return false;
+                if (newFarmerSlots[i].canInSlot)
+                {
+                    hasEmptySlot = true;
+                    newFarmerSlots[i].farmerAP = ap;
+                    newFarmerSlots[i].canInSlot = false;
+                    Debug.Log("this slot is "+i+" this slot ap is " + newFarmerSlots[i].farmerAP + " can In is " + newFarmerSlots[i].canInSlot);
+                    break;
+                }
             }
-            return true;
+          
+            return hasEmptySlot;
         }
-        public void SetCantUse()
+        //25.11.26 RI add New Get Resources
+        public int NewGetResource()
         {
-            nowCantUseSlotCount += 1;
+            int res=0;
+            for (int i = 0; i < newFarmerSlots.Count; i++)
+            {
+                if (!newFarmerSlots[i].canInSlot&& newFarmerSlots[i].isActived)
+                {
+                    res += 2;
+                    newFarmerSlots[i].farmerAP -= 1;
+                    if (newFarmerSlots[i].farmerAP == 0)
+                    {
+                        newFarmerSlots[i].isActived = false;
+                        Debug.Log("this slot is unActived! " + i);
+                    }
+                }
+            }
+         
+
+            return res;
         }
-        //25.11.26 RI add Get Now Actived Slot
-        public int GetNowActivedSlot()
+        public bool GetBuildingActived()
         {
-            return nowActivedSlotCount;
+            bool actived = false;
+            foreach (var a in newFarmerSlots)
+            {
+                if (a.isActived)
+                {
+                    actived = true;
+                    break;
+                }
+            }
+
+            return actived;
         }
         /// <summary>
         /// スロット数をアップグレードする
@@ -539,7 +591,16 @@ namespace Buildings
             int newMaxSlots = buildingData.GetMaxSlotsByLevel(slotsLevel);
 
             // 25.11.26 RI add slots
-            slots = newMaxSlots;
+            if (newMaxSlots > newFarmerSlots.Count)
+            {
+                int slotsToAdd = newMaxSlots - newFarmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    newFarmerSlots.Add(new NewFarmerSlot());
+                }
+                currentSkillUses += slotsToAdd;
+            }
+
             // スロット数を増やす
             if (newMaxSlots > farmerSlots.Count)
             {
@@ -657,6 +718,15 @@ namespace Buildings
                     farmerSlots.Add(new FarmerSlot());
                 }
             }
+            //25.11.28 RI add new FarmerSlots
+            if (newMaxSlots > newFarmerSlots.Count)
+            {
+                int slotsToAdd = newMaxSlots - newFarmerSlots.Count;
+                for (int i = 0; i < slotsToAdd; i++)
+                {
+                    newFarmerSlots.Add(new NewFarmerSlot());
+                }
+            }
         }
 
 
@@ -679,9 +749,27 @@ namespace Buildings
         #endregion
 
         /// <summary>
+        /// 25.11.28 RI add new FarmerSlot
         /// 農民スロット管理クラス
         /// </summary>
         [Serializable]
+        public class NewFarmerSlot
+        {
+            // excess AP
+            public int farmerAP;
+
+            // Farmer can in
+            public bool canInSlot=true;
+            // is actived
+            public bool isActived=true;
+
+
+        }
+
+            /// <summary>
+            /// 農民スロット管理クラス
+            /// </summary>
+            [Serializable]
         public class FarmerSlot
         {
             private Farmer assignedFarmer;

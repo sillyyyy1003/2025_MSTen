@@ -1,4 +1,5 @@
-﻿using SoundSystem;
+﻿using GameData;
+using SoundSystem;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -571,5 +572,23 @@ public class SoundManager : MonoBehaviour
     public void PlayButtonClickedSound()
     {
         PlaySE(TYPE_SE.BUTTONCLICKED);
+	}
+
+    public void PlayGameMusic()
+    {
+
+        // 根据不同宗教选择不同的音乐
+		int localPlayerId = GameManage.Instance.LocalPlayerID;
+		Religion playerReligion = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerReligion;
+		switch (playerReligion)
+        {
+            case Religion.RedMoonReligion: PlayBGM(SoundSystem.TYPE_BGM.REDMOON_THEME); break;
+            case Religion.SilkReligion: PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME); break;
+
+            //...等待追加
+			default: PlayBGM(SoundSystem.TYPE_BGM.TITLE);break;
+		}
+		
+		
 	}
 }

@@ -17,6 +17,11 @@ public class ChangeMaterial : MonoBehaviour
 
     void Start()
     {
+      
+
+    }
+    public void InitMat()
+    {
         thisRender = GetComponent<Renderer>();
         if (thisRender == null)
         {
@@ -32,16 +37,15 @@ public class ChangeMaterial : MonoBehaviour
             outlineMaterials[i] = originalMaterials[i];
         }
         outlineMaterials[originalMaterials.Length] = OutlineMat;
-
+        Debug.Log("material init");
     }
-
     public void Outline()
     {
         if (bIsChanged || thisRender == null || OutlineMat == null)
         {
             return;
         }
-
+        Debug.Log("Show outline");
         bIsChanged = true;
         thisRender.materials = outlineMaterials;
     }

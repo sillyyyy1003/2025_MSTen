@@ -11,7 +11,6 @@ using UnityEngine;
 public class Pope : Piece
 {
     private PopeDataSO popeData;
-    private float lastSwapTime = -999f;
 
     // ===== 教皇専用の個別レベル =====
     private int swapCooldownLevel = 0; // 位置交換CDレベル (0-2)
@@ -137,11 +136,16 @@ public class Pope : Piece
         return true;
     }
 
-    /// <summary>
-    /// バフ効果をアップグレードする（リソース消費は呼び出し側で行う）
-    /// </summary>
-    /// <returns>アップグレード成功したらtrue</returns>
-    public bool UpgradeBuff()
+    //25.11.28 ri add get max cool down
+    public int GetMaxSwapCooldown()
+    {
+        return popeData.swapCooldown[swapCooldownLevel];
+    }
+        /// <summary>
+        /// バフ効果をアップグレードする（リソース消費は呼び出し側で行う）
+        /// </summary>
+        /// <returns>アップグレード成功したらtrue</returns>
+        public bool UpgradeBuff()
     {
         // 最大レベルチェック
         if (buffLevel >= 3)

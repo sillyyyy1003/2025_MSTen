@@ -1,14 +1,15 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.XR;
 
 /// <summary>
 /// ゲーム仮ロードUI
 /// </summary>
-[RequireComponent(typeof(Image))]
 public class GameLoadProgressUI : MonoBehaviour
 {
 	[Header("Start progress(%)")]
@@ -25,12 +26,14 @@ public class GameLoadProgressUI : MonoBehaviour
 	public float timeLimit = 1f;
 
 	public TextMeshProUGUI text;
+	public SpriteRenderer spriteRender;
+
 
 	private bool hasStartedRealLoading = false;
+	private Tween fakeLoadingTween;
+	private Tween realLoadingTween;
 
-	public event Action<bool> OnLoadingEnd;
-
-	private Coroutine loadRoutine;
+	//public event Action<bool> OnLoadingEnd;
 
 	private void Awake()
 	{
@@ -48,74 +51,101 @@ public class GameLoadProgressUI : MonoBehaviour
 		{
 			NetGameSystem.Instance.OnRoomStatusUpdated -= HandleRoomStatusUpdate;
 		}
+
 	}
 
 	private void Start()
 	{
 		text.text = $"{startProgress:F0}%";
-		GetComponent<Image>().fillAmount = 0;
+
 	}
+
+
 
 	//===========================================================
 	// 协程
 	//===========================================================
 
-	/// <summary>
-	/// 假加载 (0 → fakeProgress)
-	/// </summary>
-	private IEnumerator FakeLoadingRoutine()
+	public void StartFakeLoading(bool isSingle = false)
 	{
-		float timer = 0f;
 
-		while (timer < fakeLimit)
-		{
-			timer += Time.deltaTime;
-			float t = Mathf.Clamp01(timer / fakeLimit);
-
-			float progress = Mathf.Lerp(0, fakeProgress, t);
-
-			text.text = $"{progress:F0}%";
-			GetComponent<Image>().fillAmount = progress / endProgress;
-
-			yield return null;
-
-			// 如果玩家已经到齐，则跳过剩余 fake 加载
-			if (hasStartedRealLoading)
-				yield break;
-		}
+		// 防止重复播放
+		fakeLoadingTween?.Kill();
+		fakeLoadingTween = DOTween.To(
+				() => 0f,                   // 起点
+				value =>
+				{
+					// 更新 UI 数字与进度
+					text.text = $"{value:F0}%";
+				},
+				fakeProgress,               // 终点
+				fakeLimit                   // 时间
+			)
+			.SetEase(Ease.Linear)
+			.OnComplete(() =>
+			{
+				Debug.Log("[客户端] 假 Loading 完成，等待玩家到齐");
+				if (isSingle) StartRealLoading(isSingle);
+			});
 	}
 
-	/// <summary>
-	/// 真加载 (fakeProgress → 100)
-	/// </summary>
-	private IEnumerator RealLoadingRoutine()
+
+
+	public void StartRealLoading(bool isSingle=false)
 	{
-		float timer = 0f;
+		// 防止重复播放
+		realLoadingTween?.Kill();
+		GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
+		float start = fakeProgress;
+		realLoadingTween = DOTween.To(
+				() => start,
+				value =>
+				{
+					start = value;
 
-		while (timer < timeLimit)
-		{
-			timer += Time.deltaTime;
-			float t = Mathf.Clamp01(timer / timeLimit);
+					// 更新 UI
+					text.text = $"{value:F0}%";
+				},
+				endProgress,
+				timeLimit
+			)
+			.SetEase(Ease.Linear)
+			.OnComplete(() =>
+			{
+				GameManage.Instance._GameCamera.SetCanUseCamera(false);
+				Debug.Log("[客户端] 真实 Loading 完成，开始淡出动画");
+				gameObject.SetActive(false);					// 关闭Loading数字
+				spriteRender.gameObject.SetActive(false);		// 关闭黑屏遮罩
+				GameSceneUIManager.Instance.OnGameStarted();   // 通知游戏场景UI管理器游戏开始 显示游戏UI
 
-			float progress = Mathf.Lerp(fakeProgress, endProgress, t);
+				FadeManager.Instance.FadeFromBlack(1, () =>
+				{
 
-			text.text = $"{progress:F0}%";
-			GetComponent<Image>().fillAmount = progress / endProgress;
+					GameManage.Instance.SetIsGamingOrNot(true);             // 设置为游戏中状态
+					GameManage.Instance._GameCamera.SetCanUseCamera(true);  // 设置摄像头可用
+					if(!isSingle)GameManage.Instance.StartFirstTurn();      // 开始第一回合
+					//======在这里追加其他的游戏开始操作
 
-			yield return null;
-		}
+					// 2025.11.14 Guoning 播放音乐
+					SoundManager.Instance.PlayGameMusic();
+				});
 
-		// 加载完成
-		OnLoadingEnd?.Invoke(true);
 
-		gameObject.SetActive(false);
-
+			});
 	}
+
+
+
+
 
 	//===========================================================
 	// 回调
 	//===========================================================
 
+	/// <summary>
+	/// 当NetSystem房间状态更新时调用一次，让客户端玩家准备完成
+	/// </summary>
+	/// <param name="players"></param>
 	private void HandleRoomStatusUpdate(List<PlayerInfo> players)
 	{
 		if (!hasStartedRealLoading && players.Count >= 2)
@@ -124,26 +154,10 @@ public class GameLoadProgressUI : MonoBehaviour
 
 			hasStartedRealLoading = true;
 
-			// 停掉 fake 协程
-			if (loadRoutine != null)
-			{
-				StopCoroutine(loadRoutine);
-			}
-
-			// 启动真实加载
-			loadRoutine = StartCoroutine(RealLoadingRoutine());
+			NetGameSystem.Instance?.SetReadyStatus(true);
 		}
 	}
 
-	public void StartRealLoadingRoutine()
-	{
-		// 停掉 fake 协程
-		if (loadRoutine != null)
-		{
-			StopCoroutine(loadRoutine);
-		}
 
-		// 启动真实加载
-		loadRoutine = StartCoroutine(RealLoadingRoutine());
-	}
+
 }

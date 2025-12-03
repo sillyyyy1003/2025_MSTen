@@ -11,12 +11,12 @@ public static class ButtonMenuFactory
         {
             { "ButtonMenu_Root",       (MenuLevel.Root,CardType.None) },
             { "ButtonMenu_Second_Missionary", (MenuLevel.Second, CardType.Missionary) },
-            { "ButtonMenu_Second_Solider",   (MenuLevel.Second, CardType.Solider) },
+            { "ButtonMenu_Second_Solider",   (MenuLevel.Second, CardType.Soldier) },
             { "ButtonMenu_Second_Farmer",     (MenuLevel.Second, CardType.Farmer) },
             { "ButtonMenu_Second_Building",    (MenuLevel.Second, CardType.Building) },
             { "ButtonMenu_Second_Pope",       (MenuLevel.Second, CardType.Pope) },
             { "ButtonMenu_Third_Missionary", (MenuLevel.Third, CardType.Missionary) },
-            { "ButtonMenu_Third_Solider",   (MenuLevel.Third, CardType.Solider) },
+            { "ButtonMenu_Third_Solider",   (MenuLevel.Third, CardType.Soldier) },
             { "ButtonMenu_Third_Farmer",     (MenuLevel.Third, CardType.Farmer) },
             { "ButtonMenu_Third_Building",    (MenuLevel.Third, CardType.Building) },
             { "ButtonMenu_Third_Pope",       (MenuLevel.Third, CardType.Pope) },
@@ -88,7 +88,7 @@ public static class ButtonMenuFactory
         {
             case MenuLevel.Root:
                 list.Add(new NaviButtonData(0, CardType.Missionary, MenuLevel.Second));
-                list.Add(new NaviButtonData(1, CardType.Solider, MenuLevel.Second));
+                list.Add(new NaviButtonData(1, CardType.Soldier, MenuLevel.Second));
                 list.Add(new NaviButtonData(2, CardType.Farmer, MenuLevel.Second));
                 list.Add(new NaviButtonData(3, CardType.Building, MenuLevel.Second));
                 list.Add(new NaviButtonData(4, CardType.Pope, MenuLevel.Second));
@@ -128,7 +128,7 @@ public static class ButtonMenuFactory
                 list.Add(new CardSkillButtonData(4, type, CardSkill.None, false));
                 list.Add(new NaviButtonData(5, CardType.None, MenuLevel.Root));
                 break;
-            case CardType.Solider:
+            case CardType.Soldier:
                 list.Add(new CardSkillButtonData(0, type, CardSkill.NormalAttack));
                 list.Add(new CardSkillButtonData(1, type, CardSkill.SpecialAttack));
                 list.Add(new NaviButtonData(2, type, MenuLevel.Third));
@@ -182,7 +182,7 @@ public static class ButtonMenuFactory
                 list.Add(new ParamUpdateButtonData(3, type, TechTree.Conversion));
                 list.Add(new ParamUpdateButtonData(4, type, TechTree.Heresy));
                 break;
-            case CardType.Solider:
+            case CardType.Soldier:
                 list.Add(new ParamUpdateButtonData(0, type, TechTree.HP));
                 list.Add(new ParamUpdateButtonData(1, type, TechTree.AP));
                 list.Add(new ParamUpdateButtonData(2, type, TechTree.ATK));

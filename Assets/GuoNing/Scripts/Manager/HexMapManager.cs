@@ -49,6 +49,8 @@ public class HexMapManager : MonoBehaviour
 
 	private void Start()
 	{
+		//serialNumber = SceneStateManager.Instance.MapSerialNumber;
+		Debug.Log(SceneStateManager.Instance.MapSerialNumber);
 		// 暂时放在Start里 如果有需要 注释掉这里即可
 		LoadMap(serialNumber);
 	}
