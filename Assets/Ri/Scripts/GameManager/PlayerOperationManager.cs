@@ -3052,6 +3052,7 @@ public class PlayerOperationManager : MonoBehaviour
                 building.SetHP(msg.BuildingRemainingHP);
                 Debug.Log($"[网络建筑攻击] 建筑 {building.BuildingID} 受到攻击，剩余HP: {building.CurrentHP}");
             }
+            UnitStatusUIManager.Instance.UpdateHPByID(building.BuildingID, building.CurrentHP);
         }
 
         Debug.Log($"[网络建筑攻击] 攻击处理完成");
