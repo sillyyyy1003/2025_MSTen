@@ -3900,7 +3900,7 @@ public class PlayerOperationManager : MonoBehaviour
             UnitStatusUIManager.Instance.RemoveStatusUI(msg.UnitID);
               // 添加本地HP显示
               UnitStatusUIManager.Instance.CreateStatusUI(msg.UnitID,
-                 PieceManager.Instance.GetPieceAllHP(msg.UnitID),
+                (int) PieceManager.Instance.GetPieceHP(msg.UnitID),
                   PieceManager.Instance.GetPieceAP(msg.UnitID),
                    unitObj.transform,
                   PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype));
@@ -4145,8 +4145,18 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方建筑 ID:{msg.NewUnitSyncData.pieceID}");
                   
                     // 添加HP
-                    UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, CardType.Building);
-                    UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
+                    if(msg.UnitType!=(int)CardType.Building)
+                    {
+                        UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, CardType.Building);
+                        UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
+
+                    }
+                    else
+                    {
+                        UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.BuildingData.Value.currentHP, 0, unitObj.transform, CardType.Building);
+                        UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
+
+                    }
 
 
                 }
