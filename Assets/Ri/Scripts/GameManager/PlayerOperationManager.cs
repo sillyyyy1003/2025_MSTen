@@ -2069,7 +2069,10 @@ public class PlayerOperationManager : MonoBehaviour
             GameManage.Instance.SetCellObject(buildingPos2D, GameManage.Instance._BuildingManager.GetBuildingGameObject());
             Debug.Log($"建筑已作为Unit添加到PlayerData.PlayerUnits: BuildingID={buildData.buildingID}");
 
-     
+            // 添加HP
+            UnitStatusUIManager.Instance.CreateStatusUI(buildData.buildingID, buildData.currentHP, 0, localPlayerUnits[buildingPos2D].transform, CardType.Building);
+            UnitStatusUIManager.Instance.UpdateHPByID(buildData.buildingID, buildData.currentHP);
+
             // 3. 网络同步：使用现有的UNIT_ADD消息
             if (NetGameSystem.Instance != null)
             {
@@ -4139,7 +4142,7 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方建筑 ID:{msg.NewUnitSyncData.pieceID}");
                   
                     // 添加HP
-                    UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype));
+                    UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, CardType.Building);
                     UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
 
 
