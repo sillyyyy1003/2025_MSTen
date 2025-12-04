@@ -3168,6 +3168,9 @@ public class PlayerOperationManager : MonoBehaviour
             BuildingRuins[msg.BuildingOwnerId][RuinID] = ruin;
             RuinID++;
 
+            //移除UI
+            UnitStatusUIManager.Instance.RemoveStatusUI(msg.BuildingID);
+
             Debug.Log($"[网络建筑摧毁] 废墟已创建");
         });
 
@@ -3631,7 +3634,7 @@ public class PlayerOperationManager : MonoBehaviour
             UnitStatusUIManager.Instance.RemoveStatusUI(targetPieceID);
 
             UnitStatusUIManager.Instance.CreateStatusUI(targetPieceID,
-                PieceManager.Instance.GetPieceAllHP(targetPieceID),
+                (int)PieceManager.Instance.GetPieceHP(targetPieceID),
                  PieceManager.Instance.GetPieceAP(targetPieceID),
                   targetUnit.transform,
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
@@ -4233,6 +4236,9 @@ public class PlayerOperationManager : MonoBehaviour
         {
             PieceManager.Instance?.RemovePiece(msg.UnitID);
         }
+
+        //移除UI
+        UnitStatusUIManager.Instance.RemoveStatusUI(msg.UnitID);
 
         // 6. 清空GameManage的格子对象
         GameManage.Instance.SetCellObject(pos, null);
