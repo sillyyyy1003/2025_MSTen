@@ -4154,7 +4154,7 @@ public class PlayerOperationManager : MonoBehaviour
                     else
                     {
                         UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.BuildingData.Value.currentHP, 0, unitObj.transform, CardType.Building);
-                        UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
+                        UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.BuildingData.Value.currentHP);
 
                     }
 
