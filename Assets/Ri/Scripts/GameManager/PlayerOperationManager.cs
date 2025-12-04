@@ -12,6 +12,8 @@ using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
 using GameData.UI;
 using Buildings;
+using System.Linq;
+
 
 
 
@@ -1283,7 +1285,7 @@ public class PlayerOperationManager : MonoBehaviour
         int2 cellPos = cellInfo.Cells2DPos;
 
         // 再次确认该位置是空的
-        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos))
+        if (PlayerDataManager.Instance.IsPositionOccupied(cellPos)||PlayerDataManager.Instance.PlayerRuinCells.Contains(SelectedEmptyCellID))
         {
             Debug.LogWarning("该格子已有单位");
             SelectedEmptyCellID = -1;
@@ -4365,6 +4367,9 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 9. 从BuildingManager中移除建筑
         GameManage.Instance._BuildingManager.RemoveBuilding(buildingID);
+
+        //移除UI
+        UnitStatusUIManager.Instance.RemoveStatusUI(buildingID);
 
         // 10. 网络同步:发送建筑摧毁消息
         SyncBuildingDestruction(buildingPos, buildingID);
