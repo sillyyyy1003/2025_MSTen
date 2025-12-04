@@ -937,7 +937,8 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction + " Resource is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
 
             // 更新AP
-            UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID));
+            if(unit.UnitType!=CardType.Building)
+                UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID));
 
             if (unit.UnitType == CardType.Building)
             {
@@ -958,8 +959,8 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
 
-                Debug.Log("丝织教获取资源: " + GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID));
-                res += GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID);
+                Debug.Log("丝织教获取资源: " + GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID) * 2);
+                res += GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID)*2;
                 PlayerDataManager.Instance.SetPlayerResourses(res);
             }
             DestroyInactivatedBuilding(building);     

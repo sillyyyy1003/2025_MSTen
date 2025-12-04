@@ -538,7 +538,7 @@ public class NetGameSystem : MonoBehaviour
     private IEnumerator DelayedNetworkStart()
     {
         // 等待一帧,确保所有 Awake 执行完成
-        yield return 0.1f;
+        yield return new WaitForSeconds(0.1f); 
 
         // 获取 GameManage 引用
         GetGameManage();
