@@ -2422,11 +2422,11 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[农民进建筑] 农民GameObject已销毁");
                 });
 
-                // 从本地单位字典中移除农民（使用原始位置）
-                if (localPlayerUnits.ContainsKey(farmerPos))
-                {
-                    localPlayerUnits.Remove(farmerPos);
-                }
+                //// 从本地单位字典中移除农民（使用原始位置）
+                //if (localPlayerUnits.ContainsKey(farmerPos))
+                //{
+                //    localPlayerUnits.Remove(farmerPos);
+                //}
             }
 
           
@@ -2512,6 +2512,15 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 移动到倒数第二个格子（如果路径只有1格就直接消失）
         int moveSteps = Mathf.Max(0, pathCells.Count - 1);
+      
+        // 🟢【关键修复】路径长度为 0 -> 无 Tween -> DOTween不会触发OnComplete
+        if (moveSteps == 0)
+        {
+            Debug.Log("[MoveFarmerToBuilding] 路径长度为 0，直接触发 onComplete");
+            _HexGrid.ClearPath();
+            onComplete?.Invoke();
+            return;
+        }
 
         for (int i = 0; i < moveSteps; i++)
         {
@@ -2535,7 +2544,7 @@ public class PlayerOperationManager : MonoBehaviour
         {
             // 注意：这里不更新PlayerDataManager和GameManage，因为农民将直接消失
             // 农民仍然在原始位置的数据将在回调中被清理
-
+          
             _HexGrid.ClearPath();
 
             // 消耗AP（移动到建筑附近的步数）
@@ -2549,7 +2558,10 @@ public class PlayerOperationManager : MonoBehaviour
             onComplete?.Invoke();
         });
     }
-
+    private IEnumerator WaitForFarmer()
+    {
+        yield return new WaitForSeconds(2.0f);
+    }
 
     #endregion
     #region ====攻击====
