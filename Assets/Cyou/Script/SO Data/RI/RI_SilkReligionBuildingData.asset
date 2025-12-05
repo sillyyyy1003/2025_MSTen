@@ -16,7 +16,7 @@ MonoBehaviour:
   religion: 1
   buildingName: "\u7D72\u7E54\u6559_\u7279\u6B8A\u5EFA\u7BC9"
   maxHp: 100
-  buildingResourceCost: 18
+  buildingResourceCost: 12
   resourceGenInterval: 1
   cellType: 0
   isSpecialBuilding: 1
@@ -33,5 +33,4 @@ MonoBehaviour:
   hpUpgradeCost: 0600000008000000
   attackRangeUpgradeCost: 080000000a000000
   slotsUpgradeCost: 080000000a000000
-  buildingPrefab: {fileID: 5820619560128198455, guid: d886dbf77c82ac94cb02a54e6a3121d5,
-    type: 3}
+  buildingPrefab: {fileID: 0}

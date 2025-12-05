@@ -49,6 +49,14 @@ namespace GameData
         public GameObject buildingPrefab;
 
         /// <summary>
+        /// リセット関数
+        /// </summary>
+        private void Reset()
+        {
+            buildingResourceCost = 12;
+        }
+
+        /// <summary>
         /// レベルに応じた最大HPを取得
         /// </summary>
         public int GetMaxHpByLevel(int level)

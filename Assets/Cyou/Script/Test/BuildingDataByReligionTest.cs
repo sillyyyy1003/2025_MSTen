@@ -100,13 +100,13 @@ public class BuildingDataByReligionTest : MonoBehaviour
         }
 
         // buildingResourceCost のチェック
-        if (buildingData.buildingResourceCost == 18)
+        if (buildingData.buildingResourceCost == 12)
         {
             Debug.Log($"✓ buildingResourceCost: {buildingData.buildingResourceCost}");
         }
         else
         {
-            Debug.LogError($"❌ buildingResourceCost: 期待値=18, 実際={buildingData.buildingResourceCost}");
+            Debug.LogError($"❌ buildingResourceCost: 期待値=12, 実際={buildingData.buildingResourceCost}");
             allPassed = false;
         }
 
