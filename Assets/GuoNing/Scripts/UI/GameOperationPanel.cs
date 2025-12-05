@@ -167,7 +167,9 @@ public class GameOperationPanel : MonoBehaviour
 		if (cell.Unit) return;
 
 		// 如果格子不是我方领地  则不显示购买面板
-		// todo:
+		int localPlayerId = GameManage.Instance.LocalPlayerID;
+		if (PlayerDataManager.Instance.GetCellOwner(cell.Index) != localPlayerId) return;
+
 
 		Vector3 cellWorldPos = cell.Position;
 
