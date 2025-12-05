@@ -925,7 +925,7 @@ public class PlayerOperationManager : MonoBehaviour
             if(unit.UnitType!=CardType.Building)
                 UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID));
 
-            if (unit.UnitType == CardType.Building)
+            else
             {
                 bool actived = GameManage.Instance._BuildingManager.GetIsActived(unit.UnitID);
                 if (!actived)
@@ -1039,8 +1039,6 @@ public class PlayerOperationManager : MonoBehaviour
                 if (_HexGrid.GetCell(cellId) != null)
                 {
                     _HexGrid.GetCell(cellId).Walled = true;
-
-                   
                 }
             }
         }
@@ -1746,6 +1744,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 取消选择单位的描边
     private void ReturnToDefault()
     {
+     
         if (SelectingUnit != null)
         {
             foreach (Transform child in SelectingUnit.transform)
@@ -1982,6 +1981,9 @@ public class PlayerOperationManager : MonoBehaviour
             UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
             // 重置选择状态
             ReturnToDefault();
+            PlayerDataManager.Instance.nowChooseUnitID = -1;
+            PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+
             SelectingUnit = null;
             bCanContinue = true;
         }
@@ -2665,7 +2667,9 @@ public class PlayerOperationManager : MonoBehaviour
                     // ShowDamageNumber(targetUnit.transform.position, damage);
 
                     // 2025.12.02 播放攻击特效
-                    EffectManager.Instance.PlayerEffect(OperationType.Attack, targetUnit.transform.position, targetUnit.transform.rotation);
+                    Vector3 hitPos = targetUnit.transform.position;
+                    hitPos.y += 5.0f;
+                    EffectManager.Instance.PlayerEffect(OperationType.Attack, hitPos, targetUnit.transform.rotation);
                 }
 
                 // 网络同步攻击

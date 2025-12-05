@@ -423,7 +423,7 @@ public class PlayerDataManager : MonoBehaviour
             Debug.Log(" PopulationCost is " + PopulationCost);
     }
         // 获取玩家数据
-        public PlayerData GetPlayerData(int playerId)
+   public PlayerData GetPlayerData(int playerId)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
