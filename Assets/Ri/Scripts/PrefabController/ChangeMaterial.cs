@@ -57,6 +57,9 @@ public class ChangeMaterial : MonoBehaviour
         bIsChanged = false;
         thisRender.materials = originalMaterials;
     }
-
+    public void UnitDead()
+    {
+       
+    }
    
 }

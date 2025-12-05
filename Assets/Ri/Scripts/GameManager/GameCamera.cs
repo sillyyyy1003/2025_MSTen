@@ -96,8 +96,8 @@ public class GameCamera : MonoBehaviour
 
 	    // 初始化为中档（斜视）
 	    currentZoomLevel = 1;
-	    currentDistance = midZoomDistance;
-	    targetDistance = currentDistance;
+	    currentDistance = maxZoomDistance;
+        targetDistance = currentDistance;
 	    currentPitch = midPitch;
 	    targetPitch = currentPitch;
 

@@ -17,7 +17,7 @@ namespace GameData
         [Header("基本属性")]
         public string buildingName;
         public int maxHp = 100;
-        public int buildingResourceCost; // 建築に必要な資源
+        public int buildingResourceCost = 12; // 建築に必要な資源
         public int resourceGenInterval; // 資源生成間隔（ターン数）
         public Terrain cellType;//金鉱がある土地か否か
 
@@ -47,6 +47,14 @@ namespace GameData
 
         [Header("Prefab")]
         public GameObject buildingPrefab;
+
+        /// <summary>
+        /// リセット関数
+        /// </summary>
+        private void Reset()
+        {
+            buildingResourceCost = 12;
+        }
 
         /// <summary>
         /// レベルに応じた最大HPを取得

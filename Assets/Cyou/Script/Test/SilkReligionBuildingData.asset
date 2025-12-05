@@ -16,7 +16,7 @@ MonoBehaviour:
   religion: 1
   buildingName: "\u7D72\u7E54\u6559_\u7279\u6B8A\u5EFA\u7BC9"
   maxHp: 100
-  buildingResourceCost: 18
+  buildingResourceCost: 12
   resourceGenInterval: 1
   cellType: 0
   isSpecialBuilding: 1

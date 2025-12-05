@@ -38,6 +38,7 @@ namespace Buildings
 
         // 25.11.26 RI add slots
         private int slots =0;
+        private bool isGoldMine;
 
         // ===== イベント =====
         public event Action<Building> OnBuildingCompleted;
@@ -221,7 +222,10 @@ namespace Buildings
 
             return generatedResources;
         }
-
+        public void SetIsOnGoldmine(bool isOn)
+        {
+            isGoldMine = isOn;
+        }
         private int GenerateResources()
         {
             int totalProduction = CalculateProduction();
@@ -405,7 +409,7 @@ namespace Buildings
         // 25.11.26 RI Add Get Building Slots
         public int GetSlots()
         {
-            return slots;
+            return NewFarmerSlots.Count;
         }
         /// <summary>
         /// HPをアップグレードする
@@ -523,7 +527,10 @@ namespace Buildings
             {
                 if (!newFarmerSlots[i].canInSlot&& newFarmerSlots[i].isActived)
                 {
-                    res += 2;
+                    if(isGoldMine)
+                        res += 10;
+                    else
+                        res += 5;
                     newFarmerSlots[i].farmerAP -= 1;
                     if (newFarmerSlots[i].farmerAP == 0)
                     {

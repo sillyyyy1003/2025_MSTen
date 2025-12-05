@@ -1113,7 +1113,18 @@ public class BuildingManager : MonoBehaviour
         building.TakeDamage(damage);
         return true;
     }
+    //25.12.3 RI ADD SET HP
+    public bool SetBuildingHP(int buildingID,int HP)
+    {
+        if (!buildings.TryGetValue(buildingID, out Building building))
+        {
+            Debug.LogError($"建物が見つかりません: ID={buildingID}");
+            return false;
+        }
 
+        building.SetHP(HP);
+        return true;
+    }
     #endregion
 
     #region ターン処理
@@ -1141,7 +1152,24 @@ public class BuildingManager : MonoBehaviour
         Debug.Log($"前ターンにて{lastTurnResourceTotal}の資源が生成されました。");
         return lastTurnResourceTotal;
     }
+    //25.12.5 RI add GoldMine
+    public void SetBuildingOnGoldmine(int id,bool isOn)
+    {
+        if (buildings.TryGetValue(id, out Building building))
+        {
+            building.SetIsOnGoldmine(isOn);
+        }
+    }
+    //25.12.3 RI add destory building's res for slik religion
+    public int GetBuildingFarmerCount(int id)
+    {
+        if (buildings.TryGetValue(id, out Building building))
+        {
+            return building.GetSlots();
+        }
 
+        return 0;
+    }
     // 25.11.28 ri add building is actived
     public bool GetIsActived(int buildingID)
     {
