@@ -124,10 +124,28 @@ public class EffectManager : MonoBehaviour
 		var instance = obj.GetComponent<EffectInstance>();
 		instance.SetUp(type);
 
+        // 25.12.4 RI 添加攻击特效回收
+        if (type == EffectType.Piece_Hit)
+			StartCoroutine(RecycleAttackEffect(type, obj));
+
 		return obj;
 
 	}
-  
+    // 25.12.4 RI 添加攻击特效回收
+    private IEnumerator RecycleAttackEffect(EffectType type, GameObject prefab)
+	{
+        yield return new WaitForSeconds(1.0f);
+        Debug.Log("回收特效");
+        var ps = prefab.GetComponentsInChildren<ParticleSystem>();
+        foreach (var p in ps)
+        {
+            p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
+        prefab.SetActive(false);
+        prefab.transform.SetParent(transform);
+        pool[type].Enqueue(prefab);
+    }
     // 回收特效
     public void Recycle(EffectType type,GameObject prefab)
     {

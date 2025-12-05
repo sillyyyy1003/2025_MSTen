@@ -303,6 +303,8 @@ public class PlayerDataManager : MonoBehaviour
     public int NowPopulation=0; 
     // 玩家拥有的废墟所在的cellID (新增,不需要网络同步)
     public List<int> PlayerRuinCells=new List<int>();
+    // 记录需要下个回合复活建筑的格子ID
+    public List<int> NextTurnReBuildCellID = new List<int>();
 
     // 单位死亡数
     public int DeadUnitCount=0;
@@ -311,6 +313,10 @@ public class PlayerDataManager : MonoBehaviour
    
     // 进入建筑的农民数量
     public int BuildingFarmerCount;
+    // 回合数
+    public int TurnCount=0;
+    // 疯狂科学家教回合倒计时
+    public int CrazyTurnCooldown = 0;
 
     // 镜湖教 触发次数
     public int MirrorSkillCount=0;
@@ -616,10 +622,21 @@ public class PlayerDataManager : MonoBehaviour
             return foundUnit.Value.UnitID;
         }
         else
-            return 0;
-
+            return -1;
     }
 
+    // 查找一个格子上是否有单位
+    public bool FindCellHasUnit(int2 pos)
+    {
+        foreach(var a in allPlayersData)
+        {
+            if(a.Value.FindUnitAt(pos).HasValue)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
     // 得到当前选择的单位类型
     public CardType GetUnitTypeIDBy2DPos(int2 pos)
     {
@@ -677,6 +694,13 @@ public class PlayerDataManager : MonoBehaviour
         PlayerRuinCells.Remove(cellID);
     }
 
+    /// <summary>
+    /// 移除玩家待重建的废墟cellID
+    /// </summary>
+    public void RemovePlayerRebuildCell(int cellID)
+    {
+        NextTurnReBuildCellID.Remove(cellID);
+    }
     // 添加单位(种类与位置) - 返回生成的UnitID
     public int AddUnit(int playerId, CardType type, int2 pos, syncPieceData unitData, GameObject unitObject = null, bool bUnitIsActivated = true)
     {

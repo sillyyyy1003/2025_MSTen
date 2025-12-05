@@ -405,7 +405,7 @@ namespace Buildings
         // 25.11.26 RI Add Get Building Slots
         public int GetSlots()
         {
-            return slots;
+            return NewFarmerSlots.Count;
         }
         /// <summary>
         /// HPをアップグレードする
