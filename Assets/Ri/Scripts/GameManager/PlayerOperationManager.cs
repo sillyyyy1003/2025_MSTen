@@ -158,7 +158,31 @@ public class PlayerOperationManager : MonoBehaviour
 			//HandleMouseInput();
 
 		}
+        //if (Input.GetKeyDown(KeyCode.D)
+        //    && SelectingUnit!=null)
+        //{
+        //    //SelectingUnit.GetComponentInChildren<ChangeMaterial>().UnitDead();
+        //    //ClickBuildingCellid = ClickCellid;
+        //    ChangeMaterial cm = SelectingUnit.GetComponentInChildren<ChangeMaterial>();
+        //    if (cm != null)
+        //    {
+        //        cm.UnitDead(() =>
+        //        {
+        //            //// 死亡特效播放完再删除单位逻辑
+        //            //if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+        //            //{
+        //            //    localPlayerUnits.Remove(targetPos);
+        //            //}
+        //            //else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
+        //            //         otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
+        //            //{
+        //            //    otherPlayersUnits[targetPlayerId].Remove(targetPos);
+        //            //}
 
+        //            //Destroy(targetObj);
+        //        });
+        //    }
+        //}
 
         //// 建造建筑
         //if (Input.GetKeyDown(KeyCode.B)
@@ -195,11 +219,11 @@ public class PlayerOperationManager : MonoBehaviour
         //            if (hp == 0)
         //                hp += 1;
         //            newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
-                   
+
         //            PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
         //            unit.PlayerUnitDataSO = newData;
         //            PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
-                   
+
         //            Debug.Log( "Heal HP is " + hp);
         //        }
         //    }
@@ -240,10 +264,10 @@ public class PlayerOperationManager : MonoBehaviour
         //}
     }
 
-	// *************************
-	//       追加高亮选择处理
-	// *************************
-	void UpdateCellHighlightData(HexCell cell)
+    // *************************
+    //       追加高亮选择处理
+    // *************************
+    void UpdateCellHighlightData(HexCell cell)
     {
 
 
@@ -3416,25 +3440,44 @@ public class PlayerOperationManager : MonoBehaviour
         int targetPlayerId)
     {
         Debug.Log($"[HandleTargetDestroyedAfterAttack] 目标被击杀，攻击者前进到目标位置");
-
+      
         // 移除目标GameObject
         if (targetObj != null)
         {
-            // 播放死亡动画（可选）
-            targetObj.transform.DOScale(0f, 0.3f).OnComplete(() =>
-            {
-                if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+           
+                ChangeMaterial cm = targetObj.GetComponentInChildren<ChangeMaterial>();
+                if (cm != null)
                 {
-                    localPlayerUnits.Remove(targetPos);
-                }
-                else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
-                         otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
-                {
-                    otherPlayersUnits[targetPlayerId].Remove(targetPos);
+                    cm.UnitDead(() =>
+                    {
+                        // 死亡特效播放完再删除单位逻辑
+                        if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+                        {
+                            localPlayerUnits.Remove(targetPos);
+                        }
+                        else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
+                                 otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
+                        {
+                            otherPlayersUnits[targetPlayerId].Remove(targetPos);
+                        }
+
+                        Destroy(targetObj);
+                    });
                 }
 
-                Destroy(targetObj);
-            });
+
+                //if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+                //{
+                //    localPlayerUnits.Remove(targetPos);
+                //}
+                //else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
+                //         otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
+                //{
+                //    otherPlayersUnits[targetPlayerId].Remove(targetPos);
+                //}
+
+                //Destroy(targetObj);
+      
         }
 
         // 攻击者前进到目标位置

@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -57,9 +58,33 @@ public class ChangeMaterial : MonoBehaviour
         bIsChanged = false;
         thisRender.materials = originalMaterials;
     }
-    public void UnitDead()
+    public void UnitDead(System.Action onFinished)
     {
-       
+        if (thisRender == null)
+            thisRender = GetComponent<Renderer>();
+
+        if (thisRender == null)
+        {
+            Debug.LogError("ChangeMaterial: 找不到 Renderer");
+            onFinished?.Invoke();
+            return;
+        }
+
+        // 取当前材质
+        Material mat = thisRender.material;
+
+        // 创建 DOTween 动画：_Float 从 0 → 1
+        DOTween.To(
+            () => mat.GetFloat("_Float"),
+            x => mat.SetFloat("_Float", x),
+            1f,
+            1f // 播放时间 1 秒
+        )
+        .SetEase(Ease.Linear)
+        .OnComplete(() =>
+        {
+            onFinished?.Invoke();
+        });
     }
-   
+
 }
