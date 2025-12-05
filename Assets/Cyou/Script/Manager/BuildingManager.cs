@@ -1152,6 +1152,14 @@ public class BuildingManager : MonoBehaviour
         Debug.Log($"前ターンにて{lastTurnResourceTotal}の資源が生成されました。");
         return lastTurnResourceTotal;
     }
+    //25.12.5 RI add GoldMine
+    public void SetBuildingOnGoldmine(int id,bool isOn)
+    {
+        if (buildings.TryGetValue(id, out Building building))
+        {
+            building.SetIsOnGoldmine(isOn);
+        }
+    }
     //25.12.3 RI add destory building's res for slik religion
     public int GetBuildingFarmerCount(int id)
     {
