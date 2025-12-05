@@ -1164,6 +1164,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rect: {fileID: 147871031}
   onOffset: {x: 350, y: 0}
+  piece: 3
   toggle: {fileID: 0}
 --- !u!1001 &103091844
 PrefabInstance:
@@ -3420,6 +3421,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rect: {fileID: 215243979}
   onOffset: {x: 350, y: 0}
+  piece: 4
   toggle: {fileID: 0}
 --- !u!1 &279214831
 GameObject:
@@ -3587,6 +3589,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _HexGrid: {fileID: 1913528995}
+  selectCellID: 0
   doubleClickTimeThreshold: 0.3
   fillImage: {fileID: 1356247010}
   MoveSpeed: 0.5
@@ -11141,6 +11144,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rect: {fileID: 419851705}
   onOffset: {x: 350, y: 0}
+  piece: 1
   toggle: {fileID: 0}
 --- !u!1 &872355124
 GameObject:
@@ -26232,6 +26236,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rect: {fileID: 647266574}
   onOffset: {x: 350, y: 0}
+  piece: 2
   toggle: {fileID: 0}
 --- !u!1 &2108764744
 GameObject:
@@ -26833,6 +26838,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rect: {fileID: 47914397}
   onOffset: {x: 350, y: 0}
+  piece: 5
   toggle: {fileID: 0}
 --- !u!1 &2124691267
 GameObject:
