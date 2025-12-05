@@ -15,7 +15,7 @@ namespace GameData
             buildingName = "絲織教_特殊建築";
 
             // 建築に必要な資源
-            buildingResourceCost = 18;
+            buildingResourceCost = 12;
 
             // HP（初始, 升級1, 升級2）
             maxHpByLevel = new int[3] { 25, 30, 45 };
