@@ -17,7 +17,7 @@ namespace GameData
         [Header("基本属性")]
         public string buildingName;
         public int maxHp = 100;
-        public int buildingResourceCost; // 建築に必要な資源
+        public int buildingResourceCost = 12; // 建築に必要な資源
         public int resourceGenInterval; // 資源生成間隔（ターン数）
         public Terrain cellType;//金鉱がある土地か否か
 
