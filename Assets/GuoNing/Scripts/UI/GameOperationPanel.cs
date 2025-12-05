@@ -267,8 +267,8 @@ public class GameOperationPanel : MonoBehaviour
 	{
 		if (!isLocal)
 		{
-			// 做距离判断
-			
+			// 如果目标格子距离选中格子的距离大于1则不显示
+			if (GetDistanceFurtherThanValue(1, cell)) return;
 
 			// 创建面板数据 显示面板
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
@@ -319,9 +319,8 @@ public class GameOperationPanel : MonoBehaviour
 	{
 		if (!isLocal)
 		{
-			// 如果cell距离本地单位不是1则不显示攻击面板
-
-
+			// 如果目标格子距离选中格子的距离大于1则不显示
+			if (GetDistanceFurtherThanValue(1, cell)) return;
 
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Attack);
@@ -411,5 +410,18 @@ public class GameOperationPanel : MonoBehaviour
 	{
 		// 每次资源更新都刷新一次花费显示
 		ResourceText.text = dataManager.GetPlayerResource().ToString();
+	}
+
+	private bool GetDistanceFurtherThanValue(int value, HexCell targetCell)
+	{
+		// 做距离判断
+		int selectCellId = GameManage.Instance._PlayerOperation.selectCellID;
+		HexCell selectedCell = hexGrid.GetCell(selectCellId);
+		int distance = selectedCell.Coordinates.DistanceTo(targetCell.Coordinates);
+		// 如果距离大于指定值 则返回伪
+		if (distance > value) return false;
+
+		return true;
+
 	}
 }
