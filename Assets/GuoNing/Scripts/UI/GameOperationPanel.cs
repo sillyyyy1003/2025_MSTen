@@ -170,7 +170,6 @@ public class GameOperationPanel : MonoBehaviour
 		int localPlayerId = GameManage.Instance.LocalPlayerID;
 		if (PlayerDataManager.Instance.GetCellOwner(cell.Index) != localPlayerId) return;
 
-
 		Vector3 cellWorldPos = cell.Position;
 
 		//将格子位置转换为屏幕UI的位置

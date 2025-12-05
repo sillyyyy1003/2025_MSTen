@@ -390,4 +390,12 @@ public class SkillTreeUIManager : MonoBehaviour
 
 		Debug.Log("[SkillTreeManager]Upgraded!");
 	}
+
+	public void UpdateSimpleSkillPanel(PieceType type)
+	{
+		if (SimpleSkillPanels.TryGetValue(type, out var panel))
+		{
+			panel.Refresh();
+		}
+	}
 }
