@@ -25,7 +25,10 @@ public class SkillNode : MonoBehaviour
 	[SerializeField]
 	private Image mask;
 	[SerializeField]
-	private TMP_Text text;	// 用于显示简易技能说明
+	private TMP_Text text;		// 用于显示简易技能说明
+	[SerializeField]	
+	private Image iconImage;	// 用于显示技能图标
+
 	private RectTransform levelUpPanel;
 	private LevelUpButton levelUpButton;
 
@@ -38,7 +41,7 @@ public class SkillNode : MonoBehaviour
 
 	public void Initialize(Sprite sprite, string skillDescription, int _skillIndex, PieceType _pieceType, TechTree _techTree, RectTransform _levelUpPanel, LevelUpButton _button)
 	{
-		skillButton.image.sprite = sprite;
+		iconImage.sprite = sprite;
 		text.text = skillDescription;
 	
 		skillIndex = _skillIndex;
@@ -92,7 +95,7 @@ public class SkillNode : MonoBehaviour
 		// ------------------------------------------------
 		if (skillIndex == currentLevel + 1) 
 		{
-			int cost = GetUpgradeCostBytechType(skillIndex - 1);
+			int cost = GetUpgradeCostByTechType(skillIndex - 1);
 			if (label) label.text = $"Resume {cost} point";
 
 			int resource = PlayerDataManager.Instance.GetPlayerResource();
@@ -121,9 +124,9 @@ public class SkillNode : MonoBehaviour
 
 		// UpdateUI
 		// 消耗资源
-		int cost = GetUpgradeCostBytechType(skillIndex);
-		int playerID = GameManage.Instance.LocalPlayerID;
-		int res = PlayerDataManager.Instance.GetPlayerData(playerID).Resources;
+		int cost = GetUpgradeCostByTechType(skillIndex);
+		int playerId = GameManage.Instance.LocalPlayerID;
+		int res = PlayerDataManager.Instance.GetPlayerData(playerId).Resources;
 		res -= cost;
 		PlayerDataManager.Instance.SetPlayerResourses(res);
 		GameUIManager.Instance.UpdateResourcesData();
@@ -185,7 +188,7 @@ public class SkillNode : MonoBehaviour
 
 	}
 
-	private int GetUpgradeCostBytechType(int level)
+	private int GetUpgradeCostByTechType(int level)
 	{
 		UnitListTable.PieceDetail pd =
 		new UnitListTable.PieceDetail(pieceType, SceneStateManager.Instance.PlayerReligion);

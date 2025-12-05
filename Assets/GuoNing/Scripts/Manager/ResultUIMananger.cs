@@ -50,16 +50,14 @@ public class ResultUIManager : MonoBehaviour
 
 	private void Update()
 	{
-		if(Input.GetKeyUp(KeyCode.Space))
-		{
-			Inititialize();
-		}
+		
+		
 	}
 
-	public void Inititialize()
+	public void Inititialize(int victoryID)
 	{
 		// 设定胜利还是失败
-		int victoryPlayerID = GameManage.Instance.LocalPlayerID;
+		int victoryPlayerID = victoryID;	
 		int localPlayerID = GameManage.Instance.LocalPlayerID;
 
 		if (victoryPlayerID == localPlayerID)
@@ -75,16 +73,8 @@ public class ResultUIManager : MonoBehaviour
 		int SpriteSerial = (int)GameManage.Instance.GetPlayerData(victoryPlayerID).PlayerReligion - 1;
 		ReligionIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.IconList_Religion, SpriteSerial);
 
-		ResultLayer.gameObject.SetActive(true);
+		OpenResultPanel();
 
-		// 关闭GameUI	
-		GameUI.gameObject.SetActive(false);
-
-		// 关闭Detail界面
-		ResultDetail.gameObject.SetActive(false);
-
-		// ResultButton显示
-		ResultDetailButton.gameObject.SetActive(true);
 	}
 
 	private void OnClickBackToGameButton()
@@ -114,14 +104,29 @@ public class ResultUIManager : MonoBehaviour
 	private int GetVictoryPlayerIDBySurrender()
 	{
 		int localID = GameManage.Instance.LocalPlayerID;
-		int enemyID = GameManage.Instance.GetAllPlayerIds().FirstOrDefault(id => id != localID);
+		int enemyID = GameManage.Instance.OtherPlayerID;
 		return enemyID;
 
 	}
 
 	public void Surrender()
 	{
-		GameManage.Instance.TriggerGameEnded(GetVictoryPlayerIDBySurrender());
+		int localID = GameManage.Instance.LocalPlayerID;
+		NetGameSystem.Instance.SendGameOverMessage(GetVictoryPlayerIDBySurrender(),localID,"surrender");
+	}
+
+	public void OpenResultPanel()
+	{
+		ResultLayer.gameObject.SetActive(true);
+
+		// 关闭GameUI	
+		GameUI.gameObject.SetActive(false);
+
+		// 关闭Detail界面
+		ResultDetail.gameObject.SetActive(false);
+
+		// ResultButton显示
+		ResultDetailButton.gameObject.SetActive(true);
 	}
 }
 

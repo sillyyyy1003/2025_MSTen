@@ -475,14 +475,10 @@ public class GameUIManager : MonoBehaviour
         if (tf)
         {
             EndTurn.interactable = false;
-
-
         }
         else
         {
             EndTurn.interactable = true;
-
-
         }
 
 
@@ -766,9 +762,7 @@ public class GameUIManager : MonoBehaviour
 
     private void HandleEndTurnButtonPressed()
     {
-
         OnEndTurnButtonPressed?.Invoke();
-
     }
 
     private void HandleCardSkillUsed(CardType card,CardSkill cardSkill)

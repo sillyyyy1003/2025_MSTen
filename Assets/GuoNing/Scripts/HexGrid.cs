@@ -972,17 +972,15 @@ public class HexGrid : MonoBehaviour
 
 	private static readonly HashSet<PlantType> forestTypes = new()
 	{
-		//PlantType.t1m1, PlantType.t1m2, PlantType.t1m3,
-		//PlantType.t3m1, PlantType.t3m2, PlantType.t3m3
-		PlantType.t2m2, PlantType.t2m3,
-		PlantType.t3m2, PlantType.t3m3,
+		PlantType.t2m3,PlantType.t3m3,PlantType.t1m0,PlantType.t2m2,PlantType.t1m2,  PlantType.t1m3,PlantType.t1m1,  PlantType.t3m1,PlantType.t0m2
+
 	};
 	public bool IsForest(PlantType type)
 	{
 		return forestTypes.Contains(type);
 	}
 
-	public bool GetNeighborCellHasForeset(int cellIndex)
+	public bool GetNeighborCellHasForest(int cellIndex)
 	{
 		HexCell cell = GetCell(cellIndex);
 		for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
@@ -995,5 +993,20 @@ public class HexGrid : MonoBehaviour
 			}
 		}
 		return false;
+	}
+
+	public bool GetCellIsGoldenMine(int cellIndex)
+	{
+		return GetCell(cellIndex).SpecialIndex == (int)SpecialIndexType.Gold;
+	}
+
+	public bool GetIsForest(int cellIndex)
+	{
+		return IsForest((PlantType)GetCell(cellIndex).PlantIndex);
+	}
+
+	public void ConsumeGoldMine(int cellIndex)
+	{
+		GetCell(cellIndex).SpecialIndex = 0;
 	}
 }

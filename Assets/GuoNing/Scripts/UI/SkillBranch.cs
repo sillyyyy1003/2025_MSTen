@@ -1,4 +1,4 @@
-using GameData;
+ï»¿using GameData;
 using GameData.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class SkillBranch : MonoBehaviour
 {
 	//=========================================
-	//¥×¥í¥Ñ¥Æ¥£
+	//ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£
 	//=========================================
 	public SkillNode nodePrefab;
 	public float VerticalSpacing = 200;
@@ -18,26 +18,26 @@ public class SkillBranch : MonoBehaviour
 	public RectTransform NodeRoot;
 
 	private List<SkillNode> skillNodes = new List<SkillNode>();
-	public void Initialize(Sprite sprite, TechTree type, PieceType pieceType,  int maxLevel, float verticalSpacing, RectTransform panel, LevelUpButton button)
+	public void Initialize(Sprite sprite, TechTree type, PieceType pieceType, int maxLevel, float verticalSpacing, RectTransform panel, LevelUpButton button)
 	{
 
-		if(maxLevel <= 0) { Debug.LogWarning("SkillBranch slots is under 0"); return; }
-		// Éè¶¨×İÏòµÄ¾àÀë
+		if (maxLevel <= 0) { Debug.LogWarning("SkillBranch slots is under 0"); return; }
+		// è®¾å®šçºµå‘çš„è·ç¦»
 		VerticalSpacing = verticalSpacing;
-		for (int i = 0; i < maxLevel; i++) 
-		{ 
-			// ÊµÀı»¯Ô¤ÖÆ¼ş
-			SkillNode node = Instantiate(nodePrefab,NodeRoot);
-			// Éè¶¨ÎÄ×Ö
-			string skillDescription = GetTechText(type,i);
-			// ³õÊ¼»¯Node
-			node.Initialize(sprite, skillDescription,i, pieceType, type, panel, button);
-			// Éè¶¨NodeÎ»ÖÃ
+		for (int i = 0; i < maxLevel; i++)
+		{
+			// å®ä¾‹åŒ–é¢„åˆ¶ä»¶
+			SkillNode node = Instantiate(nodePrefab, NodeRoot);
+			// è®¾å®šæ–‡å­—
+			string skillDescription = GetTechText(type, i);
+			// åˆå§‹åŒ–Node
+			node.Initialize(sprite, skillDescription, i, pieceType, type, panel, button);
+			// è®¾å®šNodeä½ç½®
 			RectTransform rt = node.GetComponent<RectTransform>();
 			rt.anchoredPosition = new Vector2(0, -i * VerticalSpacing);
 			skillNodes.Add(node);
 
-			// ----Èç¹û²»ÊÇµÚ 0 ¸ö Node£¬ÔòÁ¬½ÓÉÏÃæµÄ Node----
+			// ----å¦‚æœä¸æ˜¯ç¬¬ 0 ä¸ª Nodeï¼Œåˆ™è¿æ¥ä¸Šé¢çš„ Node----
 			if (i > 0)
 			{
 				CreateLineBetween(skillNodes[i - 1], skillNodes[i]);
@@ -46,7 +46,7 @@ public class SkillBranch : MonoBehaviour
 	}
 
 	/// <summary>
-	/// ´´½¨Á½¸ö Node Ö®¼äµÄÁ¬Ïß
+	/// åˆ›å»ºä¸¤ä¸ª Node ä¹‹é—´çš„è¿çº¿
 	/// </summary>
 	private void CreateLineBetween(SkillNode upperNode, SkillNode lowerNode)
 	{
@@ -56,24 +56,24 @@ public class SkillBranch : MonoBehaviour
 		RectTransform lower = lowerNode.GetComponent<RectTransform>();
 		RectTransform lineRT = line.GetComponent<RectTransform>();
 
-		// ÉèÖÃÎªÊúÏßÄ£Ê½
+		// è®¾ç½®ä¸ºç«–çº¿æ¨¡å¼
 		float lineWidth = lineRT.sizeDelta.x;
 		float distance = Mathf.Abs(lower.anchoredPosition.y - upper.anchoredPosition.y);
 
-		// Ïß¶Î³¤¶È = ½ÚµãÖĞĞÄµ½½ÚµãÖĞĞÄ
+		// çº¿æ®µé•¿åº¦ = èŠ‚ç‚¹ä¸­å¿ƒåˆ°èŠ‚ç‚¹ä¸­å¿ƒ
 		lineRT.sizeDelta = new Vector2(lineWidth, distance);
 
-		// Ïß¶ÎÎ»ÖÃ = Á½µãÖĞ¼ä
+		// çº¿æ®µä½ç½® = ä¸¤ç‚¹ä¸­é—´
 		float midY = (upper.anchoredPosition.y + lower.anchoredPosition.y) * 0.5f;
 		lineRT.anchoredPosition = new Vector2(0, midY);
 
-		// È·±£ÊÇÊúÖ±·½Ïò
+		// ç¡®ä¿æ˜¯ç«–ç›´æ–¹å‘
 		lineRT.localRotation = Quaternion.identity;
 	}
 
 
 	/// <summary>
-	/// ·µ»Ø¼¼ÄÜµÄ¼ò¶ÌÃèÊö
+	/// è¿”å›æŠ€èƒ½çš„ç®€çŸ­æè¿°
 	/// </summary>
 	/// <param name="type"></param>
 	/// <param name="index"></param>
@@ -84,41 +84,41 @@ public class SkillBranch : MonoBehaviour
 
 		switch (type)
 		{
-			case TechTree.HP:                 // ÌåÁ¦
-				return $"ÌåÁ¦ Lv.{lv}";
+			case TechTree.HP:                 // ä½“åŠ›
+				return $"ä½“åŠ› Lv.{lv}";
 
-			case TechTree.AP:                 // ĞĞ„ÓÁ¦
-				return $"ĞĞ„ÓÁ¦ Lv.{lv}";
+			case TechTree.AP:                 // è¡Œå‹•åŠ›
+				return $"è¡Œå‹•åŠ› Lv.{lv}";
 
-			case TechTree.Occupy:             // Õ¼îI³É¹¦ÂÊ
-				return $"Õ¼îI Lv.{lv}";
+			case TechTree.Occupy:             // å é ˜æˆåŠŸç‡
+				return $"å é ˜ Lv.{lv}";
 
-			case TechTree.Conversion:         // ÷È»ó³É¹¦ÂÊ
-				return $"÷È»ó Lv.{lv}";
+			case TechTree.Conversion:         // é­…æƒ‘æˆåŠŸç‡
+				return $"é­…æƒ‘ Lv.{lv}";
 
-			case TechTree.ATK:                // ¹¥“ÄÁ¦
-				return $"¹¥“ÄÁ¦ Lv.{lv}";
+			case TechTree.ATK:                // æ”»æ’ƒåŠ›
+				return $"æ”»æ’ƒåŠ› Lv.{lv}";
 
-			case TechTree.Sacrifice:          // Ï×¼ÀévßB
-				return $"Ï×¼À Lv.{lv}";
+			case TechTree.Sacrifice:          // çŒ®ç¥­é–¢é€£
+				return $"çŒ®ç¥­ Lv.{lv}";
 
-			case TechTree.AttackPosition:     // ¹¥“Ä¿Ú
-				return $"¹¥“Ä¿Ú Lv.{lv}";
+			case TechTree.AttackPosition:     // æ”»æ’ƒå£
+				return $"æ”»æ’ƒå£ Lv.{lv}";
 
-			case TechTree.AltarCount:         // ¼À‰¯Êı
-				return $"¼À‰¯Êı Lv.{lv}";
+			case TechTree.AltarCount:         // ç¥­å£‡æ•°
+				return $"ç¥­å£‡æ•° Lv.{lv}";
 
-			case TechTree.ConstructionCost:   // ½¨ÔOÙMÓÃœpÉÙ
-				return $"½¨ÔOÙMÓÃ Lv.{lv}";
+			case TechTree.ConstructionCost:   // å»ºè¨­è²»ç”¨æ¸›å°‘
+				return $"å»ºè¨­è²»ç”¨ Lv.{lv}";
 
-			case TechTree.MovementCD:         // ÒÆ„Ó¥¯©`¥ë
-				return $"ÒÆ„Ó¥¯©`¥ë Lv.{lv}";
+			case TechTree.MovementCD:         // ç§»å‹•ã‚¯ãƒ¼ãƒ«
+				return $"ç§»å‹•ã‚¯ãƒ¼ãƒ« Lv.{lv}";
 
-			case TechTree.Buff:               // Š»¯/ÈõÌå„¿¹û
-				return $"Š»¯„¿¹û Lv.{lv}";
+			case TechTree.Buff:               // å¼·åŒ–/å¼±ä½“åŠ¹æœ
+				return $"å¼·åŒ–åŠ¹æœ Lv.{lv}";
 
-			case TechTree.Heresy:             // ®¶Ë£¨¥Ç¥Ğ¥ÕÏµ£©
-				return $"®¶Ë Lv.{lv}";
+			case TechTree.Heresy:             // ç•°ç«¯ï¼ˆãƒ‡ãƒãƒ•ç³»ï¼‰
+				return $"ç•°ç«¯ Lv.{lv}";
 
 			default:
 				return $"Lv.{lv}";

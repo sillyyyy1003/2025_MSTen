@@ -28,6 +28,7 @@ public enum UISpriteID
 	Result_Bar,     // 结算界面条
     HPBar_Icon,     // 血条图标
     MouseInteraction,   // 鼠标交互图标
+    Icon_SkillIcon,  // 技能图标
 }
 
 [System.Serializable]
