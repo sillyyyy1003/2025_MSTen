@@ -158,6 +158,7 @@ public class GameUIManager : MonoBehaviour
 
         ReligionIcon.onClick.AddListener(() => HandleReligionIconClick());
         EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
+        EndTurn.interactable = false;
 
         ReligionInfoPanel.gameObject.SetActive(false);  // 初始默认常隐
 
