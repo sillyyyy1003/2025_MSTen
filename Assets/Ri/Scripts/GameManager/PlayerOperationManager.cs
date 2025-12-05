@@ -2422,11 +2422,11 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[农民进建筑] 农民GameObject已销毁");
                 });
 
-                // 从本地单位字典中移除农民（使用原始位置）
-                if (localPlayerUnits.ContainsKey(farmerPos))
-                {
-                    localPlayerUnits.Remove(farmerPos);
-                }
+                //// 从本地单位字典中移除农民（使用原始位置）
+                //if (localPlayerUnits.ContainsKey(farmerPos))
+                //{
+                //    localPlayerUnits.Remove(farmerPos);
+                //}
             }
 
           
