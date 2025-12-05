@@ -86,7 +86,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 本地玩家ID
     private int localPlayerId = -1;
 
-    public int selectCellID = -1;
+    public int selectCellID ;
 
 
     //// 保存攻击前的原始位置（用于"移动+攻击"场景）
