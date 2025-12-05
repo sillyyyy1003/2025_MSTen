@@ -2399,12 +2399,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 保存农民的GameObject引用（在移动前）
         GameObject farmerObj = SelectingUnit;
 
-        // 先从PlayerDataManager移除农民（使用原始位置farmerPos）
-        bool removed = PlayerDataManager.Instance.RemoveUnit(localPlayerId, farmerPos);
-        if (removed)
-        {
-            Debug.Log($"[农民进建筑] 已从PlayerDataManager移除农民");
-        }
+      
         // 使用新建立的移动方法让农民移动到建筑格子
         MoveFarmerToBuilding(buildingCellId, farmerPos, () =>
         {
@@ -2446,7 +2441,12 @@ public class PlayerOperationManager : MonoBehaviour
             SyncFarmerEnterBuilding(farmerID, farmerPos);
 
             Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已进入建筑并消失");
-
+            // 先从PlayerDataManager移除农民（使用原始位置farmerPos）
+            bool removed = PlayerDataManager.Instance.RemoveUnit(localPlayerId, farmerPos);
+            if (removed)
+            {
+                Debug.Log($"[农民进建筑] 已从PlayerDataManager移除农民");
+            }
             // 重置选择状态
             ReturnToDefault();
             SelectingUnit = null;
