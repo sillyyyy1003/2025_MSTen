@@ -2422,16 +2422,15 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[农民进建筑] 农民GameObject已销毁");
                 });
 
-                // 从本地单位字典中移除农民（使用原始位置）
-                if (localPlayerUnits.ContainsKey(farmerPos))
-                {
-                    localPlayerUnits.Remove(farmerPos);
-                }
+                //// 从本地单位字典中移除农民（使用原始位置）
+                //if (localPlayerUnits.ContainsKey(farmerPos))
+                //{
+                //    localPlayerUnits.Remove(farmerPos);
+                //}
             }
 
           
-            // 3. 从PieceManager移除
-            PieceManager.Instance.RemovePiece(farmerPieceID);
+         
 
             // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
             GameManage.Instance.SetCellObject(farmerPos, null);
@@ -2447,6 +2446,8 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 Debug.Log($"[农民进建筑] 已从PlayerDataManager移除农民");
             }
+            // 3. 从PieceManager移除
+            PieceManager.Instance.RemovePiece(farmerPieceID);
             // 重置选择状态
             ReturnToDefault();
             SelectingUnit = null;
