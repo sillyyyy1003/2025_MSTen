@@ -4906,6 +4906,7 @@ GameObject:
   - component: {fileID: 1271622633826323251}
   - component: {fileID: 4545444214890621938}
   - component: {fileID: 198492591516153229}
+  - component: {fileID: 945371974254039542}
   m_Layer: 0
   m_Name: Effect_Shiruku_SenryouSeikou_20251113
   m_TagString: Untagged
@@ -9726,6 +9727,18 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &945371974254039542
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3979821070583568470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35bc0372d01e8224eb103eb0f152645a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5591335218055658747
 GameObject:
   m_ObjectHideFlags: 0

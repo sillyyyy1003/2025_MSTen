@@ -14723,6 +14723,7 @@ GameObject:
   - component: {fileID: 5534101200727998109}
   - component: {fileID: 8678777868199183816}
   - component: {fileID: 791581792309302310}
+  - component: {fileID: 6149752990464330313}
   m_Layer: 0
   m_Name: Effect_Skill_Denkyoushi_RyoudoUp_20251114
   m_TagString: Untagged
@@ -19543,3 +19544,15 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &6149752990464330313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6644809276637320168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35bc0372d01e8224eb103eb0f152645a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

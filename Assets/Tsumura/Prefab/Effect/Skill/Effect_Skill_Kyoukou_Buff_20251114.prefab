@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1715141027184771317}
   - component: {fileID: 8693241809307843295}
   - component: {fileID: 1932846568686774705}
+  - component: {fileID: 5853581532173015611}
   m_Layer: 0
   m_Name: Effect_Skill_Kyoukou_Buff_20251114
   m_TagString: Untagged
@@ -4831,6 +4832,18 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &5853581532173015611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 564580098320513118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35bc0372d01e8224eb103eb0f152645a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1004065984036112912
 GameObject:
   m_ObjectHideFlags: 0

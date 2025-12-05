@@ -14714,6 +14714,7 @@ GameObject:
   - component: {fileID: 7087510419164717083}
   - component: {fileID: 4393429449303661649}
   - component: {fileID: 4193971758464067058}
+  - component: {fileID: 3263200896761434604}
   m_Layer: 0
   m_Name: Effect_Mad_SenryouSeikou_20251128
   m_TagString: Untagged
@@ -19534,3 +19535,15 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &3263200896761434604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4087298187446864940}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35bc0372d01e8224eb103eb0f152645a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
