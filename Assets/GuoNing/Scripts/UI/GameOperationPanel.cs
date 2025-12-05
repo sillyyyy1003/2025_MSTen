@@ -90,10 +90,8 @@ public class GameOperationPanel : MonoBehaviour
 		{
 			if (Input.GetMouseButton(1))
 			{
-				if (PlayerDataManager.Instance.nowChooseUnitID != -1) return;
 				HexCell cell = hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-				if(cell) ShowBuyCardInfo(cell.Index);
-				
+				if(cell!=null) ShowBuyCardInfo(cell);
 				return;
 			}
 
@@ -115,8 +113,8 @@ public class GameOperationPanel : MonoBehaviour
 	{
 
 		ActionPanelTransform.gameObject.SetActive(false);
-		int chooseUnitID = dataManager.nowChooseUnitID;
-		if (chooseUnitID == -1)
+		int chooseUnitId = dataManager.nowChooseUnitID;
+		if (chooseUnitId == -1)
 			return;
 
 		var cell = GetCellUnderCursor();
@@ -132,8 +130,8 @@ public class GameOperationPanel : MonoBehaviour
 			return;
 		}
 
-		int ownerID = dataManager.GetUnitOwner(pos);
-		bool isLocalPlayer = (ownerID == GameManage.Instance.LocalPlayerID);
+		int ownerId = dataManager.GetUnitOwner(pos);
+		bool isLocalPlayer = (ownerId == GameManage.Instance.LocalPlayerID);
 
 		switch (dataManager.nowChooseUnitType)
 		{
@@ -161,18 +159,14 @@ public class GameOperationPanel : MonoBehaviour
 	/// <summary>
 	/// 显示购买面板
 	/// </summary>
-	/// <param name="isUnit">格子是否有棋子</param>
-	public void ShowBuyCardInfo(int hexCellID)
+	/// <param name="cell">格子</param>
+	public void ShowBuyCardInfo(HexCell cell)
 	{
-		//获取格子的位置
-		var cell = hexGrid.GetCell(hexCellID);
-		if (cell == null)
-		{
-			Debug.LogWarning($"Cell {hexCellID} not found.");
-			return;
-		}
-
+		// 如果格子上有单位 则不显示购买面板
 		if (cell.Unit) return;
+
+		// 如果格子不是我方领地  则不显示购买面板
+		// todo:
 
 		Vector3 cellWorldPos = cell.Position;
 
@@ -273,6 +267,10 @@ public class GameOperationPanel : MonoBehaviour
 	{
 		if (!isLocal)
 		{
+			// 做距离判断
+			
+
+			// 创建面板数据 显示面板
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
 			ShowPanel("伝教：" + cost);
@@ -321,6 +319,10 @@ public class GameOperationPanel : MonoBehaviour
 	{
 		if (!isLocal)
 		{
+			// 如果cell距离本地单位不是1则不显示攻击面板
+
+
+
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Attack);
 			ShowPanel("攻撃：" + cost);
@@ -340,7 +342,7 @@ public class GameOperationPanel : MonoBehaviour
 		if (dataManager.nowChooseUnitType == CardType.Pope)
 			return;
 
-		// 农民的移动有限制 无法移动到非己方格子
+		// 农民的移动有限制 无法移动到非己方格子 所以不会在 非己方格子显示移动面板
 		int cellOwner = dataManager.GetCellOwner(cell.Index);
 		if (cellOwner != GameManage.Instance.LocalPlayerID && dataManager.nowChooseUnitType == CardType.Farmer) 
 		{
