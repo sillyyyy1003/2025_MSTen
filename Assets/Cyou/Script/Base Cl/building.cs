@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GameData;
 using GamePieces;
+using UnityEditor.Experimental.GraphView;
 
 namespace Buildings
 {
@@ -38,6 +39,7 @@ namespace Buildings
 
         // 25.11.26 RI add slots
         private int slots =0;
+        private bool isGoldMine;
 
         // ===== イベント =====
         public event Action<Building> OnBuildingCompleted;
@@ -221,7 +223,10 @@ namespace Buildings
 
             return generatedResources;
         }
-
+        public void SetIsOnGoldmine(bool isOn)
+        {
+            isGoldMine = isOn;
+        }
         private int GenerateResources()
         {
             int totalProduction = CalculateProduction();
@@ -523,7 +528,10 @@ namespace Buildings
             {
                 if (!newFarmerSlots[i].canInSlot&& newFarmerSlots[i].isActived)
                 {
-                    res += 2;
+                    if(isGoldMine)
+                        res += 10;
+                    else
+                        res += 5;
                     newFarmerSlots[i].farmerAP -= 1;
                     if (newFarmerSlots[i].farmerAP == 0)
                     {

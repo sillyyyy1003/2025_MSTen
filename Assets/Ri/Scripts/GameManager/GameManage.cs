@@ -176,24 +176,24 @@ public class GameManage : MonoBehaviour
     }
 
 
-    // Update is called once per frame
-    private void Update()
-    {
-        // 测试F11键投降
-        if (Input.GetKeyDown(KeyCode.F11))
-        {
-            // 只有在游戏进行中且是本地玩家的回合时才能投降
-            if (bIsInGaming)
-            {
-                Debug.Log($"[投降] 玩家 {_LocalPlayerID} 按下F1键请求投降");
-                RequestSurrender();
-            }
-            else
-            {
-                Debug.LogWarning("[投降] 游戏未开始,无法投降!");
-            }
-        }
-    }
+    //// Update is called once per frame
+    //private void Update()
+    //{
+    //    // 测试F11键投降
+    //    if (Input.GetKeyDown(KeyCode.F11))
+    //    {
+    //        // 只有在游戏进行中且是本地玩家的回合时才能投降
+    //        if (bIsInGaming)
+    //        {
+    //            Debug.Log($"[投降] 玩家 {_LocalPlayerID} 按下F1键请求投降");
+    //            RequestSurrender();
+    //        }
+    //        else
+    //        {
+    //            Debug.LogWarning("[投降] 游戏未开始,无法投降!");
+    //        }
+    //    }
+    //}
     /// <summary>
     /// 请求投降
     /// </summary>
@@ -228,7 +228,7 @@ public class GameManage : MonoBehaviour
     {
         Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
         OnGameEnded?.Invoke(winnerPlayerId);
-        //ResultUIManager.Instance.GetVictoryPlayerID(winnerPlayerId);
+        ResultUIManager.Instance.Inititialize(winnerPlayerId);
         GameOver(winnerPlayerId);
     }
 

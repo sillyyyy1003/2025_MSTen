@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028463, g: 0.22571494, b: 0.3069235, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028429, g: 0.2257145, b: 0.30692294, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2026,10 +2026,13 @@ MonoBehaviour:
   nowChooseUnitType: 5
   NowPopulation: 0
   PlayerRuinCells: 
+  NextTurnReBuildCellID: 
   DeadUnitCount: 0
   RedMoonSkillCount: 0
   bRedMoonSkill: 0
   BuildingFarmerCount: 0
+  TurnCount: 0
+  CrazyTurnCooldown: 0
   MirrorSkillCount: 0
   buildingRegistry: {fileID: 0}
 --- !u!114 &131122553
@@ -27425,8 +27428,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ecc24a2b133f9c438e582bf7aeb4392, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnTimeLimit: 30
-  timePoolInitial: 40
+  turnTimeLimit: 40
+  timePoolInitial: 60
 --- !u!114 &2117784778
 MonoBehaviour:
   m_ObjectHideFlags: 0
