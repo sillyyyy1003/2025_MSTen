@@ -90,8 +90,9 @@ public class GameOperationPanel : MonoBehaviour
 		{
 			if (Input.GetMouseButton(1))
 			{
+				if (PlayerDataManager.Instance.nowChooseUnitID != -1) return;
 				HexCell cell = hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-				if(cell!=null) ShowBuyCardInfo(cell);
+				if (cell != null) ShowBuyCardInfo(cell);
 				return;
 			}
 
