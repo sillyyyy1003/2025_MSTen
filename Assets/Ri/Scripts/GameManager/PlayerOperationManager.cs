@@ -2430,8 +2430,7 @@ public class PlayerOperationManager : MonoBehaviour
             }
 
           
-            // 3. 从PieceManager移除
-            PieceManager.Instance.RemovePiece(farmerPieceID);
+         
 
             // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
             GameManage.Instance.SetCellObject(farmerPos, null);
@@ -2447,6 +2446,8 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 Debug.Log($"[农民进建筑] 已从PlayerDataManager移除农民");
             }
+            // 3. 从PieceManager移除
+            PieceManager.Instance.RemovePiece(farmerPieceID);
             // 重置选择状态
             ReturnToDefault();
             SelectingUnit = null;
