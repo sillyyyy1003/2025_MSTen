@@ -28,6 +28,11 @@ public class GameOperationPanel : MonoBehaviour
 	public Canvas uiCanvas;
 	public RectTransform StorePanelTransform;
 	public RectTransform ActionPanelTransform;
+	
+	[Header("SpeicalButton")]
+	public Button SpecialButton;
+
+	[Header("Images")]
 	public Image MouseImage;
 	[Header("Text")]
 	public TMP_Text OperationPanelText;
@@ -40,6 +45,7 @@ public class GameOperationPanel : MonoBehaviour
 	private HexGrid hexGrid;
 	public Vector2 screenOffset = new Vector2(0, 30);
 
+	private int BuyUnitCellID = -1;     // 在哪个格子购买单位
 	HexCell GetCellUnderCursor() =>
 		hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
 
@@ -72,6 +78,9 @@ public class GameOperationPanel : MonoBehaviour
 		OnCardTypeBought += HandleResourceUpdate;
 		OnCardTypeBought += () => SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
 		UpdateCostText();
+
+		// 绑定事件
+		SpecialButton.onClick.AddListener(OnSpecialButtonClick);
 	}
 
 	void Update()
@@ -88,14 +97,18 @@ public class GameOperationPanel : MonoBehaviour
 
 		if (!EventSystem.current.IsPointerOverGameObject())
 		{
+			// 右键显示购买面板
 			if (Input.GetMouseButton(1))
 			{
-				if (PlayerDataManager.Instance.nowChooseUnitID != -1) return;
 				HexCell cell = hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-				if (cell != null) ShowBuyCardInfo(cell);
+				if (cell != null)
+				{
+					ShowBuyCardInfo(cell);
+				}
 				return;
 			}
 
+			// 点击任意处关闭购买面板
 			if (Input.GetMouseButton(0))
 			{
 				CloseStorePanel();
@@ -104,18 +117,17 @@ public class GameOperationPanel : MonoBehaviour
 			// 当选择对象发生变化的时候 更新操作面板
 			UpdateOperationPanelInfo();
 		}
-
-
 	}
 
 	/// <summary>随时更新操作面板</summary>
 	/// <param name="type">被选中的操作类型</param>
 	public void UpdateOperationPanelInfo()
 	{
-
+		// 先隐藏面板
 		ActionPanelTransform.gameObject.SetActive(false);
-		int chooseUnitId = dataManager.nowChooseUnitID;
-		if (chooseUnitId == -1)
+
+		// 如果没有选择单位 则不显示操作面板
+		if (dataManager.nowChooseUnitID == -1)
 			return;
 
 		var cell = GetCellUnderCursor();
@@ -124,6 +136,7 @@ public class GameOperationPanel : MonoBehaviour
 
 		int2 pos = GameManage.Instance.GetBoardInfor(cell.Index).Cells2DPos;
 
+		// 如果目标格子没有单位 则显示移动面板
 		if (!cell.Unit)
 		{
 			ShowMovePanelIfNeeded(cell);
@@ -131,6 +144,7 @@ public class GameOperationPanel : MonoBehaviour
 			return;
 		}
 
+		// 如果目标格子有单位 则根据单位类型显示对应的面板
 		int ownerId = dataManager.GetUnitOwner(pos);
 		bool isLocalPlayer = (ownerId == GameManage.Instance.LocalPlayerID);
 
@@ -153,7 +167,7 @@ public class GameOperationPanel : MonoBehaviour
 				break;
 		}
 
-		UpdatePanelPos();
+		
 	}
 
 
@@ -163,6 +177,9 @@ public class GameOperationPanel : MonoBehaviour
 	/// <param name="cell">格子</param>
 	public void ShowBuyCardInfo(HexCell cell)
 	{
+		// 如果已经选择了单位 则不显示购买面板
+		if (PlayerDataManager.Instance.nowChooseUnitID != -1) return;
+
 		// 如果格子上有单位 则不显示购买面板
 		if (cell.Unit) return;
 
@@ -170,9 +187,7 @@ public class GameOperationPanel : MonoBehaviour
 		int localPlayerId = GameManage.Instance.LocalPlayerID;
 		if (PlayerDataManager.Instance.GetCellOwner(cell.Index) != localPlayerId) return;
 
-		// 如果选中的格子和右键到的格子不是一个格子也不现实
-		if(GameManage.Instance._PlayerOperation.selectCellID != cell.Index) return;
-
+		BuyUnitCellID = cell.Index;
 		Vector3 cellWorldPos = cell.Position;
 
 		//将格子位置转换为屏幕UI的位置
@@ -217,7 +232,7 @@ public class GameOperationPanel : MonoBehaviour
 	public void BuyMissionary()
 	{
 		// 更新Resource
-		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Missionary))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Missionary, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 
 		CloseStorePanel();
@@ -225,7 +240,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyFarmer()
 	{
-		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Farmer))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Farmer, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 
 		CloseStorePanel();
@@ -234,7 +249,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyArmy()
 	{
-		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Soldier))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Soldier, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 	}
@@ -242,7 +257,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyBuilding()
 	{
-		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Building))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Building, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 
@@ -258,12 +273,15 @@ public class GameOperationPanel : MonoBehaviour
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 				ShowPanel("建物入る.");
+				UpdatePanelPos();
 			}
 			else
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Cure);
-				ShowPanel("治療：" + cost);
+				ShowButtonPanel("治療：" + cost);
+
+				UpdatePanelPos(cell,true);
 			}
 		}
 	}
@@ -279,20 +297,24 @@ public class GameOperationPanel : MonoBehaviour
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
 			ShowPanel("伝教：" + cost);
+			UpdatePanelPos();
 			return;
 		}
 
 		// 占领逻辑
 		if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) == cell.Index)
 		{
+			Debug.Log("Unit Cell ID:" + dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) + "cell id:" + cell.Index);
 			int cellOwner = dataManager.GetCellOwner(cell.Index);
 			if (cellOwner != GameManage.Instance.LocalPlayerID)
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int occupy = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Occupy);
-				ShowPanel("占領:" + occupy);
+				ShowButtonPanel("占領:" + occupy);
+				UpdatePanelPos(cell, true);
 			}
 		}
+
 	}
 
 	private void HandlePope(HexCell cell, int2 pos, bool isLocal)
@@ -305,6 +327,7 @@ public class GameOperationPanel : MonoBehaviour
 		{
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			ShowPanel("Switch is not ready!");
+			UpdatePanelPos();
 			return;
 		}
 
@@ -316,8 +339,11 @@ public class GameOperationPanel : MonoBehaviour
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 				ShowPanel("位置交換:2");
+				UpdatePanelPos();
 			}
 		}
+
+		
 	}
 
 	private void HandleSolider(HexCell cell, int2 pos, bool isLocal)
@@ -331,11 +357,33 @@ public class GameOperationPanel : MonoBehaviour
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Attack);
 			ShowPanel("攻撃：" + cost);
 		}
+
+		UpdatePanelPos();
 	}
 
 	private void ShowPanel(string msg)
 	{
+		// 关闭special button
+		SpecialButton.gameObject.SetActive(false);
+		// 打开文字面板
+		OperationPanelText.gameObject.SetActive(true);
 		OperationPanelText.text = msg;
+		ActionPanelTransform.gameObject.SetActive(true);
+	}
+
+	private void ShowButtonPanel(string msg)
+	{
+		// 关闭文字面板
+		OperationPanelText.gameObject.SetActive(false);
+		
+		// 显示special button
+		SpecialButton.gameObject.SetActive(true);
+
+		// 设定OperationPanel显示的内容
+		TMP_Text text = SpecialButton.GetComponentInChildren<TMP_Text>();
+		text.text = msg;
+
+		// 显示OperationPanel可见
 		ActionPanelTransform.gameObject.SetActive(true);
 	}
 
@@ -373,29 +421,58 @@ public class GameOperationPanel : MonoBehaviour
 		return anchoredPos;
 	}
 
-	private void UpdatePanelPos()
+	private void UpdatePanelPos(HexCell cell = null, bool isSpecial = false)
 	{
 		if (ActionPanelTransform == null || uiCanvas == null)
 			return;
 
-		// 取得 Canvas Rect
-		RectTransform canvasRect = uiCanvas.GetComponent<RectTransform>();
+		if (!isSpecial)
+		{
+			// 取得 Canvas Rect
+			RectTransform canvasRect = uiCanvas.GetComponent<RectTransform>();
 
-		// 获取鼠标屏幕坐标
-		Vector2 mouseScreenPos = Input.mousePosition;
+			// 获取鼠标屏幕坐标
+			Vector2 mouseScreenPos = Input.mousePosition;
 
-		// 转换成 UI 本地坐标
-		Vector2 mouseLocalPos;
-		RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, mouseScreenPos, null, out mouseLocalPos);
+			// 转换成 UI 本地坐标
+			Vector2 mouseLocalPos;
+			RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, mouseScreenPos, null, out mouseLocalPos);
 
-		// 加上偏移，防止挡住鼠标
-		Vector2 anchoredPos = mouseLocalPos + screenOffset;
+			// 加上偏移，防止挡住鼠标
+			Vector2 anchoredPos = mouseLocalPos + screenOffset;
 
-		// 防止 UI 越界
-		anchoredPos = ClampToCanvas(anchoredPos, canvasRect, StorePanelTransform);
+			// 防止 UI 越界
+			anchoredPos = ClampToCanvas(anchoredPos, canvasRect, StorePanelTransform);
 
-		// 设置位置
-		ActionPanelTransform.anchoredPosition = anchoredPos;
+			// 设置位置
+			ActionPanelTransform.anchoredPosition = anchoredPos;
+		}
+		else
+		{
+
+			// 将格子位置转换为屏幕UI的位置
+			if (cell == null)
+				return;
+			
+			Vector3 cellWorldPos = cell.Position;
+			Vector3 screenPoint = Camera.main != null
+				? Camera.main.WorldToScreenPoint(cellWorldPos)
+				: new Vector3(cellWorldPos.x, cellWorldPos.y, 0f);
+			RectTransform canvasRect = uiCanvas.GetComponent<RectTransform>();
+			Vector2 localPoint;
+			// 在 Overlay 模式下，最后一个参数传 null
+			bool ok = RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, null, out localPoint);
+			if (!ok)
+			{
+				Debug.LogWarning("ScreenPointToLocalPointInRectangle failed.");
+				return;
+			}
+			Vector2 anchoredPos = localPoint + screenOffset;
+			anchoredPos = ClampToCanvas(anchoredPos, canvasRect, ActionPanelTransform);
+			// 设定面板的位置
+			ActionPanelTransform.anchoredPosition = anchoredPos;
+
+		}
 
 	}
 
@@ -427,6 +504,11 @@ public class GameOperationPanel : MonoBehaviour
 		if (distance > value) return false;
 
 		return true;
+	}
 
+	private void OnSpecialButtonClick()
+	{
+		GameManage.Instance._PlayerOperation.OnSpecialSkillButtonClick();
+		ActionPanelTransform.gameObject.SetActive(false);
 	}
 }

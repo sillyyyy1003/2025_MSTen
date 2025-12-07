@@ -106,7 +106,6 @@ public class PlayerOperationManager : MonoBehaviour
     private int clickCount = 0;
 
     //2025.11.28 检测右键长按
-    public Image fillImage;
     private float longPressThreshold = 1.2f;
     private float rightClickTimer = 0f;
     private bool isPressing = false;
@@ -452,13 +451,11 @@ public class PlayerOperationManager : MonoBehaviour
         {
             isPressing = true;
             rightClickTimer = 0f;
-            fillImage.gameObject.SetActive(true);
         }
 
         if (isPressing && Input.GetMouseButton(1) && bCanContinue)
         {
             rightClickTimer += Time.deltaTime;
-            fillImage.fillAmount = Mathf.Clamp(rightClickTimer,0,longPressThreshold) / longPressThreshold;
 		}
 
 
@@ -471,7 +468,6 @@ public class PlayerOperationManager : MonoBehaviour
 
 			isPressing = false;
 			rightClickTimer = 0f;
-			fillImage.gameObject.SetActive(false);
 		}
     }
 
@@ -641,22 +637,34 @@ public class PlayerOperationManager : MonoBehaviour
 
 	}
 
-    private void OnRightClickLongPress()
+    private void OnRightClickLongPress() {
+
+		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+		{
+			FarmerSacrifice();
+		}
+
+		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+		{
+			ExecuteOccupy();
+		}
+	}
+
+	public void OnSpecialSkillButtonClick()
     {
        
 		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
 		{
 			FarmerSacrifice();
-			//ClickBuildingCellid = ClickCellid;
-
 		}
 
 		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
 		{
             ExecuteOccupy();
-		
 		}
 	}
+
+
 
 	private void HandleLeftClick(bool isDoubleClick)
     {
@@ -1218,6 +1226,9 @@ public class PlayerOperationManager : MonoBehaviour
         {
             // 森林无法占领
             if (_HexGrid.GetIsForest(c)) continue;
+			// 高于2级地形无法占领
+			if (_HexGrid.GetCell(c).Elevation > 2||_HexGrid.GetCell(c).Elevation <= 0) continue;
+
             _HexGrid.GetCell(c).Walled = true;
             PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(c);
 		}
@@ -1384,8 +1395,35 @@ public class PlayerOperationManager : MonoBehaviour
         return true;
     }
 
-    // 创建敌方单位
-    private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
+
+	public bool TryCreateUnit(CardType unitType,int cellID)
+	{
+		
+		// 获取选中格子的信息
+		BoardInfor cellInfo = GameManage.Instance.GetBoardInfor(cellID);
+		int2 cellPos = cellInfo.Cells2DPos;
+
+		// 再次确认该位置是空的
+		if (PlayerDataManager.Instance.IsPositionOccupied(cellPos) || PlayerDataManager.Instance.PlayerRuinCells.Contains(cellID))
+		{
+			Debug.LogWarning("该格子已有单位");
+			cellID = -1;
+			return false;
+		}
+
+		// 创建单位
+		CreateUnitAtPosition(unitType, cellID);
+
+		// 清除选择
+		// 2025.12.07 Guoning 修改为Shader高光
+		ClearClickCellHighlightData();
+
+		return true;
+	}
+
+
+	// 创建敌方单位
+	private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
     {
         if (!PlayerBoardInforDict.ContainsKey(0))
         {

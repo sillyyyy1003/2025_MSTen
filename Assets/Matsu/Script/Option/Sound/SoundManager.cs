@@ -591,4 +591,11 @@ public class SoundManager : MonoBehaviour
 		
 		
 	}
+
+	public void ApplyLoadedVolume(float master, float bgm, float se)
+	{
+		SetBGMVolume(bgm);
+        SetSEVolume(se);
+        SetMasterVolume(master);
+	}
 }
