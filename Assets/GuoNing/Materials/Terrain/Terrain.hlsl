@@ -1,6 +1,12 @@
 ﻿#include "../HexCellData.hlsl"
 
 //------------------------------------------------------------
+float4 _HoverColor; // hover 高亮颜色
+float4 _ClickColor; // click 高亮颜色
+float4 _RightClickColor;	// 右键高光颜色
+float4 _FinalColorMultiply; // rgb = 最终乘算颜色，a=启用程度(0~1)
+
+//------------------------------------------------------------
 // 从网格顶点的三个相邻六边形单元中提取数据，并计算顶点的地形与可见性信息
 //------------------------------------------------------------
 void GetVertexCellData_float(
@@ -75,9 +81,17 @@ float3 ApplyGrid(float3 baseColor, HexGridData h)
 //------------------------------------------------------------
 float3 ApplyHighlight(float3 baseColor, HexGridData h)
 {
-	return saturate(h.SmoothstepRange(0.78, 0.9) + baseColor.rgb);
+	return saturate(h.SmoothstepRange(0.68, 0.8) + baseColor.rgb);
 }
 
+//------------------------------------------------------------
+// 应用高亮边缘：距离中心 0.68~0.8 之间添加对应颜色两边
+//------------------------------------------------------------
+float3 ApplyHighlightColor(float3 baseColor, float4 highlightColor, HexGridData h)
+{
+	float t = h.SmoothstepRange(0.68, 0.8); // 高亮边缘范围
+	return lerp(baseColor, highlightColor.rgb, t * highlightColor.a);
+}
 
 //------------------------------------------------------------
 // 根据水面与地表高度差添加蓝色调滤镜（模拟水下变蓝效果）
@@ -125,11 +139,32 @@ void GetFragmentData_float(
 	}
 
 	// 若该格被高亮（例如选中），则添加白色高亮边缘
-	if (hgd.IsHighlighted())
+	//if (hgd.IsHighlighted())
+	//{
+	//	//BaseColor = ApplyHighlight(BaseColor, hgd);
+	//	BaseColor = ApplyHighlightColor(BaseColor, hgd);
+	//}
+
+	// Hover 高亮
+	if (hgd.IsHoverHighlighted())
 	{
-		BaseColor = ApplyHighlight(BaseColor, hgd);
+		BaseColor = ApplyHighlightColor(BaseColor, _HoverColor, hgd);
 	}
 
+	// Click 高亮
+	if (hgd.IsClickHighlighted())
+	{
+		BaseColor = ApplyHighlightColor(BaseColor, _ClickColor, hgd);
+	}
+	
+	// 右键高亮
+	if (hgd.IsRightClickHighlighted())
+	{
+		BaseColor = ApplyHighlightColor(BaseColor, _RightClickColor, hgd);
+	}
+	
+	BaseColor *= lerp(float3(1, 1, 1), _FinalColorMultiply.rgb, _FinalColorMultiply.a);
+	
 	// 输出探索度值（用于雾、可见性等系统）
 	Exploration = Visibility.w;
 }

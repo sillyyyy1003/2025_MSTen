@@ -17,7 +17,6 @@ public class ResultUIManager : MonoBehaviour
 	public RectTransform GameUI;
 
 	[Header("Buttons")]
-	public Button BackToGameButton;
 	public Button ResultDetailButton;
 	public Button GameExitButton;
 
@@ -42,8 +41,6 @@ public class ResultUIManager : MonoBehaviour
 	{
 		ResultLayer.gameObject.SetActive(false);
 
-
-		BackToGameButton.onClick.AddListener(OnClickBackToGameButton);
 		ResultDetailButton.onClick.AddListener(OnClickResultDetailButton);
 		GameExitButton.onClick.AddListener(OnClickGameExitButton);
 	}
@@ -75,12 +72,6 @@ public class ResultUIManager : MonoBehaviour
 
 		OpenResultPanel();
 
-	}
-
-	private void OnClickBackToGameButton()
-	{
-		ResultLayer.gameObject.SetActive(false);
-		GameUI.gameObject.SetActive(true);
 	}
 
 	private void OnClickResultDetailButton()

@@ -617,7 +617,6 @@ public class HexGrid : MonoBehaviour
 		// ↑11.6 RI 修改为public
 		for (int i = 0; i <cellList.Count; i++)
 		{
-
 			if (fromCell.Coordinates.DistanceTo(cellList[i].Coordinates) <= range)
 				return true;
 		}

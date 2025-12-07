@@ -30,10 +30,17 @@ using UnityEngine.Rendering.Universal;
 public class PlayerOperationManager : MonoBehaviour
 {
     //2025.11.13 Guoning
-    static readonly int cellHighlightingId = Shader.PropertyToID("_CellHighlighting");
+    static readonly int hoverHighlightId = Shader.PropertyToID("_HoverHighlight");
+    static readonly int hoverHighlightColorId = Shader.PropertyToID("_HoverColor");
 
-    // HexGrid的引用
-    public HexGrid _HexGrid;
+    static readonly int clickHighlightId = Shader.PropertyToID("_ClickHighlight");
+    static readonly int clickHighlightColorId = Shader.PropertyToID("_ClickColor");
+
+	static readonly int rightClickHighlightId = Shader.PropertyToID("_RightClickHighlight");
+	static readonly int rightClickHighlightColorId = Shader.PropertyToID("_RightClickColor");
+
+	// HexGrid的引用
+	public HexGrid _HexGrid;
 
     private Camera GameCamera;
 
@@ -68,7 +75,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 本地玩家的所有单位GameObject (key: 位置, value: GameObject)
     private Dictionary<int2, GameObject> localPlayerUnits = new Dictionary<int2, GameObject>();
-    
+
     // 其他玩家的单位GameObject
     private Dictionary<int, Dictionary<int2, GameObject>> otherPlayersUnits = new Dictionary<int, Dictionary<int2, GameObject>>();
 
@@ -77,8 +84,8 @@ public class PlayerOperationManager : MonoBehaviour
     // 建筑废墟字典
     private Dictionary<int, Dictionary<int, GameObject>> BuildingRuins = new Dictionary<int, Dictionary<int, GameObject>>();
     // 建筑废墟所在格子ID
-    private List<int> RuinCellID=new List<int>();
-    
+    private List<int> RuinCellID = new List<int>();
+
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
 
@@ -86,7 +93,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 本地玩家ID
     private int localPlayerId = -1;
 
-    public int selectCellID ;
+    public int selectCellID = -1;
 
 
     //// 保存攻击前的原始位置（用于"移动+攻击"场景）
@@ -98,17 +105,17 @@ public class PlayerOperationManager : MonoBehaviour
     private float lastClickTime;
     private int clickCount = 0;
 
-	//2025.11.28 检测右键长按
-	public Image fillImage;
-	private float longPressThreshold = 1.2f;
-	private float rightClickTimer = 0f;
-	private bool isPressing = false;
+    //2025.11.28 检测右键长按
+    public Image fillImage;
+    private float longPressThreshold = 1.2f;
+    private float rightClickTimer = 0f;
+    private bool isPressing = false;
 
 
 
 
-	// === Event 定义区域 ===
-	public event System.Action<int, CardType> OnUnitChoosed;
+    // === Event 定义区域 ===
+    public event System.Action<int, CardType> OnUnitChoosed;
 
 
     // 单位相关
@@ -135,7 +142,12 @@ public class PlayerOperationManager : MonoBehaviour
     void Start()
     {
         GameCamera = GameObject.Find("GameCamera").GetComponent<Camera>();
-    }
+
+        // 2025.12.07 设定高亮颜色
+        Shader.SetGlobalColor(hoverHighlightColorId, new Color(1f, 1f, 1f, 1f));        // 白色 Hover
+        Shader.SetGlobalColor(clickHighlightColorId, new Color(1f, 0f, 0f, 1f));        // 红色 Click
+		Shader.SetGlobalColor(rightClickHighlightColorId, new Color(0f, 0f, 1f, 1f));   // 蓝色 Click
+	}
 
 
     // Update is called once per frame
@@ -152,12 +164,14 @@ public class PlayerOperationManager : MonoBehaviour
                 if (Input.GetMouseButton(0) || Input.GetMouseButton(1) ||
                     Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
                     HandleMouseInput();
-                else UpdateCellHighlightData(GetCellUnderCursor());
+               
+                // 2025.12.07 高光更新
+                UpdateHighlight(GetCellUnderCursor());
             }
 
-			//HandleMouseInput();
+            //HandleMouseInput();
 
-		}
+        }
 
 
         //// 建造建筑
@@ -195,11 +209,11 @@ public class PlayerOperationManager : MonoBehaviour
         //            if (hp == 0)
         //                hp += 1;
         //            newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
-                   
+
         //            PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
         //            unit.PlayerUnitDataSO = newData;
         //            PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
-                   
+
         //            Debug.Log( "Heal HP is " + hp);
         //        }
         //    }
@@ -240,34 +254,92 @@ public class PlayerOperationManager : MonoBehaviour
         //}
     }
 
-	// *************************
-	//       追加高亮选择处理
-	// *************************
-	void UpdateCellHighlightData(HexCell cell)
+
+    void UpdateHighlight(HexCell cell)
     {
+    	UpdateHoverHighlight(cell);
+		UpdateClickHighlight(_HexGrid.GetCell(LastSelectingCellID));
+        
+	}
 
 
-        if (cell == null)
-        {
-            ClearCellHighlightData();
-            return;
-        }
+	// *************************
+	//       追加高亮选择处理(Hover)
+	// *************************
+	void UpdateHoverHighlight(HexCell cell)
+	{
+		if (cell == null)
+		{
+			Shader.SetGlobalVector(hoverHighlightId, new Vector4(0, 0, -1, 0)); // 关闭
+			return;
+		}
+       
+		Shader.SetGlobalVector(
+			hoverHighlightId,
+			new Vector4(
+				cell.Coordinates.HexX,
+				cell.Coordinates.HexZ,
+				0.5f,                 // radius^2
+				HexMetrics.wrapSize
+			)
+		);
+	}
 
-        // Works up to brush size 6.
-        Shader.SetGlobalVector(
-            cellHighlightingId,
-            new Vector4(
-                cell.Coordinates.HexX,
-                cell.Coordinates.HexZ,
-                0.5f,
-                HexMetrics.wrapSize
-            )
-        );
-    }
+	// *************************
+	// 追加高亮选择处理(Click)
+	// *************************
+	void UpdateClickHighlight(HexCell cell)
+	{
+		if (cell == null)
+		{
+			Shader.SetGlobalVector(clickHighlightId, new Vector4(0, 0, -1, 0)); // 关闭
+			return;
+		}
 
-    void ClearCellHighlightData() =>
-        Shader.SetGlobalVector(cellHighlightingId, new Vector4(0f, 0f, -1f, 0f));
-    HexCell GetCellUnderCursor() =>
+		Shader.SetGlobalVector(
+			clickHighlightId,
+			new Vector4(
+				cell.Coordinates.HexX,
+				cell.Coordinates.HexZ,
+				0.5f,
+				HexMetrics.wrapSize
+			)
+		);
+	}
+
+	// *************************
+	// 追加高亮选择处理(Click)
+	// *************************
+	void UpdateRightClickHighlight(HexCell cell)
+	{
+		if (cell == null)
+		{
+			Shader.SetGlobalVector(rightClickHighlightId, new Vector4(0, 0, -1, 0)); // 关闭
+			return;
+		}
+
+		Shader.SetGlobalVector(
+			rightClickHighlightId,
+			new Vector4(
+				cell.Coordinates.HexX,
+				cell.Coordinates.HexZ,
+				0.5f,
+				HexMetrics.wrapSize
+			)
+		);
+	}
+
+	// 清理Hover高亮数据
+	void ClearHoverCellHighlightData() =>
+        Shader.SetGlobalVector(hoverHighlightId, new Vector4(0f, 0f, -1f, 0f));
+    // 清理Click高亮数据
+	void ClearClickCellHighlightData() =>
+	    Shader.SetGlobalVector(hoverHighlightId, new Vector4(0f, 0f, -1f, 0f));
+    // 清理右键高亮数据
+	void ClearRightClickCellHighlightData() =>
+	Shader.SetGlobalVector(rightClickHighlightId, new Vector4(0f, 0f, -1f, 0f));
+
+	HexCell GetCellUnderCursor() =>
         _HexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
     // *************************
     //       追加高亮选择处理
@@ -315,12 +387,14 @@ public class PlayerOperationManager : MonoBehaviour
         }
 
         // 2025.11.13 GuoNing 清除高亮数据 
-        ClearCellHighlightData();
+        ClearClickCellHighlightData();
 
         // 左键点击 - 选择单位
         if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
-            _HexGrid.GetCell(selectCellID).DisableHighlight();
+            //2025.12.07 Guoning 取消UI高光使用
+            //_HexGrid.GetCell(selectCellID).DisableHighlight();
+            //UpdateClickHighlight(_HexGrid.GetCell(selectCellID));   
 
             // 检测鼠标左键点击
             if (Input.GetMouseButtonDown(0))
@@ -389,6 +463,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     private void OnRightClickShortPress()
     {
+        ClearRightClickCellHighlightData();
      
 		if (SelectingUnit == null) return;
 
@@ -545,6 +620,9 @@ public class PlayerOperationManager : MonoBehaviour
 					MoveToSelectCell(ClickCellid);
 			}
 		}
+		
+        // 2025.12.07 Guoning 右键点击高光
+		UpdateRightClickHighlight(_HexGrid.GetCell(ClickCellid));
 
 	}
 
@@ -643,10 +721,12 @@ public class PlayerOperationManager : MonoBehaviour
                 // 检查是否是空格子
                 if (!PlayerDataManager.Instance.IsPositionOccupied(clickPos) && _HexGrid.IsValidDestination(_HexGrid.GetCell(ClickCellid)))
                 {
-                    ChooseEmptyCell(ClickCellid);
+                    // 2025.12.07 全部使用Shader的高光
+                    //ChooseEmptyCell(ClickCellid);
+                    //UpdateClickHighlight(_HexGrid.GetCell(ClickCellid));
                     selectCellID = ClickCellid;
                     SelectedEmptyCellID = ClickCellid; // 保存选中的空格子
-                                                       //Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
+                    //Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");
 
                 }
                 else
@@ -664,7 +744,7 @@ public class PlayerOperationManager : MonoBehaviour
             SelectedEmptyCellID = -1;
         }
     }
-    //private void HandleRightClick()
+    //private void HandleHandleRightClick()
     //{
     //    if (SelectingUnit == null) return;
 
@@ -980,8 +1060,8 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = false;
 
         // 取消当前选择
-        _HexGrid.GetCell(selectCellID).DisableHighlight();
-        ReturnToDefault();
+        ClearClickCellHighlightData();
+		ReturnToDefault();
         SelectingUnit = null;
         SelectedEmptyCellID = -1;
 
@@ -1277,7 +1357,8 @@ public class PlayerOperationManager : MonoBehaviour
         CreateUnitAtPosition(unitType, SelectedEmptyCellID);
 
         // 清除选择
-        _HexGrid.GetCell(SelectedEmptyCellID).DisableHighlight();
+        // 2025.12.07 Guoning 修改为Shader高光
+        ClearClickCellHighlightData();
         SelectedEmptyCellID = -1;
 
         return true;
@@ -1907,7 +1988,10 @@ public class PlayerOperationManager : MonoBehaviour
                     NetGameSystem.Instance.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
                     Debug.Log($"[本地] 已发送移动消息到网络: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
                 }
-            });
+
+				// 2025.12.07 Guoning 清除右键高光
+				ClearRightClickCellHighlightData();
+			});
 
         
         }
@@ -2368,7 +2452,11 @@ public class PlayerOperationManager : MonoBehaviour
             bCanContinue = true;
 
             Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
-        });
+
+			// 2025.12.07 Guoning 清除右键高光
+			ClearRightClickCellHighlightData();
+
+		});
     }
 
 
@@ -2451,7 +2539,10 @@ public class PlayerOperationManager : MonoBehaviour
             ReturnToDefault();
             SelectingUnit = null;
             bCanContinue = true;
-        });
+
+			// 2025.12.07 Guoning 清除右键高光
+			ClearRightClickCellHighlightData();
+		});
     }
     private void MoveFarmerToBuilding(int targetCellId, int2 originalFarmerPos, System.Action onComplete)
     {
@@ -2929,7 +3020,10 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log($"[ExecuteAttack] 击杀目标，移动到目标位置: ({toPos.x},{toPos.y})");
 
             bCanContinue = true;
-        });
+
+			// 2025.12.07 Guoning 清除右键高光
+			ClearRightClickCellHighlightData();
+		});
     }
 
     // 处理网络建筑攻击消息

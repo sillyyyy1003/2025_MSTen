@@ -37,6 +37,9 @@ float4 GetCellData (float2 cellDataCoordinates, bool editMode) {
 // z: Highlight radius, squared with bias. Is negative if there is no highlight.
 // w: Hex grid wrap size, to support X wrapping. Is zero if there is no wrapping.
 float4 _CellHighlighting;
+float4 _HoverHighlight;		// hover 的位置与半径
+float4 _ClickHighlight;		// click 的位置与半径
+float4 _RightClickHighlight; // right click 的位置与半径
 
 // Hex grid data derived from world-space XZ position.
 struct HexGridData {
@@ -69,6 +72,31 @@ struct HexGridData {
 		return dot(cellToHighlight, cellToHighlight) < _CellHighlighting.z;
 	}
 
+	bool IsHoverHighlighted()
+	{
+		float2 v = abs(_HoverHighlight.xy - cellCenter);
+		if (v.x > _HoverHighlight.w * 0.5)
+			v.x -= _HoverHighlight.w;
+		return dot(v, v) < _HoverHighlight.z;
+	}
+
+	bool IsClickHighlighted()
+	{
+		float2 v = abs(_ClickHighlight.xy - cellCenter);
+		if (v.x > _ClickHighlight.w * 0.5)
+			v.x -= _ClickHighlight.w;
+		return dot(v, v) < _ClickHighlight.z;
+	}
+	
+	
+	bool IsRightClickHighlighted()
+	{
+		float2 v = abs(_RightClickHighlight.xy - cellCenter);
+		if (v.x > _ClickHighlight.w * 0.5)
+			v.x -= _ClickHighlight.w;
+		return dot(v, v) < _ClickHighlight.z;
+	}
+	
 	// Smoothstep from 0 to 1 at cell center distance threshold.
 	float Smoothstep01 (float threshold) {
 		return smoothstep(
