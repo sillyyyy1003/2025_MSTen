@@ -161,7 +161,11 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickEndGame()
 	{
-		Debug.Log("EndGame");
+	#if UNITY_EDITOR
+		UnityEditor.EditorApplication.isPlaying = false;
+	#else
+		Application.Quit();
+	#endif
 	}
 
 	/// <summary>

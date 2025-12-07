@@ -1211,15 +1211,18 @@ public class PlayerOperationManager : MonoBehaviour
     // 获得初始领地
     private void GetStartWall(int cellID)
     {
-        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(cellID, true);
-        foreach (var i in pos)
+        // 设定初始范围为1
+        List<int> cellIDs = _HexGrid.GetAllCellsWithinRange(1, cellID);
+      
+		foreach (var c in cellIDs)
         {
-            if (_HexGrid.GetCell(i).enabled)
-                _HexGrid.GetCell(i).Walled = true;
+            // 森林无法占领
+            if (_HexGrid.GetIsForest(c)) continue;
+            _HexGrid.GetCell(c).Walled = true;
+            PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(c);
+		}
 
-            PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(i);
-        }
-    }
+	}
 
     // 在指定的格子创建单位实例
     private void CreateUnitAtPosition(CardType unitType, int cellId)

@@ -732,6 +732,9 @@ public class GameManage : MonoBehaviour
         return startPos;
     }
 
+
+
+
     public int GetBoardCount()
     {
         return GameBoardInforDict.Count;

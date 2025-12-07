@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -681,6 +682,21 @@ public class HexGrid : MonoBehaviour
 		return false;
 	}
 
+	public List<int> GetAllCellsWithinRange(int range, int cellID)
+	{
+		List<int> result = new List<int>();
+		HexCell center = GetCell(cellID);
+
+		for (int i = 0; i < cells.Length; i++)
+		{
+			if (center.Coordinates.DistanceTo(cells[i].Coordinates) <= range)
+			{
+				result.Add(cells[i].Index);
+			}
+		}
+
+		return result;
+	}
 
 	/// <summary>
 	/// 返回某个格子到领地的最短直线距离

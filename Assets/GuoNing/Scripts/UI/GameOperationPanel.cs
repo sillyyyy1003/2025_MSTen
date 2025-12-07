@@ -16,10 +16,10 @@ public class GameOperationPanel : MonoBehaviour
 
 	enum BuyType
 	{
-		Missionary=0,
-		Farmer=1,
-		Army=2,
-		Building=3
+		Missionary = 0,
+		Farmer = 1,
+		Army = 2,
+		Building = 3
 	}
 
 	private PlayerDataManager dataManager;
@@ -31,7 +31,7 @@ public class GameOperationPanel : MonoBehaviour
 	public Image MouseImage;
 	[Header("Text")]
 	public TMP_Text OperationPanelText;
-	public TMP_Text[] CostText= new TMP_Text[4];
+	public TMP_Text[] CostText = new TMP_Text[4];
 	public TMP_Text ResourceText;
 
 	private event System.Action OnCardTypeBought;
@@ -70,14 +70,14 @@ public class GameOperationPanel : MonoBehaviour
 		}
 
 		OnCardTypeBought += HandleResourceUpdate;
-		OnCardTypeBought +=() => SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
+		OnCardTypeBought += () => SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
 		UpdateCostText();
 	}
 
 	void Update()
 	{
 
-		if (GameManage.Instance.GetIsGamingOrNot() == false) 
+		if (GameManage.Instance.GetIsGamingOrNot() == false)
 		{
 			// 关闭面板
 			StorePanelTransform.gameObject.SetActive(false);
@@ -105,7 +105,7 @@ public class GameOperationPanel : MonoBehaviour
 			UpdateOperationPanelInfo();
 		}
 
-		
+
 	}
 
 	/// <summary>随时更新操作面板</summary>
@@ -123,7 +123,7 @@ public class GameOperationPanel : MonoBehaviour
 			return;
 
 		int2 pos = GameManage.Instance.GetBoardInfor(cell.Index).Cells2DPos;
-		
+
 		if (!cell.Unit)
 		{
 			ShowMovePanelIfNeeded(cell);
@@ -170,6 +170,9 @@ public class GameOperationPanel : MonoBehaviour
 		int localPlayerId = GameManage.Instance.LocalPlayerID;
 		if (PlayerDataManager.Instance.GetCellOwner(cell.Index) != localPlayerId) return;
 
+		// 如果选中的格子和右键到的格子不是一个格子也不现实
+		if(GameManage.Instance._PlayerOperation.selectCellID != cell.Index) return;
+
 		Vector3 cellWorldPos = cell.Position;
 
 		//将格子位置转换为屏幕UI的位置
@@ -180,7 +183,7 @@ public class GameOperationPanel : MonoBehaviour
 		}
 
 		StorePanelTransform.position = cellWorldPos + (Vector3)screenOffset; // 注意：screenOffset 在 WorldSpace 下为世界单位，若需更精确可改为 Vector3 worldOffset
-		
+
 		Vector3 screenPoint = Camera.main != null
 			? Camera.main.WorldToScreenPoint(cellWorldPos)
 			: new Vector3(cellWorldPos.x, cellWorldPos.y, 0f);
@@ -214,7 +217,7 @@ public class GameOperationPanel : MonoBehaviour
 	public void BuyMissionary()
 	{
 		// 更新Resource
-		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Missionary))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Missionary))
 			OnCardTypeBought?.Invoke();
 
 		CloseStorePanel();
@@ -222,7 +225,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyFarmer()
 	{
-		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Farmer))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Farmer))
 			OnCardTypeBought?.Invoke();
 
 		CloseStorePanel();
@@ -231,7 +234,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyArmy()
 	{
-		if(unitDataInterface.TryBuyUnitToMapByType(CardType.Soldier))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Soldier))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 	}
@@ -340,7 +343,7 @@ public class GameOperationPanel : MonoBehaviour
 	private void ShowMovePanelIfNeeded(HexCell cell)
 	{
 		// 教皇不能移动
-		if (dataManager.nowChooseUnitType == CardType.Pope)
+		if (dataManager.nowChooseUnitType == CardType.Pope || dataManager.nowChooseUnitType == CardType.Building) 
 			return;
 
 		// 农民的移动有限制 无法移动到非己方格子 所以不会在 非己方格子显示移动面板
