@@ -2613,9 +2613,6 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
 
-        // 开始移动的时候 hexGrid显示路径
-        _HexGrid.ShowPathWithShader(currentAP);
-
         // 创建移动动画序列 - 只移动到建筑前，不实际进入建筑格子
         Sequence moveSequence = DOTween.Sequence();
         Vector3 currentPos = SelectingUnit.transform.position;
