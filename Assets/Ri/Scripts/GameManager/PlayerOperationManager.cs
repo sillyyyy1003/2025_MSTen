@@ -106,7 +106,6 @@ public class PlayerOperationManager : MonoBehaviour
     private int clickCount = 0;
 
     //2025.11.28 检测右键长按
-    public Image fillImage;
     private float longPressThreshold = 1.2f;
     private float rightClickTimer = 0f;
     private bool isPressing = false;
@@ -452,13 +451,11 @@ public class PlayerOperationManager : MonoBehaviour
         {
             isPressing = true;
             rightClickTimer = 0f;
-            fillImage.gameObject.SetActive(true);
         }
 
         if (isPressing && Input.GetMouseButton(1) && bCanContinue)
         {
             rightClickTimer += Time.deltaTime;
-            fillImage.fillAmount = Mathf.Clamp(rightClickTimer,0,longPressThreshold) / longPressThreshold;
 		}
 
 
@@ -471,7 +468,6 @@ public class PlayerOperationManager : MonoBehaviour
 
 			isPressing = false;
 			rightClickTimer = 0f;
-			fillImage.gameObject.SetActive(false);
 		}
     }
 
@@ -641,22 +637,34 @@ public class PlayerOperationManager : MonoBehaviour
 
 	}
 
-    private void OnRightClickLongPress()
+    private void OnRightClickLongPress() {
+
+		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+		{
+			FarmerSacrifice();
+		}
+
+		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+		{
+			ExecuteOccupy();
+		}
+	}
+
+	public void OnSpecialSkillButtonClick()
     {
        
 		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
 		{
 			FarmerSacrifice();
-			//ClickBuildingCellid = ClickCellid;
-
 		}
 
 		if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
 		{
             ExecuteOccupy();
-		
 		}
 	}
+
+
 
 	private void HandleLeftClick(bool isDoubleClick)
     {
