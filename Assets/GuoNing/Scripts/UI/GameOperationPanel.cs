@@ -274,15 +274,17 @@ public class GameOperationPanel : MonoBehaviour
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 				ShowPanel("建物入る.");
+				UpdatePanelPos();
 			}
 			else
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Cure);
 				ShowButtonPanel("治療：" + cost);
+
+				UpdatePanelPos(cell,true);
 			}
 		}
-		UpdatePanelPos();
 	}
 
 	private void HandleMissionary(HexCell cell, int2 pos, bool isLocal)
@@ -296,6 +298,7 @@ public class GameOperationPanel : MonoBehaviour
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
 			ShowPanel("伝教：" + cost);
+			UpdatePanelPos();
 			return;
 		}
 
@@ -308,9 +311,10 @@ public class GameOperationPanel : MonoBehaviour
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int occupy = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Occupy);
 				ShowButtonPanel("占領:" + occupy);
+				UpdatePanelPos(cell, true);
 			}
 		}
-		UpdatePanelPos();
+
 	}
 
 	private void HandlePope(HexCell cell, int2 pos, bool isLocal)
@@ -495,5 +499,6 @@ public class GameOperationPanel : MonoBehaviour
 	private void OnSpecialButtonClick()
 	{
 		GameManage.Instance._PlayerOperation.OnSpecialSkillButtonClick();
+		ActionPanelTransform.gameObject.SetActive(false);
 	}
 }
