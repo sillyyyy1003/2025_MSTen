@@ -258,7 +258,14 @@ public class PlayerOperationManager : MonoBehaviour
     void UpdateHighlight(HexCell cell)
     {
     	UpdateHoverHighlight(cell);
-		UpdateClickHighlight(_HexGrid.GetCell(LastSelectingCellID));
+        if(SelectedEmptyCellID!=-1)
+        {
+            UpdateClickHighlight(_HexGrid.GetCell(SelectedEmptyCellID));
+        }
+        else
+        {
+            UpdateClickHighlight(null);
+        }
         
 	}
 
@@ -666,7 +673,9 @@ public class PlayerOperationManager : MonoBehaviour
                 // 取消之前的选择
                 ReturnToDefault();
                 SelectedEmptyCellID = -1;
-
+                // 清除选择高光
+                //ClearClickCellHighlightData();
+                //ClearHoverCellHighlightData();
 
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
