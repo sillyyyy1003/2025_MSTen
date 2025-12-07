@@ -266,6 +266,10 @@ public class PlayerOperationManager : MonoBehaviour
         {
             UpdateClickHighlight(_HexGrid.GetCell(SelectedEmptyCellID));
         }
+        else if (SelectingUnit != null)
+        {
+            UpdateClickHighlight(_HexGrid.GetCell(PlayerDataManager.Instance.GetCellIdByUnitId(PlayerDataManager.Instance.nowChooseUnitID)));
+        }
         else
         {
             UpdateClickHighlight(null);
