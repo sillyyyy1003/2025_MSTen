@@ -38,6 +38,5 @@ public class ToggleGroupCard : MonoBehaviour
             changedItem.SetState(false);
         }
 
-
     }
 }

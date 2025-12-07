@@ -777,35 +777,40 @@ public class PlayerDataManager : MonoBehaviour
             // 先找到单位ID，以便清理映射
             PlayerUnitData? unitData = data.FindUnitAt(pos);
             PieceType pieceType = PieceType.None;
-            // 计算人口
-            switch (unitData.Value.UnitType)
+            // 本次移除计算人口
+            if(playerId==GameManage.Instance.LocalPlayerID)
             {
-                case CardType.Farmer:
-                    pieceType = PieceType.Farmer;
-                    PlayerDataManager.Instance.NowPopulation -=
-                        PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, SceneStateManager.Instance.PlayerReligion);
+                // 计算人口
+                switch (unitData.Value.UnitType)
+                {
+                    case CardType.Farmer:
+                        pieceType = PieceType.Farmer;
+                        PlayerDataManager.Instance.NowPopulation -=
+                            PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, SceneStateManager.Instance.PlayerReligion);
 
 
-                    break;
-                case CardType.Soldier:
-                    pieceType = PieceType.Military;
-                    PlayerDataManager.Instance.NowPopulation -=
-                     PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
+                        break;
+                    case CardType.Soldier:
+                        pieceType = PieceType.Military;
+                        PlayerDataManager.Instance.NowPopulation -=
+                         PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
 
 
 
-                    break;
-                case CardType.Missionary:
-                    pieceType = PieceType.Missionary;
-                    PlayerDataManager.Instance.NowPopulation -=
-                   PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
-                    break;
-              
+                        break;
+                    case CardType.Missionary:
+                        pieceType = PieceType.Missionary;
+                        PlayerDataManager.Instance.NowPopulation -=
+                       PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
+                        break;
 
-             
-                default:
-                    Debug.LogError($"未知的单位类型");
-                    break;
+
+
+                    default:
+                        Debug.LogError($"未知的单位类型");
+                        break;
+                }
+
             }
 
 

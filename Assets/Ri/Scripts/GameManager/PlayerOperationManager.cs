@@ -2510,16 +2510,15 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[农民进建筑] 农民GameObject已销毁");
                 });
 
-                // 从本地单位字典中移除农民（使用原始位置）
-                if (localPlayerUnits.ContainsKey(farmerPos))
-                {
-                    localPlayerUnits.Remove(farmerPos);
-                }
+                //// 从本地单位字典中移除农民（使用原始位置）
+                //if (localPlayerUnits.ContainsKey(farmerPos))
+                //{
+                //    localPlayerUnits.Remove(farmerPos);
+                //}
             }
 
           
-            // 3. 从PieceManager移除
-            PieceManager.Instance.RemovePiece(farmerPieceID);
+         
 
             // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
             GameManage.Instance.SetCellObject(farmerPos, null);
@@ -2535,6 +2534,8 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 Debug.Log($"[农民进建筑] 已从PlayerDataManager移除农民");
             }
+            // 3. 从PieceManager移除
+            PieceManager.Instance.RemovePiece(farmerPieceID);
             // 重置选择状态
             ReturnToDefault();
             SelectingUnit = null;
@@ -3509,25 +3510,44 @@ public class PlayerOperationManager : MonoBehaviour
         int targetPlayerId)
     {
         Debug.Log($"[HandleTargetDestroyedAfterAttack] 目标被击杀，攻击者前进到目标位置");
-
+      
         // 移除目标GameObject
         if (targetObj != null)
         {
-            // 播放死亡动画（可选）
-            targetObj.transform.DOScale(0f, 0.3f).OnComplete(() =>
-            {
-                if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+           
+                ChangeMaterial cm = targetObj.GetComponentInChildren<ChangeMaterial>();
+                if (cm != null)
                 {
-                    localPlayerUnits.Remove(targetPos);
-                }
-                else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
-                         otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
-                {
-                    otherPlayersUnits[targetPlayerId].Remove(targetPos);
+                    cm.UnitDead(() =>
+                    {
+                        // 死亡特效播放完再删除单位逻辑
+                        if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+                        {
+                            localPlayerUnits.Remove(targetPos);
+                        }
+                        else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
+                                 otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
+                        {
+                            otherPlayersUnits[targetPlayerId].Remove(targetPos);
+                        }
+
+                        Destroy(targetObj);
+                    });
                 }
 
-                Destroy(targetObj);
-            });
+
+                //if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
+                //{
+                //    localPlayerUnits.Remove(targetPos);
+                //}
+                //else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
+                //         otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
+                //{
+                //    otherPlayersUnits[targetPlayerId].Remove(targetPos);
+                //}
+
+                //Destroy(targetObj);
+      
         }
 
         // 攻击者前进到目标位置
