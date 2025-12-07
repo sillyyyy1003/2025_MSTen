@@ -457,6 +457,8 @@ public class HexGrid : MonoBehaviour
 			cells[currentPathToIndex].DisableHighlight();
 		}
 		currentPathFromIndex = currentPathToIndex = -1;
+
+		ClearPathHighlight();
 	}
 
 	void ShowPath(int speed)
@@ -470,10 +472,65 @@ public class HexGrid : MonoBehaviour
 				//current.SetLabel(turn.ToString());
 				current.EnableHighlight(Color.white);
 				current = cells[current.PathFromIndex];
+			
 			}
 		}
 		cells[currentPathFromIndex].EnableHighlight(Color.blue);
 		cells[currentPathToIndex].EnableHighlight(Color.red);
+	}
+
+	void UpdatePathHighlight(List<HexCell> path, Color pathColor)
+	{
+		if (path == null || path.Count == 0)
+		{
+			Shader.SetGlobalInt("_PathCount", 0);
+			return;
+		}
+
+		Vector4[] coords = new Vector4[path.Count];
+
+		for (int i = 0; i < path.Count; i++)
+		{
+			coords[i] = new Vector4(
+				path[i].Coordinates.HexX,
+				path[i].Coordinates.HexZ,
+				0.5f, 0
+			);
+		}
+
+		Shader.SetGlobalInt("_PathCount", path.Count);
+		Shader.SetGlobalVectorArray("_PathCells", coords);
+		Shader.SetGlobalColor("_PathColor", pathColor);
+	}
+
+	public void ShowPathWithShader(int speed)
+	{
+		if (!currentPathExists)
+		{
+			Shader.SetGlobalInt("_PathCount", 0);
+			Debug.Log("没有路径");
+			return;
+		}
+
+		List<HexCell> list = new List<HexCell>();
+
+		HexCell current = cells[currentPathToIndex];
+		while (current.Index != currentPathFromIndex)
+		{
+			list.Add(current);
+			current = cells[current.PathFromIndex];
+		}
+
+		// 起点 & 终点
+		list.Add(cells[currentPathFromIndex]); // blue
+		list.Add(cells[currentPathToIndex]);   // red
+
+		UpdatePathHighlight(list, new Color(0.0f, 1.0f, 0.0f, 0.5f));
+	}
+
+	public void ClearPathHighlight()
+	{
+		Shader.SetGlobalInt("_PathCount", 0);
 	}
 
 	/// <summary>
@@ -490,7 +547,7 @@ public class HexGrid : MonoBehaviour
 		currentPathFromIndex = fromCellID;
 		currentPathToIndex = toCellID;
 		currentPathExists = Search(GetCell(fromCellID), GetCell(toCellID), speed);
-		ShowPath(speed);
+		ShowPathWithShader(speed);
 	}
 
 	bool Search(HexCell fromCell, HexCell toCell, int speed)

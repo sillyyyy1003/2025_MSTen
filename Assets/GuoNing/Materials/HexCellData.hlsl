@@ -4,6 +4,7 @@ TEXTURE2D(_HexCellData);
 SAMPLER(sampler_HexCellData);
 float4 _HexCellData_TexelSize;
 
+
 float4 FilterCellData (float4 data, bool editMode) {
 	if (editMode) {
 		data.xy = 1;
@@ -31,6 +32,15 @@ float4 GetCellData (float2 cellDataCoordinates, bool editMode) {
 	);
 }
 
+// 最大路径格子数量
+#define MAX_PATH_CELLS 128
+
+// 存路径每格的 hex 坐标
+int _PathCount;
+float4 _PathCells[MAX_PATH_CELLS];
+float4 _PathColor; // 路径颜色
+
+
 // Cell highlighting data, in hex space.
 // x: Highlight center X position.
 // y: Highlight center Z position.
@@ -40,6 +50,7 @@ float4 _CellHighlighting;
 float4 _HoverHighlight;		// hover 的位置与半径
 float4 _ClickHighlight;		// click 的位置与半径
 float4 _RightClickHighlight; // right click 的位置与半径
+
 
 // Hex grid data derived from world-space XZ position.
 struct HexGridData {
@@ -97,6 +108,24 @@ struct HexGridData {
 		return dot(v, v) < _ClickHighlight.z;
 	}
 	
+	bool IsPathHighlighted()
+	{
+		// 遍历所有路径点
+		for (int i = 0; i < _PathCount; i++)
+		{
+			float2 v = abs(_PathCells[i].xy - cellCenter);
+
+        // wrap（可选，与 Hover 判定一致）
+			if (v.x > _PathCells[i].w * 0.5)
+				v.x -= _PathCells[i].w;
+
+        // 半径判断（使用 z 作为 radiusSquared）
+			if (dot(v, v) < _PathCells[i].z)
+				return true;
+		}
+		return false;
+	}
+
 	// Smoothstep from 0 to 1 at cell center distance threshold.
 	float Smoothstep01 (float threshold) {
 		return smoothstep(

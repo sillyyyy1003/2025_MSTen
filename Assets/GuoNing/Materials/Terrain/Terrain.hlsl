@@ -75,7 +75,6 @@ float3 ApplyGrid(float3 baseColor, HexGridData h)
 	return baseColor * (0.2 + 0.8 * h.Smoothstep10(0.965));
 }
 
-
 //------------------------------------------------------------
 // 应用高亮边缘：距离中心 0.68~0.8 之间添加白色亮边
 //------------------------------------------------------------
@@ -92,6 +91,7 @@ float3 ApplyHighlightColor(float3 baseColor, float4 highlightColor, HexGridData 
 	float t = h.SmoothstepRange(0.68, 0.8); // 高亮边缘范围
 	return lerp(baseColor, highlightColor.rgb, t * highlightColor.a);
 }
+
 
 //------------------------------------------------------------
 // 根据水面与地表高度差添加蓝色调滤镜（模拟水下变蓝效果）
@@ -163,7 +163,15 @@ void GetFragmentData_float(
 		BaseColor = ApplyHighlightColor(BaseColor, _RightClickColor, hgd);
 	}
 	
-	BaseColor *= lerp(float3(1, 1, 1), _FinalColorMultiply.rgb, _FinalColorMultiply.a);
+	// 路径高亮
+	if (hgd.IsPathHighlighted())
+	{
+		BaseColor = ApplyHighlightColor(BaseColor, _PathColor, hgd);
+	}
+	else
+	{
+		BaseColor *= lerp(float3(1, 1, 1), _FinalColorMultiply.rgb, _FinalColorMultiply.a);
+	}
 	
 	// 输出探索度值（用于雾、可见性等系统）
 	Exploration = Visibility.w;

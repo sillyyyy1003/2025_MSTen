@@ -147,6 +147,9 @@ public class PlayerOperationManager : MonoBehaviour
         Shader.SetGlobalColor(hoverHighlightColorId, new Color(1f, 1f, 1f, 1f));        // 白色 Hover
         Shader.SetGlobalColor(clickHighlightColorId, new Color(1f, 0f, 0f, 1f));        // 红色 Click
 		Shader.SetGlobalColor(rightClickHighlightColorId, new Color(0f, 0f, 1f, 1f));   // 蓝色 Click
+
+        // 清理路径高亮
+        _HexGrid.ClearPathHighlight();
 	}
 
 
@@ -258,6 +261,7 @@ public class PlayerOperationManager : MonoBehaviour
     void UpdateHighlight(HexCell cell)
     {
     	UpdateHoverHighlight(cell);
+
         if(SelectedEmptyCellID!=-1)
         {
             UpdateClickHighlight(_HexGrid.GetCell(SelectedEmptyCellID));
@@ -2000,6 +2004,8 @@ public class PlayerOperationManager : MonoBehaviour
 
 				// 2025.12.07 Guoning 清除右键高光
 				ClearRightClickCellHighlightData();
+
+                _HexGrid.ClearPathHighlight();
 			});
 
         
@@ -2606,6 +2612,9 @@ public class PlayerOperationManager : MonoBehaviour
             onComplete?.Invoke();
             return;
         }
+
+        // 开始移动的时候 hexGrid显示路径
+        _HexGrid.ShowPathWithShader(currentAP);
 
         // 创建移动动画序列 - 只移动到建筑前，不实际进入建筑格子
         Sequence moveSequence = DOTween.Sequence();
