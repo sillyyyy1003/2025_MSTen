@@ -429,8 +429,13 @@ public class PlayerUnitDataInterface : MonoBehaviour
 	/// </summary>
 	/// <param name="type"></param>
 	/// <returns></returns>
-	public bool TryBuyUnitToMapByType(CardType type)
+	public bool TryBuyUnitToMapByType(CardType type,int cellID)
     {
+		// 检查cell是否合法
+		if (cellID==-1)
+		{
+            return false;
+		}
 		// 检查资源是否足够
 		Religion playerReligion = SceneStateManager.Instance.PlayerReligion;
         int ResourcesCost = 0;
@@ -469,7 +474,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
 		else
 		{
 			// 尝试创建单位
-			if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
+			if (GameManage.Instance._PlayerOperation.TryCreateUnit(type, cellID))
 			{
 				ResourcesCount -= ResourcesCost;
 				PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);

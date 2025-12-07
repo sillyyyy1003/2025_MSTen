@@ -35,6 +35,7 @@ public class TitleUIManager : MonoBehaviour
 	[Header("OnlineButton")]
 	public HexButton Button_CreateGame;
 	public HexButton Button_AddGame;
+	public TMP_Text Text_UserID;
 
 	[Header("Building")]
 	/// <summary>
@@ -94,6 +95,12 @@ public class TitleUIManager : MonoBehaviour
 	// Start is called before the first frame update
 	void Start()
 	{
+		// 将读取的存档信息加载到游戏中
+		SaveLoadManager.Instance.Load();	// safe load
+		// 读取信息
+		SaveLoadManager.Instance.ApplyLoadedData();
+
+		// 绑定按钮事件
 		Button_EndGame.onClick.AddListener(() => OnClickEndGame());
 		Button_SinglePlayer.onClick.AddListener(() => OnClickSinglePlayer());
 		Button_OnlineGame.onClick.AddListener(() => OnClickOnlineGame());
@@ -118,11 +125,13 @@ public class TitleUIManager : MonoBehaviour
 		// 更新分辨率设定
 		ResolutionManager.Instance.InitializeResolutionDropDown(ResolutionDropdown);
 		ResolutionManager.Instance.InitializeFullScreenDropDown(FullScreenDropdown);
+
 		ResolutionDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentResolutionIndex);
 		FullScreenDropdown.SetValueWithoutNotify(ResolutionManager.Instance.CurrentFullScreenIndex);
 
 		// 更新Display
 		DisplayManager.Instance.InitializeToggle(GridToggle);
+		GridToggle.isOn = DisplayManager.Instance.IsGridOn;
 
 		// 更新Slider
 		MasterSlider.onValueChanged.AddListener((value) =>
@@ -147,6 +156,15 @@ public class TitleUIManager : MonoBehaviour
 		BGMSlider.SetValueWithoutNotify(SoundManager.Instance.BGMVolume);
 		SESlider.SetValueWithoutNotify(SoundManager.Instance.SEVolume);
 
+		// 更新UserID显示
+		if (SaveLoadManager.Instance.HasUserID)
+		{
+			Text_UserID.text = $"{SaveLoadManager.Instance.CurrentData.userID}";
+		}
+		else
+		{
+			Text_UserID.text = "Not Set";
+		}
 
 	}
 
@@ -161,7 +179,10 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickEndGame()
 	{
-	#if UNITY_EDITOR
+		SaveLoadManager.Instance.UpdateSaveData();
+		SaveLoadManager.Instance.Save();
+
+#if UNITY_EDITOR
 		UnityEditor.EditorApplication.isPlaying = false;
 	#else
 		Application.Quit();
@@ -174,6 +195,7 @@ public class TitleUIManager : MonoBehaviour
 	private void OnClickSinglePlayer()
 	{
 		SceneStateManager.Instance.bIsSingle = true;
+		SceneStateManager.Instance.StartSingleGameWithRandomMapAndReligion();
 		SceneController.Instance.SwitchScene("MainGame", null);
 	}
 

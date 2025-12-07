@@ -134,12 +134,21 @@ public class ResolutionManager : MonoBehaviour
 		currentFullScrrenIndex = index;
 		switch (currentFullScrrenIndex)
 		{
-			case 0: mode = FullScreenMode.ExclusiveFullScreen; break;
+			case 0: mode = FullScreenMode.FullScreenWindow; break;
 			case 1: mode = FullScreenMode.Windowed; break;
-			case 2: mode = FullScreenMode.FullScreenWindow; break;
+			case 2: mode = FullScreenMode.ExclusiveFullScreen; break;
 		}
 		Screen.fullScreenMode = mode;
 	}
 
+	public void ApplyLoadedSettings(int resIndex, int fullIndex)
+	{
+		currentResolutionIndex = Mathf.Clamp(resIndex, 0, 2);
+		currentFullScrrenIndex = Mathf.Clamp(fullIndex, 0, 2);
 
+		ResolutionSetting setting = resolutionSettings[currentResolutionIndex];
+		Screen.SetResolution(setting.width, setting.height, false);
+
+		OnChangeFullScreenMode(currentFullScrrenIndex);
+	}
 }

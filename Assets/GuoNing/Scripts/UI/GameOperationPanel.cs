@@ -45,6 +45,7 @@ public class GameOperationPanel : MonoBehaviour
 	private HexGrid hexGrid;
 	public Vector2 screenOffset = new Vector2(0, 30);
 
+	private int BuyUnitCellID = -1;     // 在哪个格子购买单位
 	HexCell GetCellUnderCursor() =>
 		hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
 
@@ -186,9 +187,7 @@ public class GameOperationPanel : MonoBehaviour
 		int localPlayerId = GameManage.Instance.LocalPlayerID;
 		if (PlayerDataManager.Instance.GetCellOwner(cell.Index) != localPlayerId) return;
 
-		// 如果选中的格子和右键到的格子不是一个格子也不显示
-		if(GameManage.Instance._PlayerOperation.selectCellID != cell.Index) return;
-
+		BuyUnitCellID = cell.Index;
 		Vector3 cellWorldPos = cell.Position;
 
 		//将格子位置转换为屏幕UI的位置
@@ -233,7 +232,7 @@ public class GameOperationPanel : MonoBehaviour
 	public void BuyMissionary()
 	{
 		// 更新Resource
-		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Missionary))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Missionary, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 
 		CloseStorePanel();
@@ -241,7 +240,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyFarmer()
 	{
-		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Farmer))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Farmer, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 
 		CloseStorePanel();
@@ -250,7 +249,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyArmy()
 	{
-		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Soldier))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Soldier, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 	}
@@ -258,7 +257,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	public void BuyBuilding()
 	{
-		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Building))
+		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Building, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
 
@@ -305,6 +304,7 @@ public class GameOperationPanel : MonoBehaviour
 		// 占领逻辑
 		if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) == cell.Index)
 		{
+			Debug.Log("Unit Cell ID:" + dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) + "cell id:" + cell.Index);
 			int cellOwner = dataManager.GetCellOwner(cell.Index);
 			if (cellOwner != GameManage.Instance.LocalPlayerID)
 			{
@@ -363,12 +363,22 @@ public class GameOperationPanel : MonoBehaviour
 
 	private void ShowPanel(string msg)
 	{
+		// 关闭special button
+		SpecialButton.gameObject.SetActive(false);
+		// 打开文字面板
+		OperationPanelText.gameObject.SetActive(true);
 		OperationPanelText.text = msg;
 		ActionPanelTransform.gameObject.SetActive(true);
 	}
 
 	private void ShowButtonPanel(string msg)
 	{
+		// 关闭文字面板
+		OperationPanelText.gameObject.SetActive(false);
+		
+		// 显示special button
+		SpecialButton.gameObject.SetActive(true);
+
 		// 设定OperationPanel显示的内容
 		TMP_Text text = SpecialButton.GetComponentInChildren<TMP_Text>();
 		text.text = msg;

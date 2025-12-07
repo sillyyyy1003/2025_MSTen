@@ -74,4 +74,10 @@ public class DisplayManager : MonoBehaviour
 		ShowGrid();
 	}
 
+	public void SetGridState(bool on)
+	{
+		isGridOn = on;
+		ShowGrid();
+	}
+
 }
