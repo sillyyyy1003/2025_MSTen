@@ -79,7 +79,7 @@ public class ChangeMaterial : MonoBehaviour
             () => DefaultMat.GetFloat("_Float"),
             x => DefaultMat.SetFloat("_Float", x),
             1f,
-            3f // 播放时间 1 秒
+            1f // 播放时间 1 秒
         )
         .SetEase(Ease.Linear)
         .OnComplete(() =>
