@@ -3805,7 +3805,11 @@ public class PlayerOperationManager : MonoBehaviour
         // 调用PieceManager的ConvertEnemy方法
         if(PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID)==null)
         {
-            Debug.Log("[ExecuteCharm] 魅惑失败");
+            Debug.Log("[ExecuteCharm] 魅惑失败");  
+            //更新传教士AP
+            UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID, PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
+
+
             return;
         }
         syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
