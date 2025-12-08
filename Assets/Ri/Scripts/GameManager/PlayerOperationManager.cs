@@ -704,7 +704,8 @@ public class PlayerOperationManager : MonoBehaviour
                         child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
                         child.gameObject.GetComponent<ChangeMaterial>().InitMat();
                     }
-                  
+                    else
+                        break;
                 }
             
                 //SelectingUnit.GetComponent<ChangeMaterial>().Outline();
@@ -718,8 +719,13 @@ public class PlayerOperationManager : MonoBehaviour
 
                 foreach (Transform child in SelectingUnit.transform)
                 {
-                    
-                    child.GetComponent<ChangeMaterial>().Outline();
+                    if (child.GetComponent<ChangeMaterial>())
+                        child.GetComponent<ChangeMaterial>().Outline();
+                    else
+                    {
+                        Debug.LogWarning("this transform now have ChangeMaterial");
+                        break;
+                    }
                     //Debug.Log("add outline");
                 }
                 Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
@@ -737,11 +743,9 @@ public class PlayerOperationManager : MonoBehaviour
                 ReturnToDefault();
                 SelectingUnit = null;
 
-                if (PlayerDataManager.Instance.nowChooseUnitType != CardType.Farmer)
-                {
-                    PlayerDataManager.Instance.nowChooseUnitID = -1;
-                    PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
-                }
+           
+                PlayerDataManager.Instance.nowChooseUnitID = -1;
+                PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
 
                 // 检查是否是空格子
                 if (!PlayerDataManager.Instance.IsPositionOccupied(clickPos) && _HexGrid.IsValidDestination(_HexGrid.GetCell(ClickCellid)))
@@ -766,7 +770,10 @@ public class PlayerOperationManager : MonoBehaviour
         {
             ReturnToDefault();
             SelectingUnit = null;
-            SelectedEmptyCellID = -1;
+            SelectedEmptyCellID = -1; 
+            PlayerDataManager.Instance.nowChooseUnitType =CardType.None;
+            PlayerDataManager.Instance.nowChooseUnitID = -1;
+
         }
     }
     //private void HandleHandleRightClick()
@@ -1890,6 +1897,7 @@ public class PlayerOperationManager : MonoBehaviour
             {
 
                 child.GetComponent<ChangeMaterial>().Default();
+                SelectingUnit = null;
             }
 
 
@@ -1899,7 +1907,6 @@ public class PlayerOperationManager : MonoBehaviour
             //{
             //    changeMaterial.Default();
             //}
-            Debug.Log("unit name: " + SelectingUnit.name);
         }
     }
     private void ChooseEmptyCell(int cell)

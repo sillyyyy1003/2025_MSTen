@@ -548,6 +548,8 @@ public class NetGameSystem : MonoBehaviour
 
         if (SceneStateManager.Instance.bIsSingle)
         {
+            // 加载地图
+            HexMapManager.Instance.InitHexMapManager();
             gameManage.StartGameFromRoomUI();
         }
         else
