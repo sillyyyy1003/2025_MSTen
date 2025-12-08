@@ -21,7 +21,7 @@ public class GameCamera : MonoBehaviour
     [Header("移动设置")]
     private float moveSpeed = 50f;            // WASD移动速度
     private float edgeScrollSpeed = 50f;     // 鼠标到屏幕边缘时的移动速度
-    private int edgeSize = 20;                // 屏幕边缘触发范围（像素）
+    private int edgeSize = 100;                // 屏幕边缘触发范围（像素）
 
     [Header("平滑设置")]
     private float rotationSmoothTime = 0.8f;  // 旋转平滑时间

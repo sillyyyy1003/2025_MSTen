@@ -232,6 +232,7 @@ public class Missionary : Piece
         float conversionChance = GetConversionChanceByPieceType(target);
 
         //25.11.6 RI 添加测试判断
+        Debug.Log("魅惑成功率: "+conversionChance);
         //conversionChance = 100;
         if (UnityEngine.Random.value<= conversionChance)
         {
