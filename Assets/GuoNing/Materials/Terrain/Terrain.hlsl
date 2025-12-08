@@ -149,15 +149,6 @@ void GetFragmentData_float(
 		BaseColor = ApplyGrid(BaseColor, hgd);
 	}
 		
-	float4 cellData = GetCellData(hgd.cellCenter, false);
-
-	// 真正的地形高度等级（0，1，2，3…）
-	float elevation = cellData.b;
-	// 若该格被高亮（例如选中），则添加白色高亮边缘
-	if (elevation == 0 && hgd.IsHighlighted())
-	{
-		BaseColor = ApplyHighlight(BaseColor, hgd);
-	}
 
 	// Hover 高亮
 	if (hgd.IsHoverHighlighted())
@@ -171,11 +162,11 @@ void GetFragmentData_float(
 		BaseColor = ApplyHighlightColor(BaseColor, _ClickColor, hgd);
 	}
 	
-	// 右键高亮
-	if (hgd.IsRightClickHighlighted())
-	{
-		BaseColor = ApplyHighlightColor(BaseColor, _RightClickColor, hgd);
-	}
+	//// 右键高亮
+	//if (hgd.IsRightClickHighlighted())
+	//{
+	//	BaseColor = ApplyHighlightColor(BaseColor, _RightClickColor, hgd);
+	//}
 	
 	// 路径高亮
 	if (hgd.IsPathHighlighted())

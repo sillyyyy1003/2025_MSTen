@@ -56,6 +56,18 @@ public class UnitStatusUI : MonoBehaviour
 		this.maxAP = maxAP;
 		this.currentAP = maxAP;
 
+		// 敌我颜色区分
+		if(isEnemy)
+		{
+			if (hpImage != null)
+				hpImage.color =new Color(0.89f, 0.0f, 0.0f);
+		}
+		else
+		{
+			if (hpImage != null)
+				hpImage.color = new Color(0.1215f, 0.6431f, 0.8666f);
+		}
+
 		// 初始刷新
 		UpdateHPUI();
 		UpdateAPUI();

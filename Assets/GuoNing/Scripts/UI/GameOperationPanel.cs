@@ -48,6 +48,9 @@ public class GameOperationPanel : MonoBehaviour
 	private int BuyUnitCellID = -1;     // 在哪个格子购买单位
 	HexCell GetCellUnderCursor() =>
 		hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
+	static readonly int rightClickHighlightId = Shader.PropertyToID("_RightClickHighlight");
+	static readonly int rightClickHighlightColorId = Shader.PropertyToID("_RightClickColor");
+
 
 	void Start()
 	{
@@ -81,6 +84,8 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 绑定事件
 		SpecialButton.onClick.AddListener(OnSpecialButtonClick);
+		// 设定右键点击高光
+		Shader.SetGlobalColor(rightClickHighlightColorId, new Color(0f, 0f, 1f, 1f));   // 蓝色 Click
 	}
 
 	void Update()
@@ -193,6 +198,9 @@ public class GameOperationPanel : MonoBehaviour
 		BuyUnitCellID = cell.Index;
 		Vector3 cellWorldPos = cell.Position;
 
+		//UpdateRightClickHighlight(cell);
+
+
 		//将格子位置转换为屏幕UI的位置
 		if (StorePanelTransform == null)
 		{
@@ -229,6 +237,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	private void CloseStorePanel()
 	{
+		//ClearRightClickCellHighlightData();
 		StorePanelTransform.gameObject.SetActive(false);
 	}
 
@@ -514,4 +523,29 @@ public class GameOperationPanel : MonoBehaviour
 		GameManage.Instance._PlayerOperation.OnSpecialSkillButtonClick();
 		ActionPanelTransform.gameObject.SetActive(false);
 	}
+
+	// *************************
+	// 追加高亮选择处理(Right Click)
+	// *************************
+	//void UpdateRightClickHighlight(HexCell cell)
+	//{
+	//	if (cell == null)
+	//	{
+	//		Shader.SetGlobalVector(rightClickHighlightId, new Vector4(0, 0, -1, 0)); // 关闭
+	//		return;
+	//	}
+
+	//	Shader.SetGlobalVector(
+	//		rightClickHighlightId,
+	//		new Vector4(
+	//			cell.Coordinates.HexX,
+	//			cell.Coordinates.HexZ,
+	//			0.5f,
+	//			HexMetrics.wrapSize
+	//		)
+	//	);
+	//}
+	// 清理右键高亮数据
+	//void ClearRightClickCellHighlightData() =>
+	//Shader.SetGlobalVector(rightClickHighlightId, new Vector4(0f, 0f, -1f, 0f));
 }

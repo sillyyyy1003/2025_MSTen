@@ -36,8 +36,6 @@ public class PlayerOperationManager : MonoBehaviour
     static readonly int clickHighlightId = Shader.PropertyToID("_ClickHighlight");
     static readonly int clickHighlightColorId = Shader.PropertyToID("_ClickColor");
 
-	static readonly int rightClickHighlightId = Shader.PropertyToID("_RightClickHighlight");
-	static readonly int rightClickHighlightColorId = Shader.PropertyToID("_RightClickColor");
 
 	// HexGrid的引用
 	public HexGrid _HexGrid;
@@ -49,6 +47,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 是否是当前玩家的回合
     private bool isMyTurn = false;
+    public bool IsMyTurn => isMyTurn;
 
     // 点击到的格子的id
     private int ClickCellid;
@@ -88,10 +87,10 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
+    List<HexCell> MoveRangeCellList = new List<HexCell>();
 
-
-    // 本地玩家ID
-    private int localPlayerId = -1;
+	// 本地玩家ID
+	private int localPlayerId = -1;
 
     public int selectCellID = -1;
 
@@ -145,7 +144,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 2025.12.07 设定高亮颜色
         Shader.SetGlobalColor(hoverHighlightColorId, new Color(1f, 1f, 1f, 1f));        // 白色 Hover
         Shader.SetGlobalColor(clickHighlightColorId, new Color(1f, 0f, 0f, 1f));        // 红色 Click
-		Shader.SetGlobalColor(rightClickHighlightColorId, new Color(0f, 0f, 1f, 1f));   // 蓝色 Click
+
 
         // 清理路径高亮
         _HexGrid.ClearPathHighlight();
@@ -171,7 +170,43 @@ public class PlayerOperationManager : MonoBehaviour
                 UpdateHighlight(GetCellUnderCursor());
             }
 
-            //HandleMouseInput();
+            if (PlayerDataManager.Instance.nowChooseUnitID != -1)
+            {
+                if(PlayerDataManager.Instance.nowChooseUnitType==CardType.Building|| PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+                {
+						// Clear highlight
+						foreach (var cell in MoveRangeCellList)
+						{
+							cell.DisableHighlight();
+						}
+
+						MoveRangeCellList.Clear();
+
+				}
+                else
+				{
+					foreach (var cell in MoveRangeCellList)
+					{
+						cell.DisableHighlight();
+					}
+					MoveRangeCellList.Clear();
+
+                    int pieceAP = PieceManager.Instance.GetPieceAP(PlayerDataManager.Instance.nowChooseUnitID);
+					MoveRangeCellList = _HexGrid.GetReachableCells(ClickCellid, pieceAP, pieceAP, PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(PlayerDataManager.Instance.nowChooseUnitType));
+                    foreach (var cell in MoveRangeCellList)
+                    {
+						cell.EnableHighlight(Color.green);
+					}
+
+				}
+            }
+            else
+            {
+				foreach (var cell in MoveRangeCellList)
+				{
+					cell.DisableHighlight();
+				}
+			}
 
         }
 
@@ -321,27 +356,7 @@ public class PlayerOperationManager : MonoBehaviour
 		);
 	}
 
-	// *************************
-	// 追加高亮选择处理(Click)
-	// *************************
-	void UpdateRightClickHighlight(HexCell cell)
-	{
-		if (cell == null)
-		{
-			Shader.SetGlobalVector(rightClickHighlightId, new Vector4(0, 0, -1, 0)); // 关闭
-			return;
-		}
 
-		Shader.SetGlobalVector(
-			rightClickHighlightId,
-			new Vector4(
-				cell.Coordinates.HexX,
-				cell.Coordinates.HexZ,
-				0.5f,
-				HexMetrics.wrapSize
-			)
-		);
-	}
 
 	// 清理Hover高亮数据
 	void ClearHoverCellHighlightData() =>
@@ -349,9 +364,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 清理Click高亮数据
 	void ClearClickCellHighlightData() =>
 	    Shader.SetGlobalVector(hoverHighlightId, new Vector4(0f, 0f, -1f, 0f));
-    // 清理右键高亮数据
-	void ClearRightClickCellHighlightData() =>
-	Shader.SetGlobalVector(rightClickHighlightId, new Vector4(0f, 0f, -1f, 0f));
+
 
 	HexCell GetCellUnderCursor() =>
         _HexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
@@ -474,7 +487,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     private void OnRightClickShortPress()
     {
-        ClearRightClickCellHighlightData();
+     
      
 		if (SelectingUnit == null) return;
 
@@ -636,8 +649,7 @@ public class PlayerOperationManager : MonoBehaviour
 			}
 		}
 		
-        // 2025.12.07 Guoning 右键点击高光
-		UpdateRightClickHighlight(_HexGrid.GetCell(ClickCellid));
+       
 
 	}
 
@@ -1481,7 +1493,7 @@ public class PlayerOperationManager : MonoBehaviour
                     unit.transform.position = worldPos;
                 }
                 // 创建UI
-                UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
+                UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType,true);
 				Debug.Log($"敌方建筑创建成功");
             }
             else
@@ -1525,7 +1537,7 @@ public class PlayerOperationManager : MonoBehaviour
 			//Debug.Log("开始查询敌方单位位置");
 			//PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
 			// 创建UI
-			UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType);
+			UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType,true);
             UnitStatusUIManager.Instance.UpdateHPByID(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP);
 
         }
@@ -2062,9 +2074,6 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[本地] 已发送移动消息到网络: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
                 }
 
-				// 2025.12.07 Guoning 清除右键高光
-				ClearRightClickCellHighlightData();
-
                 _HexGrid.ClearPathHighlight();
 			});
 
@@ -2530,8 +2539,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
 
-			// 2025.12.07 Guoning 清除右键高光
-			ClearRightClickCellHighlightData();
+
 
 		});
     }
@@ -2577,8 +2585,6 @@ public class PlayerOperationManager : MonoBehaviour
                 // 更新血条显示
                 UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
 
-                // 2025.12.07 Guoning 清除右键高光
-                ClearRightClickCellHighlightData();
                 // 播放消失动画（淡出效果）
                 farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
                 {
@@ -3105,9 +3111,6 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log($"[ExecuteAttack] 击杀目标，移动到目标位置: ({toPos.x},{toPos.y})");
 
             bCanContinue = true;
-
-			// 2025.12.07 Guoning 清除右键高光
-			ClearRightClickCellHighlightData();
 		});
     }
 
@@ -3997,7 +4000,7 @@ public class PlayerOperationManager : MonoBehaviour
             UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
          
             // 添加本地敌方单位显示
-            UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, targetUnit.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype));
+            UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, targetUnit.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype),true);
             UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
 
 
@@ -4141,7 +4144,7 @@ public class PlayerOperationManager : MonoBehaviour
                 (int) PieceManager.Instance.GetPieceHP(msg.UnitID),
                   PieceManager.Instance.GetPieceAP(msg.UnitID),
                    unitObj.transform,
-                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype));
+                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype),true);
             // 添加本地HP显示
             UnitStatusUIManager.Instance.UpdateHPByID(msg.UnitID, (int)PieceManager.Instance.GetPieceHP(msg.UnitID)); 
 
@@ -4210,7 +4213,7 @@ public class PlayerOperationManager : MonoBehaviour
                 PieceManager.Instance.GetPieceAllHP(expireInfo.UnitID),
                   0,
                   unitObj.transform,
-                    expireInfo.UnitData.UnitType);
+                    expireInfo.UnitData.UnitType,true);
             UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID, (int)PieceManager.Instance.GetPieceHP(expireInfo.UnitID));
 
         }
@@ -4385,13 +4388,13 @@ public class PlayerOperationManager : MonoBehaviour
                     // 添加HP
                     if(msg.UnitType!=(int)CardType.Building)
                     {
-                        UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, CardType.Building);
+                        UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, CardType.Building, true);
                         UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
 
                     }
                     else
                     {
-                        UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.BuildingData.Value.currentHP, 0, unitObj.transform, CardType.Building);
+                        UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.BuildingData.Value.currentHP, 0, unitObj.transform, CardType.Building, true);
                         UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.BuildingData.Value.currentHP);
 
                     }
@@ -4435,7 +4438,7 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
 
                     // 添加HP
-                    UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype));
+                    UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype), true);
                     UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
 
                 }

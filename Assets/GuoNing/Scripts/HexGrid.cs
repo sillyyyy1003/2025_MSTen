@@ -471,7 +471,7 @@ public class HexGrid : MonoBehaviour
 	{
 		List<HexCell> reachable = new List<HexCell>();
 		HexCell start = GetCell(startCellID);
-		if (start == null) return reachable;
+		if (start == null|| speed <= 0) return reachable;
 
 		// BFS 队列
 		Queue<HexCell> frontier = new Queue<HexCell>();
