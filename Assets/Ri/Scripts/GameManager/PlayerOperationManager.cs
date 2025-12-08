@@ -265,7 +265,7 @@ public class PlayerOperationManager : MonoBehaviour
         {
             UpdateClickHighlight(_HexGrid.GetCell(SelectedEmptyCellID));
         }
-        else if (SelectingUnit != null)
+        else if (SelectingUnit != null&& PlayerDataManager.Instance.nowChooseUnitID!=-1)
         {
             UpdateClickHighlight(_HexGrid.GetCell(PlayerDataManager.Instance.GetCellIdByUnitId(PlayerDataManager.Instance.nowChooseUnitID)));
         }
@@ -489,13 +489,17 @@ public class PlayerOperationManager : MonoBehaviour
 
 			// 获取当前选中单位的位置
 			int2 currentPos = PlayerBoardInforDict[LastSelectingCellID].Cells2DPos;
-
-			// 检查目标位置
-			if (PlayerDataManager.Instance.IsPositionOccupied(targetPos))
+            // 建筑没有右键操作
+            if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Building)
+            {
+                return;
+            }
+            // 检查目标位置
+            if (PlayerDataManager.Instance.IsPositionOccupied(targetPos))
 			{
 				int ownerId = PlayerDataManager.Instance.GetUnitOwner(targetPos);
-
-                // Pope交换位置
+              
+                    // Pope交换位置
                 if (ownerId == localPlayerId &&
                     PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope  )
                 {
@@ -692,7 +696,10 @@ public class PlayerOperationManager : MonoBehaviour
                 // 清除选择高光
                 //ClearClickCellHighlightData();
                 //ClearHoverCellHighlightData();
-
+                if (PlayerDataManager.Instance.GetUnitIDBy2DPos(clickPos) == -1)
+                {
+                    return;
+                }
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
                 foreach (Transform child in SelectingUnit.transform)
@@ -1128,6 +1135,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 更新其他玩家的显示
     public void UpdateOtherPlayerDisplay(int playerId, PlayerData data)
     {
+        
         if (playerId == localPlayerId)
         {
             Debug.Log($"playerId 为自己");
@@ -2205,7 +2213,9 @@ public class PlayerOperationManager : MonoBehaviour
                 localPlayerUnits[buildingPos2D] = GameManage.Instance._BuildingManager.GetBuildingGameObject();
                 Debug.Log($"建筑GameObject已添加到localPlayerUnits");
             }
+            // 添加PlayerDataManager中的位置映射
 
+            PlayerDataManager.Instance.AddBuildingUnit(localPlayerId, buildData.buildingID);
             // 添加描边效果
             GameManage.Instance._BuildingManager.GetBuildingGameObject().AddComponent<ChangeMaterial>();
 
@@ -2553,63 +2563,69 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 保存农民的GameObject引用（在移动前）
         GameObject farmerObj = SelectingUnit;
-
-      
+     
         // 使用新建立的移动方法让农民移动到建筑格子
         MoveFarmerToBuilding(buildingCellId, farmerPos, () =>
         {
             // 移动完成后的回调：让农民消失
             Debug.Log($"[农民进建筑] 农民已到达建筑，开始消失");
 
-          
-
+         
             // 2. 销毁农民GameObject（不影响建筑）
             if (farmerObj != null)
             {
                 // 更新血条显示
                 UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
-                PlayerDataManager.Instance.nowChooseUnitID = -1;
-                PlayerDataManager.Instance.nowChooseUnitType=CardType.None;
+
+                // 2025.12.07 Guoning 清除右键高光
+                ClearRightClickCellHighlightData();
                 // 播放消失动画（淡出效果）
                 farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
                 {
+                    if (localPlayerUnits.ContainsKey(farmerPos))
+                    {
+                        localPlayerUnits.Remove(farmerPos);
+                    }
                     Destroy(farmerObj);
                     Debug.Log($"[农民进建筑] 农民GameObject已销毁");
+
+                    // 重置选择状态
+                    ReturnToDefault();
+                    PlayerDataManager.Instance.nowChooseUnitID = -1;
+                    PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+                    SelectingUnit = null;
+                    bCanContinue = true;
+
+                    // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
+                    GameManage.Instance.SetCellObject(farmerPos, null);
+
+
+                    // 5. 网络同步农民消失（使用农民的原始位置）
+                    SyncFarmerEnterBuilding(farmerID, farmerPos);
+
+                    Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已进入建筑并消失");
+                    // 先从PlayerDataManager移除农民（使用原始位置farmerPos）
+                    bool removed = PlayerDataManager.Instance.RemoveUnit(localPlayerId, farmerPos);
+                    if (removed)
+                    {
+                        Debug.Log($"[农民进建筑] 已从PlayerDataManager移除农民" + localPlayerId);
+                    }
+                    else
+                    {
+                        Debug.Log($"[农民进建筑] 从PlayerDataManager移除农民失败 "+localPlayerId);
+                    }
+                    // 3. 从PieceManager移除
+                    PieceManager.Instance.RemovePiece(farmerPieceID);
+                
+
                 });
 
-                //// 从本地单位字典中移除农民（使用原始位置）
-                //if (localPlayerUnits.ContainsKey(farmerPos))
-                //{
-                //    localPlayerUnits.Remove(farmerPos);
-                //}
+
+
             }
 
-          
-         
 
-            // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
-            GameManage.Instance.SetCellObject(farmerPos, null);
 
-         
-            // 5. 网络同步农民消失（使用农民的原始位置）
-            SyncFarmerEnterBuilding(farmerID, farmerPos);
-
-            Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已进入建筑并消失");
-            // 先从PlayerDataManager移除农民（使用原始位置farmerPos）
-            bool removed = PlayerDataManager.Instance.RemoveUnit(localPlayerId, farmerPos);
-            if (removed)
-            {
-                Debug.Log($"[农民进建筑] 已从PlayerDataManager移除农民");
-            }
-            // 3. 从PieceManager移除
-            PieceManager.Instance.RemovePiece(farmerPieceID);
-            // 重置选择状态
-            ReturnToDefault();
-            SelectingUnit = null;
-            bCanContinue = true;
-
-			// 2025.12.07 Guoning 清除右键高光
-			ClearRightClickCellHighlightData();
 		});
     }
     private void MoveFarmerToBuilding(int targetCellId, int2 originalFarmerPos, System.Action onComplete)
@@ -3235,6 +3251,7 @@ public class PlayerOperationManager : MonoBehaviour
         if (attackerPlayerId == localPlayerId)
         {
             localPlayerUnits.Remove(attackerCurrentPos);
+            
             localPlayerUnits[buildingPos] = attackerObj;
         }
         else if (otherPlayersUnits.ContainsKey(attackerPlayerId))
@@ -4810,7 +4827,8 @@ public class PlayerOperationManager : MonoBehaviour
                 //localPlayerUnits.Remove(position);
 
                 // 更新魅惑后的新显示
-                UpdateOtherPlayerDisplay(localPlayerId == 1 ? 0 : 1, PlayerDataManager.Instance.GetPlayerData(localPlayerId == 1 ? 0 : 1));
+                if(PlayerDataManager.Instance.GetAllPlayersData().Count>1)
+                    UpdateOtherPlayerDisplay(localPlayerId == 1 ? 0 : 1, PlayerDataManager.Instance.GetPlayerData(localPlayerId == 1 ? 0 : 1));
             }
             GameManage.Instance.SetCellObject(position, null);
         }

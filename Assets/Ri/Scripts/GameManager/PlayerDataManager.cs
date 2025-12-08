@@ -709,9 +709,12 @@ public class PlayerDataManager : MonoBehaviour
             //int newUnitId = GenerateUnitID();
 
             PlayerData data = allPlayersData[playerId];
-            data.AddUnit(unitData.pieceID, type, pos, unitObject, unitData);
-            allPlayersData[playerId] = data;
-
+            if(data.FindUnitById(unitData.pieceID)==null)
+            {
+                data.AddUnit(unitData.pieceID, type, pos, unitObject, unitData);
+                allPlayersData[playerId] = data;
+            }
+          
 
 
             // 添加ID映射
@@ -724,6 +727,18 @@ public class PlayerDataManager : MonoBehaviour
             return unitData.pieceID;
         }
         return -1; // 失败返回-1
+    }
+    // 添加新建筑映射
+    public void AddBuildingUnit(int playerId, int unitID)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+           
+            // 添加ID映射
+            unitIdToPlayerIdMap[unitID] = playerId;
+
+         
+        }
     }
 
     // 更新单位的GameObject引用
@@ -824,6 +839,7 @@ public class PlayerDataManager : MonoBehaviour
                 // 清理ID映射
                 if (unitData.HasValue)
                 {
+                    Debug.Log("已删除ID: "+unitData.Value.UnitID);
                     unitIdToPlayerIdMap.Remove(unitData.Value.UnitID);
                 }
 
