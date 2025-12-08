@@ -742,6 +742,8 @@ public class NetGameSystem : MonoBehaviour
                         MaxPlayers = maxPlayers,
                         MapSerialNumber=SceneStateManager.Instance.mapSerialNumber,
                     };
+                    // 服务器加载地图
+                    HexMapManager.Instance.InitHexMapManager();
 
                     string json = JsonConvert.SerializeObject(broadcastMsg);
                     byte[] data = Encoding.UTF8.GetBytes(json);
