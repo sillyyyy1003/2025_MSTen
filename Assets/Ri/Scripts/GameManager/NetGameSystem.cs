@@ -2093,6 +2093,7 @@ public class NetGameSystem : MonoBehaviour
         // 通知GameManage初始化游戏
         if (gameManage != null)
         {
+            HexMapManager.Instance.InitHexMapManager();
             gameManage.InitGameWithNetworkData(data);
         }
         else

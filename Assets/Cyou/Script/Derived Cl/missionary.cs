@@ -232,7 +232,7 @@ public class Missionary : Piece
         float conversionChance = GetConversionChanceByPieceType(target);
 
         //25.11.6 RI 添加测试判断
-        conversionChance = 100;
+        //conversionChance = 100;
         if (UnityEngine.Random.value<= conversionChance)
         {
             // 升級1以上の宣教師・十字軍に対しては即死
