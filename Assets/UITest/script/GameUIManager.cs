@@ -11,6 +11,9 @@ using DG.Tweening.Core.Easing;
 using System.Threading;
 using Unity.VisualScripting;
 using GameData.UI;
+using System.Runtime.InteropServices.WindowsRuntime;
+using UnityEditor.PackageManager;
+using System;
 
 [System.Serializable]
 public struct UIUnitData
@@ -562,32 +565,41 @@ public class GameUIManager : MonoBehaviour
 
             UpdateActivateUnitCount(type, uiList.Count);
             //Debug.Log($"[GameUIManager] UnitType = {type} UnitIDs.Count = {UnitIDs.Count}");
-
-            switch (type)
+            // 25.12.8 ri add error test 
+            try
             {
-                case CardType.Missionary:
+                switch (type)
+                {
+                    case CardType.Missionary:
 
-                    MissionaryUnits = uiList;
-                    return;
-                case CardType.Soldier:
-                    SoliderUnits = uiList;
+                        MissionaryUnits = uiList;
+                        return;
+                    case CardType.Soldier:
+                        SoliderUnits = uiList;
 
-                    return;
-                case CardType.Farmer:
-                    FarmerUnits = uiList;
+                        return;
+                    case CardType.Farmer:
+                        FarmerUnits = uiList;
 
-                    return;
-                case CardType.Building:
+                        return;
+                    case CardType.Building:
 
-                    BuildingUnits = uiList;
-                    return;
-                case CardType.Pope:
-                    PopeUnitData = uiList[0];
-                    return;
-                default:
-                    return;
+                        BuildingUnits = uiList;
+                        return;
+                    case CardType.Pope:
+                        PopeUnitData = uiList[0];
+                        return;
+                    default:
+                        return;
 
+                }
             }
+            catch(Exception e)
+            {
+                return;
+            }
+          
+           
         }
     }
 

@@ -21,7 +21,7 @@ public class SceneStateManager : MonoBehaviour
     public int PlayerID;
 
     // 玩家单位上限，根据宗教不同来制定
-    public int PlayerUnitLimit=20;
+    public int PlayerUnitLimit = 20;
 
     // 玩家选择的宗教
     public Religion PlayerReligion;
@@ -30,14 +30,13 @@ public class SceneStateManager : MonoBehaviour
     private bool bIsServer;
 
     // 是否为单机模式
-    public bool bIsSingle=false;
+    public bool bIsSingle = false;
 
     // 是否为单机模式
     public bool bIsDirectConnect = false;
 
     // 随机生成的地图编号
-    private int mapSerialNumber = -1;  // 如果不是服务器则地图编码为-1
-	public int MapSerialNumber => mapSerialNumber;
+    public int mapSerialNumber = -1;  // 如果不是服务器则地图编码为-1
 
 	// 设置本地保存玩家名数据
 	private const string PLAYER_NAME_KEY = "PlayerName";

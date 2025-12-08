@@ -360,8 +360,9 @@ public class ServerInfo
     public int CurrentPlayers;
     public int MaxPlayers;
     public long LastSeen; // Timestamp
+    public int MapSerialNumber;
 
-    public ServerInfo(string ip, string name, int port, int current, int max)
+    public ServerInfo(string ip, string name, int port, int current, int max,int map)
     {
         ServerIP = ip;
         ServerName = name;
@@ -369,6 +370,7 @@ public class ServerInfo
         CurrentPlayers = current;
         MaxPlayers = max;
         LastSeen = DateTime.Now.Ticks;
+        MapSerialNumber = map;
     }
 }
 
@@ -381,6 +383,7 @@ public class ServerBroadcastMessage
     public int Port;
     public int CurrentPlayers;
     public int MaxPlayers;
+    public int MapSerialNumber;
 }
 
 // *************************
@@ -545,6 +548,8 @@ public class NetGameSystem : MonoBehaviour
 
         if (SceneStateManager.Instance.bIsSingle)
         {
+            // 加载地图
+            HexMapManager.Instance.InitHexMapManager();
             gameManage.StartGameFromRoomUI();
         }
         else
@@ -736,7 +741,8 @@ public class NetGameSystem : MonoBehaviour
                         ServerIP = playerIP,
                         Port = port,
                         CurrentPlayers = connectedPlayers.Count,
-                        MaxPlayers = maxPlayers
+                        MaxPlayers = maxPlayers,
+                        MapSerialNumber=SceneStateManager.Instance.mapSerialNumber,
                     };
 
                     string json = JsonConvert.SerializeObject(broadcastMsg);
@@ -954,7 +960,6 @@ public class NetGameSystem : MonoBehaviour
             // 启动接收线程
             networkThread = new Thread(ClientLoop) { IsBackground = true };
             networkThread.Start();
-
             Debug.Log($"[客户端] 正在连接到 {targetIP}:{targetPort}...");
         }
         catch (Exception ex)
@@ -1084,7 +1089,8 @@ public class NetGameSystem : MonoBehaviour
                                 broadcastMsg.ServerName,
                                 broadcastMsg.Port,
                                 broadcastMsg.CurrentPlayers,
-                                broadcastMsg.MaxPlayers
+                                broadcastMsg.MaxPlayers,
+                                broadcastMsg.MapSerialNumber
                             );
                             discoveredServers.Add(newServer);
 
@@ -1139,6 +1145,8 @@ public class NetGameSystem : MonoBehaviour
             serverIP = firstServer.ServerIP;
             port = firstServer.Port;
             ConnectToSpecificServer(serverIP, port);
+            SceneStateManager.Instance.mapSerialNumber = discoveredServers[0].MapSerialNumber;
+            HexMapManager.Instance.InitHexMapManager();
         }
         else
         {
@@ -1391,6 +1399,9 @@ public class NetGameSystem : MonoBehaviour
 
             Debug.Log($"玩家 {playerIds[i]} 的宗教: {(Religion)playerReligions[i]}");
         }
+
+        // 服务器加载地图
+        HexMapManager.Instance.InitHexMapManager();
 
         GameStartData gameData = new GameStartData
         {
