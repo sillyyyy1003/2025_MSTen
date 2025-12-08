@@ -4801,13 +4801,13 @@ public class PlayerOperationManager : MonoBehaviour
             // 本地玩家移除单位（发生在被攻击时）
             if (localPlayerUnits.ContainsKey(position) && !isCharm)
             {
-                Destroy(localPlayerUnits[position]);
-                localPlayerUnits.Remove(position);
+                //Destroy(localPlayerUnits[position]);
+                //localPlayerUnits.Remove(position);
             }
             else
             {
-                Destroy(localPlayerUnits[position]);
-                localPlayerUnits.Remove(position);
+                //Destroy(localPlayerUnits[position]);
+                //localPlayerUnits.Remove(position);
 
                 // 更新魅惑后的新显示
                 UpdateOtherPlayerDisplay(localPlayerId == 1 ? 0 : 1, PlayerDataManager.Instance.GetPlayerData(localPlayerId == 1 ? 0 : 1));
