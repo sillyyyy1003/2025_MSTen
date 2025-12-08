@@ -3018,105 +3018,81 @@ public class PlayerOperationManager : MonoBehaviour
         if (targetUnit != null)
         {
 
-            ChangeMaterial cm = targetUnit.GetComponentInChildren<ChangeMaterial>();
-            if (cm != null)
+            // 缩放到0
+            moveSequence.Join(targetUnit.transform.DOScale(0f, 0.5f));
+
+            // 旋转消失
+            moveSequence.Join(targetUnit.transform.DORotate(
+                new Vector3(0, 360, 0),
+                0.5f,
+                RotateMode.FastBeyond360
+            ));
+        }
+
+        // 动画完成后的处理
+        moveSequence.OnComplete(() =>
+        {
+            // 1发送攻击消息（通知目标被击杀）
+            SyncLocalUnitAttack(fromPos, toPos, targetOwnerId, true);
+            Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送攻击消息：击杀目标 at ({toPos.x},{toPos.y})");
+
+            //// 发送移动消息（通知攻击者移动到目标位置）
+            //SyncLocalUnitMove(fromPos, toPos);
+            //Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送移动消息：攻击者 ({fromPos.x},{fromPos.y}) → ({toPos.x},{toPos.y})");
+
+
+
+            // 销毁目标GameObject
+            if (targetUnit != null)
             {
-                cm.UnitDead(() =>
-                { // 1发送攻击消息（通知目标被击杀）
-                    SyncLocalUnitAttack(fromPos, toPos, targetOwnerId, true);
-                    Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送攻击消息：击杀目标 at ({toPos.x},{toPos.y})");
-
-                    //// 发送移动消息（通知攻击者移动到目标位置）
-                    //SyncLocalUnitMove(fromPos, toPos);
-                    //Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已发送移动消息：攻击者 ({fromPos.x},{fromPos.y}) → ({toPos.x},{toPos.y})");
-
-
-
-                    // 销毁目标GameObject
-                    if (targetUnit != null)
-                    {
-                        Destroy(targetUnit);
-                    }
-
-                    // 先获取目标数据
-                    PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, toPos);
-
-                    // 从PieceManager移除目标
-                    if (PieceManager.Instance.DoesPieceExist(targetData.Value.UnitID))
-                    {
-                        PieceManager.Instance.RemovePiece(targetData.Value.UnitID);
-                        Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已从PieceManager移除目标 ID:{targetData.Value.UnitID}");
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[ExecuteMoveToDeadTargetPosition] 找不到目标单位数据 at ({toPos.x},{toPos.y})");
-                    }
-                    // 3. 从PlayerDataManager移除目标数据
-                    PlayerDataManager.Instance.RemoveUnit(targetOwnerId, toPos);
-
-
-                    // 移动攻击者数据
-                    PlayerDataManager.Instance.MoveUnit(localPlayerId, fromPos, toPos);
-
-                    // 更新本地单位字典
-                    localPlayerUnits.Remove(fromPos);
-                    localPlayerUnits[toPos] = SelectingUnit;
-
-                    // 从目标玩家的单位字典中移除
-                    if (otherPlayersUnits.ContainsKey(targetOwnerId))
-                    {
-                        otherPlayersUnits[targetOwnerId].Remove(toPos);
-                    }
-
-                    // 更新GameManage的格子对象
-                    GameManage.Instance.MoveCellObject(fromPos, toPos);
-
-                    // 更新选中的格子ID
-                    LastSelectingCellID = targetCellId;
-
-
-
-                    Debug.Log($"[ExecuteAttack] 击杀目标，移动到目标位置: ({toPos.x},{toPos.y})");
-
-                    bCanContinue = true;
-
-                    // 2025.12.07 Guoning 清除右键高光
-                    ClearRightClickCellHighlightData();
-                    //cm.UnitDead(() =>
-                    //{
-                    //    // 死亡特效播放完再删除单位逻辑
-                    //    if (targetPlayerId == localPlayerId && localPlayerUnits.ContainsKey(targetPos))
-                    //    {
-                    //        localPlayerUnits.Remove(targetPos);
-                    //    }
-                    //    else if (otherPlayersUnits.ContainsKey(targetPlayerId) &&
-                    //             otherPlayersUnits[targetPlayerId].ContainsKey(targetPos))
-                    //    {
-                    //        otherPlayersUnits[targetPlayerId].Remove(targetPos);
-                    //    }
-
-                    //    Destroy(targetObj);
-                    //});
-                    //}
-                });
+                Destroy(targetUnit);
             }
 
-            //    // 缩放到0
-            //    moveSequence.Join(targetUnit.transform.DOScale(0f, 0.5f));
+            // 先获取目标数据
+            PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, toPos);
 
-            //    // 旋转消失
-            //    moveSequence.Join(targetUnit.transform.DORotate(
-            //        new Vector3(0, 360, 0),
-            //        0.5f,
-            //        RotateMode.FastBeyond360
-            //    ));
+            // 从PieceManager移除目标
+            if (PieceManager.Instance.DoesPieceExist(targetData.Value.UnitID))
+            {
+                PieceManager.Instance.RemovePiece(targetData.Value.UnitID);
+                Debug.Log($"[ExecuteMoveToDeadTargetPosition] 已从PieceManager移除目标 ID:{targetData.Value.UnitID}");
+            }
+            else
+            {
+                Debug.LogWarning($"[ExecuteMoveToDeadTargetPosition] 找不到目标单位数据 at ({toPos.x},{toPos.y})");
+            }
+            // 3. 从PlayerDataManager移除目标数据
+            PlayerDataManager.Instance.RemoveUnit(targetOwnerId, toPos);
 
-            //      // 动画完成后的处理
-            //      moveSequence.OnComplete(() =>
-            //      {
 
-            //});
-        }
+            // 移动攻击者数据
+            PlayerDataManager.Instance.MoveUnit(localPlayerId, fromPos, toPos);
+
+            // 更新本地单位字典
+            localPlayerUnits.Remove(fromPos);
+            localPlayerUnits[toPos] = SelectingUnit;
+
+            // 从目标玩家的单位字典中移除
+            if (otherPlayersUnits.ContainsKey(targetOwnerId))
+            {
+                otherPlayersUnits[targetOwnerId].Remove(toPos);
+            }
+
+            // 更新GameManage的格子对象
+            GameManage.Instance.MoveCellObject(fromPos, toPos);
+
+            // 更新选中的格子ID
+            LastSelectingCellID = targetCellId;
+
+
+
+            Debug.Log($"[ExecuteAttack] 击杀目标，移动到目标位置: ({toPos.x},{toPos.y})");
+
+            bCanContinue = true;
+
+			// 2025.12.07 Guoning 清除右键高光
+			ClearRightClickCellHighlightData();
+		});
     }
 
     // 处理网络建筑攻击消息
