@@ -823,9 +823,11 @@ public class PlayerDataManager : MonoBehaviour
                      
                         break;
 
+                    case CardType.Pope:
 
+                        break;
                     default:
-                        Debug.LogError($"未知的单位类型");
+                        Debug.LogWarning($"未知的单位类型");
                         break;
                 }
 
