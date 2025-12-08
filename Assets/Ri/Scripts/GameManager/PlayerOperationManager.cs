@@ -3355,23 +3355,23 @@ public class PlayerOperationManager : MonoBehaviour
         GameObject attackerObj = null;
         int2 attackerOriginalPos = attackerPos; // 默认原始位置就是当前位置
 
-        // 【修复】首先尝试从原始位置查找攻击者（可能还没移动）
-        // 检查消息中是否包含原始位置信息
-        if (msg.AttackerOriginalPosX != msg.AttackerPosX || msg.AttackerOriginalPosY != msg.AttackerPosY)
-        {
-            // 这是一个"移动+攻击"场景
-            attackerOriginalPos = new int2(msg.AttackerOriginalPosX, msg.AttackerOriginalPosY);
-            Debug.Log($"[网络攻击] 检测到移动+攻击，原始位置: ({attackerOriginalPos.x},{attackerOriginalPos.y})");
+        //// 【修复】首先尝试从原始位置查找攻击者（可能还没移动）
+        //// 检查消息中是否包含原始位置信息
+        //if (msg.AttackerOriginalPosX != msg.AttackerPosX || msg.AttackerOriginalPosY != msg.AttackerPosY)
+        //{
+        //    // 这是一个"移动+攻击"场景
+        //    attackerOriginalPos = new int2(msg.AttackerOriginalPosX, msg.AttackerOriginalPosY);
+        //    Debug.Log($"[网络攻击] 检测到移动+攻击，原始位置: ({attackerOriginalPos.x},{attackerOriginalPos.y})");
 
-            // 从原始位置获取攻击者对象
-            if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId) &&
-                otherPlayersUnits[msg.AttackerPlayerId].ContainsKey(attackerOriginalPos))
-            {
-                attackerObj = otherPlayersUnits[msg.AttackerPlayerId][attackerOriginalPos];
-            }
-        }
-        else
-        {
+        //    // 从原始位置获取攻击者对象
+        //    if (otherPlayersUnits.ContainsKey(msg.AttackerPlayerId) &&
+        //        otherPlayersUnits[msg.AttackerPlayerId].ContainsKey(attackerOriginalPos))
+        //    {
+        //        attackerObj = otherPlayersUnits[msg.AttackerPlayerId][attackerOriginalPos];
+        //    }
+        //}
+        //else
+        //{
             // 这是一个"直接攻击"场景（攻击者已经在攻击范围内）
             Debug.Log($"[网络攻击] 直接攻击，无需移动");
 
@@ -3380,7 +3380,7 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 attackerObj = otherPlayersUnits[msg.AttackerPlayerId][attackerPos];
             }
-        }
+        //}
 
         if (attackerObj == null)
         {
@@ -3404,45 +3404,45 @@ public class PlayerOperationManager : MonoBehaviour
         // 【修复】根据场景执行不同的动画流程
         // ========================================
 
-        if (attackerOriginalPos.x != attackerPos.x || attackerOriginalPos.y != attackerPos.y)
-        {
-            // ===== 场景1：移动+攻击 =====
-            Debug.Log($"[网络攻击] 执行移动+攻击动画");
+        //if (attackerOriginalPos.x != attackerPos.x || attackerOriginalPos.y != attackerPos.y)
+        //{
+        //    // ===== 场景1：移动+攻击 =====
+        //    Debug.Log($"[网络攻击] 执行移动+攻击动画");
 
-            // 先播放移动动画
-            PlayMoveAnimationForAttack(
-                attackerObj,
-                msg.AttackerPlayerId,
-                attackerOriginalPos,
-                attackerPos,
-                () => {
-                    // 移动完成后播放攻击效果
-                    Debug.Log($"[网络攻击] 移动完成，播放攻击效果");
+        //    // 先播放移动动画
+        //    PlayMoveAnimationForAttack(
+        //        attackerObj,
+        //        msg.AttackerPlayerId,
+        //        attackerOriginalPos,
+        //        attackerPos,
+        //        () => {
+        //            // 移动完成后播放攻击效果
+        //            Debug.Log($"[网络攻击] 移动完成，播放攻击效果");
 
-                    if (msg.TargetDestroyed)
-                    {
+        //            if (msg.TargetDestroyed)
+        //            {
                       
 
-                        // 目标死亡，攻击者继续前进到目标位置
-                        HandleTargetDestroyedAfterAttack(
-                            attackerObj,
-                            msg.AttackerPlayerId,
-                            attackerPos,
-                            targetPos,
-                            targetObj,
-                            msg.TargetPlayerId
-                        );
-                    }
-                    else
-                    {
-                        // 目标存活，只播放受击动画
-                        HandleTargetSurvivedAfterAttack(targetObj, msg);
-                    }
-                }
-            );
-        }
-        else
-        {
+        //                // 目标死亡，攻击者继续前进到目标位置
+        //                HandleTargetDestroyedAfterAttack(
+        //                    attackerObj,
+        //                    msg.AttackerPlayerId,
+        //                    attackerPos,
+        //                    targetPos,
+        //                    targetObj,
+        //                    msg.TargetPlayerId
+        //                );
+        //            }
+        //            else
+        //            {
+        //                // 目标存活，只播放受击动画
+        //                HandleTargetSurvivedAfterAttack(targetObj, msg);
+        //            }
+        //        }
+        //    );
+        //}
+        //else
+        //{
             // ===== 场景2：直接攻击（不需要移动） =====
             Debug.Log($"[网络攻击] 执行直接攻击");
 
@@ -3512,7 +3512,7 @@ public class PlayerOperationManager : MonoBehaviour
                 // 处理血量
                UnitStatusUIManager.Instance.UpdateHPByID(msg.TargetSyncData.Value.pieceID,msg.TargetSyncData.Value.currentHP);
             }
-        }
+        //}
 
         Debug.Log($"[网络攻击] 攻击处理完成");
     }
@@ -3599,7 +3599,6 @@ public class PlayerOperationManager : MonoBehaviour
                             otherPlayersUnits[targetPlayerId].Remove(targetPos);
                         }
 
-                        Destroy(targetObj);
 
 
                         // 攻击者前进到目标位置
@@ -3627,6 +3626,8 @@ public class PlayerOperationManager : MonoBehaviour
                         attackerObj.transform.DOMove(targetWorldPos, MoveSpeed * 0.5f).OnComplete(() =>
                         {
                             Debug.Log($"[HandleTargetDestroyedAfterAttack] 攻击者前进动画完成");
+
+                            Destroy(targetObj);
                         });
 
                         // 从PieceManager中移除被击杀的目标
