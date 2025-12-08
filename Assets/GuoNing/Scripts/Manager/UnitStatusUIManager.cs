@@ -130,4 +130,47 @@ public class UnitStatusUIManager : MonoBehaviour
 			Debug.LogWarning($"Try to remove StatusUI but ID {id} not found.");
 		}
 	}
+
+	/// <summary>
+	/// 激活指定单位的某个槽位（点亮 / 启用）
+	/// </summary>
+	public bool ActivateSlotByID(int id, int slotIndex)
+	{
+		if (units.TryGetValue(id, out var ui))
+		{
+			ui.ActivateSlot(slotIndex);
+			return true;
+		}
+
+		Debug.LogWarning($"StatusUI with ID {id} not found (ActivateSlot).");
+		return false;
+	}
+
+	/// <summary>
+	/// 为指定单位增加建筑槽位（slotNumber 可以为 1 或更多）
+	/// </summary>
+	public bool AddSlotToUnit(int id, int slotNumber)
+	{
+		if (units.TryGetValue(id, out var ui))
+		{
+			ui.IncreaseSlot(slotNumber);
+			return true;
+		}
+		Debug.LogWarning($"StatusUI with ID {id} not found (AddSlot).");
+		return false;
+	}
+
+	/// <summary>
+	/// 为指定单位关闭一个建筑槽位并自动重排
+	/// </summary>
+	public bool RemoveSlotFromUnit(int id, int slotIndex)
+	{
+		if (units.TryGetValue(id, out var ui))
+		{
+			ui.CloseSlot(slotIndex);
+			return true;
+		}
+		Debug.LogWarning($"StatusUI with ID {id} not found (RemoveSlot).");
+		return false;
+	}
 }

@@ -76,31 +76,20 @@ public class UnitStatusUI : MonoBehaviour
 		}
 		if (type == CardType.Building)
 		{
-			// 把预制体本身当作第一个格子
 			buildingSlots.Clear();
 			buildingSlots.Add(slotPrefab);
 
 			RectTransform prefabRT = slotPrefab.GetComponent<RectTransform>();
+			float width = prefabRT.rect.width;
+			float spacing = 5f;
 
-			float width = prefabRT.rect.width;                 // 单个格子的宽度
-			float spacing = 5f;                                  // 格子间距
-			float baseX = prefabRT.anchoredPosition.x;         // prefab 当前的 X 位置
-			float baseY = prefabRT.anchoredPosition.y;         // prefab 当前的 Y 位置
-
-			// 再生成剩下的格子，让它们“跟在 prefab 后面”
 			for (int i = 0; i < buildingSlot - 1; i++)
 			{
 				BuildingSlot slot = Instantiate(slotPrefab, transform);
-				RectTransform rt = slot.GetComponent<RectTransform>();
-
-				// i=0 的时候，紧挨着 prefab 放在右边
-				rt.anchoredPosition = new Vector2(
-					baseX + (width + spacing) * (i + 1),
-					baseY
-				);
-
 				buildingSlots.Add(slot);
 			}
+
+			RefreshSlotLayout();
 		}
 		else
 		{
@@ -113,16 +102,53 @@ public class UnitStatusUI : MonoBehaviour
 		UpdatePieceIcon(type);
 	}
 
-	public void ActivateSlot(int index, bool isActive)
+	/// <summary>
+	/// 激活建筑槽位
+	/// </summary>
+	/// <param name="index"></param>
+	/// <param name="isActive"></param>
+	public void ActivateSlot(int index)
 	{
 		if (index < 0 || index >= buildingSlots.Count) return;
-		buildingSlots[index].SetActiveSlot(isActive);
+		buildingSlots[index].ActivateSlot();
 	}
 
+	/// <summary>
+	/// 关闭指定的建筑槽位
+	/// </summary>
+	/// <param name="index"></param>
 	public void CloseSlot(int index)
 	{
 		if (index < 0 || index >= buildingSlots.Count) return;
+
+		// 关闭并删除
 		buildingSlots[index].CloseSlot();
+		Destroy(buildingSlots[index].gameObject);
+		buildingSlots.RemoveAt(index);
+
+		// 重新排列剩余槽位
+		RefreshSlotLayout();
+	}
+
+	/// <summary>
+	/// 增加制定数量的建筑槽位
+	/// </summary>
+	/// <param name="slotNumber"></param>
+	public void IncreaseSlot(int slotNumber)
+	{
+		if (slotNumber <= 0) return;
+
+		RectTransform prefabRT = slotPrefab.GetComponent<RectTransform>();
+
+		for (int i = 0; i < slotNumber; i++)
+		{
+			BuildingSlot slot = Instantiate(slotPrefab, transform);
+			slot.gameObject.SetActive(true);
+			buildingSlots.Add(slot);
+		}
+
+		// 重新排列所有槽位
+		RefreshSlotLayout();
 	}
 
 
@@ -204,5 +230,27 @@ public class UnitStatusUI : MonoBehaviour
 		// 跟随 + 朝向摄像机
 		transform.position = pieceTarget.position + offset;
 		transform.forward = Camera.main.transform.forward;
+	}
+	private void RefreshSlotLayout()
+	{
+		float spacing = 5f;
+
+		if (buildingSlots == null || buildingSlots.Count == 0)
+			return;
+
+		RectTransform prefabRT = slotPrefab.GetComponent<RectTransform>();
+		float width = prefabRT.rect.width;
+		float baseX = prefabRT.anchoredPosition.x;
+		float baseY = prefabRT.anchoredPosition.y;
+
+		for (int i = 0; i < buildingSlots.Count; i++)
+		{
+			RectTransform rt = buildingSlots[i].GetComponent<RectTransform>();
+
+			rt.anchoredPosition = new Vector2(
+				baseX + (width + spacing) * i,
+				baseY
+			);
+		}
 	}
 }
