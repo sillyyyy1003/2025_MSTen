@@ -50,6 +50,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 是否是当前玩家的回合
     private bool isMyTurn = false;
+    public bool IsMyTurn => isMyTurn;
 
     // 点击到的格子的id
     private int ClickCellid;
@@ -89,10 +90,10 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
+    List<HexCell> MoveRangeCellList = new List<HexCell>();
 
-
-    // 本地玩家ID
-    private int localPlayerId = -1;
+	// 本地玩家ID
+	private int localPlayerId = -1;
 
     public int selectCellID = -1;
 
@@ -172,7 +173,42 @@ public class PlayerOperationManager : MonoBehaviour
                 UpdateHighlight(GetCellUnderCursor());
             }
 
-            //HandleMouseInput();
+            if (PlayerDataManager.Instance.nowChooseUnitID != -1)
+            {
+                if(PlayerDataManager.Instance.nowChooseUnitType==CardType.Building|| PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
+                {
+						// Clear highlight
+						foreach (var cell in MoveRangeCellList)
+						{
+							cell.DisableHighlight();
+						}
+
+						MoveRangeCellList.Clear();
+
+				}
+                else
+				{
+					foreach (var cell in MoveRangeCellList)
+					{
+						cell.DisableHighlight();
+					}
+					MoveRangeCellList.Clear();
+                    int pieceAP = PieceManager.Instance.GetPieceAP(PlayerDataManager.Instance.nowChooseUnitID);
+					MoveRangeCellList = _HexGrid.GetReachableCells(ClickCellid, pieceAP, pieceAP, PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(PlayerDataManager.Instance.nowChooseUnitType));
+                    foreach (var cell in MoveRangeCellList)
+                    {
+						cell.EnableHighlight(Color.green);
+					}
+
+				}
+            }
+            else
+            {
+				foreach (var cell in MoveRangeCellList)
+				{
+					cell.DisableHighlight();
+				}
+			}
 
         }
 
@@ -719,10 +755,8 @@ public class PlayerOperationManager : MonoBehaviour
                     //Debug.Log("add outline");
                 }
 
-                HexCell cell = _HexGrid.GetCell(ClickCellid);
 				Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
             }
-
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
             {
                 Debug.Log("Get Enemy Unit " + clickPos);
@@ -1925,11 +1959,11 @@ public class PlayerOperationManager : MonoBehaviour
        
         if (PlayerDataManager.Instance.nowChooseUnitType!=CardType.Farmer&&PieceManager.Instance.GetPieceAP(unitData.Value.UnitID) > 0)
         {
-            _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+            _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID),PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(unitData.Value.UnitType));
         }
         else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
         {
-            _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+            _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID), PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(unitData.Value.UnitType));
         }
         else
         {
@@ -2633,10 +2667,11 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
 
-        // 寻找路径
-        _HexGrid.FindPath(LastSelectingCellID, targetCellId, currentAP);
+        // 寻找路径 2025.12.08 Guoning 改为使用带棋子类型的寻路
+        _HexGrid.FindPath(LastSelectingCellID, targetCellId, currentAP, PieceType.Farmer);
+		//_HexGrid.FindPath(LastSelectingCellID, targetCellId, currentAP);
 
-        if (!_HexGrid.HasPath)
+		if (!_HexGrid.HasPath)
         {
             Debug.Log("[MoveFarmerToBuilding] 没有找到路径");
             _HexGrid.ClearPath();

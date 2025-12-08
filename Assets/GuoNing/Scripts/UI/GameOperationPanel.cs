@@ -86,6 +86,9 @@ public class GameOperationPanel : MonoBehaviour
 	void Update()
 	{
 
+		// 如果不是我的回合 则不处理
+		if (!GameManage.Instance._PlayerOperation.IsMyTurn) return;
+
 		if (GameManage.Instance.GetIsGamingOrNot() == false)
 		{
 			// 关闭面板
@@ -136,11 +139,11 @@ public class GameOperationPanel : MonoBehaviour
 
 		int2 pos = GameManage.Instance.GetBoardInfor(cell.Index).Cells2DPos;
 
-		// 如果目标格子没有单位 则显示移动面板
+		// 如果目标格子没有单位 则不显示
 		if (!cell.Unit)
 		{
-			ShowMovePanelIfNeeded(cell);
-			UpdatePanelPos();
+			//ShowMovePanelIfNeeded(cell);
+			//UpdatePanelPos();
 			return;
 		}
 
