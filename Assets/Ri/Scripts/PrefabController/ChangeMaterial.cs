@@ -72,13 +72,12 @@ public class ChangeMaterial : MonoBehaviour
         }
 
         // 取当前材质
-        Material mat = thisRender.material;
         // 确保初始值设置
-        mat.SetFloat("_Float", 0f);
+        DefaultMat.SetFloat("_Float", -1f);
         // 创建 DOTween 动画：_Float 从 0 → 1
         DOTween.To(
-            () => mat.GetFloat("_Float"),
-            x => mat.SetFloat("_Float", x),
+            () => DefaultMat.GetFloat("_Float"),
+            x => DefaultMat.SetFloat("_Float", x),
             1f,
             2f // 播放时间 1 秒
         )
