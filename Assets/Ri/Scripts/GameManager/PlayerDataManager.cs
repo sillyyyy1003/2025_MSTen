@@ -804,6 +804,9 @@ public class PlayerDataManager : MonoBehaviour
                        PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
                         break;
 
+                    case CardType.Building:
+                     
+                        break;
 
 
                     default:
