@@ -3600,42 +3600,45 @@ public class PlayerOperationManager : MonoBehaviour
                         }
 
                         Destroy(targetObj);
+
+
+                        // 攻击者前进到目标位置
+                        Vector3 targetWorldPos = GameManage.Instance.GetCell2D(targetPos).Cells3DPos;
+
+                        // 更新字典
+                        if (attackerPlayerId == localPlayerId)
+                        {
+                            localPlayerUnits.Remove(attackerCurrentPos);
+                            localPlayerUnits[targetPos] = attackerObj;
+                        }
+                        else if (otherPlayersUnits.ContainsKey(attackerPlayerId))
+                        {
+                            otherPlayersUnits[attackerPlayerId].Remove(attackerCurrentPos);
+                            otherPlayersUnits[attackerPlayerId][targetPos] = attackerObj;
+                        }
+
+                        // 更新GameManage
+                        GameManage.Instance.SetCellObject(attackerCurrentPos, null);
+                        GameManage.Instance.SetCellObject(targetPos, attackerObj);
+
+
+
+                        // 播放前进动画
+                        attackerObj.transform.DOMove(targetWorldPos, MoveSpeed * 0.5f).OnComplete(() =>
+                        {
+                            Debug.Log($"[HandleTargetDestroyedAfterAttack] 攻击者前进动画完成");
+                        });
+
+                        // 从PieceManager中移除被击杀的目标
+                        PlayerUnitData? deadTargetData = PlayerDataManager.Instance.FindUnit(targetPlayerId, targetPos);
+                        if (deadTargetData.HasValue && PieceManager.Instance != null)
+                        {
+                            PieceManager.Instance.RemovePiece(deadTargetData.Value.UnitID);
+                            Debug.Log($"[HandleTargetDestroyedAfterAttack] 已从PieceManager移除被击杀单位 ID:{deadTargetData.Value.UnitID}");
+                        }
                     });
 
-                // 攻击者前进到目标位置
-                Vector3 targetWorldPos = GameManage.Instance.GetCell2D(targetPos).Cells3DPos;
-
-                // 更新字典
-                if (attackerPlayerId == localPlayerId)
-                {
-                    localPlayerUnits.Remove(attackerCurrentPos);
-                    localPlayerUnits[targetPos] = attackerObj;
-                }
-                else if (otherPlayersUnits.ContainsKey(attackerPlayerId))
-                {
-                    otherPlayersUnits[attackerPlayerId].Remove(attackerCurrentPos);
-                    otherPlayersUnits[attackerPlayerId][targetPos] = attackerObj;
-                }
-
-                // 更新GameManage
-                GameManage.Instance.SetCellObject(attackerCurrentPos, null);
-                GameManage.Instance.SetCellObject(targetPos, attackerObj);
-
-
-
-                // 播放前进动画
-                attackerObj.transform.DOMove(targetWorldPos, MoveSpeed * 0.5f).OnComplete(() =>
-                {
-                    Debug.Log($"[HandleTargetDestroyedAfterAttack] 攻击者前进动画完成");
-                });
-
-                // 从PieceManager中移除被击杀的目标
-                PlayerUnitData? deadTargetData = PlayerDataManager.Instance.FindUnit(targetPlayerId, targetPos);
-                if (deadTargetData.HasValue && PieceManager.Instance != null)
-                {
-                    PieceManager.Instance.RemovePiece(deadTargetData.Value.UnitID);
-                    Debug.Log($"[HandleTargetDestroyedAfterAttack] 已从PieceManager移除被击杀单位 ID:{deadTargetData.Value.UnitID}");
-                }
+             
 
             }
 
