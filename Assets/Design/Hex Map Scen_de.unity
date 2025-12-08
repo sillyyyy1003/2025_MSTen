@@ -18339,6 +18339,11 @@ PrefabInstance:
       propertyPath: grid
       value: 
       objectReference: {fileID: 1571186511}
+    - target: {fileID: 7698797980731268316, guid: f239927840e5a3b4ca6b23300f65a738,
+        type: 3}
+      propertyPath: bCanUseCamera
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
