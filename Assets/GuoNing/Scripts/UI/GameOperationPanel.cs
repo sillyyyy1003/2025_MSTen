@@ -272,7 +272,6 @@ public class GameOperationPanel : MonoBehaviour
 		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Building, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
-
 	}
 
 	private void HandleFarmer(HexCell cell, int2 pos, bool isLocal)

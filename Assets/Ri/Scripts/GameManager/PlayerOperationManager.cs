@@ -1269,8 +1269,6 @@ public class PlayerOperationManager : MonoBehaviour
         int2 position = cellInfo.Cells2DPos;
         Vector3 worldPos = cellInfo.Cells3DPos;
 
-
-
         // 选择对应的预制体
         //Piece prefab = null;
         PieceType pieceType = PieceType.None;
@@ -1314,7 +1312,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 //EffectManager.Instance.PlayEffect(EffectType.Building_Build, worldPos, Quaternion.identity); 
                 // 建筑使用独有逻辑
-                CreateBuilding(SelectedEmptyCellID,false);
+                CreateBuilding(cellId,false);
 
                 return;
             default:
@@ -1340,8 +1338,16 @@ public class PlayerOperationManager : MonoBehaviour
         //PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
         // 生成ID，创建单位
         int unitID = PlayerDataManager.Instance.AddUnit(localPlayerId, unitType, position, unitData);
+
+        // 如果是建筑则取得建筑数值
+        int slot = 0;
+		if (unitType == CardType.Building)
+        {
+            slot = GameManage.Instance._BuildingManager.GetBuildingDataByReligion(SceneStateManager.Instance.PlayerReligion).maxUnitCapacity;
+			Debug.LogError(slot);
+		}
         // 生成StatusUI
-        UnitStatusUIManager.Instance.CreateStatusUI(unitID, unitData.currentHP,unitData.currentAP, pieceObj.transform, unitType);
+        UnitStatusUIManager.Instance.CreateStatusUI(unitID, unitData.currentHP, unitData.currentAP, pieceObj.transform, unitType);
 
 		// 保存本地引用
 		localPlayerUnits[position] = pieceObj;
@@ -2188,7 +2194,7 @@ public class PlayerOperationManager : MonoBehaviour
                 GameManage.Instance._BuildingManager.SetBuildingOnGoldmine(buildData.buildingID,true);
             }
             // 2. 将建筑作为Unit添加到PlayerData
-            int2 buildingPos2D = PlayerBoardInforDict[SelectedEmptyCellID].Cells2DPos;
+            int2 buildingPos2D = PlayerBoardInforDict[cellID].Cells2DPos;
 
             // 创建syncPieceData（用于单位系统）
             syncPieceData buildingPieceData = new syncPieceData
@@ -2223,7 +2229,6 @@ public class PlayerOperationManager : MonoBehaviour
                 Debug.Log($"建筑GameObject已添加到localPlayerUnits");
             }
             // 添加PlayerDataManager中的位置映射
-
             PlayerDataManager.Instance.AddBuildingUnit(localPlayerId, buildData.buildingID);
             // 添加描边效果
             GameManage.Instance._BuildingManager.GetBuildingGameObject().AddComponent<ChangeMaterial>();
@@ -2231,8 +2236,12 @@ public class PlayerOperationManager : MonoBehaviour
             GameManage.Instance.SetCellObject(buildingPos2D, GameManage.Instance._BuildingManager.GetBuildingGameObject());
             Debug.Log($"建筑已作为Unit添加到PlayerData.PlayerUnits: BuildingID={buildData.buildingID}");
 
-            // 添加HP
-            UnitStatusUIManager.Instance.CreateStatusUI(buildData.buildingID, buildData.currentHP, 0, localPlayerUnits[buildingPos2D].transform, CardType.Building);
+			// 添加HP
+			int slot = 0;
+            BuildingDataSO data = GameManage.Instance._BuildingManager.GetBuildingDataByReligion(SceneStateManager.Instance.PlayerReligion);
+            slot = data.maxSlotsByLevel[buildData.slotsLevel];
+
+			UnitStatusUIManager.Instance.CreateStatusUI(buildData.buildingID, buildData.currentHP, 0, localPlayerUnits[buildingPos2D].transform, CardType.Building,false,slot);
             UnitStatusUIManager.Instance.UpdateHPByID(buildData.buildingID, buildData.currentHP);
 
             // 3. 网络同步：使用现有的UNIT_ADD消息

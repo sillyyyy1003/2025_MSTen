@@ -23,10 +23,10 @@ public class UnitStatusUIManager : MonoBehaviour
 		int maxHP,
 		int maxAP,
 		Transform target,
-		CardType type,bool isEnemy=false)
+		CardType type, bool isEnemy = false, int slot = 0)
 	{
 		var ui = Instantiate(statusUIPrefab, uiCanvas.transform);
-		ui.Initialize(maxHP, maxAP, target, defaultOffset, type, isEnemy);
+		ui.Initialize(maxHP, maxAP, target, defaultOffset, type, isEnemy, slot);
 		units.Add(id, ui);
 	}
 

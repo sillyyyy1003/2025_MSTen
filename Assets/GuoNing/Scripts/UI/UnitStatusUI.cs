@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,6 +38,12 @@ public class UnitStatusUI : MonoBehaviour
 	[Header("PieceIcon")]
 	[SerializeField] private Image pieceIcon;
 
+	[Header("BuildingIcon")]
+	[SerializeField] private BuildingSlot slotPrefab;
+	
+
+	List<BuildingSlot> buildingSlots = new List<BuildingSlot>();
+
 	//================================
 	// メソッド
 	//================================
@@ -45,7 +52,7 @@ public class UnitStatusUI : MonoBehaviour
 		int maxAP,
 		Transform target,
 		Vector3 offset,
-		CardType type, bool isEnemy = false)
+		CardType type, bool isEnemy = false, int buildingSlot = 0)
 	{
 		this.pieceTarget = target;
 		this.offset = offset;
@@ -67,12 +74,57 @@ public class UnitStatusUI : MonoBehaviour
 			if (hpImage != null)
 				hpImage.color = new Color(0.1215f, 0.6431f, 0.8666f);
 		}
+		if (type == CardType.Building)
+		{
+			// 把预制体本身当作第一个格子
+			buildingSlots.Clear();
+			buildingSlots.Add(slotPrefab);
 
+			RectTransform prefabRT = slotPrefab.GetComponent<RectTransform>();
+
+			float width = prefabRT.rect.width;                 // 单个格子的宽度
+			float spacing = 5f;                                  // 格子间距
+			float baseX = prefabRT.anchoredPosition.x;         // prefab 当前的 X 位置
+			float baseY = prefabRT.anchoredPosition.y;         // prefab 当前的 Y 位置
+
+			// 再生成剩下的格子，让它们“跟在 prefab 后面”
+			for (int i = 0; i < buildingSlot - 1; i++)
+			{
+				BuildingSlot slot = Instantiate(slotPrefab, transform);
+				RectTransform rt = slot.GetComponent<RectTransform>();
+
+				// i=0 的时候，紧挨着 prefab 放在右边
+				rt.anchoredPosition = new Vector2(
+					baseX + (width + spacing) * (i + 1),
+					baseY
+				);
+
+				buildingSlots.Add(slot);
+			}
+		}
+		else
+		{
+			slotPrefab.gameObject.SetActive(false);
+		}
+		
 		// 初始刷新
 		UpdateHPUI();
 		UpdateAPUI();
 		UpdatePieceIcon(type);
 	}
+
+	public void ActivateSlot(int index, bool isActive)
+	{
+		if (index < 0 || index >= buildingSlots.Count) return;
+		buildingSlots[index].SetActiveSlot(isActive);
+	}
+
+	public void CloseSlot(int index)
+	{
+		if (index < 0 || index >= buildingSlots.Count) return;
+		buildingSlots[index].CloseSlot();
+	}
+
 
 	public void SetHP(int hp)
 	{

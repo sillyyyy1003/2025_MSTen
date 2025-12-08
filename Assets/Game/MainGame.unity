@@ -6089,7 +6089,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2117784782}
         m_TargetAssemblyTypeName: GameOption, Assembly-CSharp
-        m_MethodName: OpenMenu
+        m_MethodName: DoMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -23839,7 +23839,7 @@ GameObject:
   - component: {fileID: 1938065378}
   - component: {fileID: 1938065377}
   - component: {fileID: 1938065376}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: StausBarCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25856,6 +25856,7 @@ MonoBehaviour:
   resolutionDropdown: {fileID: 174602638}
   fullScreenDropdown: {fileID: 1040283214}
   gridToggle: {fileID: 1180549202}
+  EndTrunButton: {fileID: 2062960769}
 --- !u!114 &2117784783
 MonoBehaviour:
   m_ObjectHideFlags: 0
