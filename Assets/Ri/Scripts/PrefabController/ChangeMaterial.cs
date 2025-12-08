@@ -60,7 +60,7 @@ public class ChangeMaterial : MonoBehaviour
     }
     public void UnitDead(System.Action onFinished)
     {
-        Debug.Log("执行单位新死亡特效");
+        Debug.Log("执行单位新死亡特效 "+DefaultMat.name);
         if (thisRender == null)
             thisRender = GetComponent<Renderer>();
 
@@ -79,7 +79,7 @@ public class ChangeMaterial : MonoBehaviour
             () => DefaultMat.GetFloat("_Float"),
             x => DefaultMat.SetFloat("_Float", x),
             1f,
-            2f // 播放时间 1 秒
+            3f // 播放时间 1 秒
         )
         .SetEase(Ease.Linear)
         .OnComplete(() =>
