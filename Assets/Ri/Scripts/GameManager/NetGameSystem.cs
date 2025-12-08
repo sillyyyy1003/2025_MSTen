@@ -1144,6 +1144,7 @@ public class NetGameSystem : MonoBehaviour
             port = firstServer.Port;
             ConnectToSpecificServer(serverIP, port);
             SceneStateManager.Instance.mapSerialNumber = discoveredServers[0].MapSerialNumber;
+            HexMapManager.Instance.InitHexMapManager();
         }
         else
         {
@@ -2094,7 +2095,6 @@ public class NetGameSystem : MonoBehaviour
         if (gameManage != null)
         {
             gameManage.InitGameWithNetworkData(data);
-            HexMapManager.Instance.InitHexMapManager();
         }
         else
         {
