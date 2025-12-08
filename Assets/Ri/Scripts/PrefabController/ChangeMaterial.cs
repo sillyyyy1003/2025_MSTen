@@ -60,6 +60,7 @@ public class ChangeMaterial : MonoBehaviour
     }
     public void UnitDead(System.Action onFinished)
     {
+        Debug.Log("执行单位新死亡特效");
         if (thisRender == null)
             thisRender = GetComponent<Renderer>();
 
@@ -72,7 +73,8 @@ public class ChangeMaterial : MonoBehaviour
 
         // 取当前材质
         Material mat = thisRender.material;
-
+        // 确保初始值设置
+        mat.SetFloat("_Float", 0f);
         // 创建 DOTween 动画：_Float 从 0 → 1
         DOTween.To(
             () => mat.GetFloat("_Float"),
@@ -83,6 +85,7 @@ public class ChangeMaterial : MonoBehaviour
         .SetEase(Ease.Linear)
         .OnComplete(() =>
         {
+            Debug.Log("死亡特效播放完成");
             onFinished?.Invoke();
         });
     }
