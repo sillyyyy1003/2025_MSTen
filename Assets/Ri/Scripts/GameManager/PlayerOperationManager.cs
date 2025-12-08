@@ -549,12 +549,12 @@ public class PlayerOperationManager : MonoBehaviour
 				{
 					Debug.Log("[魅惑] 传教士尝试魅惑敌方单位");
 
-					// 检查AP（魅惑需要消耗AP）
-					if (!CheckUnitHasEnoughAP(currentPos, 1))
-					{
-						Debug.Log("[魅惑] AP不足，无法魅惑");
-						return;
-					}
+					//// 检查AP（魅惑需要消耗AP）
+					//if (!CheckUnitHasEnoughAP(currentPos, 1))
+					//{
+					//	Debug.Log("[魅惑] AP不足，无法魅惑");
+					//	return;
+					//}
 
 					ExecuteCharm(targetPos, ownerId);
 					// 更新UI Status
