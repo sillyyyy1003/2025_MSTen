@@ -80,7 +80,18 @@ float3 ApplyGrid(float3 baseColor, HexGridData h)
 //------------------------------------------------------------
 float3 ApplyHighlight(float3 baseColor, HexGridData h)
 {
-	return saturate(h.SmoothstepRange(0.68, 0.8) + baseColor.rgb);
+	//return saturate(h.SmoothstepRange(0.68, 0.8) + baseColor.rgb);
+	
+	// 高亮强度（0~1），可自行调节
+	float intensity = h.SmoothstepRange(0.68, 0.8);
+
+    // 目标绿色（可换成任意色）
+	float3 highlightColor = float3(0.2, 1.0, 0.2);
+
+    // 将颜色往绿色混合（Lerp）
+	float3 result = lerp(baseColor, highlightColor, intensity);
+
+	return saturate(result);
 }
 
 //------------------------------------------------------------
@@ -137,13 +148,16 @@ void GetFragmentData_float(
 	{
 		BaseColor = ApplyGrid(BaseColor, hgd);
 	}
+		
+	float4 cellData = GetCellData(hgd.cellCenter, false);
 
+	// 真正的地形高度等级（0，1，2，3…）
+	float elevation = cellData.b;
 	// 若该格被高亮（例如选中），则添加白色高亮边缘
-	//if (hgd.IsHighlighted())
-	//{
-	//	//BaseColor = ApplyHighlight(BaseColor, hgd);
-	//	BaseColor = ApplyHighlightColor(BaseColor, hgd);
-	//}
+	if (elevation == 0 && hgd.IsHighlighted())
+	{
+		BaseColor = ApplyHighlight(BaseColor, hgd);
+	}
 
 	// Hover 高亮
 	if (hgd.IsHoverHighlighted())

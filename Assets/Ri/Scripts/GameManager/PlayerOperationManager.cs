@@ -39,6 +39,7 @@ public class PlayerOperationManager : MonoBehaviour
 	static readonly int rightClickHighlightId = Shader.PropertyToID("_RightClickHighlight");
 	static readonly int rightClickHighlightColorId = Shader.PropertyToID("_RightClickColor");
 
+
 	// HexGrid的引用
 	public HexGrid _HexGrid;
 
@@ -406,9 +407,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 左键点击 - 选择单位
         if (Input.GetMouseButtonDown(0) && bCanContinue)
         {
-            //2025.12.07 Guoning 取消UI高光使用
-            //_HexGrid.GetCell(selectCellID).DisableHighlight();
-            //UpdateClickHighlight(_HexGrid.GetCell(selectCellID));   
+            //2025.12.07 Guoning 取消UI高光使用 
 
             // 检测鼠标左键点击
             if (Input.GetMouseButtonDown(0))
@@ -689,9 +688,6 @@ public class PlayerOperationManager : MonoBehaviour
                 // 取消之前的选择
                 ReturnToDefault();
                 SelectedEmptyCellID = -1;
-                // 清除选择高光
-                //ClearClickCellHighlightData();
-                //ClearHoverCellHighlightData();
 
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
@@ -707,7 +703,7 @@ public class PlayerOperationManager : MonoBehaviour
                   
                 }
             
-                //SelectingUnit.GetComponent<ChangeMaterial>().Outline();
+         
                 LastSelectingCellID = ClickCellid;
 
 
@@ -722,7 +718,9 @@ public class PlayerOperationManager : MonoBehaviour
                     child.GetComponent<ChangeMaterial>().Outline();
                     //Debug.Log("add outline");
                 }
-                Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
+
+                HexCell cell = _HexGrid.GetCell(ClickCellid);
+				Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
             }
 
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
@@ -731,10 +729,11 @@ public class PlayerOperationManager : MonoBehaviour
                 PlayerUnitDataInterface.Instance.SetEnemyUnitPosition(clickPos);
             }
             else
-            {
-               //Debug.Log("owner Player is "+PlayerDataManager.Instance.GetCellOwner(ClickCellid));
-                // 点击了空地或其他玩家单位
-                ReturnToDefault();
+			{
+				
+				//Debug.Log("owner Player is "+PlayerDataManager.Instance.GetCellOwner(ClickCellid));
+				// 点击了空地或其他玩家单位
+				ReturnToDefault();
                 SelectingUnit = null;
 
                 if (PlayerDataManager.Instance.nowChooseUnitType != CardType.Farmer)
@@ -747,8 +746,6 @@ public class PlayerOperationManager : MonoBehaviour
                 if (!PlayerDataManager.Instance.IsPositionOccupied(clickPos) && _HexGrid.IsValidDestination(_HexGrid.GetCell(ClickCellid)))
                 {
                     // 2025.12.07 全部使用Shader的高光
-                    //ChooseEmptyCell(ClickCellid);
-                    //UpdateClickHighlight(_HexGrid.GetCell(ClickCellid));
                     selectCellID = ClickCellid;
                     SelectedEmptyCellID = ClickCellid; // 保存选中的空格子
                     //Debug.Log($"选择了空格子: {clickPos}，可以在此创建单位");

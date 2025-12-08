@@ -462,6 +462,88 @@ public class HexGrid : MonoBehaviour
 		ClearPathHighlight();
 	}
 
+	/// <summary>
+	/// 获取从某个 Cell 出发，在 speed & 移动规则下，所有 “路径距离 <= maxRange” 的 Cell。
+	/// 这个方法复用了寻路中的过滤规则（障碍、单位、水域、特殊建筑、悬崖等）。
+	/// </summary>
+	public List<HexCell> GetReachableCells(int startCellID, int speed, int maxRange)
+	{
+		List<HexCell> reachable = new List<HexCell>();
+		HexCell start = GetCell(startCellID);
+		if (start == null) return reachable;
+
+		// BFS 队列
+		Queue<HexCell> frontier = new Queue<HexCell>();
+
+		searchFrontierPhase += 2;
+
+		start.SearchPhase = searchFrontierPhase;
+		start.Distance = 0;
+		frontier.Enqueue(start);
+		reachable.Add(start);
+
+		while (frontier.Count > 0)
+		{
+			HexCell current = frontier.Dequeue();
+
+			int currentTurn = (current.Distance - 1) / speed;
+
+			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+			{
+				if (!current.TryGetNeighbor(d, out HexCell neighbor))
+					continue;
+
+				// 已经访问过
+				if (neighbor.SearchPhase >= searchFrontierPhase)
+					continue;
+
+				// ---- 与寻路一致的过滤规则 ----
+
+				// 水域不通过
+				if (neighbor.IsUnderwater)
+					continue;
+
+				// 不允许站在单位上
+				if (neighbor.Unit)
+					continue;
+
+				// 特殊建筑阻挡
+				if (neighbor.SpecialIndex == (int)SpecialIndexType.Temple)
+					continue;
+
+				// 悬崖不能通过
+				if (current.GetEdgeType(neighbor) == HexEdgeType.Cliff)
+					continue;
+
+				// 高地限制
+				if (neighbor.Elevation >= 2)
+					continue;
+
+				// ---- 移动代价计算 ----
+				int moveCost = current.HasRoadThroughEdge(d) ? 1 : 1;
+
+				int newDistance = current.Distance + moveCost;
+				int newTurn = (newDistance - 1) / speed;
+				if (newTurn > currentTurn)
+				{
+					newDistance = newTurn * speed + moveCost;
+				}
+
+				if (newDistance > maxRange)
+					continue;
+
+				// ---- 合法可达 ----
+				neighbor.SearchPhase = searchFrontierPhase;
+				neighbor.Distance = newDistance;
+
+				frontier.Enqueue(neighbor);
+				reachable.Add(neighbor);
+			}
+		}
+
+		return reachable;
+	}
+
 	void ShowPath(int speed)
 	{
 		if (currentPathExists)
@@ -608,6 +690,11 @@ public class HexGrid : MonoBehaviour
 				{
 					continue;
 				}
+				// 高低不考虑
+				if (neighbor.Elevation >= 2)
+				{
+					continue;
+				}
 
 				int moveCost;
 				if (current.HasRoadThroughEdge(d))
@@ -616,14 +703,7 @@ public class HexGrid : MonoBehaviour
 				}
 				else
 				{
-					//// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
-					//moveCost = edgeType == HexEdgeType.Flat ? 2 : 4;
-
-					//int ForestEffecetor = 1, FarmEffecetor = 1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
-					//moveCost += neighbor.UrbanLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
-					//			neighbor.PlantLevel * PlantEffecetor;
 					moveCost = 1;
-
 				}
 
 				int distance = current.Distance + moveCost;

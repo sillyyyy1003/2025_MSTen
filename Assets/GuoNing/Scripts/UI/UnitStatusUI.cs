@@ -45,7 +45,7 @@ public class UnitStatusUI : MonoBehaviour
 		int maxAP,
 		Transform target,
 		Vector3 offset,
-		CardType type)
+		CardType type, bool isEnemy = false)
 	{
 		this.pieceTarget = target;
 		this.offset = offset;
