@@ -38,31 +38,30 @@ public class SimpleSkillButton : MonoBehaviour
 	public void Refresh()
 	{
 		int currentLv = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, tech);
+        levelText.text = $"Lv.{currentLv+1}";
 
-		// 获取最大等级
-		int maxLv = GetMaxLevel(pieceType, tech);
+        // 获取最大等级
+        int maxLv = GetMaxLevel(pieceType, tech);
 
-		if (currentLv >= maxLv)
-		{
-			levelText.text = $"MAX";
-			levelText.color = Color.white;
+        if (currentLv >= maxLv-1)
+        {
+            levelText.text = $"MAX";
+            levelText.color = Color.white;
             skillNameText.color = Color.white;
             upgradeButton.interactable = false;
-			return;
-		}
+            return;
+        }
 
-		// 显示下一级等级
-		int nextLevel = currentLv + 1;
-		levelText.text = $"Lv.{nextLevel}";
-
-		// 获取升级消耗
-		int cost = GetUpgradeCost(pieceType, tech, currentLv);
+        // 获取升级消耗
+        int cost = GetUpgradeCost(pieceType, tech, currentLv);
 
 		// 判断资源够不够
 		int playerID = GameManage.Instance.LocalPlayerID;
 		int resource = PlayerDataManager.Instance.GetPlayerData(playerID).Resources;
 
 		upgradeButton.interactable = resource >= cost;
+
+
 	}
 
 	private void OnClickUpgrade()
@@ -78,15 +77,16 @@ public class SimpleSkillButton : MonoBehaviour
 
 		// 提升等级
 		SkillTreeUIManager.Instance.UpgradeCurrentLevel(pieceType, tech);
+		SkillTreeUIManager.Instance.RefreshSkillTreeByPieceType(pieceType);
 
-		// 升级单位 & 建筑等
-		UpgradeRelatedUnits();
+        // 升级单位 & 建筑等
+        UpgradeRelatedUnits();
 
-		// 刷新所有按钮
-		panel.Refresh();
+        // 刷新所有按钮
+        panel.Refresh();
 
-		// 刷新资源 UI
-		GameUIManager.Instance.UpdateResourcesData();
+        // 刷新资源 UI
+        GameUIManager.Instance.UpdateResourcesData();
 	}
 
 	//==============================================================

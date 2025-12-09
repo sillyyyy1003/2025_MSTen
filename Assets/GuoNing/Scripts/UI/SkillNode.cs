@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using GamePieces;
 
 public class SkillNode : MonoBehaviour
 {
@@ -52,7 +53,7 @@ public class SkillNode : MonoBehaviour
 		levelUpPanel = _levelUpPanel;
 		levelUpButton = _button;
 
-		if (SkillTreeUIManager.Instance.GetCurrentLevel(pieceType,techTree) == _skillIndex)
+		if (SkillTreeUIManager.Instance.GetCurrentLevel(pieceType,techTree) >= _skillIndex)
 		{
 			UnlockSkillNode();
 		}
@@ -97,7 +98,7 @@ public class SkillNode : MonoBehaviour
 		// ------------------------------------------------
 		// ⭐ ② 已解锁等级：skillIndex < currentLevel
 		// ------------------------------------------------
-		if (skillIndex < currentLevel)
+		if (skillIndex <= currentLevel)
 		{
 			if (label) { label.text = "アンロック済"; label.color = Color.white; }
             if (costNum) costNum.text = $"";
@@ -149,7 +150,10 @@ public class SkillNode : MonoBehaviour
 		res -= cost;
 		PlayerDataManager.Instance.SetPlayerResourses(res);
 		GameUIManager.Instance.UpdateResourcesData();
-	}
+
+		//与外部侧边栏联动
+        SkillTreeUIManager.Instance.UpdateSimpleSkillPanel(pieceType);
+    }
 
 
 	// 单位升级
