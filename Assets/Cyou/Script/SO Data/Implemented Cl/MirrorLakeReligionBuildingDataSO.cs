@@ -18,21 +18,21 @@ namespace GameData
             // 建築に必要な資源
             buildingResourceCost = 12;
 
-            // HP（初始, 升級1, 升級2）
-            maxHpByLevel = new int[3] { 25, 30, 35 };
+            // HP（初始, 升級1, 升級2, 升級3）
+            maxHpByLevel = new int[4] { 6, 7, 8, 10 };
 
-            // 祭壇格子数（初始, 升級1, 升級2）
-            maxSlotsByLevel = new int[3] { 3, 4, 5 };
+            // 祭壇格子数（初始, 升級1, 升級2, 升級3）
+            maxSlotsByLevel = new int[4] { 3, 4, 5, 6 };
 
             // 攻撃範囲（鏡湖教は通常攻撃なし、反撃のみ）
-            attackRangeByLevel = new int[3] { 0, 0, 0 };
+            attackRangeByLevel = new int[4] { 0, 0, 0, 0 };
 
-            // 反撃機能（無→受到攻擊反擊→受到攻擊反擊傷害+1）
-            hasCounterAttack = new bool[3] { false, true, true };
-            counterAttackDamage = new int[3] { 0, 1, 2 }; // 反撃ダメージ（0、基礎1、基礎+1で2）
+            // 反撃機能（無→受到攻擊反擊→受到攻擊反擊傷害+1→受到攻擊反擊傷害+2）
+            hasCounterAttack = new bool[4] { false, true, true, true };
+            counterAttackDamage = new int[4] { 0, 1, 2, 3 }; // 反撃ダメージ（0、基礎1、基礎+1で2、基礎+2で3）
 
             // 各項目のアップグレードコスト
-            hpUpgradeCost = new int[2] { 6, 8 }; // 血量: 25→30(6資源), 30→35(8資源)
+            hpUpgradeCost = new int[3] { 6, 8, 10 }; // 血量: 6→7(6資源), 7→8(8資源), 8→10(10資源)
             attackRangeUpgradeCost = new int[2] { 8, 10 }; // 反撃機能: 無→反撃(8資源), 反撃→反撃+1(10資源)
             slotsUpgradeCost = new int[2] { 8, 10 }; // 祭壇格子數: 3→4(8資源), 4→5(10資源)
 
