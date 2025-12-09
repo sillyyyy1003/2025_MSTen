@@ -82,11 +82,7 @@ public class ResolutionManager : MonoBehaviour
 	void Start()
 	{
 
-		currentResolutionIndex = 0;			// default 1080p
-		currentFullScrrenIndex = 0; // default full screen
 
-		// 应用设置 (FULL HD/WINDOW)
-		Screen.SetResolution(resolutionSettings[0].width, resolutionSettings[0].height, false);
 
 	}
 
@@ -111,9 +107,9 @@ public class ResolutionManager : MonoBehaviour
 		{
 			"ウィンドウ",       // Windowed
             "フルスクリーン"  // ExclusiveFullScreen
-         //   "ボーダーレス"      // FullScreenWindow
+         
         };
-
+		//   "ボーダーレス"      // FullScreenWindow
 		dropdown.ClearOptions();
 		dropdown.AddOptions(fullscreenOptions);
 		dropdown.value = currentFullScrrenIndex;

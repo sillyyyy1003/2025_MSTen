@@ -12,6 +12,8 @@ public class TitleAnimation : MonoBehaviour
 	public UserIDPanel userIDPanel;
 	void Start()
 	{
+		SaveLoadManager.Instance.Load();
+		SaveLoadManager.Instance.ApplyLoadedData();
 		PlayAnimation();
 	}
 

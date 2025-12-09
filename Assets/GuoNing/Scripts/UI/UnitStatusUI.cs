@@ -81,7 +81,6 @@ public class UnitStatusUI : MonoBehaviour
 
 			RectTransform prefabRT = slotPrefab.GetComponent<RectTransform>();
 			float width = prefabRT.rect.width;
-			float spacing = 5f;
 
 			for (int i = 0; i < buildingSlot - 1; i++)
 			{

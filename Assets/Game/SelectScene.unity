@@ -12319,21 +12319,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8131400303194852878, guid: 1e29633c4e08377418ebb74526e4dee4,
-        type: 3}
-      propertyPath: dropdown
-      value: 
-      objectReference: {fileID: 856839082}
-    - target: {fileID: 8131400303194852878, guid: 1e29633c4e08377418ebb74526e4dee4,
-        type: 3}
-      propertyPath: fullScreenToggle
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8131400303194852878, guid: 1e29633c4e08377418ebb74526e4dee4,
-        type: 3}
-      propertyPath: fullscreenModeDropdown
-      value: 
-      objectReference: {fileID: 343359481}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
