@@ -116,9 +116,9 @@ public class SaveLoadManager : MonoBehaviour
 	public void ApplyLoadedData()
 	{
 		SaveData d = CurrentData;
-		DisplayManager.Instance.SetGridState(d.isGridOn);
-		ResolutionManager.Instance.ApplyLoadedSettings(d.resolutionIndex, d.fullscreenIndex);
-		SoundManager.Instance.ApplyLoadedVolume(d.masterVolume, d.bgmVolume, d.seVolume);
+		if( DisplayManager.Instance!=null)DisplayManager.Instance.SetGridState(d.isGridOn);
+		if (ResolutionManager.Instance != null) ResolutionManager.Instance.ApplyLoadedSettings(d.resolutionIndex, d.fullscreenIndex);
+		if (SoundManager.Instance != null) SoundManager.Instance.ApplyLoadedVolume(d.masterVolume, d.bgmVolume, d.seVolume);
 	}
 
 

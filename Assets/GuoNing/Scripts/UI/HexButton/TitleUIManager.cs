@@ -35,6 +35,7 @@ public class TitleUIManager : MonoBehaviour
 	[Header("OnlineButton")]
 	public HexButton Button_CreateGame;
 	public HexButton Button_AddGame;
+	public RectTransform UserID;
 	public TMP_Text Text_UserID;
 
 	[Header("Building")]
@@ -76,6 +77,9 @@ public class TitleUIManager : MonoBehaviour
 			Button_Setting.ResetHexButton();
 			Button_OnlineGame.ResetHexButton();
 			SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+
+			//  Open UserID display
+			UserID.gameObject.SetActive(true);
 		}
 
 		//=========Building model update
@@ -225,6 +229,8 @@ public class TitleUIManager : MonoBehaviour
 		// Change material
 		UpdateBackground(true);
 
+		// 关闭UserID显示
+		UserID.gameObject.SetActive(false);
 	}
 
 	/// <summary>

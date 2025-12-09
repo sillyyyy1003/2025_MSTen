@@ -140,8 +140,9 @@ public class HexGrid : MonoBehaviour
 			return false;
 		}
 
-		ClearPath();
-		ClearUnits();
+		ClearPathHighlight();
+		//ClearPath();
+		//ClearUnits();
 		if (columns != null)
 		{
 			for (int i = 0; i < columns.Length; i++)
@@ -845,7 +846,7 @@ public class HexGrid : MonoBehaviour
 
 	public void FindPath(int fromCellID, int toCellID, int speed, PieceType type)
 	{
-		ClearPath();
+		ClearPathHighlight();
 		currentPathFromIndex = fromCellID;
 		currentPathToIndex = toCellID;
 		currentPathExists = Search(GetCell(fromCellID), GetCell(toCellID), speed, type);
@@ -1053,8 +1054,7 @@ public class HexGrid : MonoBehaviour
 
 
 
-
-	/*
+/*
 	/// <summary>
 	   /// Try to find a path.
 	   /// </summary>

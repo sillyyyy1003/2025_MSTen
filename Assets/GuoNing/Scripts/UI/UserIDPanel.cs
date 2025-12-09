@@ -8,8 +8,12 @@ public class UserIDPanel : MonoBehaviour
 
 	private void Start()
 	{
-		SaveLoadManager.Instance.Load();
+		
+	}
 
+	public void OnAnimationEnd()
+	{
+		
 		// 初始化时根据 SaveLoadManager 判断是否显示
 		if (SaveLoadManager.Instance.HasUserID)
 		{
