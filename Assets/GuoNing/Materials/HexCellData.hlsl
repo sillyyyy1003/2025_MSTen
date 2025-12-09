@@ -40,6 +40,9 @@ int _PathCount;
 float4 _PathCells[MAX_PATH_CELLS];
 float4 _PathColor; // 路径颜色
 
+// 存移动范围的 hex 坐标
+int _MoveRangeCount;
+float4 _MoveRangeCells[MAX_PATH_CELLS];
 
 // Cell highlighting data, in hex space.
 // x: Highlight center X position.
@@ -121,6 +124,24 @@ struct HexGridData {
 
         // 半径判断（使用 z 作为 radiusSquared）
 			if (dot(v, v) < _PathCells[i].z)
+				return true;
+		}
+		return false;
+	}
+	
+	bool IsMoveRangeHighlighted()
+	{
+		// 遍历所有路径点
+		for (int i = 0; i < _MoveRangeCount; i++)
+		{
+			float2 v = abs(_MoveRangeCells[i].xy - cellCenter);
+
+        // wrap（可选，与 Hover 判定一致）
+			if (v.x > _MoveRangeCells[i].w * 0.5)
+				v.x -= _MoveRangeCells[i].w;
+
+        // 半径判断（使用 z 作为 radiusSquared）
+			if (dot(v, v) < _MoveRangeCells[i].z)
 				return true;
 		}
 		return false;

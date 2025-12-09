@@ -144,10 +144,6 @@ public class PlayerOperationManager : MonoBehaviour
         // 2025.12.07 设定高亮颜色
         Shader.SetGlobalColor(hoverHighlightColorId, new Color(1f, 1f, 1f, 1f));        // 白色 Hover
         Shader.SetGlobalColor(clickHighlightColorId, new Color(1f, 0f, 0f, 1f));        // 红色 Click
-
-
-        // 清理路径高亮
-        _HexGrid.ClearPathHighlight();
 	}
 
 
@@ -174,126 +170,139 @@ public class PlayerOperationManager : MonoBehaviour
                 UpdateHighlight(GetCellUnderCursor());
             }
 
+            // 更新移动距离
             if (PlayerDataManager.Instance.nowChooseUnitID != -1)
             {
                 if(PlayerDataManager.Instance.nowChooseUnitType==CardType.Building|| PlayerDataManager.Instance.nowChooseUnitType == CardType.Pope)
                 {
-						// Clear highlight
-						foreach (var cell in MoveRangeCellList)
-						{
-							cell.DisableHighlight();
-						}
-
-						MoveRangeCellList.Clear();
-
+                    ClearMoveRangeHighlight();
+					MoveRangeCellList.Clear();
 				}
                 else
 				{
-					foreach (var cell in MoveRangeCellList)
-					{
-						cell.DisableHighlight();
-					}
 					MoveRangeCellList.Clear();
-
                     int pieceAP = PieceManager.Instance.GetPieceAP(PlayerDataManager.Instance.nowChooseUnitID);
-					MoveRangeCellList = _HexGrid.GetReachableCells(ClickCellid, pieceAP, pieceAP, PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(PlayerDataManager.Instance.nowChooseUnitType));
-                    foreach (var cell in MoveRangeCellList)
-                    {
-						cell.EnableHighlight(Color.green);
-					}
-
+                    MoveRangeCellList = _HexGrid.GetReachableCells(ClickCellid, pieceAP, pieceAP, PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(PlayerDataManager.Instance.nowChooseUnitType));
+                    UpdateMoveRangeHighlight(MoveRangeCellList);
 				}
             }
             else
             {
-				foreach (var cell in MoveRangeCellList)
-				{
-					cell.DisableHighlight();
-				}
+                ClearMoveRangeHighlight();
 			}
 
         }
-
-
-        //// 建造建筑
-        //if (Input.GetKeyDown(KeyCode.B)
-        //    && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
-        //{
-        //    CreateBuilding();
-        //    //ClickBuildingCellid = ClickCellid;
-
-        //}
-
-        //// 测试建筑升级
-        //if (Input.GetKeyDown(KeyCode.B)
-        //    && PlayerDataManager.Instance.nowChooseUnitType == CardType.Building)
-        //{
-        //    UnitUpgrade(TechTree.HP,CardType.Building);
-        //    //ClickBuildingCellid = ClickCellid;
-
-        //}
-        //// 测试红月被动
-        //if (Input.GetKeyDown(KeyCode.R)
-        //    && SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion)
-        //{
-        //    PlayerDataManager.Instance.DeadUnitCount = 12 ;
-
-        //    PlayerDataManager.Instance.bRedMoonSkill = true;
-
-        //    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits.Count; i++)
-        //    {
-        //        int hp =0;
-        //        syncPieceData newData = new syncPieceData();
-        //        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitType!=CardType.Building)
-        //        {
-        //            hp = PieceManager.Instance.GetPieceAllHP(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID) / 5;
-        //            if (hp == 0)
-        //                hp += 1;
-        //            newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
-
-        //            PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
-        //            unit.PlayerUnitDataSO = newData;
-        //            PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
-
-        //            Debug.Log( "Heal HP is " + hp);
-        //        }
-        //    }
-        //    //ClickBuildingCellid = ClickCellid;
-
-        //}
-
-
-        //// 农民献祭
-        //if (Input.GetKeyDown(KeyCode.T)
-        //    && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
-        //{
-        //    FarmerSacrifice();
-        //    //ClickBuildingCellid = ClickCellid;
-
-        //}
-
-        //if (Input.GetKeyDown(KeyCode.G) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
-        //{
-        //    // 传教士占领
-        //    // 通过PieceManager判断
-        //    if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
-        //        && _HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1)
-        //        && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
-        //    {
-
-        //        _HexGrid.GetCell(LastSelectingCellID).Walled = true;
-        //        PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
-        //        HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
-
-        //        // 2025.11.14 Guoning 音声再生
-        //        SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
-        //    }
-        //    else
-        //    {
-        //        Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
-        //    }
-        //}
     }
+
+	/// 2025.12.09 Guoning 更新移动范围高亮
+	void UpdateMoveRangeHighlight(List<HexCell> cells)
+	{
+		if (cells == null || cells.Count == 0)
+		{
+			Shader.SetGlobalInt("_MoveRangeCount", 0);
+			return;
+		}
+
+		Vector4[] coords = new Vector4[cells.Count];
+
+		for (int i = 0; i < cells.Count; i++)
+		{
+			coords[i] = new Vector4(
+				cells[i].Coordinates.HexX,
+				cells[i].Coordinates.HexZ,
+				0.5f, 0
+			);
+		}
+
+		Shader.SetGlobalInt("_MoveRangeCount", cells.Count);
+		Shader.SetGlobalVectorArray("_MoveRangeCells", coords);
+	}
+
+
+	public void ClearMoveRangeHighlight()
+	{
+		Shader.SetGlobalInt("_MoveRangeCount", 0);
+	}
+
+	//// 建造建筑
+	//if (Input.GetKeyDown(KeyCode.B)
+	//    && PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(SelectedEmptyCellID))
+	//{
+	//    CreateBuilding();
+	//    //ClickBuildingCellid = ClickCellid;
+
+	//}
+
+	//// 测试建筑升级
+	//if (Input.GetKeyDown(KeyCode.B)
+	//    && PlayerDataManager.Instance.nowChooseUnitType == CardType.Building)
+	//{
+	//    UnitUpgrade(TechTree.HP,CardType.Building);
+	//    //ClickBuildingCellid = ClickCellid;
+
+	//}
+	//// 测试红月被动
+	//if (Input.GetKeyDown(KeyCode.R)
+	//    && SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion)
+	//{
+	//    PlayerDataManager.Instance.DeadUnitCount = 12 ;
+
+	//    PlayerDataManager.Instance.bRedMoonSkill = true;
+
+	//    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits.Count; i++)
+	//    {
+	//        int hp =0;
+	//        syncPieceData newData = new syncPieceData();
+	//        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitType!=CardType.Building)
+	//        {
+	//            hp = PieceManager.Instance.GetPieceAllHP(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID) / 5;
+	//            if (hp == 0)
+	//                hp += 1;
+	//            newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
+
+	//            PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
+	//            unit.PlayerUnitDataSO = newData;
+	//            PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
+
+	//            Debug.Log( "Heal HP is " + hp);
+	//        }
+	//    }
+	//    //ClickBuildingCellid = ClickCellid;
+
+	//}
+
+
+	//// 农民献祭
+	//if (Input.GetKeyDown(KeyCode.T)
+	//    && PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
+	//{
+	//    FarmerSacrifice();
+	//    //ClickBuildingCellid = ClickCellid;
+
+	//}
+
+	//if (Input.GetKeyDown(KeyCode.G) && PlayerDataManager.Instance.nowChooseUnitType == CardType.Missionary)
+	//{
+	//    // 传教士占领
+	//    // 通过PieceManager判断
+	//    if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
+	//        && _HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1)
+	//        && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
+	//    {
+
+	//        _HexGrid.GetCell(LastSelectingCellID).Walled = true;
+	//        PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
+	//        HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
+
+	//        // 2025.11.14 Guoning 音声再生
+	//        SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+	//    }
+	//    else
+	//    {
+	//        Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
+	//    }
+	//}
+
 
 
     void UpdateHighlight(HexCell cell)

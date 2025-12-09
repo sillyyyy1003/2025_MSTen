@@ -76,22 +76,23 @@ float3 ApplyGrid(float3 baseColor, HexGridData h)
 }
 
 //------------------------------------------------------------
-// 应用高亮边缘：距离中心 0.68~0.8 之间添加白色亮边
+// 应用高亮边缘：距离中心 0~0.89 之间添加绿色亮边
 //------------------------------------------------------------
 float3 ApplyHighlight(float3 baseColor, HexGridData h)
 {
 	//return saturate(h.SmoothstepRange(0.68, 0.8) + baseColor.rgb);
 	
-	// 高亮强度（0~1），可自行调节
-	float intensity = h.SmoothstepRange(0.68, 0.8);
+	float intensity = h.SmoothstepRange(0, 1.0);
 
     // 目标绿色（可换成任意色）
 	float3 highlightColor = float3(0.2, 1.0, 0.2);
 
     // 将颜色往绿色混合（Lerp）
-	float3 result = lerp(baseColor, highlightColor, intensity);
+	//float3 result = lerp(baseColor, highlightColor, intensity);
 
-	return saturate(result);
+	//return saturate(result);
+
+	return saturate(baseColor + highlightColor * intensity * 0.3);
 }
 
 //------------------------------------------------------------
@@ -149,7 +150,12 @@ void GetFragmentData_float(
 		BaseColor = ApplyGrid(BaseColor, hgd);
 	}
 		
-
+	// 移动范围高亮
+	if(hgd.IsMoveRangeHighlighted())
+	{
+		BaseColor = ApplyHighlight(BaseColor, hgd);
+	}
+	
 	// Hover 高亮
 	if (hgd.IsHoverHighlighted())
 	{
@@ -161,12 +167,6 @@ void GetFragmentData_float(
 	{
 		BaseColor = ApplyHighlightColor(BaseColor, _ClickColor, hgd);
 	}
-	
-	//// 右键高亮
-	//if (hgd.IsRightClickHighlighted())
-	//{
-	//	BaseColor = ApplyHighlightColor(BaseColor, _RightClickColor, hgd);
-	//}
 	
 	// 路径高亮
 	if (hgd.IsPathHighlighted())
