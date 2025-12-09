@@ -256,6 +256,13 @@ public class UnitStatusUI : MonoBehaviour
 		// 跟随 + 朝向摄像机
 		transform.position = pieceTarget.position + offset;
 		transform.forward = Camera.main.transform.forward;
+
+		// ----------- 新增：根据距离缩放 UI -----------
+		float distance = Vector3.Distance(Camera.main.transform.position, transform.position);
+
+		// 距离越远越大（调节 scaleFactor 来控制）
+		float scaleFactor = distance * 0.01f; // 可调整
+		transform.localScale = Vector3.one * scaleFactor;
 	}
 	private void RefreshSlotLayout()
 	{

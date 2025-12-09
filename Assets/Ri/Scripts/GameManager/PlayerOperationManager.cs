@@ -35,7 +35,8 @@ public class PlayerOperationManager : MonoBehaviour
 
     static readonly int clickHighlightId = Shader.PropertyToID("_ClickHighlight");
     static readonly int clickHighlightColorId = Shader.PropertyToID("_ClickColor");
-
+	private const int MAX_MOVE_RANGE = 128;
+	private static readonly Vector4[] MoveRangeBuffer = new Vector4[MAX_MOVE_RANGE];
 
 	// HexGrid的引用
 	public HexGrid _HexGrid;
@@ -203,20 +204,21 @@ public class PlayerOperationManager : MonoBehaviour
 			return;
 		}
 
-		Vector4[] coords = new Vector4[cells.Count];
+		int count = Mathf.Min(cells.Count, MAX_MOVE_RANGE);
 
-		for (int i = 0; i < cells.Count; i++)
+		for (int i = 0; i < count; i++)
 		{
-			coords[i] = new Vector4(
+			MoveRangeBuffer[i] = new Vector4(
 				cells[i].Coordinates.HexX,
 				cells[i].Coordinates.HexZ,
 				0.5f, 0
 			);
 		}
 
-		Shader.SetGlobalInt("_MoveRangeCount", cells.Count);
-		Shader.SetGlobalVectorArray("_MoveRangeCells", coords);
+		Shader.SetGlobalInt("_MoveRangeCount", count);
+		Shader.SetGlobalVectorArray("_MoveRangeCells", MoveRangeBuffer);
 	}
+
 
 
 	public void ClearMoveRangeHighlight()
@@ -1992,7 +1994,8 @@ public class PlayerOperationManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("该单位AP不足！");
+			OperationBroadcastManager.Instance.ShowMessage("行動力が足りない！");
+			Debug.Log("该单位AP不足！");
             bCanContinue = true;
             return;
         }
@@ -2072,6 +2075,7 @@ public class PlayerOperationManager : MonoBehaviour
                         Piece piece = PieceManager.Instance.GetPiece(pieceID);
                         if (piece != null && piece.CurrentAP <= 0)
                         {
+                            //2025.12.10 增加系統播報
                             PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, toPos, false);
                             Debug.Log($"[移动] 单位 PieceID:{pieceID} AP为0，bCanDoAction设置为false");
                         }
@@ -2307,7 +2311,8 @@ public class PlayerOperationManager : MonoBehaviour
 
         if (currentAP < requiredAP)
         {
-            Debug.Log($"[AP检查] 单位 PieceID:{pieceID} AP不足 (当前:{currentAP}, 需要:{requiredAP})");
+			OperationBroadcastManager.Instance.ShowMessage("行動力が足りない！");
+			Debug.Log($"[AP检查] 单位 PieceID:{pieceID} AP不足 (当前:{currentAP}, 需要:{requiredAP})");
             //ShowAPInsufficientMessage($"AP不足！当前AP: {currentAP}，需要: {requiredAP}");
             return false;
         }
@@ -2702,7 +2707,8 @@ public class PlayerOperationManager : MonoBehaviour
 
         if (!_HexGrid.HasPath)
         {
-            Debug.Log("[MoveFarmerToBuilding] 没有找到路径");
+			OperationBroadcastManager.Instance.ShowMessage("移動できない！");
+			Debug.Log("[MoveFarmerToBuilding] 没有找到路径");
             _HexGrid.ClearPath();
             onComplete?.Invoke();
             return;

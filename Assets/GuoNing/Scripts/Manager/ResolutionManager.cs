@@ -44,8 +44,6 @@ public class ResolutionManager : MonoBehaviour
 	private int currentResolutionIndex;
 	private int currentFullScrrenIndex;
 
-	bool isFullScreen = true;
-
 	public int CurrentResolutionIndex=> currentResolutionIndex;
 	public int CurrentFullScreenIndex=> currentFullScrrenIndex;
 
@@ -145,7 +143,6 @@ public class ResolutionManager : MonoBehaviour
 		{
 			// 使用最兼容的全屏模式
 			Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-
 			// 全屏必须用 true
 			Screen.SetResolution(setting.width, setting.height, true);
 		}

@@ -283,14 +283,14 @@ public class GameOperationPanel : MonoBehaviour
 			if (target.HasValue && target.Value.IsBuilding())
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-				ShowPanel("建物入る.");
+				ShowPanel("建物に入る");
 				UpdatePanelPos();
 			}
 			else
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Cure);
-				ShowButtonPanel("治療：" + cost);
+				ShowButtonPanel("治療");
 
 				UpdatePanelPos(cell,true);
 			}
@@ -299,18 +299,18 @@ public class GameOperationPanel : MonoBehaviour
 
 	private void HandleMissionary(HexCell cell, int2 pos, bool isLocal)
 	{
-		if (!isLocal)
-		{
-			// 如果目标格子距离选中格子的距离大于1则不显示
-			if (GetDistanceFurtherThanValue(1, cell)) return;
+		//if (!isLocal)
+		//{
+		//	// 如果目标格子距离选中格子的距离大于1则不显示
+		//	if (GetDistanceFurtherThanValue(1, cell)) return;
 
-			// 创建面板数据 显示面板
-			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
-			ShowPanel("伝教：" + cost);
-			UpdatePanelPos();
-			return;
-		}
+		//	// 创建面板数据 显示面板
+		//	MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
+		//	int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
+		//	ShowPanel("伝教：" + cost);
+		//	UpdatePanelPos();
+		//	return;
+		//}
 
 		// 占领逻辑
 		if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) == cell.Index)
@@ -320,9 +320,21 @@ public class GameOperationPanel : MonoBehaviour
 			int cellOwner = dataManager.GetCellOwner(cell.Index);
 			if (cellOwner != GameManage.Instance.LocalPlayerID)
 			{
-				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int occupy = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Occupy);
-				ShowButtonPanel("占領:" + occupy);
+				
+				// 如果行动力不足 则按钮无法交互
+				if(PieceManager.Instance.GetPieceAP(dataManager.nowChooseUnitID) < occupy)
+				{
+					ShowButtonPanel("占領: 行動力不足");
+					SpecialButton.interactable = false;
+
+				}
+				else
+				{
+					ShowButtonPanel("占領: " + occupy + " 行動力");
+					SpecialButton.interactable = true;
+				}
+
 				UpdatePanelPos(cell, true);
 			}
 		}
@@ -337,9 +349,10 @@ public class GameOperationPanel : MonoBehaviour
 		// 如果冷却未结束 则不能交换位置则显示冷却信息
 		if (!PieceManager.Instance.GetCanPopeSwap(dataManager.nowChooseUnitID))
 		{
-			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-			ShowPanel("Switch is not ready!");
-			UpdatePanelPos();
+			//MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
+			//ShowPanel("Switch is not ready!");
+			//UpdatePanelPos();
+			OperationBroadcastManager.Instance.ShowMessage("スキルはクールダウン中");
 			return;
 		}
 
@@ -350,7 +363,7 @@ public class GameOperationPanel : MonoBehaviour
 			if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) != cell.Index)
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-				ShowPanel("位置交換:2");
+				ShowPanel("位置交換可能");
 				UpdatePanelPos();
 			}
 		}
@@ -367,7 +380,7 @@ public class GameOperationPanel : MonoBehaviour
 
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Attack);
-			ShowPanel("攻撃：" + cost);
+			ShowPanel("攻撃： " + cost+" 行動力");
 		}
 
 		UpdatePanelPos();

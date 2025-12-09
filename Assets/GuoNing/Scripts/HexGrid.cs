@@ -77,6 +77,8 @@ public class HexGrid : MonoBehaviour
 
 	HexCellShaderData cellShaderData;
 
+	private const int MAX_PATH = 128;
+	private static readonly Vector4[] PathBuffer = new Vector4[MAX_PATH];
 	void Awake()
 	{
 		CellCountX = 20;
@@ -672,19 +674,19 @@ public class HexGrid : MonoBehaviour
 			return;
 		}
 
-		Vector4[] coords = new Vector4[path.Count];
+		int count = Mathf.Min(path.Count, MAX_PATH);
 
-		for (int i = 0; i < path.Count; i++)
+		for (int i = 0; i < count; i++)
 		{
-			coords[i] = new Vector4(
+			PathBuffer[i] = new Vector4(
 				path[i].Coordinates.HexX,
 				path[i].Coordinates.HexZ,
 				0.5f, 0
 			);
 		}
 
-		Shader.SetGlobalInt("_PathCount", path.Count);
-		Shader.SetGlobalVectorArray("_PathCells", coords);
+		Shader.SetGlobalInt("_PathCount", count);
+		Shader.SetGlobalVectorArray("_PathCells", PathBuffer);
 		Shader.SetGlobalColor("_PathColor", pathColor);
 	}
 
