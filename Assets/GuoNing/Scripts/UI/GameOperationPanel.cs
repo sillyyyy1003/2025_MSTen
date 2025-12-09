@@ -315,7 +315,8 @@ public class GameOperationPanel : MonoBehaviour
 		// 占领逻辑
 		if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) == cell.Index)
 		{
-			Debug.Log("Unit Cell ID:" + dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) + "cell id:" + cell.Index);
+			// 25.12.9 RI 修改update中的Debug
+			//Debug.Log("Unit Cell ID:" + dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) + "cell id:" + cell.Index);
 			int cellOwner = dataManager.GetCellOwner(cell.Index);
 			if (cellOwner != GameManage.Instance.LocalPlayerID)
 			{

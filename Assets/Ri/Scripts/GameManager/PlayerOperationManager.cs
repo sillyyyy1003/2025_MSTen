@@ -3761,14 +3761,28 @@ public class PlayerOperationManager : MonoBehaviour
 
     public void ExecuteOccupy()
     {
+        if (_HexGrid.GetIsForest(LastSelectingCellID))
+        {
+            Debug.Log("cant Occupy this forest cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
+
+            return;
+        }
+        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID))
+        {
+            Debug.Log("cant Occupy this Owned cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
+
+            return;
+        }
+        if (!_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1))
+        {
+            Debug.Log("cant Occupy this So Far cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
+
+            return;
+        }
         // 传教士占领
         // 通过PieceManager判断
-        if (!PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID)
-            && _HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1)
-            && PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos)
-            &&!_HexGrid.GetIsForest(LastSelectingCellID))
+        if (PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
         {
-
             _HexGrid.GetCell(LastSelectingCellID).Walled = true;
             PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
             HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
@@ -3785,6 +3799,8 @@ public class PlayerOperationManager : MonoBehaviour
         else
         {
             Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
+            //更新AP
+            UnitStatusUIManager.Instance.UpdateAPByID(PlayerDataManager.Instance.nowChooseUnitID, PieceManager.Instance.GetPieceAP((PlayerDataManager.Instance.nowChooseUnitID)));
         }
     }
     // ============================================
