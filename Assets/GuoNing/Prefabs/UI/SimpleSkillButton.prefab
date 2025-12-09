@@ -56,7 +56,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillNameText: {fileID: 1843157729191575620}
   levelText: {fileID: 2199198696933544267}
+  Outline: {fileID: 4834707004810136224}
   upgradeButton: {fileID: 967870825304018797}
+  hoverPrefab: {fileID: 3030299764550244808, guid: c9886c34bc904de4ba5791b9444948a1,
+    type: 3}
 --- !u!114 &967870825304018797
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,8 +180,7 @@ MonoBehaviour:
   m_text: MAX
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e9b65ea5aff1bf0418bed55a989fcba0, type: 2}
-  m_sharedMaterial: {fileID: 4661373970872745851, guid: e9b65ea5aff1bf0418bed55a989fcba0,
-    type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 1c21100abc9a6424295457fe2b532700, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -312,8 +314,7 @@ MonoBehaviour:
   m_text: "\u5360\u9818\u78BA\u7387"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e9b65ea5aff1bf0418bed55a989fcba0, type: 2}
-  m_sharedMaterial: {fileID: 4661373970872745851, guid: e9b65ea5aff1bf0418bed55a989fcba0,
-    type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 1c21100abc9a6424295457fe2b532700, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -391,7 +392,7 @@ GameObject:
   - component: {fileID: 8138584446077902296}
   - component: {fileID: 7341248703014330319}
   m_Layer: 0
-  m_Name: Background01
+  m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -466,7 +467,7 @@ GameObject:
   - component: {fileID: 7794770225078598122}
   - component: {fileID: 4834707004810136224}
   m_Layer: 0
-  m_Name: Background02
+  m_Name: Outline
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
