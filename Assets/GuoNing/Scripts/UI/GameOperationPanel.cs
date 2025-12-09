@@ -51,7 +51,7 @@ public class GameOperationPanel : MonoBehaviour
 	static readonly int rightClickHighlightId = Shader.PropertyToID("_RightClickHighlight");
 	static readonly int rightClickHighlightColorId = Shader.PropertyToID("_RightClickColor");
 
-
+	bool isClosePanel;
 	void Start()
 	{
 		dataManager = PlayerDataManager.Instance;
@@ -92,7 +92,14 @@ public class GameOperationPanel : MonoBehaviour
 	{
 
 		// 如果不是我的回合 则不处理
-		if (!GameManage.Instance._PlayerOperation.IsMyTurn) return;
+		if (!GameManage.Instance._PlayerOperation.IsMyTurn){
+			if (!isClosePanel)
+			{
+				CloseStorePanel();
+				isClosePanel = true;
+			}
+			return;
+		}
 
 		if (GameManage.Instance.GetIsGamingOrNot() == false)
 		{

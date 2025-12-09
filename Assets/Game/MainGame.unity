@@ -25637,7 +25637,10 @@ MonoBehaviour:
     religion: 3
     pieceDataSO: {fileID: 11400000, guid: 9a0f48b02bda2f14f87211bb70b1af1c, type: 2}
   Ruins:
-  - {fileID: 1000010046023388, guid: 1589993158ba34786b54f448bdeb6085, type: 3}
+  - {fileID: 4260726415608013866, guid: 20286ce8a2fb0e74da04e89d59cade0a, type: 3}
+  - {fileID: 4985360878437811999, guid: 52c574026133b6d4e87760c08edea4bc, type: 3}
+  - {fileID: 4631286829819602770, guid: 54596b853cc9c7249869f8305b7167ac, type: 3}
+  - {fileID: 3296889079020756951, guid: 6960b0f8109dc5643bb03c0a7ef26064, type: 3}
 --- !u!1 &1627826617
 GameObject:
   m_ObjectHideFlags: 0
