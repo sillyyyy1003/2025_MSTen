@@ -17,17 +17,17 @@ namespace GameData
             // 建築に必要な資源
             buildingResourceCost = 12;
 
-            // HP（初始, 升級1, 升級2）
-            maxHpByLevel = new int[3] { 25, 28, 32 };
+            // HP（初始, 升級1, 升級2, 升級3）
+            maxHpByLevel = new int[4] { 5, 6, 7, 9 };
 
-            // 祭壇格子数（初始, 升級1, 升級2）
-            maxSlotsByLevel = new int[3] { 3, 4, 5 };
+            // 祭壇格子数（初始, 升級1, 升級2, 升級3）
+            maxSlotsByLevel = new int[4] { 3, 4, 5, 6 };
 
             // 攻撃範囲（注：飛天擔擔麵教は初期状態から攻撃範囲1を持つ）
-            attackRangeByLevel = new int[3] { 1, 2, 3 }; // 範囲1→範囲2→範囲3
+            attackRangeByLevel = new int[4] { 1, 2, 3, 4 }; // 範囲1→範囲2→範囲3→範囲4
 
             // 各項目のアップグレードコスト (Excel行125-127)
-            hpUpgradeCost = new int[2] { 6, 8 }; // 血量: 25→28(6資源), 28→32(8資源)
+            hpUpgradeCost = new int[3] { 6, 8, 8 }; // 血量: 5→6(6資源), 6→7(8資源), 7→9(8資源)
             attackRangeUpgradeCost = new int[2] { 10, 14 }; // 攻撃範囲: 範囲1→範囲2(10資源), 範囲2→範囲3(14資源)
             slotsUpgradeCost = new int[2] { 10, 12 }; // 祭壇格子數: 3→4(10資源), 4→5(12資源)
 

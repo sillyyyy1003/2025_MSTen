@@ -40,10 +40,10 @@ namespace GameData
             convertAPCost = 3;
             conversionTurnDuration = new int[4] { 2, 3, 4, 5 };
 
-            // 魅惑成功率（Excel: 無, 0.5, 0.55, 0.65 / 無, 0.1, 0.2, 0.3 / 無, 0.45, 0.5, 0.6）
-            convertMissionaryChanceByLevel = new float[4] { 0.0f, 0.5f, 0.55f, 0.65f };
-            convertFarmerChanceByLevel = new float[4] { 0.0f, 0.1f, 0.2f, 0.3f };
-            convertMilitaryChanceByLevel = new float[4] { 0.0f, 0.45f, 0.5f, 0.6f };
+            // 魅惑成功率（Excel: 0.5, 0.55, 0.65, 0.7 / 0.1, 0.2, 0.3, 0.35 / 0.45, 0.5, 0.6, 0.65）
+            convertMissionaryChanceByLevel = new float[4] { 0.5f, 0.55f, 0.65f, 0.7f };
+            convertFarmerChanceByLevel = new float[4] { 0.1f, 0.2f, 0.3f, 0.35f };
+            convertMilitaryChanceByLevel = new float[4] { 0.45f, 0.5f, 0.6f, 0.65f };
             convertEnemyUpgradeCost = new int[3] { 5, 6, 7 }; // 魅惑傳教士: 無→0.5(5資源), 
 
             // 魅惑耐性（升級1以降）
