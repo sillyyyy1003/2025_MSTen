@@ -11,7 +11,7 @@ public class SimpleSkillButton : MonoBehaviour
 	[Header("UI")]
 	public TMP_Text skillNameText;
 	public TMP_Text levelText;
-	public TMP_Text costText;
+	//public TMP_Text costText;
 	public Button upgradeButton;
 
 	private PieceType pieceType;
@@ -24,7 +24,8 @@ public class SimpleSkillButton : MonoBehaviour
 		this.tech = techTree;
 		this.panel = panel;
 
-		skillNameText.text = tech.ToString();
+		//20251207 Lu改变字符取用
+		skillNameText.text = PlayerUnitDataInterface.Instance.GetTechNameByTechTree(tech);
 
 		upgradeButton.onClick.AddListener(OnClickUpgrade);
 
@@ -43,9 +44,10 @@ public class SimpleSkillButton : MonoBehaviour
 
 		if (currentLv >= maxLv)
 		{
-			levelText.text = $"Lv.MAX";
-			costText.text = "";
-			upgradeButton.interactable = false;
+			levelText.text = $"MAX";
+			levelText.color = Color.white;
+            skillNameText.color = Color.white;
+            upgradeButton.interactable = false;
 			return;
 		}
 
@@ -55,7 +57,6 @@ public class SimpleSkillButton : MonoBehaviour
 
 		// 获取升级消耗
 		int cost = GetUpgradeCost(pieceType, tech, currentLv);
-		costText.text = $"Cost: {cost}";
 
 		// 判断资源够不够
 		int playerID = GameManage.Instance.LocalPlayerID;
@@ -173,7 +174,6 @@ public class SimpleSkillButton : MonoBehaviour
 		return count;
 	}
 }
-
 
 
 public static class SkillTreeCostHelper

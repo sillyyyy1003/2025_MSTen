@@ -29,6 +29,10 @@ public enum UISpriteID
     HPBar_Icon,     // 血条图标
     MouseInteraction,   // 鼠标交互图标
     Icon_SkillIcon,  // 技能图标
+    IconList_RedMoon,  // 红月教棋子图标
+    IconList_Silk,  // 丝织教棋子图标
+    IconList_Maya,  // NCG_1300 星界教団棋子图标
+    IconList_MadScientist,  // 真理研究所棋子图标
 }
 
 [System.Serializable]
@@ -255,7 +259,61 @@ public class UISpriteHelper : MonoBehaviour
 
     }
 
+    public Sprite GetReligionPieceIcon(PieceType type, Religion religion)
+    {
+        UISpriteID ListName;
+        string iconId;
 
+        switch (religion)
+        {
+            case Religion.SilkReligion:  // 丝织教棋子图标
+                //ListName = UISpriteID.IconList_Silk;
+                ListName = UISpriteID.IconList_RedMoon;
+                break;
+            case Religion.RedMoonReligion:  // 红月教棋子图标
+                ListName = UISpriteID.IconList_RedMoon;
+                break;
+            case Religion.MayaReligion:  // NCG_1300 星界教団棋子图标
+                //ListName = UISpriteID.IconList_Maya;
+                ListName = UISpriteID.IconList_RedMoon;
+                break;
+            case Religion.MadScientistReligion:  // 真理研究所棋子图标
+                //ListName = UISpriteID.IconList_MadScientist;
+                ListName = UISpriteID.IconList_RedMoon;
+                break;
+            default:
+                ListName = UISpriteID.IconList_RedMoon;
+                break;
+        }
+
+
+
+        switch (type)
+        {
+            case PieceType.Pope:
+                iconId = ListName.ToString() + "_0";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.Missionary:
+                iconId = ListName.ToString() + "_1";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.Military:
+                iconId = ListName.ToString() + "_2";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.Farmer:
+                iconId = ListName.ToString() + "_3";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.Building:
+                iconId = ListName.ToString() + "_4";
+                return GetSubSprite(ListName, iconId);
+
+            default:
+                return null;
+
+
+        }
+
+
+    }
 
 
 }

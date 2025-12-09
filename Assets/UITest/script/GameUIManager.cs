@@ -80,22 +80,48 @@ public class GameUIManager : MonoBehaviour
     private Dictionary<int, UIPlayerData> allPlayersData;
 
 
-    [Header("UI Elements")]
+    [Header("StatusBar Elements")]
     public Button ReligionIcon;                      // 宗教图标
     public TextMeshProUGUI resourcesValue;          // 资源值
     public TextMeshProUGUI activateMissionaryValue; // 传教士激活数
     public TextMeshProUGUI activateSoliderValue;    // 士兵激活数
     public TextMeshProUGUI activateFarmerValue;     // 农民激活数
     public TextMeshProUGUI allUnitValue;       // 当前人口 / 人口上限
-	public Button EndTurn;
+	public Button EndTurn;         // 结束Button
+    public GameObject TurnMessageObj;//回合开始提示件
+    public TextMeshProUGUI TurnMessageText;//回合开始提示内容
     public RectTransform ReligionInfoPanel;         // 宗教信息和科技树
 
-	[Header("Timer")]
+    [Header("ReligionInfo Elements")]
+    public Image ReligionInfoIcon;
+    public Image ReligionColor;
+    public TextMeshProUGUI ReligionName;
+    public TextMeshProUGUI ReligionType;
+    public TextMeshProUGUI Population;       // 当前人口 / 人口上限
+    public TextMeshProUGUI FarmerValue;     // 农民激活数
+    public TextMeshProUGUI SoliderValue;    // 士兵激活数
+    public TextMeshProUGUI MissionaryValue; // 传教士激活数
+    public TextMeshProUGUI ReligionDescribe01;
+    public TextMeshProUGUI ReligionDescribe02;
+    public TextMeshProUGUI ReligionDescribe03;
+
+    [Header("SimplePanel Elements")]
+    public Image PopeIcon;
+    public Image MissionaryIcon;
+    public Image SoliderIcon;
+    public Image FarmerIcon;
+    public Image BuildingIcon;
+
+
+
+
+
+    [Header("Timer")]
 	public Image TimeImage;     // TimeImage
 	public TextMeshProUGUI timeText; // 可选数字显示
 
 	//public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
-	//public GameObject playerIconPrefab;
+	
 	//public RectTransform playerIconParent;
 	//public Image miniMap;
 	//public Button InactiveUnit;
@@ -360,10 +386,12 @@ public class GameUIManager : MonoBehaviour
 
         DisableInput(false);
 
+        StartCoroutine(ShowTurnMessageForOneSecond(false));
+
         UpdatePlayerIconsData();
         UpdateResourcesData();
         UpdatePopulationData(); // 更新人口显示
-		//UpdateAllUnitCountData();
+
 
 		UpdateUIUnitDataListFromInterface(CardType.Missionary);
         UpdateUIUnitDataListFromInterface(CardType.Soldier);
@@ -380,6 +408,8 @@ public class GameUIManager : MonoBehaviour
         StopTimer();
 
         DisableInput(true);
+
+        StartCoroutine(ShowTurnMessageForOneSecond(true));
 
         UpdatePlayerIconsData();
 
@@ -485,8 +515,6 @@ public class GameUIManager : MonoBehaviour
             EndTurn.interactable = true;
         }
 
-
-
     }
 
     public Religion GetPlayerReligion()
@@ -495,6 +523,10 @@ public class GameUIManager : MonoBehaviour
         return playerReligion;
 
     }
+
+
+
+
 
 
 
@@ -516,7 +548,7 @@ public class GameUIManager : MonoBehaviour
         playerReligion = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerReligion;
 
         SetPlayerReligionIcon(playerReligion);
-        UpdateAllUnitCountData();
+        SetReligionInfo(playerReligion);
         UpdatePopulationData(); // 更新人口显示
 		UpdateResourcesData();
 
@@ -612,14 +644,17 @@ public class GameUIManager : MonoBehaviour
 
                 ActivateMissionaryCount = count;
                 activateMissionaryValue.text = ActivateMissionaryCount.ToString();
+                MissionaryValue.text = ActivateMissionaryCount.ToString();
                 return;
             case CardType.Soldier:
                 ActivateSoliderCount = count;
                 activateSoliderValue.text = ActivateSoliderCount.ToString();
+                SoliderValue.text = ActivateSoliderCount.ToString();
                 return;
             case CardType.Farmer:
                 ActivateFarmerCount = count;
                 activateFarmerValue.text = ActivateFarmerCount.ToString();
+                FarmerValue.text = ActivateFarmerCount.ToString();
                 return;
             case CardType.Building:
                 ActivateBuildingCount = count;
@@ -657,6 +692,94 @@ public class GameUIManager : MonoBehaviour
     private void SetPlayerReligionIcon(Religion religion)
     {
         ReligionIcon.image.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
+        
+    }
+
+    public void SetReligionInfo(Religion religion)
+    {
+        ReligionInfoIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
+
+        switch (religion)
+        {
+            case Religion.SilkReligion://丝织教
+                ReligionColor.color = new Color32(128, 0, 128, 255);
+                ReligionName.text = "？？教";
+                ReligionType.text = "？？？？型部族";
+                ReligionDescribe01.text = "・？？？が多い\n" +
+                    "・？？？の？？成功率が高い\n" +
+                    "・？？？の？？？が低い\n" +
+                    "・全体HP強化のコストが？？\n\n\n" +
+                    "・教皇周囲バフ：啓蒙者の？？？アップ\n" +
+                    "・？？の？？：周囲6マスの味方を回復\n";
+                ReligionDescribe02.text = "被動：\n" +
+                     "？？？が12名に達すると、味方全員が残HPの20%を即時回復。";
+                ReligionDescribe03.text = "現在累積：0/??";
+                break;
+            case Religion.RedMoonReligion://红月教
+                ReligionColor.color = new Color32(128, 0, 128, 255);
+                ReligionName.text = "紅月教";
+                ReligionType.text = "人海戦術型部族";
+                ReligionDescribe01.text = "・総人口が多い\n" +
+                    "・啓蒙者の洗脳成功率が高い\n" +
+                    "・守護者の攻撃力が低い\n" +
+                    "・全体HP強化のコストが安い\n\n\n" +
+                    "・教皇周囲バフ：啓蒙者の魅了率アップ\n" +
+                    "・信徒の献祭：周囲6マスの味方を回復\n";
+                ReligionDescribe02.text = "被動：\n" +
+                     "戦死者が12名に達すると、味方全員が残HPの20%を即時回復";
+                ReligionDescribe03.text = "現在累積：0/12";
+                break;
+
+            case Religion.MayaReligion://星界教团
+                ReligionColor.color = new Color32(0, 255, 55, 255);
+                ReligionName.text = "NCG_1300 星界教団";
+                ReligionType.text = "戦闘特化型部族";
+                ReligionDescribe01.text = "・洗脳成功率が大幅に低下\n" +
+                    "・守衛者の攻撃力が高く、行動力も多い\n" +
+                    "・守衛者の維持費が最高\n" +
+                    "・行動力関連の強化コストが安い\n\n\n" +
+                    "・教皇周囲バフ：味方のHP上昇量アップ\n" +
+                    "・信徒の献祭回復：周囲6マスの味方を回復\n";
+                ReligionDescribe02.text = "被動：\n" +
+                     "味方駒が魅了される確率が大幅に低下";
+                ReligionDescribe03.text = "";
+                break;
+            case Religion.MadScientistReligion://真理研究所
+                ReligionColor.color = new Color32(31, 80, 255, 255);
+                ReligionName.text = "真理研究所";
+                ReligionType.text = "知識こそ力だと信じる部族";
+                ReligionDescribe01.text = "・撃破時の獲得ポイントが多い\n" +
+                    "・敵啓蒙者の魅了成功率が低い\n" +
+                    "・守衛者の維持費が高い\n" +
+                    "・行動力関連の強化コストが安い\n\n\n" +
+                    "・教皇周囲バフ：なし\n" +
+                    "・信徒の献祭回復：なし\n";
+                ReligionDescribe02.text = "被動：\n" +
+                     "自陣の魔煙中に啓蒙が発動すると、ランダムで1体が復活し、10ポイント獲得する";
+                ReligionDescribe03.text = "冷卻時間：8／10回合";
+                break;
+            default://默认
+                ReligionColor.color = new Color32(128, 0, 128, 255);
+                ReligionName.text = "？？教";
+                ReligionType.text = "？？？？型部族";
+                ReligionDescribe01.text = "・？？？が多い\n" +
+                    "・？？？の？？成功率が高い\n" +
+                    "・？？？の？？？が低い\n" +
+                    "・全体HP強化のコストが？？\n\n\n" +
+                    "・教皇周囲バフ：啓蒙者の？？？アップ\n" +
+                    "・？？の？？：周囲6マスの味方を回復\n";
+                ReligionDescribe02.text = "被動：\n" +
+                     "？？？が12名に達すると、味方全員が残HPの20%を即時回復。";
+                ReligionDescribe03.text = "現在累積：0/??";
+                break;
+        }
+
+        PopeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Pope, religion);
+        MissionaryIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Missionary, religion);
+        SoliderIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Military, religion);
+        FarmerIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Farmer, religion);
+        BuildingIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Building, religion);
+
     }
 
     /*
@@ -686,23 +809,21 @@ public class GameUIManager : MonoBehaviour
 	}
 
 
-    private void UpdateAllUnitCountData()
-    {
-        AllUnitCount = PlayerUnitDataInterface.Instance.GetAllActivatedUnitCount();
-        AllUnitCountLimit = PlayerUnitDataInterface.Instance.GetUnitCountLimit();
-        InactiveUnitCount = PlayerUnitDataInterface.Instance.GetInactiveUnitCount();
-
-        //allUnitValue.text = $"{AllUnitCount}/{AllUnitCountLimit}";
-        //unusedUnitValue.text = InactiveUnitCount.ToString();
-    }
 
     private void UpdatePopulationData()
     {
         int nowPopulation = PlayerDataManager.Instance.NowPopulation;
         int maxPopulation = PlayerDataManager.Instance.PopulationCost;
 
+        AllUnitCount = nowPopulation;
+        AllUnitCountLimit = maxPopulation;
+        InactiveUnitCount = maxPopulation- nowPopulation;
+
+
+
         allUnitValue.text = $"{nowPopulation}/{maxPopulation}";
-	}
+        Population.text = $"{maxPopulation}";
+    }
 
 
 
@@ -750,7 +871,7 @@ public class GameUIManager : MonoBehaviour
         Debug.Log($"购买卡进场上: {type}");
         UpdateUIUnitDataListFromInterface(type);
         UpdateResourcesData();
-        UpdateAllUnitCountData();
+        UpdatePopulationData();
 
 		// 2025.11.14 Guoning 音声再生
 		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
@@ -761,7 +882,7 @@ public class GameUIManager : MonoBehaviour
     {
         UpdateUIUnitDataListFromInterface(type);
         UpdateResourcesData();
-        UpdateAllUnitCountData();
+        UpdatePopulationData();
 
 		// 2025.11.14 Guoning 音声再生
 		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.SPAWNUNIT);
@@ -807,7 +928,6 @@ public class GameUIManager : MonoBehaviour
 		UpdatePlayerIconsData();
         UpdateResourcesData();  // 更新资源显示
         UpdatePopulationData(); // 更新人口显示
-		//UpdateAllUnitCountData();
 
 		// 更新单位数据列表
 		UpdateUIUnitDataListFromInterface(CardType.Missionary);
@@ -825,6 +945,23 @@ public class GameUIManager : MonoBehaviour
             ReligionInfoPanel.gameObject.SetActive(true);
 
 	}
+
+    private IEnumerator ShowTurnMessageForOneSecond(bool tf)
+    {
+        if(tf)
+        {
+            TurnMessageText.text = "Enemy\n" + "Turn";
+            
+        }
+        else
+        {
+            TurnMessageText.text = "Your\n" + "Turn";
+        }
+        TurnMessageObj.SetActive(true);
+        yield return new WaitForSeconds(1f);
+        TurnMessageObj.SetActive(false);
+    }
+
 
 }
 

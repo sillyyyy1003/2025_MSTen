@@ -38,10 +38,18 @@ public class SimpleSkillPanel : MonoBehaviour
 
 	private void CreateButton(PieceType type, TechTree tech,int index)
 	{
-		SimpleSkillButton b = Instantiate(buttonPrefab, buttonRoot);
+		//生成交错的Button
+        float leftX = -72.5f;      // 左列 X
+        float rightX = 72.5f;      // 右列 X
+        int column = index % 2;        // 0 = 左列，1 = 右列
+        int row = index ;           // 行号
+        float x = (column == 0) ? leftX : rightX;
+        float y = -row * 45/2+20f;
+
+        SimpleSkillButton b = Instantiate(buttonPrefab, buttonRoot);
 		b.Initialize(type, tech, this);
 		RectTransform rt = b.GetComponent<RectTransform>();
-		rt.anchoredPosition = new Vector2(0, -index * 40);
+		rt.anchoredPosition = new Vector2(x, y);
 		buttons.Add(b);
 	}
 
