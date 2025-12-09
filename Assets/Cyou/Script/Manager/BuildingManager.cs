@@ -454,7 +454,7 @@ public class BuildingManager : MonoBehaviour
             return false;
         } 
      
-        if(!building.FarmerEnter(farmerAP))
+        if(!building.FarmerEnter(buildingID,farmerAP))
         {
             Debug.LogWarning("Slot is Full! cant in");
             return false;
@@ -1144,7 +1144,7 @@ public class BuildingManager : MonoBehaviour
             {
                 // 25.11.28 Ri add new turn process
                 //lastTurnResourceTotal+=building.ProcessTurn();
-                lastTurnResourceTotal += building.NewGetResource();
+                lastTurnResourceTotal += building.NewGetResource(buildingID);
             }
 
         }

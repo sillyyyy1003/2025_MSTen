@@ -137,8 +137,10 @@ public class UnitStatusUIManager : MonoBehaviour
 	public bool ActivateSlotByID(int id, int slotIndex)
 	{
 		if (units.TryGetValue(id, out var ui))
-		{
-			ui.ActivateSlot(slotIndex);
+        {
+            //25.12.9 ri change index logic 
+            ui.ActivateSlot(0);
+            //ui.ActivateSlot(slotIndex);
 			return true;
 		}
 
@@ -167,8 +169,10 @@ public class UnitStatusUIManager : MonoBehaviour
 	{
 		if (units.TryGetValue(id, out var ui))
 		{
-			ui.CloseSlot(slotIndex);
-			return true;
+            //25.12.9 RI 修改删除格子逻辑
+            //ui.CloseSlot(slotIndex);
+            ui.CloseSlot(0);
+            return true;
 		}
 		Debug.LogWarning($"StatusUI with ID {id} not found (RemoveSlot).");
 		return false;

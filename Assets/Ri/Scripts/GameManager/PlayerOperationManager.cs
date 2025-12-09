@@ -154,6 +154,10 @@ public class PlayerOperationManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn&& Input.GetKeyDown(KeyCode.U))
+        {
+            UnitUpgrade(TechTree.AltarCount, CardType.Building);
+        }
         // 鼠标判定
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
@@ -1827,13 +1831,14 @@ public class PlayerOperationManager : MonoBehaviour
                         {
                             newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
                             PlayerDataManager.Instance.nowChooseUnitID);
+                        
                             break;
 
                         }
                         else
                         {
                             Debug.LogWarning("Building ID : " + PlayerDataManager.Instance.nowChooseUnitID + " Upgrade Failed!");
-
+                            return false;
                         }
 
                     }
@@ -1850,7 +1855,7 @@ public class PlayerOperationManager : MonoBehaviour
                         list[j] = unit;
                         Debug.Log("j= " + j + "Upgrade after Unit ID is " + list[j].PlayerUnitDataSO.pieceID +
                             " dataSO AttackPosition is " + list[j].BuildingData.Value.slotsLevel);
-
+                        UnitStatusUIManager.Instance.AddSlotToUnit(newBuildingData.buildingID,1);
                     }
                 }
                 return true;
