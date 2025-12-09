@@ -44,11 +44,11 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     void Start()
     {
-        if (GameManage.Instance._PlayerOperation != null)
-        {
-            GameManage.Instance._PlayerOperation.OnUnitChoosed += OnUnitChoosed;
-
-        }
+       // if (GameManage.Instance._PlayerOperation != null)
+       // {
+       //     GameManage.Instance._PlayerOperation.OnUnitChoosed += OnUnitChoosed;
+       //
+       // }
 
 
 
@@ -58,23 +58,23 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // ********内部数据处理*********
     // *****************************
 
-    private void OnUnitChoosed(int unitid, CardType unittype)
-    {
-
-
-
-        if (ButtonMenuManager.Instance.GetCardTypeChoosed() != unittype)
-        {
-            ButtonMenuManager.Instance.SetCardTypeChoosed(unittype);
-            string nextMenuId = ButtonMenuFactory.GetMenuId(GameData.UI.MenuLevel.Second, unittype);
-            ButtonMenuManager.Instance.LoadMenu(nextMenuId);
-        }
-
-        UnitCardManager.Instance.SetTargetCardType(unittype);
-        UnitCardManager.Instance.SetTargetUnitId(unitid);
-
-
-    }
+    //private void OnUnitChoosed(int unitid, CardType unittype)
+    //{
+    //
+    //
+    //
+    //    if (ButtonMenuManager.Instance.GetCardTypeChoosed() != unittype)
+    //    {
+    //        ButtonMenuManager.Instance.SetCardTypeChoosed(unittype);
+    //        string nextMenuId = ButtonMenuFactory.GetMenuId(GameData.UI.MenuLevel.Second, unittype);
+    //        ButtonMenuManager.Instance.LoadMenu(nextMenuId);
+    //    }
+    //
+    //    UnitCardManager.Instance.SetTargetCardType(unittype);
+    //    UnitCardManager.Instance.SetTargetUnitId(unitid);
+    //
+    //
+    //}
 
 
 
