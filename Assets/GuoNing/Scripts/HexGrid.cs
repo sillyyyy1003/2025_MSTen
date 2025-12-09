@@ -551,7 +551,7 @@ public class HexGrid : MonoBehaviour
 	{
 		List<HexCell> reachable = new List<HexCell>();
 		HexCell start = GetCell(startCellID);
-		if (start == null) return reachable;
+		if (start == null||speed==0) return reachable;
 
 		// Missionary 需要用到玩家领地格子，提前准备
 		List<HexCell> ownedCells = null;
