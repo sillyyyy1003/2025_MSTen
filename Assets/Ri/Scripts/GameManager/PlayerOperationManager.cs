@@ -1584,9 +1584,18 @@ public class PlayerOperationManager : MonoBehaviour
         syncPieceData newData = new syncPieceData();
         syncBuildingData newBuildingData = new syncBuildingData();
         List<int> ID = new List<int>();
+        int thisUpgradeID = 0;
         for (int i=0;i<list.Count;i++)
         {
             ID.Add(list[i].UnitID);
+        }
+        for(int i=0;i< list.Count;i++)
+        {
+            if (list[i].UnitType == type)
+            {
+                thisUpgradeID = list[i].UnitID;
+                break;
+            }
         }
         switch (tech)
         {
@@ -1596,17 +1605,17 @@ public class PlayerOperationManager : MonoBehaviour
                     if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
                     {
                          newData = (syncPieceData)PieceManager.Instance.UpgradePiece(
-                            PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.HP);
+                            thisUpgradeID, PieceUpgradeType.HP);
                         break;
                     }
                     else if (list[i].UnitType == CardType.Building)
                     {
                         // Building Upgrade
-                        if(GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildingHP))
+                        if(GameManage.Instance._BuildingManager.UpgradeBuilding(thisUpgradeID, BuildingUpgradeType.BuildingHP))
                         {
 
                             newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
-                            PlayerDataManager.Instance.nowChooseUnitID);
+                           thisUpgradeID);
                             Debug.LogWarning("Building ID : " + newBuildingData.buildingID + " Upgrade HP! "+ newBuildingData.currentHP);
 
                             break;
@@ -1614,7 +1623,7 @@ public class PlayerOperationManager : MonoBehaviour
                         }
                         else
                         {
-                            Debug.LogWarning("Building ID : "+ PlayerDataManager.Instance.nowChooseUnitID+" Upgrade Failed!");
+                            Debug.LogWarning("Building ID : " + thisUpgradeID + " Upgrade Failed!");
                       
                         }
 
@@ -1652,7 +1661,7 @@ public class PlayerOperationManager : MonoBehaviour
                     if (list[i].UnitType != CardType.Building && list[i].UnitType == type)
                     {
                         newData = (syncPieceData)PieceManager.Instance.UpgradePiece(
-                           PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
+                            thisUpgradeID, PieceUpgradeType.AP);
                         break;
                     }
                     else
@@ -1676,7 +1685,7 @@ public class PlayerOperationManager : MonoBehaviour
                     }
                     else
                     {
-
+                        return false;
                     }
                 }
                 //PieceManager.Instance.UpgradePiece(PlayerDataManager.Instance.nowChooseUnitID, PieceUpgradeType.AP);
@@ -1687,7 +1696,7 @@ public class PlayerOperationManager : MonoBehaviour
                     if (list[i].UnitType == CardType.Missionary)
                     {
                         newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
-                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryOccupy);
+                             thisUpgradeID, SpecialUpgradeType.MissionaryOccupy);
                         break;
                        
                     }
@@ -1717,7 +1726,7 @@ public class PlayerOperationManager : MonoBehaviour
                     if (list[i].UnitType == CardType.Missionary)
                     {
                         newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
-                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MissionaryConvertEnemy);
+                            thisUpgradeID, SpecialUpgradeType.MissionaryConvertEnemy);
                         break;
                     }
                 }
@@ -1741,7 +1750,7 @@ public class PlayerOperationManager : MonoBehaviour
                     if (list[i].UnitType == CardType.Soldier)
                     {
                         newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
-                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.MilitaryAttackPower);
+                            thisUpgradeID, SpecialUpgradeType.MilitaryAttackPower);
                         break;
                     }
                 }
@@ -1764,7 +1773,7 @@ public class PlayerOperationManager : MonoBehaviour
                     if (list[i].UnitType == CardType.Farmer)
                     {
                         newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
-                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.FarmerSacrifice);
+                            thisUpgradeID, SpecialUpgradeType.FarmerSacrifice);
                         break;
                      
                     }
@@ -1788,17 +1797,17 @@ public class PlayerOperationManager : MonoBehaviour
                      if (list[i].UnitType == CardType.Building)
                     {
                         // Building Upgrade
-                        if (GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.attackRange))
+                        if (GameManage.Instance._BuildingManager.UpgradeBuilding(thisUpgradeID, BuildingUpgradeType.attackRange))
                         {
                             newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
-                            PlayerDataManager.Instance.nowChooseUnitID);
+                            thisUpgradeID);
                             break;
 
                         }
                         else
                         {
-                            Debug.LogWarning("Building ID : " + PlayerDataManager.Instance.nowChooseUnitID + " Upgrade Failed!");
-
+                            Debug.LogWarning("Building ID : " + thisUpgradeID + " Upgrade Failed!");
+                            return false;
                         }
 
                     }
@@ -1830,14 +1839,14 @@ public class PlayerOperationManager : MonoBehaviour
                         if (GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.slotsLevel))
                         {
                             newBuildingData = (syncBuildingData)GameManage.Instance._BuildingManager.CreateCompleteSyncData(
-                            PlayerDataManager.Instance.nowChooseUnitID);
+                            thisUpgradeID);
                         
                             break;
 
                         }
                         else
                         {
-                            Debug.LogWarning("Building ID : " + PlayerDataManager.Instance.nowChooseUnitID + " Upgrade Failed!");
+                            Debug.LogWarning("Building ID : " + thisUpgradeID + " Upgrade Failed!");
                             return false;
                         }
 
@@ -1860,7 +1869,7 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 return true;
             case TechTree.ConstructionCost:
-                GameManage.Instance._BuildingManager.UpgradeBuilding(PlayerDataManager.Instance.nowChooseUnitID, BuildingUpgradeType.BuildingHP);
+                GameManage.Instance._BuildingManager.UpgradeBuilding(thisUpgradeID, BuildingUpgradeType.BuildingHP);
                 return true;
             case TechTree.MovementCD:
                 for (int i = 0; i < list.Count; i++)
@@ -1868,7 +1877,7 @@ public class PlayerOperationManager : MonoBehaviour
                     if (list[i].UnitType == CardType.Pope)
                     {
                         newData = (syncPieceData)PieceManager.Instance.UpgradePieceSpecial(
-                            PlayerDataManager.Instance.nowChooseUnitID, SpecialUpgradeType.PopeSwapCooldown);
+                            thisUpgradeID, SpecialUpgradeType.PopeSwapCooldown);
                         break;
                     }
                 }
