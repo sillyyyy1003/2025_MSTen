@@ -228,11 +228,11 @@ public class GameManage : MonoBehaviour
     {
         Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
         OnGameEnded?.Invoke(winnerPlayerId);
-        ResultUIManager.Instance.Inititialize(winnerPlayerId);
+        ResultUIManager.Instance.Initialize(winnerPlayerId);
         ResultData data = new ResultData()
         {
 
-           PlayerID=LocalPlayerID,            // 玩家ID
+           PlayerId = LocalPlayerID.ToString(),            // 玩家ID
            CellNumber=PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
            PieceNumber= PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
            BuildingNumber= PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
