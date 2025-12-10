@@ -22,7 +22,6 @@ namespace GamePieces
         protected int currentPID; // 現在所属しているプレイヤーID
         protected int originalPID; // 元々所属していたプレイヤーID
         protected PieceState currentState = PieceState.Idle;
-        protected int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2、3:升級3（全体レベル・互換性のため残す）
 
         // ===== 各項目の個別レベル =====
         protected int hpLevel = 0; // HP レベル (0-3)
@@ -59,7 +58,6 @@ namespace GamePieces
         public bool IsAlive => currentHP > 0;
         public bool CanMove => currentAP >= pieceData.moveAPCost;
         public PieceState State => currentState;
-        public int UpgradeLevel => upgradeLevel;
         public int HPLevel => hpLevel;
         public int APLevel => apLevel;
 
@@ -78,17 +76,23 @@ namespace GamePieces
         /// </summary>
         /// <param name="data">駒のデータ</param>
         /// <param name="playerID">所属するプレイヤーID</param>
-        public virtual void Initialize(PieceDataSO data, int playerID)
+        /// <param name="initHPLevel">HP初期レベル (0-3)</param>
+        /// <param name="initAPLevel">AP初期レベル (0-3)</param>
+        public virtual void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
         {
             pieceData = data;
             originalPID = playerID;  // 引数から設定（SOデータではなく実行時の所有者）
             currentPID = playerID;
 
-            currentMaxHP = data.maxHPByLevel[0];
+            // 外部から渡されたレベルを設定
+            hpLevel = Mathf.Clamp(initHPLevel, 0, 3);
+            apLevel = Mathf.Clamp(initAPLevel, 0, 3);
+
+            currentMaxHP = data.maxHPByLevel[hpLevel];
             currentHP = currentMaxHP;
             if (CurrentHP <= 0)
                 Debug.LogError($"{data.pieceName}のHP初期値定義が0以下です！");
-            currentMaxAP = data.maxAPByLevel[0];
+            currentMaxAP = data.maxAPByLevel[apLevel];
             currentAP = currentMaxAP;
             if (CurrentAP <= 0)
                 Debug.LogError($"{data.pieceName}のAP初期値定義が0以下です！");
@@ -273,31 +277,6 @@ namespace GamePieces
 
         #region アップグレード管理
 
-        /// <summary>
-        /// 駒をアップグレードする（旧システム・互換性のため残す）
-        /// </summary>
-        public virtual bool UpgradePiece()
-        {
-            if (upgradeLevel >= 3)
-            {
-                Debug.LogWarning($"{pieceData.pieceName} は既に最大レベルです");
-                return false;
-            }
-
-            upgradeLevel++;
-            ApplyUpgradeEffects();
-            Debug.Log($"{pieceData.pieceName} がレベル {upgradeLevel} にアップグレードしました");
-            return true;
-        }
-
-        /// <summary>
-        /// アップグレード効果を適用（派生クラスでオーバーライド）
-        /// </summary>
-        protected virtual void ApplyUpgradeEffects()
-        {
-            // 基底クラスでは何もしない
-            // 派生クラスで具体的な効果を実装
-        }
 
         /// <summary>
         /// HPをアップグレードする

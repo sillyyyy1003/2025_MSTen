@@ -22,7 +22,7 @@ public class Pope : Piece
     {
         return popeData;
     }
-    public override void Initialize(PieceDataSO data, int playerID)
+    public override void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
     {
         popeData = data as PopeDataSO;
         if (popeData == null)
@@ -31,7 +31,26 @@ public class Pope : Piece
             return;
         }
 
-        base.Initialize(data, playerID);
+        base.Initialize(data, playerID, initHPLevel, initAPLevel);
+    }
+
+    /// <summary>
+    /// 教皇専用の初期化（スキルレベル指定）
+    /// </summary>
+    public void Initialize(PieceDataSO data, int playerID, int initHPLevel, int initAPLevel, int initSwapCooldownLevel, int initBuffLevel)
+    {
+        popeData = data as PopeDataSO;
+        if (popeData == null)
+        {
+            Debug.LogError("教皇にはPopeDataSOが必要です");
+            return;
+        }
+
+        base.Initialize(data, playerID, initHPLevel, initAPLevel);
+
+        // 教皇専用のスキルレベルを設定
+        swapCooldownLevel = Mathf.Clamp(initSwapCooldownLevel, 0, 2);
+        buffLevel = Mathf.Clamp(initBuffLevel, 0, 3);
     }
 
     ///この関数は廃止されました
@@ -77,27 +96,6 @@ public class Pope : Piece
     public int SwapCooldownLevel => swapCooldownLevel;
     public int BuffLevel => buffLevel;
 
-    /// <summary>
-    /// アップグレード効果を適用
-    /// </summary>
-    protected override void ApplyUpgradeEffects()
-    {
-        if (popeData == null) return;
-
-        // レベルに応じてHP、AP、攻撃力を更新
-        int newMaxHP = popeData.GetMaxHPByLevel(upgradeLevel);
-        int newMaxAP = popeData.GetMaxAPByLevel(upgradeLevel);
-
-        // 現在のHPとAPの割合を保持
-        int hpRatio = currentHP / currentMaxHP;
-        int apRatio = currentAP / currentMaxAP;
-
-        // 新しい最大値に基づいて現在値を更新
-        currentHP = newMaxHP * hpRatio;
-
-
-        Debug.Log($"教皇のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}");
-    }
 
     /// <summary>
     /// 位置交換クールダウンをアップグレードする（リソース消費は呼び出し側で行う）

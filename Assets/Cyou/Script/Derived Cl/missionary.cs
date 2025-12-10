@@ -28,7 +28,7 @@ public class Missionary : Piece
 
     public bool IsOccupying => isOccupying;
 
-    public override void Initialize(PieceDataSO data, int playerID)
+    public override void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
     {
         missionaryData = data as MissionaryDataSO;
         if (missionaryData == null)
@@ -37,7 +37,26 @@ public class Missionary : Piece
             return;
         }
 
-        base.Initialize(data, playerID);
+        base.Initialize(data, playerID, initHPLevel, initAPLevel);
+    }
+
+    /// <summary>
+    /// 宣教師専用の初期化（スキルレベル指定）
+    /// </summary>
+    public void Initialize(PieceDataSO data, int playerID, int initHPLevel, int initAPLevel, int initOccupyLevel, int initConvertEnemyLevel)
+    {
+        missionaryData = data as MissionaryDataSO;
+        if (missionaryData == null)
+        {
+            Debug.LogError("宣教師にはMissionaryDataSOが必要です");
+            return;
+        }
+
+        base.Initialize(data, playerID, initHPLevel, initAPLevel);
+
+        // 宣教師専用のスキルレベルを設定
+        occupyLevel = Mathf.Clamp(initOccupyLevel, 0, 3);
+        convertEnemyLevel = Mathf.Clamp(initConvertEnemyLevel, 0, 3);
     }
 
     //25.10.26 RI 添加SOData回调
@@ -48,45 +67,19 @@ public class Missionary : Piece
     #region スキルレベル管理
 
     /// <summary>
-    /// スキルレベルを設定
-    /// </summary>
-    public void SetSkillLevel(int level)
-    {
-        int oldLevel = UpgradeLevel;
-        upgradeLevel = Mathf.Clamp(level, 1, missionaryData.convertFarmerChanceByLevel.Length);
-
-        if (oldLevel != UpgradeLevel)
-        {
-            OnSkillLevelChanged?.Invoke(UpgradeLevel);
-            Debug.Log($"宣教師のスキルレベルが{UpgradeLevel}になりました");
-        }
-    }
-
-    /// <summary>
-    /// スキルレベルをレベルアップ
-    /// </summary>
-    public void LevelUp()
-    {
-        if (upgradeLevel < missionaryData.convertFarmerChanceByLevel.Length)
-        {
-            SetSkillLevel(UpgradeLevel + 1);
-        }
-    }
-
-    /// <summary>
-    /// アップグレードレベルに基づく自領地占領成功率を取得
+    /// 占領レベルに基づく自領地占領成功率を取得
     /// </summary>
     public float GetOccupyEmptySuccessRate()
     {
-        return missionaryData.GetOccupyEmptySuccessRate(UpgradeLevel);
+        return missionaryData.GetOccupyEmptySuccessRate(occupyLevel);
     }
 
     /// <summary>
-    /// アップグレードレベルに基づく敵領地占領成功率を取得
+    /// 占領レベルに基づく敵領地占領成功率を取得
     /// </summary>
     public float GetOccupyEnemySuccessRate()
     {
-        return missionaryData.GetOccupyEnemySuccessRate(UpgradeLevel);
+        return missionaryData.GetOccupyEnemySuccessRate(occupyLevel);
     }
 
     /// <summary>
@@ -96,15 +89,15 @@ public class Missionary : Piece
     {
         if (target is Missionary)
         {
-            return missionaryData.GetConvertMissionaryChance(UpgradeLevel);
+            return missionaryData.GetConvertMissionaryChance(convertEnemyLevel);
         }
         else if (target is Farmer)
         {
-            return missionaryData.GetConvertFarmerChance(UpgradeLevel);
+            return missionaryData.GetConvertFarmerChance(convertEnemyLevel);
         }
         else if (target is MilitaryUnit)
         {
-            return missionaryData.GetConvertMilitaryChance(UpgradeLevel);
+            return missionaryData.GetConvertMilitaryChance(convertEnemyLevel);
         }
         else
         {
@@ -127,11 +120,11 @@ public class Missionary : Piece
     }
 
     /// <summary>
-    /// 魅惑敵性スキルを持っているか（升級1以降）
+    /// 魅惑敵性スキルを持っているか（魅惑レベル1以降）
     /// </summary>
     public bool HasAntiConversionSkill()
     {
-        return missionaryData.HasAntiConversionSkill(UpgradeLevel);
+        return missionaryData.HasAntiConversionSkill(convertEnemyLevel);
     }
 
     #endregion
@@ -318,21 +311,11 @@ public class Missionary : Piece
         // 元のプレイヤーIDを保存
         int originalPlayerID = enemy.CurrentPID;
 
-        ///ここでもう一度相手駒の職業で判定する必要はない。
-        //↓switch式の練習としては良かったのだが↓
-        //float convertSuccessRate = enemy.Data switch
-        //{
-        //    MissionaryDataSO => missionaryData.GetConvertMissionaryChance(UpgradeLevel),
-        //    MilitaryDataSO => missionaryData.GetConvertMilitaryChance(UpgradeLevel),
-        //    FarmerDataSO => missionaryData.GetConvertFarmerChance(UpgradeLevel),
-        //    _ => default
-        //};
-
-
         // プレイヤーIDを変更（陣営変更）
-        enemy.ChangePID(currentPID, missionaryData.conversionTurnDuration[UpgradeLevel],this);
+        int duration = GetConversionDuration();
+        enemy.ChangePID(currentPID, duration, this);
 
-        OnPieceConverted?.Invoke(enemy, missionaryData.conversionTurnDuration[UpgradeLevel]);
+        OnPieceConverted?.Invoke(enemy, duration);
     }
 
 
@@ -344,42 +327,6 @@ public class Missionary : Piece
     public int OccupyLevel => occupyLevel;
     public int ConvertEnemyLevel => convertEnemyLevel;
 
-    /// <summary>
-    /// アップグレード効果を適用
-    /// </summary>
-    protected override void ApplyUpgradeEffects()
-    {
-        if (missionaryData == null) return;
-
-        // レベルに応じてHP、AP、攻撃力を更新
-        int newMaxHP = missionaryData.GetMaxHPByLevel(upgradeLevel);
-        int newMaxAP = missionaryData.GetMaxAPByLevel(upgradeLevel);
-
-        // 現在のHPとAPの割合を保持
-        int hpRatio = currentHP / currentMaxHP;
-        int apRatio = currentAP / currentMaxAP;
-
-        // 新しい最大値に基づいて現在値を更新
-        currentHP = newMaxHP * hpRatio;
-
-
-        // 現在のアップグレードレベルに応じたスキル効果を取得
-        float occupyOwnRate = GetOccupyEmptySuccessRate();
-        float occupyEnemyRate = GetOccupyEnemySuccessRate();
-        float convertMissionaryChance = missionaryData.GetConvertMissionaryChance(upgradeLevel);
-        float convertFarmerChance = missionaryData.GetConvertFarmerChance(upgradeLevel);
-        float convertMilitaryChance = missionaryData.GetConvertMilitaryChance(upgradeLevel);
-
-        Debug.Log($"宣教師のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}");
-        Debug.Log($"自領地占領成功率: {occupyOwnRate * 100:F0}%, 敵領地占領成功率: {occupyEnemyRate * 100:F0}%");
-        Debug.Log($"魅惑成功率 - 宣教師: {convertMissionaryChance * 100:F0}%, 信徒: {convertFarmerChance * 100:F0}%, 十字軍: {convertMilitaryChance * 100:F0}%");
-
-        // 新しいスキルのログ
-        if (upgradeLevel == 1)
-        {
-            Debug.Log("新スキル獲得: 魅惑敵性（敵の宣教師による変換を無効化）");
-        }
-    }
 
     /// <summary>
     /// 占領成功率をアップグレードする（リソース消費は呼び出し側で行う）

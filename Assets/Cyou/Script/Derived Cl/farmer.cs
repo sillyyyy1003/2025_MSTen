@@ -16,7 +16,7 @@ public class Farmer : Piece
     private int sacrificeLevel = 0; // 獻祭レベル (0-2)
 
 
-    public override void Initialize(PieceDataSO data, int playerID)
+    public override void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
     {
         farmerData = data as FarmerDataSO;
         if (farmerData == null)
@@ -25,7 +25,25 @@ public class Farmer : Piece
             return;
         }
 
-        base.Initialize(data, playerID);
+        base.Initialize(data, playerID, initHPLevel, initAPLevel);
+    }
+
+    /// <summary>
+    /// 農民専用の初期化（スキルレベル指定）
+    /// </summary>
+    public void Initialize(PieceDataSO data, int playerID, int initHPLevel, int initAPLevel, int initSacrificeLevel)
+    {
+        farmerData = data as FarmerDataSO;
+        if (farmerData == null)
+        {
+            Debug.LogError("農民にはFarmerDataSOが必要です");
+            return;
+        }
+
+        base.Initialize(data, playerID, initHPLevel, initAPLevel);
+
+        // 農民専用のスキルレベルを設定
+        sacrificeLevel = Mathf.Clamp(initSacrificeLevel, 0, 2);
     }
     //25.10.26 RI 添加SOData回调
     public PieceDataSO GetUnitDataSO()
@@ -34,24 +52,6 @@ public class Farmer : Piece
     }
 
 
-    /// <summary>
-    /// スキルレベルを設定
-    /// </summary>
-    public void SetSkillLevel(int level)
-    {
-        upgradeLevel = Mathf.Clamp(level, 1, farmerData.maxAPByLevel.Length);
-    }
-
-    /// <summary>
-    /// スキルレベルをレベルアップ
-    /// </summary>
-    public void LevelUp()
-    {
-        if (UpgradeLevel < farmerData.maxAPByLevel.Length)
-        {
-            upgradeLevel++;
-        }
-    }
 
     /// <summary>
     /// AP消費し他駒のHPを回復するスキル（通常の獻祭）
@@ -229,37 +229,6 @@ public class Farmer : Piece
     // ===== プロパティ =====
     public int SacrificeLevel => sacrificeLevel;
 
-    /// <summary>
-    /// アップグレード効果を適用
-    /// </summary>
-    protected override void ApplyUpgradeEffects()
-    {
-        if (farmerData == null) return;
-
-        // レベルに応じてHP、AP、攻撃力を更新
-        int newMaxHP = farmerData.GetMaxHPByLevel(upgradeLevel);
-        int newMaxAP = farmerData.GetMaxAPByLevel(upgradeLevel);
-
-        // 現在のHPとAPの割合を保持
-        int hpRatio = currentHP / currentMaxHP;
-        int apRatio = currentAP / currentMaxAP;
-
-        // 新しい最大値に基づいて現在値を更新
-        currentHP = newMaxHP * hpRatio;
-        currentMaxHP=newMaxHP;
-
-        Debug.Log($"信徒のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}");
-
-        // 新しいステータスのログ
-        if (upgradeLevel == 1)
-        {
-            Debug.Log("血量: 4, 行動力: 5");
-        }
-        else if (upgradeLevel == 2)
-        {
-            Debug.Log("血量: 5, 行動力: 未記載");
-        }
-    }
 
     /// <summary>
     /// 獻祭回復量をアップグレードする（リソース消費は呼び出し側で行う）

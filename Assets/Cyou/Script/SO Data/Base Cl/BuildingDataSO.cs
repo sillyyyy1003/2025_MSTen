@@ -16,8 +16,8 @@ namespace GameData
         public Religion religion = Religion.None; // 所属する宗教
         [Header("基本属性")]
         public string buildingName;
-        public int maxHp = 100;
-        public int buildingResourceCost = 12; // 建築に必要な資源
+        public int maxHp;
+        public int buildingResourceCost; // 建築に必要な資源
         public int resourceGenInterval; // 資源生成間隔（ターン数）
         public Terrain cellType;//金鉱がある土地か否か
 
@@ -32,7 +32,7 @@ namespace GameData
         public float productionMultiplier = 1.0f;
 
         [Header("アップグレードレベルごとのデータ（升級1,2）")]
-        public int[] maxHpByLevel = new int[3] { 25, 30, 45 }; // 血量（Excel基礎数値）
+        public int[] maxHpByLevel = new int[3]; // 血量（Excel基礎数値）
         public int[] attackRangeByLevel = new int[3] { 0, 1, 2 }; // 攻撃範囲（無、有攻撃範囲1、攻撃範囲2）
         public int[] maxSlotsByLevel = new int[3] { 3, 5, 5 }; // 投入信徒数量（Excel基礎数値: 3, 5, 升級2未記載なので5を踏襲）
 
