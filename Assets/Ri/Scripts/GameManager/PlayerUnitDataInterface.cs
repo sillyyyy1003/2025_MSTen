@@ -9,6 +9,8 @@ using Unity.Mathematics;
 using TMPro;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Linq;
+using Buildings;
+
 
 
 #if UNITY_EDITOR
@@ -219,6 +221,10 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
             ResourcesCount -= ResourcesCost;
             PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+
+            //添加结局数据
+            PlayerDataManager.Instance.Result_ResourceUsed += ResourcesCost;
+
             return true;
 
         }
@@ -410,7 +416,10 @@ public class PlayerUnitDataInterface : MonoBehaviour
             if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
             {
                 ResourcesCount -= ResourcesCost;
-                PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+                PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);  
+                
+                //添加结局数据
+                PlayerDataManager.Instance.Result_ResourceUsed += ResourcesCost;
                 return true;
             }
             else
@@ -466,27 +475,30 @@ public class PlayerUnitDataInterface : MonoBehaviour
         if (type != CardType.Building)
             currentUnitPopulationCost = PieceManager.Instance.GetPiecePopulationCost(ConvertCardTypeToPieceType(type), SceneStateManager.Instance.PlayerReligion);
 
-        if (currentUnitPopulationCost > currentPlayerPopulationTotal - currentPlayerPopulationUsed)
-        {
-            Debug.LogWarning("人口不足!");
-            return false;
-        }
-        else
-        {
-            // 尝试创建单位
-            if (GameManage.Instance._PlayerOperation.TryCreateUnit(type, cellID))
-            {
-                ResourcesCount -= ResourcesCost;
-                PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+		if (currentUnitPopulationCost > currentPlayerPopulationTotal - currentPlayerPopulationUsed)
+		{
+			Debug.LogWarning("人口不足!");
+			return false;
+		}
+		else
+		{
+			// 尝试创建单位
+			if (GameManage.Instance._PlayerOperation.TryCreateUnit(type, cellID))
+			{
+				ResourcesCount -= ResourcesCost;
+				PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+
+                //添加结局数据
+                PlayerDataManager.Instance.Result_ResourceUsed += ResourcesCost;
                 return true;
-            }
-            else
-            {
-                Debug.LogWarning("创建失败 - 请先选择一个空格子");
-                return false;
-            }
-        }
-    }
+			}
+			else
+			{
+				Debug.LogWarning("创建失败 - 请先选择一个空格子");
+				return false;
+			}
+		}
+	}
 
 
     // 将 CardType 转换为 PieceType
