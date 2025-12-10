@@ -26,7 +26,7 @@ public class ResultUIManager : MonoBehaviour
 	public Button GameExitButton;
 
 	// 25.12.10 RI add ResultData
-	private ResultData UI_ResultData=new ResultData();
+	private ResultData UI_ResultData = new ResultData();
 
 	[Header("ResultComponent")]
 	public ResultDetailUI ResultDetailUIComponent;
@@ -86,30 +86,31 @@ public class ResultUIManager : MonoBehaviour
 
 		// 暂时代用
 		List<ResultData> datas = new List<ResultData>();
-		ResultData data1 = new ResultData(
-			"Player1",
-			25,
-			15,
-			5,
-			10,
-			2,
-			3,
-			100,
-			80
-			);
-		datas.Add(data1);
-		ResultData data2 = new ResultData(
-			"Player2",
-			20,
-			10,
-			3,
-			5,
-			1,
-			1,
-			90,
-			80
-			);
-		datas.Add(data2);
+		datas.Add(UI_ResultData);
+		//ResultData data1 = new ResultData(
+		//	"Player1",
+		//	25,
+		//	15,
+		//	5,
+		//	10,
+		//	2,
+		//	3,
+		//	100,
+		//	80
+		//	);
+		//datas.Add(data1);
+		//ResultData data2 = new ResultData(
+		//	"Player2",
+		//	20,
+		//	10,
+		//	3,
+		//	5,
+		//	1,
+		//	1,
+		//	90,
+		//	80
+		//	);
+		//datas.Add(data2);
 
 		InitResultData(datas);
 		
@@ -236,11 +237,11 @@ public class ResultUIManager : MonoBehaviour
 		ResultDetailButton.gameObject.SetActive(true);
 	}
 
-  //25.12.10 RI 添加ResultData
-  public void SetResultData(ResultData data)
-  {
-		UI_ResultData = data;
-  }
+	  //25.12.10 RI 添加ResultData
+	  public void SetResultData(ResultData data)
+	  {
+			UI_ResultData = data;
+	  }
     
 	private void InitResultData(List<ResultData> data)
 	{

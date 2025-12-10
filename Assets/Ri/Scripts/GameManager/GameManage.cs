@@ -228,11 +228,12 @@ public class GameManage : MonoBehaviour
     {
         Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
         OnGameEnded?.Invoke(winnerPlayerId);
-        ResultUIManager.Instance.Initialize(winnerPlayerId);
+      
+        // 设定数据
         ResultData data = new ResultData()
         {
 
-           PlayerId = LocalPlayerID.ToString(),            // 玩家ID
+           PlayerId = SaveLoadManager.Instance.UserId,                             // 玩家ID
            CellNumber=PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
            PieceNumber= PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
            BuildingNumber= PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
@@ -243,7 +244,11 @@ public class GameManage : MonoBehaviour
            ResourceUsed= PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
         };
         ResultUIManager.Instance.SetResultData(data);
-        GameOver(winnerPlayerId);
+
+        // 初始化ui
+        ResultUIManager.Instance.Initialize(winnerPlayerId);
+
+		GameOver(winnerPlayerId);
     }
 
     // 房间状态待机管理
