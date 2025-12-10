@@ -119,6 +119,11 @@ public class GameUIManager : MonoBehaviour
     public Image BuildingBackground;
 
 
+    public TextMeshProUGUI PopeInfo;
+    public TextMeshProUGUI MissionaryInfo;
+    public TextMeshProUGUI SoliderInfo;
+    public TextMeshProUGUI FarmerInfo;
+    public TextMeshProUGUI BuildingInfo;
 
     [Header("Timer")]
 	public Image TimeImage;     // TimeImage
@@ -529,7 +534,16 @@ public class GameUIManager : MonoBehaviour
     }
 
 
+    public void UpdateSimplePanelInfo()
+    {
 
+        PopeInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Pope);
+        MissionaryInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Missionary);
+        SoliderInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Military);
+        FarmerInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Farmer);
+        BuildingInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Building);
+
+    }
 
 
 
@@ -804,6 +818,9 @@ public class GameUIManager : MonoBehaviour
         SoliderBackground.color = Backgroundcolor;
         FarmerBackground.color = Backgroundcolor;
         BuildingBackground.color = Backgroundcolor;
+
+        UpdateSimplePanelInfo();
+
 }
 
     /*
@@ -969,12 +986,6 @@ public class GameUIManager : MonoBehaviour
 		SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.UPGRADE);
 
 	}
-
-    private void HandleInactiveUnitButtonPressed()
-    {
-        if (InactiveUnitCount == 0) return;
-
-    }
 
     private void HandlePlayerDataChanged(int id,PlayerData player)
     {

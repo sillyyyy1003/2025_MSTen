@@ -1732,6 +1732,14 @@ MonoBehaviour:
   TurnCount: 0
   CrazyTurnCooldown: 0
   MirrorSkillCount: 0
+  Result_CellNumber: 0
+  Result_PieceNumber: 0
+  Result_BuildingNumber: 0
+  Result_PieceDestroyedNumber: 0
+  Result_BuildingDestroyedNumber: 0
+  Result_CharmSucceedNumber: 0
+  Result_ResourceGet: 0
+  Result_ResourceUsed: 0
   buildingRegistry: {fileID: 0}
 --- !u!114 &131122553
 MonoBehaviour:
@@ -5901,7 +5909,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: fc51defa0e0786744b8975e29683821d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 71a1ff6e89535fe459cbd68e2549f714, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -33266,6 +33274,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 8c69352c713761f4780a2d2114eea77d, type: 3}
     - {fileID: 21300000, guid: 755e5de0b1257e44c9c26801c03c07e4, type: 3}
     - {fileID: 21300000, guid: 02ba59df97758544482550ab3fe687b8, type: 3}
+    - {fileID: 21300000, guid: 56a2b4f761e8f864ab8b06e2a9c215a9, type: 3}
     note: 
   - id: 19
     singleSprite: {fileID: 21300000, guid: 1e4da6dfff4b7714badfae6566a9c1cf, type: 3}
@@ -34842,6 +34851,11 @@ MonoBehaviour:
   SoliderBackground: {fileID: 1204113354}
   FarmerBackground: {fileID: 1627826619}
   BuildingBackground: {fileID: 173242611}
+  PopeInfo: {fileID: 294375947}
+  MissionaryInfo: {fileID: 222311786}
+  SoliderInfo: {fileID: 626055734}
+  FarmerInfo: {fileID: 617879113}
+  BuildingInfo: {fileID: 498292209}
   TimeImage: {fileID: 1908318486}
   timeText: {fileID: 320742768}
   timer: {fileID: 2117784777}
@@ -34947,12 +34961,12 @@ MonoBehaviour:
   BuildingTransform: {fileID: 704033892}
   levelUpInfoPanel: {fileID: 345779829}
   levelUpbutton: {fileID: 2142504554}
-  VerticalSpacing: 30
-  HorizontalSpacing: 5
+  VerticalSpacing: 50
+  HorizontalSpacing: 20
   StartPos: {x: 0, y: 0, z: 0}
-  PaddingLeft: -200
+  PaddingLeft: -110
   PaddingRight: 0
-  PaddingTop: -60
+  PaddingTop: -30
   PaddingBottom: 0
 --- !u!1 &2117941066
 GameObject:
