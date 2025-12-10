@@ -9,6 +9,8 @@ using Unity.Mathematics;
 using TMPro;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Linq;
+using Buildings;
+
 
 
 #if UNITY_EDITOR
@@ -219,6 +221,10 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
             ResourcesCount -= ResourcesCost;
             PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+
+            //添加结局数据
+            PlayerDataManager.Instance.Result_ResourceUsed += ResourcesCost;
+
             return true;
 
         }
@@ -410,7 +416,10 @@ public class PlayerUnitDataInterface : MonoBehaviour
             if (GameManage.Instance._PlayerOperation.TryCreateUnit(type))
             {
                 ResourcesCount -= ResourcesCost;
-                PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
+                PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);  
+                
+                //添加结局数据
+                PlayerDataManager.Instance.Result_ResourceUsed += ResourcesCost;
                 return true;
             }
             else
@@ -478,7 +487,10 @@ public class PlayerUnitDataInterface : MonoBehaviour
 			{
 				ResourcesCount -= ResourcesCost;
 				PlayerDataManager.Instance.SetPlayerResourses(ResourcesCount);
-				return true;
+
+                //添加结局数据
+                PlayerDataManager.Instance.Result_ResourceUsed += ResourcesCost;
+                return true;
 			}
 			else
 			{

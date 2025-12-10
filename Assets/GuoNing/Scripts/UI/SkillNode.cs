@@ -151,7 +151,10 @@ public class SkillNode : MonoBehaviour
 		PlayerDataManager.Instance.SetPlayerResourses(res);
 		GameUIManager.Instance.UpdateResourcesData();
 
-		//与外部侧边栏联动
+        //25.12.10 RI 添加结局数据
+        PlayerDataManager.Instance.Result_ResourceUsed += cost;
+
+        //与外部侧边栏联动
         SkillTreeUIManager.Instance.UpdateSimpleSkillPanel(pieceType);
     }
 

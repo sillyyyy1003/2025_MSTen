@@ -1114,9 +1114,13 @@ public class PlayerOperationManager : MonoBehaviour
         // 获取建筑资源
         
         int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
-        res += GameManage.Instance._BuildingManager.ProcessTurnStart();
-      
+        int Addres = GameManage.Instance._BuildingManager.ProcessTurnStart();
+        res += Addres;
         PlayerDataManager.Instance.SetPlayerResourses(res);
+
+        // 添加结局数据
+        PlayerDataManager.Instance.Result_ResourceGet += Addres;
+
         PlayerUnitDataInterface.Instance.GetPopeSwapCooldown();
         Debug.Log("你的回合开始!获取资源行动 " + res+" 目前资源: " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
 
@@ -1152,7 +1156,12 @@ public class PlayerOperationManager : MonoBehaviour
 
                 Debug.Log("丝织教获取资源: " + GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID) * 2);
                 res += GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID)*2;
+                // 添加结局数据
+                PlayerDataManager.Instance.Result_ResourceGet += GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID) * 2;
+             
                 PlayerDataManager.Instance.SetPlayerResourses(res);
+
+           
             }
             DestroyInactivatedBuilding(building);     
         }
@@ -1424,8 +1433,11 @@ public class PlayerOperationManager : MonoBehaviour
         // 生成StatusUI
         UnitStatusUIManager.Instance.CreateStatusUI(unitID, unitData.currentHP, unitData.currentAP, pieceObj.transform, unitType);
 
-		// 保存本地引用
-		localPlayerUnits[position] = pieceObj;
+        // 添加结局数据
+        PlayerDataManager.Instance.Result_PieceNumber += 1;
+
+        // 保存本地引用
+        localPlayerUnits[position] = pieceObj;
         GameManage.Instance.SetCellObject(position, pieceObj);
 
         Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
@@ -2341,6 +2353,11 @@ public class PlayerOperationManager : MonoBehaviour
 			UnitStatusUIManager.Instance.CreateStatusUI(buildData.buildingID, buildData.currentHP, 0, localPlayerUnits[buildingPos2D].transform, CardType.Building,false,slot);
             UnitStatusUIManager.Instance.UpdateHPByID(buildData.buildingID, buildData.currentHP);
 
+
+            // 添加结局数据
+            PlayerDataManager.Instance.Result_BuildingNumber += 1;
+
+
             // 3. 网络同步：使用现有的UNIT_ADD消息
             if (NetGameSystem.Instance != null)
             {
@@ -2952,6 +2969,8 @@ public class PlayerOperationManager : MonoBehaviour
                 // 移除本地HP显示
                 UnitStatusUIManager.Instance.RemoveStatusUI(targetSyncData.Value.pieceID);
 
+                // 添加结局数据
+                PlayerDataManager.Instance.Result_PieceDestroyedNumber += 1;
             }
             else
             {
@@ -3035,6 +3054,9 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 BuildingRuins[localPlayerId][RuinID] = ruin;
                 RuinID++;
+
+                // 添加结局数据
+                PlayerDataManager.Instance.Result_BuildingDestroyedNumber += 1;
 
                 UnitStatusUIManager.Instance.RemoveStatusUI(targetBuilding.BuildingID);
             }
@@ -3886,6 +3908,9 @@ public class PlayerOperationManager : MonoBehaviour
             // 2025.11.14 Guoning 音声再生
             SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 
+            // 添加结局数据
+            PlayerDataManager.Instance.Result_CellNumber += 1;
+
             // 取消选择状态
             ReturnToDefault();
         }
@@ -3943,11 +3968,19 @@ public class PlayerOperationManager : MonoBehaviour
         // 获取双方的 PieceID
         int missionaryPieceID = missionaryData.Value.PlayerUnitDataSO.pieceID;
         int targetPieceID = targetData.Value.PlayerUnitDataSO.pieceID;
+       
+        if (PieceManager.Instance.GetConvertData(missionaryPieceID, targetPieceID)==0)
+        {
+            Debug.LogWarning("传教士目前无法魅惑");
+            ReturnToDefault();
+            return;
+        }
 
         Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
         if(targetData.Value.bIsCharmed)
         {
             Debug.Log("不能魅惑已被魅惑的单位！");
+            ReturnToDefault();
             return;
         }
         // 调用PieceManager的ConvertEnemy方法
@@ -3957,6 +3990,7 @@ public class PlayerOperationManager : MonoBehaviour
             //更新传教士AP
             UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID, PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
 
+            ReturnToDefault();
 
             return;
         }
@@ -4015,7 +4049,8 @@ public class PlayerOperationManager : MonoBehaviour
             //更新传教士AP
             UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID,PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
 
-
+            // 添加结局数据
+            PlayerDataManager.Instance.Result_CharmSucceedNumber += 1;
 
             // 更新魅惑来的单位HP和AP
             UnitStatusUIManager.Instance.RemoveStatusUI(targetPieceID);

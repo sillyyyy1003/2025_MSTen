@@ -322,6 +322,15 @@ public class PlayerDataManager : MonoBehaviour
     public int MirrorSkillCount=0;
 
 
+    // Result datas
+    public int Result_CellNumber = 0;  // 格子的数量
+    public int Result_PieceNumber = 0;         // 棋子的数量
+    public int Result_BuildingNumber = 0;      // 建筑数量
+    public int Result_PieceDestroyedNumber = 0; // 消灭的棋子数量
+    public int Result_BuildingDestroyedNumber = 0; // 摧毁的建筑的数量
+    public int Result_CharmSucceedNumber = 0;  // 成功魅惑棋子的数量
+    public int Result_ResourceGet = 0;     // 获得的资源数量
+    public int Result_ResourceUsed = 0;     // 使用的资源数量
     // 建筑
     [SerializeField] private BuildingRegistry buildingRegistry;
 
