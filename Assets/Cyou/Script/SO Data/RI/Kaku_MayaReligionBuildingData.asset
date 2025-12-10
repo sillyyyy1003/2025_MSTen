@@ -25,7 +25,7 @@ MonoBehaviour:
   baseProductionAmount: 2
   goldenProductionAmount: 5
   productionMultiplier: 1
-  maxHpByLevel: 190000001e0000002d000000
+  maxHpByLevel: 050000000600000008000000
   attackRangeByLevel: 000000000100000002000000
   maxSlotsByLevel: 020000000300000004000000
   hasCounterAttack: 000000

@@ -58,7 +58,6 @@ public class SkillTreeUIManager : MonoBehaviour
 	public static SkillTreeUIManager Instance { get; private set; }
 
 	public Dictionary<PieceType, SimpleSkillPanel> SimpleSkillPanels = new Dictionary<PieceType, SimpleSkillPanel>();
-    //public Dictionary<CardType, UnitSkillTree> allSkillTrees;
     public Dictionary<PieceType, SkillLevelData> UnitSkillLevels = new Dictionary<PieceType, SkillLevelData>();   // 所有棋子的所有技能的等级
 
 	private void Awake()
