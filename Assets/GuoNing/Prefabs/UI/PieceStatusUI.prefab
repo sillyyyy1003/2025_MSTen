@@ -60,6 +60,7 @@ MonoBehaviour:
   apText: {fileID: 3047601889773417628}
   pieceIcon: {fileID: 6180336148634382457}
   slotPrefab: {fileID: 2206479833316333634}
+  uiBaseScale: 0.005
 --- !u!1 &1310281299318851894
 GameObject:
   m_ObjectHideFlags: 0
