@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GameData;
+using GameData.UI;
 using GamePieces;
 using UnityEditor.Experimental.GraphView;
 
@@ -74,15 +75,26 @@ namespace Buildings
 
         #region 初期化
 
-        public void Initialize(BuildingDataSO data, int ownerPlayerID, int initHPLevel = 0, int initAttackRangeLevel = 0, int initSlotsLevel = 0)
+        public virtual void Initialize(BuildingDataSO data, int ownerPlayerID)
         {
             buildingData = data;
             playerID = ownerPlayerID;
 
-            // 外部から渡されたレベルを設定
-            hpLevel = Mathf.Clamp(initHPLevel, 0, 2);
-            attackRangeLevel = Mathf.Clamp(initAttackRangeLevel, 0, 2);
-            slotsLevel = Mathf.Clamp(initSlotsLevel, 0, 2);
+            // ローカルプレイヤーの建物の場合、SkillTreeUIManagerからレベルを取得
+            if (ownerPlayerID == PieceManager.Instance.GetLocalPlayerID())
+            {
+                hpLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.HP);
+                slotsLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.AltarCount);
+                // attackRangeLevelは管理されない
+                attackRangeLevel = 0;
+            }
+            else
+            {
+                // 敵プレイヤーの建物はデフォルトレベル0
+                hpLevel = 0;
+                attackRangeLevel = 0;
+                slotsLevel = 0;
+            }
 
             currentHp = data.maxHpByLevel[hpLevel];
             remainingBuildCost = data.buildingResourceCost;

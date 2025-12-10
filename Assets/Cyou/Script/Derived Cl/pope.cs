@@ -1,5 +1,6 @@
 using System;
 using GameData;
+using GameData.UI;
 using GamePieces;
 using UnityEngine;
 
@@ -22,7 +23,7 @@ public class Pope : Piece
     {
         return popeData;
     }
-    public override void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
+    public override void Initialize(PieceDataSO data, int playerID)
     {
         popeData = data as PopeDataSO;
         if (popeData == null)
@@ -31,26 +32,23 @@ public class Pope : Piece
             return;
         }
 
-        base.Initialize(data, playerID, initHPLevel, initAPLevel);
-    }
+        base.Initialize(data, playerID);
 
-    /// <summary>
-    /// 教皇専用の初期化（スキルレベル指定）
-    /// </summary>
-    public void Initialize(PieceDataSO data, int playerID, int initHPLevel, int initAPLevel, int initSwapCooldownLevel, int initBuffLevel)
-    {
-        popeData = data as PopeDataSO;
-        if (popeData == null)
+        // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
+        if (playerID == PieceManager.Instance.GetLocalPlayerID())
         {
-            Debug.LogError("教皇にはPopeDataSOが必要です");
-            return;
+            SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.HP));
+            SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.MovementCD));
+            swapCooldownLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.MovementCD);
+            // buffLevelは使用しない
+            buffLevel = 0;
         }
-
-        base.Initialize(data, playerID, initHPLevel, initAPLevel);
-
-        // 教皇専用のスキルレベルを設定
-        swapCooldownLevel = Mathf.Clamp(initSwapCooldownLevel, 0, 2);
-        buffLevel = Mathf.Clamp(initBuffLevel, 0, 3);
+        else
+        {
+            // 敵プレイヤーの駒はデフォルトレベル0
+            swapCooldownLevel = 0;
+            buffLevel = 0;
+        }
     }
 
     ///この関数は廃止されました

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using GameData;
+using GameData.UI;
 using GamePieces;
 using UnityEngine;
 
@@ -28,7 +29,7 @@ public class Missionary : Piece
 
     public bool IsOccupying => isOccupying;
 
-    public override void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
+    public override void Initialize(PieceDataSO data, int playerID)
     {
         missionaryData = data as MissionaryDataSO;
         if (missionaryData == null)
@@ -37,26 +38,23 @@ public class Missionary : Piece
             return;
         }
 
-        base.Initialize(data, playerID, initHPLevel, initAPLevel);
-    }
+        base.Initialize(data, playerID);
 
-    /// <summary>
-    /// 宣教師専用の初期化（スキルレベル指定）
-    /// </summary>
-    public void Initialize(PieceDataSO data, int playerID, int initHPLevel, int initAPLevel, int initOccupyLevel, int initConvertEnemyLevel)
-    {
-        missionaryData = data as MissionaryDataSO;
-        if (missionaryData == null)
+        // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
+        if (playerID == PieceManager.Instance.GetLocalPlayerID())
         {
-            Debug.LogError("宣教師にはMissionaryDataSOが必要です");
-            return;
+            SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.HP));
+            SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.AP));
+            occupyLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.Occupy);
+            convertEnemyLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.Conversion);
         }
-
-        base.Initialize(data, playerID, initHPLevel, initAPLevel);
-
-        // 宣教師専用のスキルレベルを設定
-        occupyLevel = Mathf.Clamp(initOccupyLevel, 0, 3);
-        convertEnemyLevel = Mathf.Clamp(initConvertEnemyLevel, 0, 3);
+        else
+        {
+            // 敵プレイヤーの駒はデフォルトレベル0
+            // base.Initialize()で既にhpLevel=0, apLevel=0が設定されている
+            occupyLevel = 0;
+            convertEnemyLevel = 0;
+        }
     }
 
     //25.10.26 RI 添加SOData回调

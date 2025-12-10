@@ -1,5 +1,6 @@
 using Buildings;
 using GameData;
+using GameData.UI;
 using GamePieces;
 
 using UnityEngine;
@@ -16,7 +17,7 @@ public class Farmer : Piece
     private int sacrificeLevel = 0; // 獻祭レベル (0-2)
 
 
-    public override void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
+    public override void Initialize(PieceDataSO data, int playerID)
     {
         farmerData = data as FarmerDataSO;
         if (farmerData == null)
@@ -25,25 +26,20 @@ public class Farmer : Piece
             return;
         }
 
-        base.Initialize(data, playerID, initHPLevel, initAPLevel);
-    }
+        base.Initialize(data, playerID);
 
-    /// <summary>
-    /// 農民専用の初期化（スキルレベル指定）
-    /// </summary>
-    public void Initialize(PieceDataSO data, int playerID, int initHPLevel, int initAPLevel, int initSacrificeLevel)
-    {
-        farmerData = data as FarmerDataSO;
-        if (farmerData == null)
+        // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
+        if (playerID == PieceManager.Instance.GetLocalPlayerID())
         {
-            Debug.LogError("農民にはFarmerDataSOが必要です");
-            return;
+            SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Farmer, TechTree.HP));
+            SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Farmer, TechTree.AP));
+            sacrificeLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Farmer, TechTree.Sacrifice);
         }
-
-        base.Initialize(data, playerID, initHPLevel, initAPLevel);
-
-        // 農民専用のスキルレベルを設定
-        sacrificeLevel = Mathf.Clamp(initSacrificeLevel, 0, 2);
+        else
+        {
+            // 敵プレイヤーの駒はデフォルトレベル0
+            sacrificeLevel = 0;
+        }
     }
     //25.10.26 RI 添加SOData回调
     public PieceDataSO GetUnitDataSO()

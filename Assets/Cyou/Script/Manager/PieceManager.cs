@@ -586,6 +586,24 @@ public class PieceManager : MonoBehaviour
 			Debug.LogError($"駒の職業が不明です.");
 			return false;
 		}
+
+		// SkillTreeUIManagerでグローバルレベルを更新
+		TechTree techTree = TechTree.None;
+		switch (upgradeType)
+		{
+			case PieceUpgradeType.HP:
+				techTree = TechTree.HP;
+				break;
+			case PieceUpgradeType.AP:
+				techTree = TechTree.AP;
+				break;
+			default:
+				Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+				return false;
+		}
+
+		SkillTreeUIManager.Instance.UpgradeCurrentLevel(targetPieceType, techTree);
+
         // 同じ職業のすべての自分の駒を取得
         int playerID = GameManage.Instance.LocalPlayerID;
 		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
@@ -622,7 +640,7 @@ public class PieceManager : MonoBehaviour
 				if (index >= 0)
 				{
 					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
-                    unit.PlayerUnitDataSO.pieceID = targetID;  
+                    unit.PlayerUnitDataSO.pieceID = targetID;
 					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
 				}
 
@@ -660,6 +678,36 @@ public class PieceManager : MonoBehaviour
 			Debug.LogError($"駒の職業が不明です.");
 			return false;
 		}
+
+		// SkillTreeUIManagerでグローバルレベルを更新
+		TechTree techTree = TechTree.None;
+		switch (specialUpgradeType)
+		{
+			case SpecialUpgradeType.FarmerSacrifice:
+				techTree = TechTree.Sacrifice;
+				break;
+			case SpecialUpgradeType.MilitaryAttackPower:
+				techTree = TechTree.ATK;
+				break;
+			case SpecialUpgradeType.MissionaryOccupy:
+				techTree = TechTree.Occupy;
+				break;
+			case SpecialUpgradeType.MissionaryConvertEnemy:
+				techTree = TechTree.Conversion;
+				break;
+			case SpecialUpgradeType.PopeSwapCooldown:
+				techTree = TechTree.MovementCD;
+				break;
+			case SpecialUpgradeType.PopeBuff:
+				techTree = TechTree.Buff;
+				break;
+			default:
+				Debug.LogError($"不明なアップグレードタイプ: {specialUpgradeType}");
+				return false;
+		}
+
+		SkillTreeUIManager.Instance.UpgradeCurrentLevel(targetPieceType, techTree);
+
 		// 同じ職業のすべての自分の駒を取得
 		int playerID = GameManage.Instance.LocalPlayerID;
 		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);

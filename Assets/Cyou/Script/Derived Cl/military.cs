@@ -1,4 +1,5 @@
 using GameData;
+using GameData.UI;
 using GamePieces;
 
 using UnityEngine;
@@ -17,7 +18,7 @@ public class MilitaryUnit : Piece
     private int attackPowerLevel = 0; // 攻撃力レベル (0-3)
 
 
-    public override void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
+    public override void Initialize(PieceDataSO data, int playerID)
     {
         militaryData = data as MilitaryDataSO;
 
@@ -27,29 +28,20 @@ public class MilitaryUnit : Piece
             return;
         }
 
-        base.Initialize(data, playerID, initHPLevel, initAPLevel);
+        base.Initialize(data, playerID);
 
-        // 特殊スキルは攻撃力レベル2以上で利用可能（将来の拡張用）
-        specialSkillAvailable = false;
-    }
-
-    /// <summary>
-    /// 軍隊専用の初期化（スキルレベル指定）
-    /// </summary>
-    public void Initialize(PieceDataSO data, int playerID, int initHPLevel, int initAPLevel, int initAttackPowerLevel)
-    {
-        militaryData = data as MilitaryDataSO;
-
-        if (militaryData == null)
+        // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
+        if (playerID == PieceManager.Instance.GetLocalPlayerID())
         {
-            Debug.LogError("軍隊ユニットにはMilitaryDataSOが必要です");
-            return;
+            SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.HP));
+            SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.AP));
+            attackPowerLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.ATK);
         }
-
-        base.Initialize(data, playerID, initHPLevel, initAPLevel);
-
-        // 軍隊専用のスキルレベルを設定
-        attackPowerLevel = Mathf.Clamp(initAttackPowerLevel, 0, 3);
+        else
+        {
+            // 敵プレイヤーの駒はデフォルトレベル0
+            attackPowerLevel = 0;
+        }
 
         // 特殊スキルは攻撃力レベル2以上で利用可能（将来の拡張用）
         specialSkillAvailable = attackPowerLevel >= 2;

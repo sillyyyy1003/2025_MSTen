@@ -76,17 +76,15 @@ namespace GamePieces
         /// </summary>
         /// <param name="data">駒のデータ</param>
         /// <param name="playerID">所属するプレイヤーID</param>
-        /// <param name="initHPLevel">HP初期レベル (0-3)</param>
-        /// <param name="initAPLevel">AP初期レベル (0-3)</param>
-        public virtual void Initialize(PieceDataSO data, int playerID, int initHPLevel = 0, int initAPLevel = 0)
+        public virtual void Initialize(PieceDataSO data, int playerID)
         {
             pieceData = data;
             originalPID = playerID;  // 引数から設定（SOデータではなく実行時の所有者）
             currentPID = playerID;
 
-            // 外部から渡されたレベルを設定
-            hpLevel = Mathf.Clamp(initHPLevel, 0, 3);
-            apLevel = Mathf.Clamp(initAPLevel, 0, 3);
+            // デフォルトレベルは0（各derived classでoverrideして適切なレベルを設定）
+            hpLevel = 0;
+            apLevel = 0;
 
             currentMaxHP = data.maxHPByLevel[hpLevel];
             currentHP = currentMaxHP;
