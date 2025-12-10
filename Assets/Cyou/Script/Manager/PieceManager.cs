@@ -1492,7 +1492,26 @@ public class PieceManager : MonoBehaviour
         }
         return false;
     }
-
+    //25.12.10 RI add get Convert data
+    public int GetConvertData(int missionaryID,int targetID)
+    {
+        if (!allPieces.TryGetValue(missionaryID, out Piece missionaryPiece))
+        {
+            Debug.LogError($"宣教師が見つかりません: ID={missionaryID}");
+            return -1;
+        }
+        if (!allPieces.TryGetValue(targetID, out Piece target))
+        {
+            Debug.LogError($"敵駒が見つかりません: ID={targetID}");
+            return -1;
+        }
+        if (missionaryPiece is not Missionary missionary)
+        {
+            Debug.LogError($"駒ID={missionaryID}は宣教師ではありません");
+            return -1;
+        }
+        return missionary.GetConvertData(target);
+    }
     /// <summary>
     /// 宣教師が敵を魅惑
     /// </summary>

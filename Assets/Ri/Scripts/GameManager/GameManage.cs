@@ -229,6 +229,20 @@ public class GameManage : MonoBehaviour
         Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
         OnGameEnded?.Invoke(winnerPlayerId);
         ResultUIManager.Instance.Initialize(winnerPlayerId);
+        ResultData data = new ResultData()
+        {
+
+           PlayerId = LocalPlayerID.ToString(),            // 玩家ID
+           CellNumber=PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
+           PieceNumber= PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
+           BuildingNumber= PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
+           PieceDestroyedNumber= PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
+           BuildingDestroyedNumber= PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
+           CharmSucceedNumber= PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
+           ResourceGet= PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
+           ResourceUsed= PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
+        };
+        ResultUIManager.Instance.SetResultData(data);
         GameOver(winnerPlayerId);
     }
 

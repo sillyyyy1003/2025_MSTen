@@ -25,6 +25,9 @@ public class ResultUIManager : MonoBehaviour
 	public Button ResultDetailButton;
 	public Button GameExitButton;
 
+	// 25.12.10 RI add ResultData
+	private ResultData UI_ResultData=new ResultData();
+
 	[Header("ResultComponent")]
 	public ResultDetailUI ResultDetailUIComponent;
 	public RectTransform ResultDetailTitle;
@@ -233,6 +236,12 @@ public class ResultUIManager : MonoBehaviour
 		ResultDetailButton.gameObject.SetActive(true);
 	}
 
+  //25.12.10 RI 添加ResultData
+  public void SetResultData(ResultData data)
+  {
+		UI_ResultData = data;
+  }
+    
 	private void InitResultData(List<ResultData> data)
 	{
 		// 1. 获取 Title 的 RectTransform
