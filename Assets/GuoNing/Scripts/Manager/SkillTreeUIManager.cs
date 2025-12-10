@@ -37,13 +37,7 @@ public class SkillTreeUIManager : MonoBehaviour
 	public RectTransform SoliderTransform;
 	public RectTransform BuildingTransform;
 
-	[Header("NaviToggle")]
-	public Toggle PopeNavi;
-	public Toggle MissionaryNavi;
-	public Toggle FarmerNavi;
-	public Toggle SoliderNavi;
-	public Toggle BuildingNavi;
-
+	[Header("LevelUpPanel")]
 	public RectTransform levelUpInfoPanel;
 	public LevelUpButton levelUpbutton;
 
@@ -70,21 +64,7 @@ public class SkillTreeUIManager : MonoBehaviour
 	{
 		Initialize();
 
-        // 注册事件
-        //PopeNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Pope, isOn));
-        //MissionaryNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Missionary, isOn));
-        //FarmerNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Farmer, isOn));
-        //SoliderNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Military, isOn));
-        //BuildingNavi.onValueChanged.AddListener((isOn)=>OnToggleChanged(PieceType.Building,isOn));
-        // 默认显示 Pope
-        //OnToggleChanged(PieceType.Pope, true);
 
-        //20251209 Lu 默认全部显示
-        PopeTransform.gameObject.SetActive(true);
-        MissionaryTransform.gameObject.SetActive(true);
-        FarmerTransform.gameObject.SetActive(true);
-        SoliderTransform.gameObject.SetActive(true);
-        BuildingTransform.gameObject.SetActive(true);
 
         levelUpInfoPanel.gameObject.SetActive(false);
 	}
@@ -489,5 +469,39 @@ public class SkillTreeUIManager : MonoBehaviour
 	
 	
     }
+
+    public string GetSingleLevelUpInfo(TechTree tech, PieceType pieceType, bool isUpdate)
+	{
+		string stg;
+        string status;
+        stg = PlayerUnitDataInterface.Instance.GetTechNameByTechTree(tech)+" : ";
+
+        UnitListTable.PieceDetail pd =
+    new UnitListTable.PieceDetail(PieceType.Pope, SceneStateManager.Instance.PlayerReligion);
+        var dataSO = UnitListTable.Instance.GetPieceDataSO(PieceType.Pope,pd);
+
+        switch (tech)
+        {
+            case TechTree.HP: status = ""; break;
+            case TechTree.AP: status = ""; break;// "行動力";
+            case TechTree.Occupy: status = ""; break;// "占領確率";
+            case TechTree.Conversion: status = ""; break;// "伝教確率";
+            case TechTree.ATK: status = ""; break;// "攻撃力";
+            case TechTree.Sacrifice: status = ""; break;// "奉仕";
+            case TechTree.AttackPosition: status = ""; break;// "攻撃口";
+            case TechTree.AltarCount: status = ""; break;// "開拓者数";
+            case TechTree.ConstructionCost: status = ""; break;// "建設費用";
+            case TechTree.MovementCD: status = ""; break;// "移動CD";
+            case TechTree.Buff: status = ""; break;// "周囲バフ";//真理研究所　无Buff
+            case TechTree.Heresy: status = ""; break;// "異端邪説";
+            default:
+                return "?";
+        }
+
+
+
+        return stg;
+	}
+
 
 }

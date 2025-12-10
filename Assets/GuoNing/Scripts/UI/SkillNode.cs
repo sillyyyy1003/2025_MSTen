@@ -153,6 +153,10 @@ public class SkillNode : MonoBehaviour
 
 		//与外部侧边栏联动
         SkillTreeUIManager.Instance.UpdateSimpleSkillPanel(pieceType);
+
+		//刷新
+		OnSkillButtonClick();
+
     }
 
 

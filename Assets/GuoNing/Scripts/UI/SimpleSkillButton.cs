@@ -117,7 +117,7 @@ public class SimpleSkillButton : MonoBehaviour, IPointerEnterHandler, IPointerEx
 		res -= cost;
 		PlayerDataManager.Instance.SetPlayerResourses(res);
 
-		// 提升等级
+		// 提升等级，树刷新
 		SkillTreeUIManager.Instance.UpgradeCurrentLevel(pieceType, tech);
 		SkillTreeUIManager.Instance.RefreshSkillTreeByPieceType(pieceType);
 
