@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +22,7 @@ public struct SaveData
 	public float bgmVolume;
 	public float seVolume;
 
-	// Custom ID（你说需要一个 ID）
+	// Custom ID
 	public string userID;
 }
 
@@ -39,6 +40,7 @@ public class SaveLoadManager : MonoBehaviour
 	private SaveData currentData;
 	private bool isLoadData = false;
 	public bool IsLoadData => isLoadData;
+	public String UserId => CurrentData.userID;
 	public SaveData CurrentData
 	{
 		get => currentData;

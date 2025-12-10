@@ -40,9 +40,13 @@ public class UnitStatusUI : MonoBehaviour
 
 	[Header("BuildingIcon")]
 	[SerializeField] private BuildingSlot slotPrefab;
-	
+
+	[Header("UIBaseScale")]
+	[SerializeField] private float uiBaseScale = 0.01f;
 
 	List<BuildingSlot> buildingSlots = new List<BuildingSlot>();
+
+
 
 	//================================
 	// メソッド
@@ -261,9 +265,11 @@ public class UnitStatusUI : MonoBehaviour
 		float distance = Vector3.Distance(Camera.main.transform.position, transform.position);
 
 		// 距离越远越大（调节 scaleFactor 来控制）
-		float scaleFactor = distance * 0.01f; // 可调整
+		float scaleFactor = distance * uiBaseScale; // 可调整
 		transform.localScale = Vector3.one * scaleFactor;
 	}
+
+
 	private void RefreshSlotLayout()
 	{
 		float spacing = 5f;
