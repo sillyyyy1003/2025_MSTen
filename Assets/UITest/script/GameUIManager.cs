@@ -105,7 +105,11 @@ public class GameUIManager : MonoBehaviour
     public Image FarmerIcon;
     public Image BuildingIcon;
 
-
+    public Image PopeBackground;
+    public Image MissionaryBackground;
+    public Image SoliderBackground;
+    public Image FarmerBackground;
+    public Image BuildingBackground;
 
 
 
@@ -691,31 +695,36 @@ public class GameUIManager : MonoBehaviour
     public void SetReligionInfo(Religion religion)
     {
         ReligionInfoIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
+        Color Backgroundcolor;
 
         switch (religion)
         {
             case Religion.SilkReligion://丝织教
-                ReligionColor.color = new Color32(128, 0, 128, 255);
-                ReligionName.text = "？？教";
-                ReligionType.text = "？？？？型部族";
-                ReligionDescribe01.text = "・？？？が多い\n" +
-                    "・？？？の？？成功率が高い\n" +
-                    "・？？？の？？？が低い\n" +
-                    "・全体HP強化のコストが？？\n\n\n" +
-                    "・教皇周囲バフ：啓蒙者の？？？アップ\n" +
-                    "・？？の？？：周囲6マスの味方を回復\n";
-                ReligionDescribe02.text = "被動：\n" +
-                     "？？？が12名に達すると、味方全員が残HPの20%を即時回復。";
-                ReligionDescribe03.text = "現在累積：0/??";
+                ReligionColor.color = new Color32(0xE2, 0x77, 0x19, 0xFF);
+                Backgroundcolor = new Color32(0xFF, 0x78, 0x00, 0xFF);
+                ReligionName.text = "シルク村";
+                ReligionType.text = "資源転換と制御型部族";
+                ReligionDescribe01.text = "・啓蒙者誘惑の成功率が大幅に上昇\n" +
+                    "・資源獲得能力がやや高い\n" +
+                    "・総帥が位置交換スキルを使用する際のクールダウンが短い\n" +
+                    "・全体の重量系テクノロジーの消費がやや軽減\n\n" +
+                    "・教皇周囲のバフ：攻撃力が上昇\n" +
+                    "・信徒の献祭による恩恵：周囲6マス以内の駒のHPを回復\n";
+                ReligionDescribe02.text = "森林地形に生成された揺らぎポイントが遺跡へと変化した際、" +
+                    "即座に紅利資源を獲得する（投入された信徒の総数1人につき = 2△△）\n" +
+                     "※各建築につき、この効果は一度のみ発動";
+                ReligionDescribe03.text = "";
+
                 break;
             case Religion.RedMoonReligion://红月教
-                ReligionColor.color = new Color32(128, 0, 128, 255);
+                ReligionColor.color = new Color32(0x68, 0x01, 0x91, 0xFF);
+                Backgroundcolor = new Color32(0xB8, 0x00, 0xFF, 0xFF);
                 ReligionName.text = "紅月教";
                 ReligionType.text = "人海戦術型部族";
                 ReligionDescribe01.text = "・総人口が多い\n" +
                     "・啓蒙者の洗脳成功率が高い\n" +
                     "・守護者の攻撃力が低い\n" +
-                    "・全体HP強化のコストが安い\n\n\n" +
+                    "・全体HP強化のコストが安い\n\n" +
                     "・教皇周囲バフ：啓蒙者の魅了率アップ\n" +
                     "・信徒の献祭：周囲6マスの味方を回復\n";
                 ReligionDescribe02.text = "被動：\n" +
@@ -724,13 +733,14 @@ public class GameUIManager : MonoBehaviour
                 break;
 
             case Religion.MayaReligion://星界教团
-                ReligionColor.color = new Color32(0, 255, 55, 255);
+                ReligionColor.color = new Color32(0x82, 0xC6, 0x3F, 0xFF);
+                Backgroundcolor = new Color32(0x7F, 0xFF, 0x00, 0xFF);
                 ReligionName.text = "NCG_1300 星界教団";
                 ReligionType.text = "戦闘特化型部族";
                 ReligionDescribe01.text = "・洗脳成功率が大幅に低下\n" +
                     "・守衛者の攻撃力が高く、行動力も多い\n" +
                     "・守衛者の維持費が最高\n" +
-                    "・行動力関連の強化コストが安い\n\n\n" +
+                    "・行動力関連の強化コストが安い\n\n" +
                     "・教皇周囲バフ：味方のHP上昇量アップ\n" +
                     "・信徒の献祭回復：周囲6マスの味方を回復\n";
                 ReligionDescribe02.text = "被動：\n" +
@@ -738,13 +748,14 @@ public class GameUIManager : MonoBehaviour
                 ReligionDescribe03.text = "";
                 break;
             case Religion.MadScientistReligion://真理研究所
-                ReligionColor.color = new Color32(31, 80, 255, 255);
+                ReligionColor.color = new Color32(0x1E, 0x3A, 0x6A, 0xFF);
+                Backgroundcolor = new Color32(0x00, 0x5E, 0xFF, 0xFF);
                 ReligionName.text = "真理研究所";
                 ReligionType.text = "知識こそ力だと信じる部族";
                 ReligionDescribe01.text = "・撃破時の獲得ポイントが多い\n" +
                     "・敵啓蒙者の魅了成功率が低い\n" +
                     "・守衛者の維持費が高い\n" +
-                    "・行動力関連の強化コストが安い\n\n\n" +
+                    "・行動力関連の強化コストが安い\n\n" +
                     "・教皇周囲バフ：なし\n" +
                     "・信徒の献祭回復：なし\n";
                 ReligionDescribe02.text = "被動：\n" +
@@ -752,13 +763,14 @@ public class GameUIManager : MonoBehaviour
                 ReligionDescribe03.text = "冷卻時間：8／10回合";
                 break;
             default://默认
-                ReligionColor.color = new Color32(128, 0, 128, 255);
+                ReligionColor.color = new Color32(255, 255, 255, 255);
+                Backgroundcolor = new Color32(255, 255, 255, 255);
                 ReligionName.text = "？？教";
                 ReligionType.text = "？？？？型部族";
                 ReligionDescribe01.text = "・？？？が多い\n" +
                     "・？？？の？？成功率が高い\n" +
                     "・？？？の？？？が低い\n" +
-                    "・全体HP強化のコストが？？\n\n\n" +
+                    "・全体HP強化のコストが？？\n\n" +
                     "・教皇周囲バフ：啓蒙者の？？？アップ\n" +
                     "・？？の？？：周囲6マスの味方を回復\n";
                 ReligionDescribe02.text = "被動：\n" +
@@ -773,7 +785,12 @@ public class GameUIManager : MonoBehaviour
         FarmerIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Farmer, religion);
         BuildingIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Building, religion);
 
-    }
+        PopeBackground.color= Backgroundcolor;
+        MissionaryBackground.color = Backgroundcolor;
+        SoliderBackground.color = Backgroundcolor;
+        FarmerBackground.color = Backgroundcolor;
+        BuildingBackground.color = Backgroundcolor;
+}
 
     /*
     private void RefreshPlayerIcons()
