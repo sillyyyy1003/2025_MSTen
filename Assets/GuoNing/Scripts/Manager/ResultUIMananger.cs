@@ -20,9 +20,10 @@ public class ResultUIManager : MonoBehaviour
 	public Button ResultDetailButton;
 	public Button GameExitButton;
 
+	// 25.12.10 RI add ResultData
+	private ResultData UI_ResultData=new ResultData();
 
-
-	public static ResultUIManager Instance;
+    public static ResultUIManager Instance;
 
 	private void Awake()
 	{
@@ -119,7 +120,13 @@ public class ResultUIManager : MonoBehaviour
 		// ResultButton显示
 		ResultDetailButton.gameObject.SetActive(true);
 	}
+    //25.12.10 RI 添加ResultData
+    public void SetResultData(ResultData data)
+    {
+		UI_ResultData = data;
+    }
 }
+
 
 [System.Serializable]
 public struct ResultData
