@@ -20,8 +20,9 @@ public class GameCamera : MonoBehaviour
 
     [Header("移动设置")]
     private float moveSpeed = 50f;            // WASD移动速度
-    private float edgeScrollSpeed = 50f;     // 鼠标到屏幕边缘时的移动速度
-    private int edgeSize = 100;                // 屏幕边缘触发范围（像素）
+    private float mouseDragSpeed = 0.1f;      // 鼠标拖拽移动速度
+    //private float edgeScrollSpeed = 50f;     // 鼠标到屏幕边缘时的移动速度（已禁用）
+    //private int edgeSize = 100;                // 屏幕边缘触发范围（像素）（已禁用）
 
     [Header("平滑设置")]
     private float rotationSmoothTime = 0.8f;  // 旋转平滑时间
@@ -104,7 +105,7 @@ public class GameCamera : MonoBehaviour
 	    Cursor.lockState = CursorLockMode.None;
 	    Cursor.visible = true;
 
-		Debug.Log($"<color=cyan>GameCamera初始化 - edgeScrollSpeed: {edgeScrollSpeed}, moveSpeed: {moveSpeed}, edgeSize: {edgeSize}</color>");
+		//Debug.Log($"<color=cyan>GameCamera初始化 - edgeScrollSpeed: {edgeScrollSpeed}, moveSpeed: {moveSpeed}, edgeSize: {edgeSize}</color>");
 	  
     }
 
@@ -209,7 +210,6 @@ public class GameCamera : MonoBehaviour
         }
 
         Vector3 keyboardInput = Vector3.zero;
-        Vector3 edgeInput = Vector3.zero;
 
         // 键盘控制 WASD
         float x = Input.GetAxis("Horizontal");
@@ -220,49 +220,10 @@ public class GameCamera : MonoBehaviour
             keyboardInput = new Vector3(x, 0f, z);
         }
 
-        // 鼠标到屏幕边缘
-        Vector3 mousePos = Input.mousePosition;
-        if (mousePos.x >= 0 && mousePos.x <= Screen.width &&
-            mousePos.y >= 0 && mousePos.y <= Screen.height)
-        {
-            bool atEdge = false;
-            string edgeInfo = "";
-
-            if (mousePos.x <= edgeSize)
-            {
-                edgeInput += Vector3.left;
-                atEdge = true;
-                edgeInfo = "左边缘";
-            }
-            if (mousePos.x >= Screen.width - edgeSize)
-            {
-                edgeInput += Vector3.right;
-                atEdge = true;
-                edgeInfo = "右边缘";
-            }
-            if (mousePos.y <= edgeSize)
-            {
-                edgeInput += Vector3.back;
-                atEdge = true;
-                edgeInfo += " 下边缘";
-            }
-            if (mousePos.y >= Screen.height - edgeSize)
-            {
-                edgeInput += Vector3.forward;
-                atEdge = true;
-                edgeInfo += " 上边缘";
-            }
-
-            if (atEdge && showDebugInfo)
-            {
-                Debug.Log($"<color=green>边缘检测:{edgeInfo} - 鼠标:{mousePos}, 屏幕:{Screen.width}x{Screen.height}, 边缘大小:{edgeSize}, 速度:{edgeScrollSpeed}</color>");
-            }
-        }
-
         // 根据相机的yaw旋转移动方向
         Quaternion yawOnly = Quaternion.Euler(0f, yaw, 0f);
 
-        // 分别处理键盘和边缘输入（使用不同的速度）
+        // 处理键盘输入
         if (keyboardInput.sqrMagnitude > 0.0001f)
         {
             keyboardInput.Normalize();
@@ -276,23 +237,38 @@ public class GameCamera : MonoBehaviour
             }
         }
 
-        if (edgeInput.sqrMagnitude > 0.0001f)
-        {
-            edgeInput.Normalize();
-            Vector3 worldDir = yawOnly * edgeInput;
-            Vector3 movement = worldDir * edgeScrollSpeed * Time.deltaTime;
-            focusPoint += movement;
-
-            if (showDebugInfo)
-            {
-                Debug.Log($"<color=red>边缘移动 - 速度:{edgeScrollSpeed}, 移动量:{movement.magnitude}, deltaTime:{Time.deltaTime}</color>");
-            }
-        }
-
         // 限制中心点在地图范围内
         focusPoint = ClampFocusPoint(focusPoint);
     }
 
+    /// <summary>
+    /// 通过鼠标拖拽移动相机
+    /// 由PlayerOperationManager调用
+    /// </summary>
+    /// <param name="mouseDelta">鼠标移动增量（屏幕空间）</param>
+    public void MoveCameraByMouseDrag(Vector3 mouseDelta)
+    {
+        // 根据相机的yaw旋转计算移动方向
+        Quaternion yawOnly = Quaternion.Euler(0f, yaw, 0f);
+
+        // 将屏幕空间的鼠标移动转换为世界空间的相机移动
+        // 注意：鼠标向右拖动，相机应该向左移动（反向）
+        Vector3 dragInput = new Vector3(-mouseDelta.x, 0f, -mouseDelta.y);
+        dragInput.Normalize();
+
+        Vector3 worldDir = yawOnly * dragInput;
+        Vector3 movement = worldDir * mouseDragSpeed * mouseDelta.magnitude;
+
+        focusPoint += movement;
+
+        // 限制中心点在地图范围内
+        focusPoint = ClampFocusPoint(focusPoint);
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"<color=magenta>鼠标拖拽移动 - mouseDelta:{mouseDelta}, 移动量:{movement.magnitude}</color>");
+        }
+    }
     void UpdateCameraPosition()
     {
         // 平滑缩放距离
@@ -337,15 +313,15 @@ public class GameCamera : MonoBehaviour
         return point;
     }
 
-    void OnGUI()
-    {
-        if (showDebugInfo)
-        {
-            GUI.Label(new Rect(10, 10, 400, 20), $"边缘速度: {edgeScrollSpeed}");
-            GUI.Label(new Rect(10, 30, 400, 20), $"键盘速度: {moveSpeed}");
-            GUI.Label(new Rect(10, 50, 400, 20), $"鼠标位置: {Input.mousePosition}");
-            GUI.Label(new Rect(10, 70, 400, 20), $"屏幕尺寸: {Screen.width} x {Screen.height}");
-            GUI.Label(new Rect(10, 90, 400, 20), $"边缘检测范围: {edgeSize} 像素");
-        }
-    }
+    //void OnGUI()
+    //{
+    //    if (showDebugInfo)
+    //    {
+    //        //GUI.Label(new Rect(10, 10, 400, 20), $"边缘速度: {edgeScrollSpeed}");
+    //        //GUI.Label(new Rect(10, 30, 400, 20), $"键盘速度: {moveSpeed}");
+    //        //GUI.Label(new Rect(10, 50, 400, 20), $"鼠标位置: {Input.mousePosition}");
+    //        //GUI.Label(new Rect(10, 70, 400, 20), $"屏幕尺寸: {Screen.width} x {Screen.height}");
+    //        //GUI.Label(new Rect(10, 90, 400, 20), $"边缘检测范围: {edgeSize} 像素");
+    //    }
+    //}
 }
