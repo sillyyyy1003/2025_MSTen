@@ -110,6 +110,10 @@ public class PlayerOperationManager : MonoBehaviour
     private float rightClickTimer = 0f;
     private bool isPressing = false;
 
+    // 左键拖拽
+    private bool isDraggingCamera = false;
+    private Vector3 lastMousePosition;
+    private float dragThreshold = 5f; // 拖拽阈值（像素），防止误触
 
 
 
@@ -169,6 +173,11 @@ public class PlayerOperationManager : MonoBehaviour
                
                 // 2025.12.07 高光更新
                 UpdateHighlight(GetCellUnderCursor());
+            }
+            else
+            {
+                // 在UI上也要处理相机拖拽
+                HandleCameraDrag();
             }
 
             // 更新移动距离
@@ -427,12 +436,13 @@ public class PlayerOperationManager : MonoBehaviour
         {
             return;
         }
-
+        // 处理相机拖拽
+        HandleCameraDrag();
         // 2025.11.13 GuoNing 清除高亮数据 
         ClearClickCellHighlightData();
 
         // 左键点击 - 选择单位
-        if (Input.GetMouseButtonDown(0) && bCanContinue)
+        if (Input.GetMouseButtonDown(0) && bCanContinue && !isDraggingCamera)
         {
             //2025.12.07 Guoning 取消UI高光使用
             //_HexGrid.GetCell(selectCellID).DisableHighlight();
@@ -967,6 +977,56 @@ public class PlayerOperationManager : MonoBehaviour
     public int GetFocusedUnitID()
     {
         return 0;
+    }
+    /// <summary>
+    /// 处理鼠标拖拽移动相机
+    /// </summary>
+    private void HandleCameraDrag()
+    {
+        // 按下左键开始拖拽检测
+        if (Input.GetMouseButtonDown(0))
+        {
+            lastMousePosition = Input.mousePosition;
+            isDraggingCamera = false; // 重置拖拽状态
+        }
+
+        // 持续按住左键
+        if (Input.GetMouseButton(0))
+        {
+            Vector3 currentMousePosition = Input.mousePosition;
+            float dragDistance = Vector3.Distance(currentMousePosition, lastMousePosition);
+
+            // 如果移动距离超过阈值，开始拖拽相机
+            if (dragDistance > dragThreshold)
+            {
+                isDraggingCamera = true;
+            }
+
+            // 如果正在拖拽，移动相机
+            if (isDraggingCamera)
+            {
+                Vector3 mouseDelta = currentMousePosition - lastMousePosition;
+
+                // 调用GameCamera的移动方法
+                if (GameManage.Instance._GameCamera != null)
+                {
+                    GameManage.Instance._GameCamera.MoveCameraByMouseDrag(mouseDelta);
+                }
+
+                lastMousePosition = currentMousePosition;
+            }
+        }
+
+        // 松开左键
+        if (Input.GetMouseButtonUp(0))
+        {
+            // 如果发生了拖拽，则不处理点击事件
+            if (isDraggingCamera)
+            {
+                isDraggingCamera = false;
+                return; // 跳过点击处理
+            }
+        }
     }
     #endregion
     // *************************
@@ -1941,23 +2001,20 @@ public class PlayerOperationManager : MonoBehaviour
     // 取消选择单位的描边
     private void ReturnToDefault()
     {
-     
         if (SelectingUnit != null)
         {
+            Debug.Log("bow selecting unit is " + SelectingUnit == null ? 0 : SelectingUnit.name);
             foreach (Transform child in SelectingUnit.transform)
             {
 
                 child.GetComponent<ChangeMaterial>().Default();
                 SelectingUnit = null;
             }
+            PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+            PlayerDataManager.Instance.nowChooseUnitID = -1;
+            bCanContinue = true;
 
-
-            //var changeMaterial = SelectingUnit.GetComponent<ChangeMaterial>();
-
-            //if (changeMaterial != null)
-            //{
-            //    changeMaterial.Default();
-            //}
+          
         }
     }
     private void ChooseEmptyCell(int cell)
@@ -1996,7 +2053,8 @@ public class PlayerOperationManager : MonoBehaviour
         {
 			OperationBroadcastManager.Instance.ShowMessage("行動力が足りない！");
 			Debug.Log("该单位AP不足！");
-            bCanContinue = true;
+            ReturnToDefault();
+            //bCanContinue = true;
             return;
         }
 
@@ -2007,7 +2065,9 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 Debug.Log("AP不足");
                 _HexGrid.ClearPath();
-                bCanContinue = true;
+
+                ReturnToDefault();
+                //bCanContinue = true;
                 return;
             }
             Sequence moveSequence = DOTween.Sequence();
@@ -2037,7 +2097,6 @@ public class PlayerOperationManager : MonoBehaviour
             moveSequence.OnComplete(() =>
             {
                 // 动画完成后更新数据
-                bCanContinue = true;
 
                 // 更新本地数据
                 PlayerDataManager.Instance.MoveUnit(localPlayerId, fromPos, toPos);
@@ -2090,7 +2149,12 @@ public class PlayerOperationManager : MonoBehaviour
                   
 
                 }
-
+                // 重置选择状态
+                ReturnToDefault();
+                //bCanContinue = true; 
+                //SelectingUnit = null;
+                //PlayerDataManager.Instance.nowChooseUnitID = -1;
+                //PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
 
                 // 发送网络消息 - 移动
                 if (NetGameSystem.Instance != null)
@@ -2116,7 +2180,13 @@ public class PlayerOperationManager : MonoBehaviour
         {
             _HexGrid.ClearPath();
             //Debug.Log("移动失败！cell x "+toPos.x+" cell y "+toPos.y+"  cell unit is " + _HexGrid.GetCell(toPos.x, toPos.y).Unit);
-            bCanContinue = true;
+
+            ReturnToDefault();
+            // 重置选择状态
+            //bCanContinue = true; 
+            //SelectingUnit = null;
+            //PlayerDataManager.Instance.nowChooseUnitID = -1;
+            //PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
         }
 
     }
@@ -2182,11 +2252,11 @@ public class PlayerOperationManager : MonoBehaviour
             UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
             // 重置选择状态
             ReturnToDefault();
-            PlayerDataManager.Instance.nowChooseUnitID = -1;
-            PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+            //PlayerDataManager.Instance.nowChooseUnitID = -1;
+            //PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
 
-            SelectingUnit = null;
-            bCanContinue = true;
+            //SelectingUnit = null;
+            //bCanContinue = true;
         }
 
     }
@@ -2392,7 +2462,9 @@ public class PlayerOperationManager : MonoBehaviour
         else
         {
             Debug.LogError("[Pope交换] 找不到目标单位GameObject");
-            bCanContinue = true;
+            //bCanContinue = true;
+
+            ReturnToDefault();
             return;
         }
 
@@ -2445,7 +2517,9 @@ public class PlayerOperationManager : MonoBehaviour
             if (popeIndex == -1 || targetIndex == -1)
             {
                 Debug.LogError($"[Pope交换] 找不到单位索引: Pope={popeIndex}, Target={targetIndex}");
-                bCanContinue = true;
+
+                ReturnToDefault();
+                //bCanContinue = true;
                 return;
             }
 
@@ -2499,16 +2573,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 5. 更新LastSelectingCellID为Pope的新位置
             LastSelectingCellID = targetCellId;
 
-            //// 6. 消耗Pope的AP
-            //int popeID = popeUnitData.Value.PlayerUnitDataSO.pieceID;
-
-                //// 检查AP是否为0
-                //Piece popePiece = PieceManager.Instance.GetPiece(popeID);
-                //if (popePiece != null && popePiece.CurrentAP <= 0)
-                //{
-                //    PlayerDataManager.Instance.UpdateUnitCanDoActionByPos(localPlayerId, targetPos, false);
-                //    Debug.Log($"[Pope交换] Pope AP为0，bCanDoAction设置为false");
-                //}
+         
             
           
 
@@ -2527,54 +2592,60 @@ public class PlayerOperationManager : MonoBehaviour
                     popeAfterSwap.Value.PlayerUnitDataSO,      // Pope交换后的数据（现在在targetPos）
                     targetAfterSwap.Value.PlayerUnitDataSO     // Target交换后的数据（现在在popePos）
                 );
+                // 重新启用输入
+                ReturnToDefault();
                 Debug.Log($"[Pope交换] 已发送网络同步消息（使用交换后的数据）");
             }
             else
             {
                 Debug.LogError($"[Pope交换] 无法获取交换后的单位数据，网络同步失败！");
+                // 重新启用输入
+                ReturnToDefault();
             }
 
 
-            // ===== 完整上下文参考 =====
 
-            // 在动画完成回调中的完整代码应该是：
+            //swapSequence.OnComplete(() =>
+            //{
+            //    Debug.Log("[Pope交换] 动画完成，开始更新数据");
 
-            swapSequence.OnComplete(() =>
-            {
-                Debug.Log("[Pope交换] 动画完成，开始更新数据");
+            //    // 1-6. 数据更新、GameObject更新、AP消耗等（保持不变）
+            //    // ... 你的现有代码 ...
 
-                // 1-6. 数据更新、GameObject更新、AP消耗等（保持不变）
-                // ... 你的现有代码 ...
+            //    // 7. 网络同步 - 发送交换位置消息
+            //    // ===== 关键修复：必须使用交换后的数据 =====
+            //    PlayerUnitData? popeAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, targetPos);
+            //    PlayerUnitData? targetAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, popePos);
 
-                // 7. 网络同步 - 发送交换位置消息
-                // ===== 关键修复：必须使用交换后的数据 =====
-                PlayerUnitData? popeAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, targetPos);
-                PlayerUnitData? targetAfterSwap = PlayerDataManager.Instance.FindUnit(localPlayerId, popePos);
+            //    if (popeAfterSwap.HasValue && targetAfterSwap.HasValue)
+            //    {
+            //        SyncPopeSwapPosition(
+            //            popePos,
+            //            targetPos,
+            //            popeAfterSwap.Value.PlayerUnitDataSO,
+            //            targetAfterSwap.Value.PlayerUnitDataSO
+            //        );
+            //        Debug.Log($"[Pope交换] 已发送网络同步消息（使用交换后的数据）");
+            //    }
+            //    else
+            //    {
+            //        Debug.LogError($"[Pope交换] 无法获取交换后的单位数据，网络同步失败！");
+            //    }
 
-                if (popeAfterSwap.HasValue && targetAfterSwap.HasValue)
-                {
-                    SyncPopeSwapPosition(
-                        popePos,
-                        targetPos,
-                        popeAfterSwap.Value.PlayerUnitDataSO,
-                        targetAfterSwap.Value.PlayerUnitDataSO
-                    );
-                    Debug.Log($"[Pope交换] 已发送网络同步消息（使用交换后的数据）");
-                }
-                else
-                {
-                    Debug.LogError($"[Pope交换] 无法获取交换后的单位数据，网络同步失败！");
-                }
+            //    // 重新启用输入
 
-                // 重新启用输入
-                bCanContinue = true;
+            //  
+            //    //bCanContinue = true;
+            //    //SelectingUnit = null;
+            //    //PlayerDataManager.Instance.nowChooseUnitID = -1;
+            //    //PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
 
-                Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
-            });
-            // 重新启用输入
-            bCanContinue = true;
+            //    Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
+            //});
+            ////// 重新启用输入
+            ////bCanContinue = true;
 
-            Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
+            ////Debug.Log($"[Pope交换] 位置交换完成！Pope现在在({targetPos.x},{targetPos.y})，目标单位在({popePos.x},{popePos.y})");
 
 
 
@@ -2598,7 +2669,9 @@ public class PlayerOperationManager : MonoBehaviour
         if (!farmerData.HasValue)
         {
             Debug.LogError("[农民进建筑] 找不到农民数据");
-            bCanContinue = true;
+
+            ReturnToDefault();
+            //bCanContinue = true;
             return;
         }
 
@@ -2634,10 +2707,10 @@ public class PlayerOperationManager : MonoBehaviour
 
                     // 重置选择状态
                     ReturnToDefault();
-                    PlayerDataManager.Instance.nowChooseUnitID = -1;
-                    PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
-                    SelectingUnit = null;
-                    bCanContinue = true;
+                    //PlayerDataManager.Instance.nowChooseUnitID = -1;
+                    //PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+                    //SelectingUnit = null;
+                    //bCanContinue = true;
 
                     // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
                     GameManage.Instance.SetCellObject(farmerPos, null);
@@ -2789,7 +2862,9 @@ public class PlayerOperationManager : MonoBehaviour
         if (!IsAdjacentPosition(attackerPos, targetPos))
         {
             Debug.LogError("[ExecuteAttack] 错误：目标不在攻击范围内！");
-            bCanContinue = true;
+
+            ReturnToDefault();
+            //bCanContinue = true;
             return;
         }
 
@@ -2801,7 +2876,9 @@ public class PlayerOperationManager : MonoBehaviour
         if (!attackerData.HasValue)
         {
             Debug.LogError("[ExecuteAttack] 找不到攻击者数据");
-            bCanContinue = true;
+
+            ReturnToDefault();
+            //bCanContinue = true;
             return;
         }
 
@@ -2810,7 +2887,9 @@ public class PlayerOperationManager : MonoBehaviour
         if (!targetData.HasValue)
         {
             Debug.LogError("[ExecuteAttack] 找不到目标数据");
-            bCanContinue = true;
+            //bCanContinue = true;
+
+            ReturnToDefault();
             return;
         }
 
@@ -2839,7 +2918,9 @@ public class PlayerOperationManager : MonoBehaviour
             if (!targetSyncData.HasValue)
             {
                 Debug.LogError("[ExecuteAttack] PieceManager.AttackEnemy 调用失败！");
-                bCanContinue = true;
+                //bCanContinue = true;
+
+                ReturnToDefault();
                 return;
             }
 
@@ -2911,7 +2992,9 @@ public class PlayerOperationManager : MonoBehaviour
             if (targetBuilding == null)
             {
                 Debug.LogError($"[ExecuteAttack] 找不到建筑ID:{targetPieceID}");
-                bCanContinue = true;
+
+                ReturnToDefault();
+                //bCanContinue = true;
                 return;
             }
 
@@ -2920,7 +3003,8 @@ public class PlayerOperationManager : MonoBehaviour
             if (!attackSuccess)
             {
                 Debug.LogError("[ExecuteAttack] 攻击建筑失败！");
-                bCanContinue = true;
+                ReturnToDefault();
+                //bCanContinue = true;
                 return;
             }
 
@@ -3801,6 +3885,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 2025.11.14 Guoning 音声再生
             SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+
+            // 取消选择状态
+            ReturnToDefault();
         }
         else
         {
@@ -3823,7 +3910,9 @@ public class PlayerOperationManager : MonoBehaviour
         if (!IsAdjacentPosition(missionaryPos, targetPos))
         {
             Debug.LogError("[ExecuteCharm] 错误：目标不在魅惑范围内！");
-            bCanContinue = true;
+
+            ReturnToDefault();
+            //bCanContinue = true;
             return;
         }
 
@@ -3832,7 +3921,9 @@ public class PlayerOperationManager : MonoBehaviour
         if (!missionaryData.HasValue)
         {
             Debug.LogError("[ExecuteCharm] 找不到传教士数据");
-            bCanContinue = true;
+
+            ReturnToDefault();
+            //bCanContinue = true;
             return;
         }
 
@@ -3949,7 +4040,14 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[ExecuteCharm] 魅惑完成 - 原所有者:{targetOwnerId}, 新所有者:{localPlayerId}");
 
-        bCanContinue = true;
+        // 重置选择状态
+        ReturnToDefault();
+        //bCanContinue = true;
+        //SelectingUnit = null;
+        //PlayerDataManager.Instance.nowChooseUnitID = -1;
+        //PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+
+
     }
 
     // 处理来自网络的魅惑消息
