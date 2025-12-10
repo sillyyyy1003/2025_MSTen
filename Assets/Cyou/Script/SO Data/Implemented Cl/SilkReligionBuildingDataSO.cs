@@ -18,7 +18,7 @@ namespace GameData
             buildingResourceCost = 12;
 
             // HP（初始, 升級1, 升級2）
-            maxHpByLevel = new int[3] { 25, 30, 45 };
+            maxHpByLevel = new int[3] { 5, 6, 7 };
 
             // 祭壇格子数（初始, 升級1, 升級2）
             maxSlotsByLevel = new int[3] { 3, 4, 5 };
@@ -27,7 +27,7 @@ namespace GameData
             attackRangeByLevel = new int[3] { 0, 1, 2 };
 
             // 各項目のアップグレードコスト
-            hpUpgradeCost = new int[2] { 6, 8 }; // 血量: 25→30(6資源), 30→45(8資源)
+            hpUpgradeCost = new int[2] { 6, 7 }; // 血量: 5→6(6資源), 6→7(7資源)
             attackRangeUpgradeCost = new int[2] { 8, 10 }; // 攻撃範囲: 無→範囲1(8資源), 範囲1→範囲2(10資源)
             slotsUpgradeCost = new int[2] { 8, 10 }; // 祭壇格子數: 3→4(8資源), 4→5(10資源)
 

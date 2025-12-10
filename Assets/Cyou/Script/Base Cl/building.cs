@@ -501,7 +501,7 @@ namespace Buildings
             return true;
         }
         //25.11.26 RI add new FarmerEnter
-        public bool FarmerEnter(int ap)
+        public bool FarmerEnter(int id,int ap)
         {
             Debug.Log("empty slot count is "+newFarmerSlots.Count+" farmer ap is "+ap);
             bool hasEmptySlot = false; ;
@@ -512,7 +512,10 @@ namespace Buildings
                     hasEmptySlot = true;
                     newFarmerSlots[i].farmerAP = ap;
                     newFarmerSlots[i].canInSlot = false;
-                    Debug.Log("this slot is "+i+" this slot ap is " + newFarmerSlots[i].farmerAP + " can In is " + newFarmerSlots[i].canInSlot);
+                    Debug.Log("this slot is " + i + " this slot ap is " + newFarmerSlots[i].farmerAP + " can In is " + newFarmerSlots[i].canInSlot);
+
+                    // 25.12.9 RI 添加格子UI效果
+                    UnitStatusUIManager.Instance.ActivateSlotByID(id,i);
                     break;
                 }
             }
@@ -520,7 +523,7 @@ namespace Buildings
             return hasEmptySlot;
         }
         //25.11.26 RI add New Get Resources
-        public int NewGetResource()
+        public int NewGetResource(int id)
         {
             int res=0;
             for (int i = 0; i < newFarmerSlots.Count; i++)
@@ -535,6 +538,8 @@ namespace Buildings
                     if (newFarmerSlots[i].farmerAP == 0)
                     {
                         newFarmerSlots[i].isActived = false;
+                        // 25.12.9 RI 添加格子UI效果
+                        UnitStatusUIManager.Instance.RemoveSlotFromUnit(id,i);
                         Debug.Log("this slot is unActived! " + i);
                     }
                 }

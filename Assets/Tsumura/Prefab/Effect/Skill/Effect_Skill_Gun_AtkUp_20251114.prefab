@@ -9810,6 +9810,7 @@ GameObject:
   - component: {fileID: 4377320569058854625}
   - component: {fileID: 3852849661341383048}
   - component: {fileID: 5416506845832490829}
+  - component: {fileID: 3234649595472327524}
   m_Layer: 0
   m_Name: Effect_Skill_Gun_AtkUp_20251114
   m_TagString: Untagged
@@ -14630,6 +14631,18 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &3234649595472327524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8722297073198768572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35bc0372d01e8224eb103eb0f152645a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &9199460168369868566
 GameObject:
   m_ObjectHideFlags: 0

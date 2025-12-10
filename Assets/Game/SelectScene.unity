@@ -310,6 +310,7 @@ MonoBehaviour:
   PlayerReligion: 2
   bIsSingle: 0
   bIsDirectConnect: 0
+  mapSerialNumber: -1
 --- !u!4 &48313754
 Transform:
   m_ObjectHideFlags: 0
@@ -1473,7 +1474,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 76.856445, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &313113147
@@ -3723,7 +3724,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 39c83b076ae7f6b4a9905dac2ab06f77, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3872,6 +3873,7 @@ MonoBehaviour:
   RightDetailMenu: {fileID: 1331801380}
   Button_CreateGame: {fileID: 631856370}
   Button_AddGame: {fileID: 64319158}
+  UserID: {fileID: 366579152}
   Text_UserID: {fileID: 874457034}
   Building: {fileID: 781660100}
   Lighting: {fileID: 1931269576}
@@ -4186,7 +4188,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 2}
-  m_SizeDelta: {x: 0, y: 240}
+  m_SizeDelta: {x: 0, y: 160}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &807819824
 MonoBehaviour:
@@ -4238,7 +4240,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 39c83b076ae7f6b4a9905dac2ab06f77, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6864,7 +6866,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1187518268}
   m_Layer: 0
-  m_Name: DropDownComponent
+  m_Name: ResolutionComponent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6948,7 +6950,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: d0ab3240c35e9684cb662b574568f14c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -10368,7 +10370,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 39c83b076ae7f6b4a9905dac2ab06f77, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -10479,7 +10481,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: d0ab3240c35e9684cb662b574568f14c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -12317,21 +12319,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8131400303194852878, guid: 1e29633c4e08377418ebb74526e4dee4,
-        type: 3}
-      propertyPath: dropdown
-      value: 
-      objectReference: {fileID: 856839082}
-    - target: {fileID: 8131400303194852878, guid: 1e29633c4e08377418ebb74526e4dee4,
-        type: 3}
-      propertyPath: fullScreenToggle
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8131400303194852878, guid: 1e29633c4e08377418ebb74526e4dee4,
-        type: 3}
-      propertyPath: fullscreenModeDropdown
-      value: 
-      objectReference: {fileID: 343359481}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
+using GamePieces;
 
 public class SkillNode : MonoBehaviour
 {
@@ -51,7 +53,7 @@ public class SkillNode : MonoBehaviour
 		levelUpPanel = _levelUpPanel;
 		levelUpButton = _button;
 
-		if (SkillTreeUIManager.Instance.GetCurrentLevel(pieceType,techTree) == _skillIndex)
+		if (SkillTreeUIManager.Instance.GetCurrentLevel(pieceType,techTree) >= _skillIndex)
 		{
 			UnlockSkillNode();
 		}
@@ -69,36 +71,52 @@ public class SkillNode : MonoBehaviour
 		levelUpButton.GetComponent<Button>().interactable = false;
 		// 先判断是不是当前级别的
 		int currentLevel = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, techTree);
-		TMP_Text label = levelUpButton.GetComponentInChildren<TMP_Text>();
-		Debug.Log("[SkillNode]CurrentLevel" + currentLevel);
+
+
+        //20251207 Lu 更新Button的详细组件调用
+        TMP_Text label = levelUpButton.transform.Find("LevelUp").GetComponent<TMP_Text>();
+        TMP_Text costNum = levelUpButton.transform.Find("Count").GetComponent<TMP_Text>();
+		GameObject costImage= levelUpButton.transform.Find("Image").gameObject;
+        TMP_Text PieceName = levelUpPanel.transform.Find("LevelUpPiece/PieceName").GetComponent<TMP_Text>();
+        TMP_Text LevelUpDescription = levelUpPanel.transform.Find("LevelUpPiece/LevelUpDescription").GetComponent<TMP_Text>();
+
+        if (PieceName) PieceName.text = PlayerUnitDataInterface.Instance.GetPieceNameByPieceType(pieceType);
+
+        Debug.Log("[SkillNode]CurrentLevel" + currentLevel);
 		Debug.Log("[SkillNode]Skill level:" + SkillIndex);
 		// ------------------------------------------------
 		// ⭐ ① index=0：初始等级，永远解锁，不需要升级
 		// ------------------------------------------------
 		if (skillIndex == 0)
 		{
-			if (label) label.text = "Unlocked";
-			return;
+			if (label) { label.text = "アンロック済"; label.color = Color.white; }
+            if (costNum) costNum.text = $"";
+            if (costImage) costImage.SetActive(false);
+            return;
 		}
 
 		// ------------------------------------------------
 		// ⭐ ② 已解锁等级：skillIndex < currentLevel
 		// ------------------------------------------------
-		if (skillIndex < currentLevel)
+		if (skillIndex <= currentLevel)
 		{
-			if (label) label.text = "Unlocked";
-			return;
+			if (label) { label.text = "アンロック済"; label.color = Color.white; }
+            if (costNum) costNum.text = $"";
+            if (costImage) costImage.SetActive(false);
+            return;
 		}
 
 		// ------------------------------------------------
 		// ⭐ ③ “当前可升级等级”：skillIndex == currentLevel
 		// ------------------------------------------------
-		if (skillIndex == currentLevel + 1) 
+		if (skillIndex == currentLevel + 1)
 		{
 			int cost = GetUpgradeCostByTechType(skillIndex - 1);
-			if (label) label.text = $"Resume {cost} point";
+			if (label) {label.text = $"レベルアップ"; label.color = Color.black; }
+            if (costNum) costNum.text = $"{cost}";
+            if (costImage) costImage.SetActive(true);
 
-			int resource = PlayerDataManager.Instance.GetPlayerResource();
+            int resource = PlayerDataManager.Instance.GetPlayerResource();
 			if (resource >= cost)
 			{
 				levelUpButton.GetComponent<Button>().interactable = true;
@@ -110,8 +128,10 @@ public class SkillNode : MonoBehaviour
 		// ------------------------------------------------
 		// ⭐ ④ 未来等级：skillIndex > currentLevel
 		// ------------------------------------------------
-		if (label) label.text = "？";
-	}
+		if (label) { label.text = "？？？"; label.color = Color.white; }
+        if (costNum) costNum.text = $"";
+        if (costImage) costImage.SetActive(false);
+    }
 
 	public void OnLevelUpButtonClicked()
 	{
@@ -130,7 +150,10 @@ public class SkillNode : MonoBehaviour
 		res -= cost;
 		PlayerDataManager.Instance.SetPlayerResourses(res);
 		GameUIManager.Instance.UpdateResourcesData();
-	}
+
+		//与外部侧边栏联动
+        SkillTreeUIManager.Instance.UpdateSimpleSkillPanel(pieceType);
+    }
 
 
 	// 单位升级
@@ -266,4 +289,8 @@ public class SkillNode : MonoBehaviour
 		}
 		
 	}
+
+
+
+
 }

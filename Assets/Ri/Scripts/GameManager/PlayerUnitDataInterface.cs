@@ -44,11 +44,11 @@ public class PlayerUnitDataInterface : MonoBehaviour
 
     void Start()
     {
-        if (GameManage.Instance._PlayerOperation != null)
-        {
-            GameManage.Instance._PlayerOperation.OnUnitChoosed += OnUnitChoosed;
-
-        }
+       // if (GameManage.Instance._PlayerOperation != null)
+       // {
+       //     GameManage.Instance._PlayerOperation.OnUnitChoosed += OnUnitChoosed;
+       //
+       // }
 
 
 
@@ -58,23 +58,23 @@ public class PlayerUnitDataInterface : MonoBehaviour
     // ********内部数据处理*********
     // *****************************
 
-    private void OnUnitChoosed(int unitid, CardType unittype)
-    {
-
-
-
-        if (ButtonMenuManager.Instance.GetCardTypeChoosed() != unittype)
-        {
-            ButtonMenuManager.Instance.SetCardTypeChoosed(unittype);
-            string nextMenuId = ButtonMenuFactory.GetMenuId(GameData.UI.MenuLevel.Second, unittype);
-            ButtonMenuManager.Instance.LoadMenu(nextMenuId);
-        }
-
-        UnitCardManager.Instance.SetTargetCardType(unittype);
-        UnitCardManager.Instance.SetTargetUnitId(unitid);
-
-
-    }
+    //private void OnUnitChoosed(int unitid, CardType unittype)
+    //{
+    //
+    //
+    //
+    //    if (ButtonMenuManager.Instance.GetCardTypeChoosed() != unittype)
+    //    {
+    //        ButtonMenuManager.Instance.SetCardTypeChoosed(unittype);
+    //        string nextMenuId = ButtonMenuFactory.GetMenuId(GameData.UI.MenuLevel.Second, unittype);
+    //        ButtonMenuManager.Instance.LoadMenu(nextMenuId);
+    //    }
+    //
+    //    UnitCardManager.Instance.SetTargetCardType(unittype);
+    //    UnitCardManager.Instance.SetTargetUnitId(unitid);
+    //
+    //
+    //}
 
 
 
@@ -517,6 +517,42 @@ public class PlayerUnitDataInterface : MonoBehaviour
             default:
                 Debug.LogError($"未知的 PieceType: {pieceType}");
                 return CardType.Farmer; // 默认返回Farmer
+        }
+    }
+
+    //20251207 Lu UI字符显示用
+    public string GetPieceNameByPieceType(PieceType type)
+    {
+        switch (type)
+        {
+            case PieceType.Farmer: return "村人";
+            case PieceType.Military: return "守護者";
+            case PieceType.Missionary: return "長老";
+            case PieceType.Pope: return "象徴";
+            case PieceType.Building: return "特殊建物";
+            default:
+                return "?";
+        }
+    }
+
+    public string GetTechNameByTechTree(TechTree tech)
+    {
+        switch (tech)
+        {
+            case TechTree.HP: return "HP";
+            case TechTree.AP: return "行動力";
+            case TechTree.Occupy: return "占領確率";
+            case TechTree.Conversion: return "伝教確率";
+            case TechTree.ATK: return "攻撃力";
+            case TechTree.Sacrifice: return "奉仕";
+            case TechTree.AttackPosition: return "攻撃口";
+            case TechTree.AltarCount: return "祭壇数";
+            case TechTree.ConstructionCost: return "建設費用";
+            case TechTree.MovementCD: return "移動CD";
+            case TechTree.Buff: return "バフ";
+            case TechTree.Heresy: return "異端邪説";
+            default:
+                return "?";
         }
     }
 }

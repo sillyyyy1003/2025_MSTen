@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -70,17 +71,23 @@ public class SkillTreeUIManager : MonoBehaviour
 	{
 		Initialize();
 
-		// 注册事件
-		PopeNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Pope, isOn));
-		MissionaryNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Missionary, isOn));
-		FarmerNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Farmer, isOn));
-		SoliderNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Military, isOn));
-		BuildingNavi.onValueChanged.AddListener((isOn)=>OnToggleChanged(PieceType.Building,isOn));
+        // 注册事件
+        //PopeNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Pope, isOn));
+        //MissionaryNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Missionary, isOn));
+        //FarmerNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Farmer, isOn));
+        //SoliderNavi.onValueChanged.AddListener((isOn) => OnToggleChanged(PieceType.Military, isOn));
+        //BuildingNavi.onValueChanged.AddListener((isOn)=>OnToggleChanged(PieceType.Building,isOn));
+        // 默认显示 Pope
+        //OnToggleChanged(PieceType.Pope, true);
 
-		// 默认显示 Pope
-		OnToggleChanged(PieceType.Pope, true);
+        //20251209 Lu 默认全部显示
+        PopeTransform.gameObject.SetActive(true);
+        MissionaryTransform.gameObject.SetActive(true);
+        FarmerTransform.gameObject.SetActive(true);
+        SoliderTransform.gameObject.SetActive(true);
+        BuildingTransform.gameObject.SetActive(true);
 
-		levelUpInfoPanel.gameObject.SetActive(false);
+        levelUpInfoPanel.gameObject.SetActive(false);
 	}
 	public void Initialize()
     {
@@ -220,7 +227,10 @@ public class SkillTreeUIManager : MonoBehaviour
 
 	}
 
-	private void CreateBuildingSkillTree()
+    //============================================================
+    // 5   建筑 Building
+    //============================================================
+    private void CreateBuildingSkillTree()
 	{
 		var dataSO =
 			GameManage.Instance._BuildingManager.GetBuildingDataByReligion(SceneStateManager.Instance.PlayerReligion);
@@ -398,4 +408,87 @@ public class SkillTreeUIManager : MonoBehaviour
 			panel.Refresh();
 		}
 	}
+
+    //增加树刷新的对外接口
+    public void RefreshSkillTreeByPieceType(PieceType pieceType)
+	{
+        switch (pieceType)
+        {
+            case PieceType.Pope:
+                for (int i = PopeTransform.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = PopeTransform.GetChild(i);
+
+                    if (child.name.StartsWith("Skill Branch"))
+                    {
+                        Destroy(child.gameObject);
+                    }
+                }
+				CreatePopeSkillTree();
+
+                break;
+            case PieceType.Missionary:
+                for (int i = MissionaryTransform.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = MissionaryTransform.GetChild(i);
+
+                    if (child.name.StartsWith("Skill Branch"))
+                    {
+                        Destroy(child.gameObject);
+                    }
+                }
+				CreateMissionarySkillTree();
+
+                break;
+            case PieceType.Military:
+                for (int i = SoliderTransform.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = SoliderTransform.GetChild(i);
+
+                    if (child.name.StartsWith("Skill Branch"))
+                    {
+                        Destroy(child.gameObject);
+                    }
+                }
+				CreateSoldierSkillTree();
+
+                break;
+            case PieceType.Farmer:
+                for (int i = FarmerTransform.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = FarmerTransform.GetChild(i);
+
+                    if (child.name.StartsWith("Skill Branch"))
+                    {
+                        Destroy(child.gameObject);
+                    }
+                }
+				CreateFarmerSkillTree();
+
+                break;
+            case PieceType.Building:
+                for (int i = BuildingTransform.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = BuildingTransform.GetChild(i);
+
+                    if (child.name.StartsWith("Skill Branch"))
+                    {
+                        Destroy(child.gameObject);
+                    }
+                }
+				CreateBuildingSkillTree();
+
+                break;
+
+            default:
+                break;
+	
+	
+        }
+	
+	
+	
+	
+    }
+
 }

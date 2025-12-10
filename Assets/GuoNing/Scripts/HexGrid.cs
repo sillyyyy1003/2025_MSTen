@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GameData;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -76,6 +77,8 @@ public class HexGrid : MonoBehaviour
 
 	HexCellShaderData cellShaderData;
 
+	private const int MAX_PATH = 128;
+	private static readonly Vector4[] PathBuffer = new Vector4[MAX_PATH];
 	void Awake()
 	{
 		CellCountX = 20;
@@ -139,8 +142,9 @@ public class HexGrid : MonoBehaviour
 			return false;
 		}
 
-		ClearPath();
-		ClearUnits();
+		ClearPathHighlight();
+		//ClearPath();
+		//ClearUnits();
 		if (columns != null)
 		{
 			for (int i = 0; i < columns.Length; i++)
@@ -462,6 +466,188 @@ public class HexGrid : MonoBehaviour
 		ClearPathHighlight();
 	}
 
+	/// <summary>
+	/// 获取从某个 Cell 出发，在 speed & 移动规则下，所有 “路径距离 <= maxRange” 的 Cell。
+	/// 这个方法复用了寻路中的过滤规则（障碍、单位、水域、特殊建筑、悬崖等）。
+	/// </summary>
+	public List<HexCell> GetReachableCells(int startCellID, int speed, int maxRange)
+	{
+		List<HexCell> reachable = new List<HexCell>();
+		HexCell start = GetCell(startCellID);
+		if (start == null|| speed <= 0) return reachable;
+
+		// BFS 队列
+		Queue<HexCell> frontier = new Queue<HexCell>();
+
+		searchFrontierPhase += 2;
+
+		start.SearchPhase = searchFrontierPhase;
+		start.Distance = 0;
+		frontier.Enqueue(start);
+		reachable.Add(start);
+
+		while (frontier.Count > 0)
+		{
+			HexCell current = frontier.Dequeue();
+
+			int currentTurn = (current.Distance - 1) / speed;
+
+			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+			{
+				if (!current.TryGetNeighbor(d, out HexCell neighbor))
+					continue;
+
+				// 已经访问过
+				if (neighbor.SearchPhase >= searchFrontierPhase)
+					continue;
+
+				// ---- 与寻路一致的过滤规则 ----
+
+				// 水域不通过
+				if (neighbor.IsUnderwater)
+					continue;
+
+				// 不允许站在单位上
+				if (neighbor.Unit)
+					continue;
+
+				// 特殊建筑阻挡
+				if (neighbor.SpecialIndex == (int)SpecialIndexType.Temple)
+					continue;
+
+				// 悬崖不能通过
+				if (current.GetEdgeType(neighbor) == HexEdgeType.Cliff)
+					continue;
+
+				// 高地限制
+				if (neighbor.Elevation >= 2)
+					continue;
+
+				// ---- 移动代价计算 ----
+				int moveCost = current.HasRoadThroughEdge(d) ? 1 : 1;
+
+				int newDistance = current.Distance + moveCost;
+				int newTurn = (newDistance - 1) / speed;
+				if (newTurn > currentTurn)
+				{
+					newDistance = newTurn * speed + moveCost;
+				}
+
+				if (newDistance > maxRange)
+					continue;
+
+				// ---- 合法可达 ----
+				neighbor.SearchPhase = searchFrontierPhase;
+				neighbor.Distance = newDistance;
+
+				frontier.Enqueue(neighbor);
+				reachable.Add(neighbor);
+			}
+		}
+
+		return reachable;
+	}
+
+
+	public List<HexCell> GetReachableCells(int startCellID, int speed, int maxRange, PieceType pieceType)
+	{
+		List<HexCell> reachable = new List<HexCell>();
+		HexCell start = GetCell(startCellID);
+		if (start == null||speed==0) return reachable;
+
+		// Missionary 需要用到玩家领地格子，提前准备
+		List<HexCell> ownedCells = null;
+		if (pieceType == PieceType.Missionary)
+		{
+			List<int> ownedIDs = PlayerDataManager.Instance
+				.GetPlayerData(GameManage.Instance.LocalPlayerID)
+				.PlayerOwnedCells;
+
+			ownedCells = new List<HexCell>(ownedIDs.Count);
+			for (int i = 0; i < ownedIDs.Count; i++)
+				ownedCells.Add(GetCell(ownedIDs[i]));
+		}
+
+		// BFS 队列
+		Queue<HexCell> frontier = new Queue<HexCell>();
+
+		searchFrontierPhase += 2;
+
+		start.SearchPhase = searchFrontierPhase;
+		start.Distance = 0;
+		frontier.Enqueue(start);
+		reachable.Add(start);
+
+		while (frontier.Count > 0)
+		{
+			HexCell current = frontier.Dequeue();
+
+			int currentTurn = (current.Distance - 1) / speed;
+
+			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+			{
+				if (!current.TryGetNeighbor(d, out HexCell neighbor))
+					continue;
+
+				// 已访问
+				if (neighbor.SearchPhase >= searchFrontierPhase)
+					continue;
+
+				// ======== Missionary 的特殊限制：必须在玩家领地 3 格以内 ========
+				if (pieceType == PieceType.Missionary)
+				{
+					if (!SearchCellRange(ownedCells, neighbor, 3))
+						continue;
+				}
+
+				if(pieceType==PieceType.Farmer)
+				{
+					if (!CanEnterCell(pieceType, neighbor.Index))
+						continue;
+				}
+
+				// =================================================================
+
+				// ---- 与寻路一致的过滤规则 ----
+
+				if (neighbor.IsUnderwater)
+					continue;
+
+				if (neighbor.Unit)
+					continue;
+
+				if (neighbor.SpecialIndex == (int)SpecialIndexType.Temple)
+					continue;
+
+				if (current.GetEdgeType(neighbor) == HexEdgeType.Cliff)
+					continue;
+
+				if (neighbor.Elevation >= 2)
+					continue;
+
+				// ---- 移动代价 ----
+				int moveCost = current.HasRoadThroughEdge(d) ? 1 : 1;
+
+				int newDistance = current.Distance + moveCost;
+				int newTurn = (newDistance - 1) / speed;
+				if (newTurn > currentTurn)
+					newDistance = newTurn * speed + moveCost;
+
+				if (newDistance > maxRange)
+					continue;
+
+				// ---- 合法可达 ----
+				neighbor.SearchPhase = searchFrontierPhase;
+				neighbor.Distance = newDistance;
+
+				frontier.Enqueue(neighbor);
+				reachable.Add(neighbor);
+			}
+		}
+
+		return reachable;
+	}
+
 	void ShowPath(int speed)
 	{
 		if (currentPathExists)
@@ -488,19 +674,19 @@ public class HexGrid : MonoBehaviour
 			return;
 		}
 
-		Vector4[] coords = new Vector4[path.Count];
+		int count = Mathf.Min(path.Count, MAX_PATH);
 
-		for (int i = 0; i < path.Count; i++)
+		for (int i = 0; i < count; i++)
 		{
-			coords[i] = new Vector4(
+			PathBuffer[i] = new Vector4(
 				path[i].Coordinates.HexX,
 				path[i].Coordinates.HexZ,
 				0.5f, 0
 			);
 		}
 
-		Shader.SetGlobalInt("_PathCount", path.Count);
-		Shader.SetGlobalVectorArray("_PathCells", coords);
+		Shader.SetGlobalInt("_PathCount", count);
+		Shader.SetGlobalVectorArray("_PathCells", PathBuffer);
 		Shader.SetGlobalColor("_PathColor", pathColor);
 	}
 
@@ -608,6 +794,11 @@ public class HexGrid : MonoBehaviour
 				{
 					continue;
 				}
+				// 高低不考虑
+				if (neighbor.Elevation >= 2)
+				{
+					continue;
+				}
 
 				int moveCost;
 				if (current.HasRoadThroughEdge(d))
@@ -616,14 +807,7 @@ public class HexGrid : MonoBehaviour
 				}
 				else
 				{
-					//// 如果是平地，距离+1，如果是斜坡，距离+2 //todo:这个地方需要可以人工修改
-					//moveCost = edgeType == HexEdgeType.Flat ? 2 : 4;
-
-					//int ForestEffecetor = 1, FarmEffecetor = 1, PlantEffecetor = 1; //均假设特征影响力为1 之后再进行修改
-					//moveCost += neighbor.UrbanLevel * ForestEffecetor + neighbor.FarmLevel * FarmEffecetor +
-					//			neighbor.PlantLevel * PlantEffecetor;
 					moveCost = 1;
-
 				}
 
 				int distance = current.Distance + moveCost;
@@ -662,7 +846,161 @@ public class HexGrid : MonoBehaviour
 		return false;
 	}
 
+	public void FindPath(int fromCellID, int toCellID, int speed, PieceType type)
+	{
+		ClearPathHighlight();
+		currentPathFromIndex = fromCellID;
+		currentPathToIndex = toCellID;
+		currentPathExists = Search(GetCell(fromCellID), GetCell(toCellID), speed, type);
+		ShowPathWithShader(speed);
+	}
 
+
+	bool Search(HexCell fromCell, HexCell toCell, int speed, PieceType pieceType)
+	{
+
+		searchFrontierPhase += 2;
+		if (searchFrontier == null)
+		{
+			searchFrontier = new HexCellPriorityQueue();
+		}
+		else
+		{
+			searchFrontier.Clear();
+		}
+
+		//广度优先搜索
+		fromCell.SearchPhase = searchFrontierPhase;
+		fromCell.Distance = 0;
+		searchFrontier.Enqueue(fromCell);
+
+		while (searchFrontier.Count > 0)
+		{
+			HexCell current = searchFrontier.Dequeue();
+			current.SearchPhase += 1;
+			//当前单元格是目标单元格 中止搜索
+			if (current == toCell)
+			{
+				return true;
+			}
+
+			int currentTurn = (current.Distance - 1) / speed;
+
+			for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+			{
+				
+				if (!current.TryGetNeighbor(d, out HexCell neighbor) ||
+					neighbor.SearchPhase > searchFrontierPhase)
+				{
+					continue;
+				}
+
+				// Missionary 不能离开领地三格内
+				if (pieceType == PieceType.Missionary)
+				{
+					// 获取玩家占领的格子 ID 列表
+					List<int> ownedCellIDs = PlayerDataManager.Instance
+						.GetPlayerData(GameManage.Instance.LocalPlayerID)
+						.PlayerOwnedCells;
+
+					// 将 ownedCellIDs 转换为 HexCell 列表（一次性转换更快）
+					// ※ 建议把这个缓存起来，不要每帧重复创建（如果需要我可以帮你改成缓存版）
+					List<HexCell> ownedCells = new List<HexCell>(ownedCellIDs.Count);
+					for (int j = 0; j < ownedCellIDs.Count; j++)
+					{
+						ownedCells.Add(GetCell(ownedCellIDs[j])); // ← 用你的 GetCell(id) API
+					}
+
+					// 如果 neighbor 不在玩家领地 3 格内，不能进入
+					if (!SearchCellRange(ownedCells, neighbor, 3))
+					{
+						continue;
+					}
+				}
+
+
+				if (!CanEnterCell(pieceType, neighbor.Index))
+				{
+					continue;
+				}
+
+				// 水域不考虑 且不考虑有单位的格子
+				if (neighbor.IsUnderwater || neighbor.Unit)
+				{
+					continue;
+				}
+
+				//2025.11.06 追加特殊建筑不可通过 从寻路中剔除
+				if (neighbor.SpecialIndex == (int)SpecialIndexType.Temple)
+				{
+					continue;
+				}
+
+				// 山地不考虑
+				HexEdgeType edgeType = current.GetEdgeType(neighbor);
+				if (edgeType == HexEdgeType.Cliff)
+				{
+					continue;
+				}
+				// 高低不考虑
+				if (neighbor.Elevation >= 2)
+				{
+					continue;
+				}
+
+				int moveCost;
+				if (current.HasRoadThroughEdge(d))
+				{
+					moveCost = 1;
+				}
+				else
+				{
+					moveCost = 1;
+				}
+
+				int distance = current.Distance + moveCost;
+				int turn = (distance - 1) / speed;
+				if (turn > currentTurn)
+				{
+					distance = turn * speed + moveCost;
+				}
+
+				if (neighbor.SearchPhase < searchFrontierPhase)
+				{
+					neighbor.SearchPhase = searchFrontierPhase;
+					neighbor.Distance = distance;
+				
+					neighbor.PathFromIndex = current.Index;
+					neighbor.SearchHeuristic =
+						neighbor.Coordinates.DistanceTo(toCell.Coordinates);
+					searchFrontier.Enqueue(neighbor);
+				}
+				else if (distance < neighbor.Distance)
+				{
+					int oldPriority = neighbor.SearchPriority;
+					neighbor.Distance = distance;
+				
+					neighbor.PathFromIndex = current.Index;
+					searchFrontier.Change(neighbor, oldPriority);
+				}
+
+			}
+		}
+
+		return false;
+	}
+
+
+	bool CanEnterCell(PieceType type, int cellID)
+	{
+		if (type == PieceType.Farmer)
+		{
+			return PlayerDataManager.Instance.GetAllPlayersData()[GameManage.Instance.LocalPlayerID].PlayerOwnedCells.Contains(cellID);
+		}
+
+		// 其他棋子不限制
+		return true;
+	}
 	/// <summary>
 	/// 判断某个Hex Cell到玩家领地是否在距离范围内
 	/// </summary>
@@ -718,8 +1056,7 @@ public class HexGrid : MonoBehaviour
 
 
 
-
-	/*
+/*
 	/// <summary>
 	   /// Try to find a path.
 	   /// </summary>

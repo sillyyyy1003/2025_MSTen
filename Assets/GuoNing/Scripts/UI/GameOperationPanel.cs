@@ -48,7 +48,10 @@ public class GameOperationPanel : MonoBehaviour
 	private int BuyUnitCellID = -1;     // 在哪个格子购买单位
 	HexCell GetCellUnderCursor() =>
 		hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
+	static readonly int rightClickHighlightId = Shader.PropertyToID("_RightClickHighlight");
+	static readonly int rightClickHighlightColorId = Shader.PropertyToID("_RightClickColor");
 
+	bool isClosePanel;
 	void Start()
 	{
 		dataManager = PlayerDataManager.Instance;
@@ -81,10 +84,22 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 绑定事件
 		SpecialButton.onClick.AddListener(OnSpecialButtonClick);
+		// 设定右键点击高光
+		Shader.SetGlobalColor(rightClickHighlightColorId, new Color(0f, 0f, 1f, 1f));   // 蓝色 Click
 	}
 
 	void Update()
 	{
+
+		// 如果不是我的回合 则不处理
+		if (!GameManage.Instance._PlayerOperation.IsMyTurn){
+			if (!isClosePanel)
+			{
+				CloseStorePanel();
+				isClosePanel = true;
+			}
+			return;
+		}
 
 		if (GameManage.Instance.GetIsGamingOrNot() == false)
 		{
@@ -136,11 +151,11 @@ public class GameOperationPanel : MonoBehaviour
 
 		int2 pos = GameManage.Instance.GetBoardInfor(cell.Index).Cells2DPos;
 
-		// 如果目标格子没有单位 则显示移动面板
+		// 如果目标格子没有单位 则不显示
 		if (!cell.Unit)
 		{
-			ShowMovePanelIfNeeded(cell);
-			UpdatePanelPos();
+			//ShowMovePanelIfNeeded(cell);
+			//UpdatePanelPos();
 			return;
 		}
 
@@ -190,6 +205,9 @@ public class GameOperationPanel : MonoBehaviour
 		BuyUnitCellID = cell.Index;
 		Vector3 cellWorldPos = cell.Position;
 
+		//UpdateRightClickHighlight(cell);
+
+
 		//将格子位置转换为屏幕UI的位置
 		if (StorePanelTransform == null)
 		{
@@ -226,6 +244,7 @@ public class GameOperationPanel : MonoBehaviour
 
 	private void CloseStorePanel()
 	{
+		//ClearRightClickCellHighlightData();
 		StorePanelTransform.gameObject.SetActive(false);
 	}
 
@@ -260,7 +279,6 @@ public class GameOperationPanel : MonoBehaviour
 		if (unitDataInterface.TryBuyUnitToMapByType(CardType.Building, BuyUnitCellID))
 			OnCardTypeBought?.Invoke();
 		CloseStorePanel();
-
 	}
 
 	private void HandleFarmer(HexCell cell, int2 pos, bool isLocal)
@@ -272,14 +290,14 @@ public class GameOperationPanel : MonoBehaviour
 			if (target.HasValue && target.Value.IsBuilding())
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-				ShowPanel("建物入る.");
+				ShowPanel("建物に入る");
 				UpdatePanelPos();
 			}
 			else
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Cure);
-				ShowButtonPanel("治療：" + cost);
+				ShowButtonPanel("治療");
 
 				UpdatePanelPos(cell,true);
 			}
@@ -288,29 +306,42 @@ public class GameOperationPanel : MonoBehaviour
 
 	private void HandleMissionary(HexCell cell, int2 pos, bool isLocal)
 	{
-		if (!isLocal)
-		{
-			// 如果目标格子距离选中格子的距离大于1则不显示
-			if (GetDistanceFurtherThanValue(1, cell)) return;
+		//if (!isLocal)
+		//{
+		//	// 如果目标格子距离选中格子的距离大于1则不显示
+		//	if (GetDistanceFurtherThanValue(1, cell)) return;
 
-			// 创建面板数据 显示面板
-			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
-			ShowPanel("伝教：" + cost);
-			UpdatePanelPos();
-			return;
-		}
+		//	// 创建面板数据 显示面板
+		//	MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
+		//	int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
+		//	ShowPanel("伝教：" + cost);
+		//	UpdatePanelPos();
+		//	return;
+		//}
 
 		// 占领逻辑
 		if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) == cell.Index)
 		{
-			Debug.Log("Unit Cell ID:" + dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) + "cell id:" + cell.Index);
+			// 25.12.9 RI 修改update中的Debug
+			//Debug.Log("Unit Cell ID:" + dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) + "cell id:" + cell.Index);
 			int cellOwner = dataManager.GetCellOwner(cell.Index);
 			if (cellOwner != GameManage.Instance.LocalPlayerID)
 			{
-				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int occupy = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Occupy);
-				ShowButtonPanel("占領:" + occupy);
+				
+				// 如果行动力不足 则按钮无法交互
+				if(PieceManager.Instance.GetPieceAP(dataManager.nowChooseUnitID) < occupy)
+				{
+					ShowButtonPanel("占領: 行動力不足");
+					SpecialButton.interactable = false;
+
+				}
+				else
+				{
+					ShowButtonPanel("占領: " + occupy + " 行動力");
+					SpecialButton.interactable = true;
+				}
+
 				UpdatePanelPos(cell, true);
 			}
 		}
@@ -325,9 +356,10 @@ public class GameOperationPanel : MonoBehaviour
 		// 如果冷却未结束 则不能交换位置则显示冷却信息
 		if (!PieceManager.Instance.GetCanPopeSwap(dataManager.nowChooseUnitID))
 		{
-			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-			ShowPanel("Switch is not ready!");
-			UpdatePanelPos();
+			//MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
+			//ShowPanel("Switch is not ready!");
+			//UpdatePanelPos();
+			OperationBroadcastManager.Instance.ShowMessage("スキルはクールダウン中");
 			return;
 		}
 
@@ -338,7 +370,7 @@ public class GameOperationPanel : MonoBehaviour
 			if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) != cell.Index)
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-				ShowPanel("位置交換:2");
+				ShowPanel("位置交換可能");
 				UpdatePanelPos();
 			}
 		}
@@ -355,7 +387,7 @@ public class GameOperationPanel : MonoBehaviour
 
 			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Attack);
-			ShowPanel("攻撃：" + cost);
+			ShowPanel("攻撃： " + cost+" 行動力");
 		}
 
 		UpdatePanelPos();
@@ -511,4 +543,29 @@ public class GameOperationPanel : MonoBehaviour
 		GameManage.Instance._PlayerOperation.OnSpecialSkillButtonClick();
 		ActionPanelTransform.gameObject.SetActive(false);
 	}
+
+	// *************************
+	// 追加高亮选择处理(Right Click)
+	// *************************
+	//void UpdateRightClickHighlight(HexCell cell)
+	//{
+	//	if (cell == null)
+	//	{
+	//		Shader.SetGlobalVector(rightClickHighlightId, new Vector4(0, 0, -1, 0)); // 关闭
+	//		return;
+	//	}
+
+	//	Shader.SetGlobalVector(
+	//		rightClickHighlightId,
+	//		new Vector4(
+	//			cell.Coordinates.HexX,
+	//			cell.Coordinates.HexZ,
+	//			0.5f,
+	//			HexMetrics.wrapSize
+	//		)
+	//	);
+	//}
+	// 清理右键高亮数据
+	//void ClearRightClickCellHighlightData() =>
+	//Shader.SetGlobalVector(rightClickHighlightId, new Vector4(0f, 0f, -1f, 0f));
 }

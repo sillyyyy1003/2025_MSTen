@@ -42,6 +42,7 @@ public class GameOption : MonoBehaviour
 	public TMP_Dropdown fullScreenDropdown;
 	public Toggle gridToggle;
 
+	public RectTransform EndTrunButton;
 	private bool isOpen = false;
 
 	void Start()
@@ -124,6 +125,7 @@ public class GameOption : MonoBehaviour
 		Menu.gameObject.SetActive(true);
 		FirstLayer.gameObject.SetActive(true);
 		SecondLayer.gameObject.SetActive(false);
+		EndTrunButton.gameObject.SetActive(false);
 	}
 
 	/// <summary>
@@ -135,6 +137,19 @@ public class GameOption : MonoBehaviour
 		GameManage.Instance.SetIsGamingOrNot(true);
 		Debug.Log(GameManage.Instance!=null);
 		Menu.gameObject.SetActive(false);
+		EndTrunButton.gameObject.SetActive(true);
+	}
+
+	public void DoMenu()
+	{
+		if (isOpen)
+		{
+			CloseMenu();
+		}
+		else
+		{
+			OpenMenu();
+		}
 	}
 
 	public void CloseSecondLayer()

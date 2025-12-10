@@ -5,30 +5,44 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
+using UnityEngine.EventSystems;
 
-public class SimpleSkillButton : MonoBehaviour
+public class SimpleSkillButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
 	[Header("UI")]
 	public TMP_Text skillNameText;
 	public TMP_Text levelText;
-	public TMP_Text costText;
-	public Button upgradeButton;
+    public Image Outline;
+    public Button upgradeButton;
+    public GameObject hoverPrefab;
 
-	private PieceType pieceType;
+    private GameObject hoverInstance;
+    private PieceType pieceType;
 	private TechTree tech;
 	private SimpleSkillPanel panel;
+    private Color normalColor;
+    private Color highlightedColor;
+    private Color disabledColor;
 
-	public void Initialize(PieceType type, TechTree techTree, SimpleSkillPanel panel)
+
+    public void Initialize(PieceType type, TechTree techTree, SimpleSkillPanel panel)
 	{
 		this.pieceType = type;
 		this.tech = techTree;
 		this.panel = panel;
 
-		skillNameText.text = tech.ToString();
+		//20251207 Lu改变字符取用
+		skillNameText.text = PlayerUnitDataInterface.Instance.GetTechNameByTechTree(tech);
 
 		upgradeButton.onClick.AddListener(OnClickUpgrade);
 
-		Refresh();
+        SetupButtonColors(0);
+        if (pieceType == PieceType.Pope) SetupButtonColors(1);
+
+        Refresh();
+
+
 	}
 
 	/// <summary>
@@ -36,35 +50,63 @@ public class SimpleSkillButton : MonoBehaviour
 	/// </summary>
 	public void Refresh()
 	{
-		int currentLv = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, tech);
 
-		// 获取最大等级
-		int maxLv = GetMaxLevel(pieceType, tech);
+        EventSystem.current.SetSelectedGameObject(null);
 
-		if (currentLv >= maxLv)
-		{
-			levelText.text = $"Lv.MAX";
-			costText.text = "";
-			upgradeButton.interactable = false;
-			return;
-		}
+        levelText.color = normalColor;
+		skillNameText.color = normalColor;
 
-		// 显示下一级等级
-		int nextLevel = currentLv + 1;
-		levelText.text = $"Lv.{nextLevel}";
 
-		// 获取升级消耗
-		int cost = GetUpgradeCost(pieceType, tech, currentLv);
-		costText.text = $"Cost: {cost}";
+        int currentLv = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, tech);
+        levelText.text = $"Lv.{currentLv+1}";
+
+        // 获取最大等级
+        int maxLv = GetMaxLevel(pieceType, tech);
+
+        if (currentLv >= maxLv-1)
+        {
+            levelText.text = $"MAX";
+            levelText.color = disabledColor;
+            skillNameText.color = disabledColor;
+            upgradeButton.interactable = false;
+            return;
+        }
+
+        // 获取升级消耗
+        int cost = GetUpgradeCost(pieceType, tech, currentLv);
 
 		// 判断资源够不够
 		int playerID = GameManage.Instance.LocalPlayerID;
 		int resource = PlayerDataManager.Instance.GetPlayerData(playerID).Resources;
 
 		upgradeButton.interactable = resource >= cost;
-	}
+		if(!upgradeButton.interactable)
+		{
+            levelText.color = disabledColor;
+            skillNameText.color = disabledColor;
+        }
 
-	private void OnClickUpgrade()
+    }
+
+    void Update()
+    {
+        if (hoverInstance != null)
+        {
+            // 跟随当前鼠标
+            Vector2 pos;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                GetComponentInParent<Canvas>().transform as RectTransform,
+                Input.mousePosition,
+                null,
+                out pos
+            );
+
+            hoverInstance.GetComponent<RectTransform>().anchoredPosition = pos + new Vector2(80f, -30f);
+        }
+    }
+
+
+    private void OnClickUpgrade()
 	{
 		int currentLv = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, tech);
 		int cost = GetUpgradeCost(pieceType, tech, currentLv);
@@ -77,16 +119,20 @@ public class SimpleSkillButton : MonoBehaviour
 
 		// 提升等级
 		SkillTreeUIManager.Instance.UpgradeCurrentLevel(pieceType, tech);
+		SkillTreeUIManager.Instance.RefreshSkillTreeByPieceType(pieceType);
 
-		// 升级单位 & 建筑等
-		UpgradeRelatedUnits();
+        // 升级单位 & 建筑等
+        UpgradeRelatedUnits();
 
-		// 刷新所有按钮
-		panel.Refresh();
+        // 刷新所有按钮
+        panel.Refresh();
 
-		// 刷新资源 UI
-		GameUIManager.Instance.UpdateResourcesData();
-	}
+        // 刷新资源 UI
+        GameUIManager.Instance.UpdateResourcesData();
+
+		//关闭Cost小图标
+        HideHoverPrefab();
+    }
 
 	//==============================================================
 	// 工具函数：调用你现有的升级函数
@@ -172,8 +218,130 @@ public class SimpleSkillButton : MonoBehaviour
 		}
 		return count;
 	}
-}
 
+
+
+    // ========== Highlight 检测 ==========
+
+    //颜色设定预组
+    private void SetupButtonColors(int id)
+    {
+        ColorBlock cb = upgradeButton.colors;
+
+        switch (id)
+		{
+			case 0://黑白预组
+
+                cb.normalColor = Color.white;
+                cb.highlightedColor = new Color(96 / 255f, 96 / 255f, 96 / 255f, 225 / 255f);
+                cb.pressedColor = Color.black;
+                cb.disabledColor = new Color(1f, 1f, 1f, 0f);
+
+                normalColor= new Color(56 / 255f, 56 / 255f, 56 / 255f, 225 / 255f);
+                highlightedColor = Color.white;
+                disabledColor = new Color(56 / 255f, 56 / 255f, 56 / 255f, 225 / 255f);
+
+
+                upgradeButton.colors = cb;
+                levelText.color = normalColor;
+                skillNameText.color = normalColor;
+				Outline.color = disabledColor;
+
+                break;
+            case 1://金色预组
+
+                cb.normalColor = Color.white;
+                cb.highlightedColor = new Color(174 / 255f, 77 / 255f, 24 / 255f, 225 / 255f);
+                cb.pressedColor = new Color(140 / 255f, 61 / 255f, 18 / 255f, 225 / 255f);
+                cb.disabledColor = new Color(1f, 1f, 1f, 0f);
+
+                normalColor = new Color(231 / 255f, 189 / 255f, 127 / 255f, 225 / 255f);
+                highlightedColor = Color.white;
+                disabledColor = Color.white;
+
+
+                upgradeButton.colors = cb;
+                levelText.color = normalColor;
+                skillNameText.color = normalColor;
+                Outline.color = disabledColor;
+
+                break;
+
+			default:
+				break;
+
+
+        }
+
+
+    }
+
+    // 鼠标移入（Highlight 开始）
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+		if (!upgradeButton.interactable) return;
+
+        // --- 显示 Prefab ---
+        ShowHoverPrefab(eventData);
+
+        levelText.color = highlightedColor;
+        skillNameText.color = highlightedColor;
+
+
+    }
+
+    // 鼠标移出（Highlight 结束）
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        HideHoverPrefab();
+
+        if (!upgradeButton.interactable) return;
+
+        Refresh();
+
+    }
+
+	//Cost小图标的开关和位置设定
+    private void ShowHoverPrefab(PointerEventData eventData)
+    {
+        if (hoverPrefab == null) return;
+        int currentLv = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, tech);
+        int cost = GetUpgradeCost(pieceType, tech, currentLv);
+
+        // 生成实例，并加入 Canvas
+        Canvas canvas = GetComponentInParent<Canvas>();
+        hoverInstance = Instantiate(hoverPrefab, canvas.transform);
+        TMP_Text innerText = hoverInstance.GetComponentInChildren<TMP_Text>();
+        innerText.text = $"{cost}";
+
+        // 初始位置放到鼠标旁边
+        UpdateHoverPosition(eventData);
+    }
+    private void HideHoverPrefab()
+    {
+        if (hoverInstance != null)
+            Destroy(hoverInstance);
+    }
+
+    private void UpdateHoverPosition(PointerEventData eventData)
+    {
+        if (hoverInstance == null) return;
+
+        RectTransform canvasRect = GetComponentInParent<Canvas>().transform as RectTransform;
+        RectTransform hoverRect = hoverInstance.GetComponent<RectTransform>();
+
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            canvasRect,
+            eventData.position,
+            eventData.pressEventCamera,
+            out localPoint
+        );
+
+        // 偏移让提示框不遮住鼠标
+        hoverRect.anchoredPosition = localPoint + new Vector2(80f, -30f);
+    }
+}
 
 
 public static class SkillTreeCostHelper
@@ -233,4 +401,9 @@ public static class SkillTreeCostHelper
 		}
 	}
 	
+
+
+
+
 }
+
