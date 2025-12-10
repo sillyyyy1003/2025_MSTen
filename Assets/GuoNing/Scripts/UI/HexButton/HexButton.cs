@@ -16,13 +16,17 @@ public class HexButton : MonoBehaviour
 	[Header("点击事件")]
 	public UnityEvent onClick;
 
-
 	[Header("颜色设置")]
 	public Color normalColor = Color.white;
 	public Color hoverColor = new Color(0.9f, 0.9f, 1f);
 	public Color pressedColor = new Color(0.8f, 0.8f, 0.8f);
 	public Color disabledColor = new Color(0.5f, 0.5f, 0.5f);
 	public Color selectedColor = new Color(0.6f, 0.8f, 1f); // 选中状态颜色
+
+
+	[Header("文字颜色设定")]
+	public Color normalTextColor = Color.white;
+	public Color pressedTextColor =Color.white;
 
 	[Header("状态设置")]
 	public bool interactable = true;
@@ -50,11 +54,14 @@ public class HexButton : MonoBehaviour
 			// 禁用Toggle组件
 			toggle.enabled = false;
 			UpdateVisual(normalColor);
+			UpdateTextVisual(normalTextColor);
 		}
 		else
 		{
 			// 根据是否被选中 设置初始颜色
 			UpdateVisual(toggle.isOn ? selectedColor : normalColor);
+			UpdateTextVisual(toggle.isOn ? pressedTextColor : normalTextColor);
+
 		}
 		
 	}
@@ -78,13 +85,18 @@ public class HexButton : MonoBehaviour
 		{
 			isHover = true;
 			if (!toggle.isOn)
+			{
 				UpdateVisual(hoverColor);
+				UpdateTextVisual(pressedTextColor);
+			}
+			
 			
 		}
 		else if (!inside && isHover)
 		{
 			isHover = false;
 			UpdateVisual(toggle.isOn ? selectedColor : normalColor);
+			UpdateTextVisual(toggle.isOn ? pressedTextColor : normalTextColor);
 		}
 
 		// ---------------- Press ----------------
@@ -93,6 +105,7 @@ public class HexButton : MonoBehaviour
 			isPressed = true;
 			shadow.gameObject.SetActive(false);
 			UpdateVisual(pressedColor);
+			UpdateTextVisual(pressedTextColor);
 		}
 
 		if (isPressed && mouseUp)
@@ -120,13 +133,14 @@ public class HexButton : MonoBehaviour
 						toggle.isOn = true;
 						// Update color
 						UpdateVisual(selectedColor);
-
+						UpdateTextVisual(pressedTextColor);
 						onClick?.Invoke();
 					}
 				}
 				else
 				{
 					UpdateVisual(hoverColor);
+					UpdateTextVisual(pressedTextColor);
 					onClick?.Invoke();
 				}
 
@@ -134,7 +148,7 @@ public class HexButton : MonoBehaviour
 			else
 			{
 				UpdateVisual(toggle.isOn ? selectedColor : normalColor);
-				
+				UpdateTextVisual(toggle.isOn ? pressedTextColor : normalTextColor);
 			}
 		
 			isPressed = false;
@@ -156,10 +170,17 @@ public class HexButton : MonoBehaviour
 			background.color = targetColor;
 	}
 
+	private void UpdateTextVisual(Color targetColor)
+	{
+		if (background != null)
+			text.color = targetColor;
+	}
+
 	public void ResetHexButton()
 	{
 		// Reset color
 		UpdateVisual(normalColor);
+		UpdateTextVisual(normalTextColor);
 		if (toggle != null) toggle.isOn = false;
 	}
 
@@ -177,5 +198,6 @@ public class HexButton : MonoBehaviour
 
 		if (toggle != null) toggle.isOn = false;
 		UpdateVisual(toggle.isOn ? selectedColor : normalColor);
+		UpdateTextVisual(toggle.isOn ? pressedTextColor : normalTextColor);
 	}
 }
