@@ -511,7 +511,7 @@ public class SkillTreeUIManager : MonoBehaviour
 					if(isUpdate)
 					{
                         next = BuildingData.GetMaxHpByLevel(lv + 1);
-                        status = $"{num}"+ $"<color=#FF0000>+{next-num}</color>";
+                        status = $"{num} "+ $"<color=#FF0000>+{next-num}</color>";
                     }
                     else
                     {
@@ -524,7 +524,7 @@ public class SkillTreeUIManager : MonoBehaviour
                     if (isUpdate)
                     {
                         next = BuildingData.GetMaxSlotsByLevel(lv+1);
-                        status = $"{num}" + $"<color=#FF0000>+{next - num}</color>";
+                        status = $"{num} " + $"<color=#FF0000>+{next - num}</color>";
                     }
                     else
                     {
