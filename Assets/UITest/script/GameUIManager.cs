@@ -97,6 +97,13 @@ public class GameUIManager : MonoBehaviour
     public TextMeshProUGUI ReligionDescribe01;
     public TextMeshProUGUI ReligionDescribe02;
     public TextMeshProUGUI ReligionDescribe03;
+    public Image PopeSkillTreeIcon;
+    public Image MissionarySkillTreeIcon;
+    public Image SoliderSkillTreeIcon;
+    public Image FarmerSkillTreeIcon;
+    public Image BuildingSkillTreeIcon;
+
+
 
     [Header("SimplePanel Elements")]
     public Image PopeIcon;
@@ -112,6 +119,11 @@ public class GameUIManager : MonoBehaviour
     public Image BuildingBackground;
 
 
+    public TextMeshProUGUI PopeInfo;
+    public TextMeshProUGUI MissionaryInfo;
+    public TextMeshProUGUI SoliderInfo;
+    public TextMeshProUGUI FarmerInfo;
+    public TextMeshProUGUI BuildingInfo;
 
     [Header("Timer")]
 	public Image TimeImage;     // TimeImage
@@ -307,7 +319,6 @@ public class GameUIManager : MonoBehaviour
                 return 0;
         }
 
-
     }
 
     public bool AddDeckNumByType(CardType type)
@@ -410,6 +421,7 @@ public class GameUIManager : MonoBehaviour
 
         UpdatePlayerIconsData();
 
+        ReligionInfoPanel.gameObject.SetActive(false);
     }
 
     public void UpdatePlayerIconsData()
@@ -522,7 +534,16 @@ public class GameUIManager : MonoBehaviour
     }
 
 
+    public void UpdateSimplePanelInfo()
+    {
 
+        PopeInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Pope);
+        MissionaryInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Missionary);
+        SoliderInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Military);
+        FarmerInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Farmer);
+        BuildingInfo.text = SkillTreeUIManager.Instance.GetLevelUpInfo(PieceType.Building);
+
+    }
 
 
 
@@ -729,7 +750,7 @@ public class GameUIManager : MonoBehaviour
                     "・信徒の献祭：周囲6マスの味方を回復\n";
                 ReligionDescribe02.text = "被動：\n" +
                      "戦死者が12名に達すると、味方全員が残HPの20%を即時回復";
-                ReligionDescribe03.text = "現在累積：0/12";
+                ReligionDescribe03.text = "現在累積：0/12 死亡数";
                 break;
 
             case Religion.MayaReligion://星界教团
@@ -760,7 +781,7 @@ public class GameUIManager : MonoBehaviour
                     "・信徒の献祭回復：なし\n";
                 ReligionDescribe02.text = "被動：\n" +
                      "自陣の魔煙中に啓蒙が発動すると、ランダムで1体が復活し、10ポイント獲得する";
-                ReligionDescribe03.text = "冷卻時間：8／10回合";
+                ReligionDescribe03.text = "冷卻時間：8/10ターン";
                 break;
             default://默认
                 ReligionColor.color = new Color32(255, 255, 255, 255);
@@ -785,11 +806,21 @@ public class GameUIManager : MonoBehaviour
         FarmerIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Farmer, religion);
         BuildingIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Building, religion);
 
+        PopeSkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Pope, religion);
+        MissionarySkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Missionary, religion);
+        SoliderSkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Military, religion);
+        FarmerSkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Farmer, religion);
+        BuildingSkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Building, religion);
+
+
         PopeBackground.color= Backgroundcolor;
         MissionaryBackground.color = Backgroundcolor;
         SoliderBackground.color = Backgroundcolor;
         FarmerBackground.color = Backgroundcolor;
         BuildingBackground.color = Backgroundcolor;
+
+        UpdateSimplePanelInfo();
+
 }
 
     /*
@@ -819,7 +850,6 @@ public class GameUIManager : MonoBehaviour
 	}
 
 
-
     private void UpdatePopulationData()
     {
         int nowPopulation = PlayerDataManager.Instance.NowPopulation;
@@ -830,12 +860,43 @@ public class GameUIManager : MonoBehaviour
         InactiveUnitCount = maxPopulation- nowPopulation;
 
 
-
         allUnitValue.text = $"{nowPopulation}/{maxPopulation}";
         Population.text = $"{maxPopulation}";
     }
 
+    private void UpdateReligionBuff()
+    {
+        int count;
 
+        switch (playerReligion)
+        {
+            case Religion.SilkReligion://丝织教
+                //ReligionDescribe03.text = "";
+                break;
+            case Religion.RedMoonReligion://红月教
+                count=PlayerDataManager.Instance.DeadUnitCount;
+
+                ReligionDescribe03.text = $"現在累積：{count}/12 死亡数";
+                break;
+
+            case Religion.MayaReligion://星界教团
+                //ReligionDescribe03.text = "";
+                break;
+            case Religion.MadScientistReligion://真理研究所
+                count = PlayerDataManager.Instance.CrazyTurnCooldown;
+                ReligionDescribe03.text = "冷卻時間：{count}/10 ターン";
+                break;
+            default://默认
+               
+                ReligionDescribe03.text = "";
+                break;
+
+
+
+
+        }
+
+    }
 
 
     private string FormatTime(float timeInSeconds)
@@ -926,21 +987,16 @@ public class GameUIManager : MonoBehaviour
 
 	}
 
-    private void HandleInactiveUnitButtonPressed()
-    {
-        if (InactiveUnitCount == 0) return;
-
-    }
-
     private void HandlePlayerDataChanged(int id,PlayerData player)
     {
         Debug.Log($"玩家数据更新: 玩家 {id}");
 		UpdatePlayerIconsData();
         UpdateResourcesData();  // 更新资源显示
         UpdatePopulationData(); // 更新人口显示
+        UpdateReligionBuff();
 
-		// 更新单位数据列表
-		UpdateUIUnitDataListFromInterface(CardType.Missionary);
+        // 更新单位数据列表
+        UpdateUIUnitDataListFromInterface(CardType.Missionary);
         UpdateUIUnitDataListFromInterface(CardType.Soldier);
         UpdateUIUnitDataListFromInterface(CardType.Farmer);
         UpdateUIUnitDataListFromInterface(CardType.Building);

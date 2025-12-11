@@ -85,40 +85,40 @@ public class SkillBranch : MonoBehaviour
 		switch (type)
 		{
 			case TechTree.HP:                 // 体力
-				return $"体力 Lv.{lv}";
+				return $"H P \n Lv.{lv}";
 
 			case TechTree.AP:                 // 行動力
-				return $"行動力 Lv.{lv}";
+				return $"A P \n Lv.{lv}";
 
 			case TechTree.Occupy:             // 占領成功率
-				return $"占領 Lv.{lv}";
+				return $"占領確率 \n Lv.{lv}";
 
 			case TechTree.Conversion:         // 魅惑成功率
-				return $"魅惑 Lv.{lv}";
+				return $"伝教確率 \n Lv.{lv}";
 
 			case TechTree.ATK:                // 攻撃力
-				return $"攻撃力 Lv.{lv}";
+				return $"攻撃力 \n Lv.{lv}";
 
 			case TechTree.Sacrifice:          // 献祭関連
-				return $"献祭 Lv.{lv}";
+				return $"奉仕 \n Lv.{lv}";
 
 			case TechTree.AttackPosition:     // 攻撃口
-				return $"攻撃口 Lv.{lv}";
+				return $"攻撃口 \n Lv.{lv}";
 
 			case TechTree.AltarCount:         // 祭壇数
-				return $"祭壇数 Lv.{lv}";
+				return $"開拓者数 \n Lv.{lv}";
 
 			case TechTree.ConstructionCost:   // 建設費用減少
-				return $"建設費用 Lv.{lv}";
+				return $"建設費用 \n Lv.{lv}";
 
 			case TechTree.MovementCD:         // 移動クール
-				return $"移動クール Lv.{lv}";
+				return $"移動CD \n Lv.{lv}";
 
 			case TechTree.Buff:               // 強化/弱体効果
-				return $"強化効果 Lv.{lv}";
+				return $"周囲バフ \n Lv.{lv}";
 
 			case TechTree.Heresy:             // 異端（デバフ系）
-				return $"異端 Lv.{lv}";
+				return $"異端 Lv.\n {lv}";
 
 			default:
 				return $"Lv.{lv}";
