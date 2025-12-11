@@ -61,7 +61,7 @@ public class ResultUIManager : MonoBehaviour
 		
 	}
 
-	public void Initialize(int victoryID)
+	public void Initialize(int victoryID, List<ResultData> datas)
 	{
 		// 设定胜利还是失败
 		int victoryPlayerId = victoryID;	
@@ -80,36 +80,37 @@ public class ResultUIManager : MonoBehaviour
 		int spriteSerial = (int)GameManage.Instance.GetPlayerData(victoryPlayerId).PlayerReligion - 1;
 		ReligionIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.IconList_Religion, spriteSerial);
 
-		//List<ResultData> datas = GameManage.Instance.GetResultDatas();
+		//25.12.10 RI 修改结局逻辑
+		//List<ResultData> datass = GameManage.Instance.GetResultDatas();
 		// 初始化Detail数据
 		//InitResultData(datas);
 
 		// 暂时代用
-		List<ResultData> datas = new List<ResultData>();
-		ResultData data1 = new ResultData(
-			"Player1",
-			25,
-			15,
-			5,
-			10,
-			2,
-			3,
-			100,
-			80
-			);
-		datas.Add(data1);
-		ResultData data2 = new ResultData(
-			"Player2",
-			20,
-			10,
-			3,
-			5,
-			1,
-			1,
-			90,
-			80
-			);
-		datas.Add(data2);
+		//List<ResultData> datas = new List<ResultData>();
+		//ResultData data1 = new ResultData(
+		//	"Player1",
+		//	25,
+		//	15,
+		//	5,
+		//	10,
+		//	2,
+		//	3,
+		//	100,
+		//	80
+		//	);
+		//datas.Add(data1);
+		//ResultData data2 = new ResultData(
+		//	"Player2",
+		//	20,
+		//	10,
+		//	3,
+		//	5,
+		//	1,
+		//	1,
+		//	90,
+		//	80
+		//	);
+		//datas.Add(data2);
 
 		InitResultData(datas);
 		
@@ -207,14 +208,33 @@ public class ResultUIManager : MonoBehaviour
 		// 如果单人模式直接结算 否则发送投降消息
 		if (SceneStateManager.Instance.bIsSingle)
 		{
+			//25.12.10 RI 修改结局信息
 			// 初始化ui并进行结算
-			Initialize(GameManage.Instance.LocalPlayerID);
+			ResultData data = new ResultData();
+			List<ResultData> datas = new List<ResultData>();
+			datas.Add(data);
+            Initialize(GameManage.Instance.LocalPlayerID, datas);
 		}
 		else
 		{
 			//发送投降消息
 			int localId = GameManage.Instance.LocalPlayerID;
-			NetGameSystem.Instance.SendGameOverMessage(GetVictoryPlayerIdBySurrender(), localId, "surrender");
+
+			ResultData data = new ResultData()
+			{
+				PlayerId =SaveLoadManager.Instance.CurrentData.userID,            // 玩家ID
+				CellNumber = PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
+				PieceNumber = PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
+				BuildingNumber = PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
+				PieceDestroyedNumber = PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
+				BuildingDestroyedNumber = PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
+				CharmSucceedNumber = PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
+				ResourceGet = PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
+				ResourceUsed = PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
+			};
+
+
+            NetGameSystem.Instance.SendGameOverMessage(GetVictoryPlayerIdBySurrender(), localId,data, "surrender");
 		}
 
 	}

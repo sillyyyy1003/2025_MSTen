@@ -259,6 +259,7 @@ public class GameOverMessage
     public int WinnerPlayerId;     // 获胜的玩家ID
     public int LoserPlayerId;      // 失败的玩家ID
     public string Reason;          // 结束原因: "surrender"(投降), "building_destroyed"(建筑摧毁), "disconnect"(断线) 等
+    public ResultData ResultData;   // 结局数据
 }
 
 #endregion
@@ -1806,13 +1807,14 @@ public class NetGameSystem : MonoBehaviour
     /// <param name="winnerPlayerId">获胜玩家ID</param>
     /// <param name="loserPlayerId">失败玩家ID</param>
     /// <param name="reason">结束原因: "surrender"(投降), "building_destroyed"(建筑摧毁), "disconnect"(断线) 等</param>
-    public void SendGameOverMessage(int winnerPlayerId, int loserPlayerId, string reason = "surrender")
+    public void SendGameOverMessage(int winnerPlayerId, int loserPlayerId,  ResultData data,string reason = "surrender")
     {
         GameOverMessage gameOverData = new GameOverMessage
         {
             WinnerPlayerId = winnerPlayerId,
             LoserPlayerId = loserPlayerId,
-            Reason = reason
+            Reason = reason,
+            ResultData= data
         };
 
         NetworkMessage msg = new NetworkMessage
@@ -2304,7 +2306,7 @@ public class NetGameSystem : MonoBehaviour
             if (gameManage != null)
             {
                 Debug.Log($"触发游戏结束事件，获胜者: {data.WinnerPlayerId}");
-                gameManage.TriggerGameEnded(data.WinnerPlayerId);
+                gameManage.TriggerGameEnded(data.WinnerPlayerId,data.ResultData);
             }
         });
 
