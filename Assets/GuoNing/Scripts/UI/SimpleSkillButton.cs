@@ -1,4 +1,4 @@
-﻿using GameData;
+using GameData;
 using GameData.UI;
 using System.Collections.Generic;
 using TMPro;
@@ -123,7 +123,10 @@ public class SimpleSkillButton : MonoBehaviour, IPointerEnterHandler, IPointerEx
 
         // 提升等级
         SkillTreeUIManager.Instance.UpgradeCurrentLevel(pieceType, tech);
+
+		//刷新UI
 		SkillTreeUIManager.Instance.RefreshSkillTreeByPieceType(pieceType);
+        GameUIManager.Instance.UpdateSimplePanelInfo();
 
         // 升级单位 & 建筑等
         UpgradeRelatedUnits();

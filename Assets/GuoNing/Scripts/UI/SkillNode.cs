@@ -82,7 +82,9 @@ public class SkillNode : MonoBehaviour
 
         if (PieceName) PieceName.text = PlayerUnitDataInterface.Instance.GetPieceNameByPieceType(pieceType);
 
-        Debug.Log("[SkillNode]CurrentLevel" + currentLevel);
+		if (LevelUpDescription) LevelUpDescription.text = SkillTreeUIManager.Instance.GetLevelUpInfo(pieceType);
+
+            Debug.Log("[SkillNode]CurrentLevel" + currentLevel);
 		Debug.Log("[SkillNode]Skill level:" + SkillIndex);
 		// ------------------------------------------------
 		// ⭐ ① index=0：初始等级，永远解锁，不需要升级
@@ -122,7 +124,10 @@ public class SkillNode : MonoBehaviour
 				levelUpButton.GetComponent<Button>().interactable = true;
 				levelUpButton.SetButton(OnLevelUpButtonClicked);
 			}
-			return;
+
+            if (LevelUpDescription) LevelUpDescription.text = SkillTreeUIManager.Instance.GetLevelUpInfo(pieceType, techTree);
+
+            return;
 		}
 
 		// ------------------------------------------------
@@ -142,9 +147,10 @@ public class SkillNode : MonoBehaviour
 		// Update 棋子数据和UIBar数据
 		UpgradePieces(techTree, pieceType);
 
-		// UpdateUI
-		// 消耗资源
-		int cost = GetUpgradeCostByTechType(skillIndex);
+
+
+        // 消耗资源
+        int cost = GetUpgradeCostByTechType(skillIndex);
 		int playerId = GameManage.Instance.LocalPlayerID;
 		int res = PlayerDataManager.Instance.GetPlayerData(playerId).Resources;
 		res -= cost;
@@ -154,8 +160,14 @@ public class SkillNode : MonoBehaviour
         //25.12.10 RI 添加结局数据
         PlayerDataManager.Instance.Result_ResourceUsed += cost;
 
-        //与外部侧边栏联动
+        // UpdateUI
         SkillTreeUIManager.Instance.UpdateSimpleSkillPanel(pieceType);
+        GameUIManager.Instance.UpdateSimplePanelInfo();
+
+
+		//刷新
+		OnSkillButtonClick();
+
     }
 
 
@@ -219,8 +231,11 @@ public class SkillNode : MonoBehaviour
 		UnitListTable.PieceDetail pd =
 		new UnitListTable.PieceDetail(pieceType, SceneStateManager.Instance.PlayerReligion);
 
-		var so = UnitListTable.Instance.GetPieceDataSO(pieceType, pd);
-		switch (pieceType)
+		var so = ScriptableObject.CreateInstance<PieceDataSO>();
+
+        if (pieceType != PieceType.Building) UnitListTable.Instance.GetPieceDataSO(pieceType, pd);
+
+        switch (pieceType)
 		{ 
 			case PieceType.Pope:
 				{
