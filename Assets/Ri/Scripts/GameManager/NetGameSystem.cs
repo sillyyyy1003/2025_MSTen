@@ -2340,15 +2340,15 @@ public class NetGameSystem : MonoBehaviour
         {
             SendToServer(gameOverMsg);
         }
-        //// 触发游戏结束事件
-        //MainThreadDispatcher.Enqueue(() =>
-        //{
-        //    if (gameManage != null)
-        //    {
-        //        Debug.Log($"触发游戏结束事件，获胜者: {data.WinnerPlayerId}");
-        //        gameManage.TriggerGameEnded(data.WinnerPlayerId, data.ResultData);
-        //    }
-        //});
+        // 触发游戏结束事件
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            if (gameManage != null)
+            {
+                Debug.Log($"触发游戏结束事件，获胜者: {data.WinnerPlayerId}");
+                gameManage.TriggerGameEnded(data.WinnerPlayerId, data.ResultData);
+            }
+        });
     }
         // 处理游戏结束消息
     private void HandleGameOver(NetworkMessage message)
