@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GameData;
+using GameData.UI;
 using GamePieces;
 
 namespace Buildings
@@ -23,8 +24,6 @@ namespace Buildings
         private int remainingBuildCost;
         private int currentSkillUses;//現時点まだ使用可能のスロットの数
         private int lastResourceGenTurn;
-        private int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2（全体レベル・互換性のため残す）
-
 
         // 25.11.26 RI add now slot count and cant use slot
         // ===== 各項目の個別レベル =====
@@ -61,7 +60,6 @@ namespace Buildings
         //25.11.28 Ri add new FarmerSlots
         public List<NewFarmerSlot> NewFarmerSlots => newFarmerSlots;
 
-        public int UpgradeLevel => upgradeLevel;
         public int HPLevel => hpLevel;
         public int AttackRangeLevel => attackRangeLevel;
         public int SlotsLevel => slotsLevel;
@@ -76,14 +74,31 @@ namespace Buildings
 
         #region 初期化
 
-        public void Initialize(BuildingDataSO data, int ownerPlayerID)
+        public virtual void Initialize(BuildingDataSO data, int ownerPlayerID)
         {
             buildingData = data;
             playerID = ownerPlayerID;
-            currentHp = data.maxHp;
+
+            // ローカルプレイヤーの建物の場合、SkillTreeUIManagerからレベルを取得
+            if (ownerPlayerID == PieceManager.Instance.GetLocalPlayerID())
+            {
+                hpLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.HP);
+                slotsLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.AltarCount);
+                // attackRangeLevelは管理されない
+                attackRangeLevel = 0;
+            }
+            else
+            {
+                // 敵プレイヤーの建物はデフォルトレベル0
+                hpLevel = 0;
+                attackRangeLevel = 0;
+                slotsLevel = 0;
+            }
+
+            currentHp = data.maxHpByLevel[hpLevel];
             remainingBuildCost = data.buildingResourceCost;
-            currentSkillUses = data.GetMaxSlotsByLevel(0);
-            slots = data.GetMaxSlotsByLevel(data.maxSlotsByLevel[0]);
+            currentSkillUses = data.GetMaxSlotsByLevel(slotsLevel);
+            slots = data.GetMaxSlotsByLevel(slotsLevel);
             //地面に金鉱があるか否かを判断すべき
 
             // 25.11.10 RI 修改为直接创建完毕
@@ -92,7 +107,7 @@ namespace Buildings
             // スロット初期化
             if (data.isSpecialBuilding)
             {
-                int initialSlots = data.GetMaxSlotsByLevel(0);
+                int initialSlots = data.GetMaxSlotsByLevel(slotsLevel);
                 for (int i = 0; i < initialSlots; i++)
                 {
                     farmerSlots.Add(new FarmerSlot());
@@ -323,82 +338,6 @@ namespace Buildings
 
         #region アップグレード管理
 
-        /// <summary>
-        /// 建物をアップグレードする（旧システム・互換性のため残す）
-        /// </summary>
-        public bool UpgradeBuilding()
-        {
-            if (upgradeLevel >= 2)
-            {
-                Debug.LogWarning($"{buildingData.buildingName} は既に最大レベルです");
-                return false;
-            }
-
-            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
-            {
-                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
-                return false;
-            }
-
-            upgradeLevel++;
-            ApplyUpgradeEffects();
-            Debug.Log($"{buildingData.buildingName} がレベル {upgradeLevel} にアップグレードしました");
-            return true;
-        }
-
-        /// <summary>
-        /// アップグレード効果を適用
-        /// </summary>
-        private void ApplyUpgradeEffects()
-        {
-            // レベルに応じた最大HPを更新
-            int newMaxHp = buildingData.GetMaxHpByLevel(upgradeLevel);
-            float hpRatio = (float)currentHp / buildingData.maxHp;
-            currentHp = Mathf.RoundToInt(newMaxHp * hpRatio);
-
-            // レベルに応じた最大スロット数を更新
-            int newMaxSlots = buildingData.GetMaxSlotsByLevel(upgradeLevel);
-            if (newMaxSlots > farmerSlots.Count)
-            {
-                // スロット数を増やす
-                int slotsToAdd = newMaxSlots - farmerSlots.Count;
-                for (int i = 0; i < slotsToAdd; i++)
-                {
-                    farmerSlots.Add(new FarmerSlot());
-                }
-                currentSkillUses = newMaxSlots;
-            }
-
-            // 25.11.28 RI add new farmer Slot
-            if (newMaxSlots > newFarmerSlots.Count)
-            {
-                // スロット数を増やす
-                int slotsToAdd = newMaxSlots - newFarmerSlots.Count;
-                for (int i = 0; i < slotsToAdd; i++)
-                {
-                    newFarmerSlots.Add(new NewFarmerSlot());
-                }
-                currentSkillUses = newMaxSlots;
-            }
-
-
-            Debug.Log($"建物のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHp}, スロット数={newMaxSlots}");
-
-            // 新しい機能のログ
-            if (upgradeLevel == 1)
-            {
-                int attackRange = buildingData.GetAttackRangeByLevel(upgradeLevel);
-                if (attackRange > 0)
-                {
-                    Debug.Log($"攻撃機能獲得: 攻撃範囲={attackRange}");
-                }
-            }
-            else if (upgradeLevel == 2)
-            {
-                int attackRange = buildingData.GetAttackRangeByLevel(upgradeLevel);
-                Debug.Log($"強化攻撃機能: 攻撃範囲={attackRange}");
-            }
-        }
 
         // 25.11.26 RI Add Get Building All HP
         public int  GetAllHP()
