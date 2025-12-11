@@ -7,6 +7,7 @@ using GamePieces;
 using DG.Tweening.Core.Easing;
 using UnityEngine.UIElements;
 using DG.Tweening;
+using GameData.UI;
 using static UnityEngine.GraphicsBuffer;
 
 //25.11.4 RI 添加序列化Vector3 变量

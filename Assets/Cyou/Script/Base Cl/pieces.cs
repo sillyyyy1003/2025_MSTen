@@ -22,9 +22,10 @@ namespace GamePieces
         protected int currentPID; // 現在所属しているプレイヤーID
         protected int originalPID; // 元々所属していたプレイヤーID
         protected PieceState currentState = PieceState.Idle;
+        protected int upgradeLevel = 0; // 0:初期、1:升級1、2:升級2、3:升級3（全体レベル・互換性のため残す）
 
-        // ===== 各項目の個別レベル =====
-        protected int hpLevel = 0; // HP レベル (0-3)
+		// ===== 各項目の個別レベル =====
+		protected int hpLevel = 0; // HP レベル (0-3)
         protected int apLevel = 0; // AP レベル (0-3)
 
         // ===== 魅惑関連 =====
@@ -58,7 +59,8 @@ namespace GamePieces
         public bool IsAlive => currentHP > 0;
         public bool CanMove => currentAP >= pieceData.moveAPCost;
         public PieceState State => currentState;
-        public int HPLevel => hpLevel;
+        public int UpgradeLevel => upgradeLevel;
+		public int HPLevel => hpLevel;
         public int APLevel => apLevel;
 
         /// <summary>
