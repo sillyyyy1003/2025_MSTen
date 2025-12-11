@@ -1830,8 +1830,7 @@ public class NetGameSystem : MonoBehaviour
         if (isServer)
         {
             BroadcastToClients(msg, localClientId);
-            // 服务器先处理自己的游戏结束
-            //HandleGameOver(msg);
+          
             Debug.Log($"[网络-服务器] 处理游戏结束消息并广播给所有客户端");
         }
         else
@@ -1839,6 +1838,9 @@ public class NetGameSystem : MonoBehaviour
             SendToServer(msg);
             Debug.Log($"[网络-客户端] 发送游戏结束消息到服务器");
         }
+        if (isServer)
+            // 服务器处理自己的游戏结束
+            HandleGameOver(msg);
     }
     #endregion
     // 发送消息到服务器
@@ -1918,9 +1920,9 @@ public class NetGameSystem : MonoBehaviour
             return;
         }
 
-        if (clients == null)
+        if (!SceneStateManager.Instance.bIsSingle&&clients == null)
         {
-            Debug.LogError("clients 字典为 null!");
+            Debug.LogWarning("clients 字典为 null!");
             return;
         }
 
@@ -2335,6 +2337,10 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log($"[服务器] 广播游戏结束消息给所有客户端");
             BroadcastToClients(server_gameOverMsg, uint.MaxValue);
         }
+        //else
+        //{
+        //    SendToServer(server_gameOverMsg);
+        //}
         // 触发游戏结束事件
         MainThreadDispatcher.Enqueue(() =>
         {
