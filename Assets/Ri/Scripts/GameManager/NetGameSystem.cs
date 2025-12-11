@@ -11,6 +11,7 @@ using UnityEngine.SceneManagement;
 using GameData;
 using Unity.Mathematics;
 using UnityEngine.Rendering.Universal;
+using UnityEditor.PackageManager;
 
 
 
@@ -1828,8 +1829,9 @@ public class NetGameSystem : MonoBehaviour
      
         if (isServer)
         {
+            BroadcastToClients(msg, localClientId);
             // 服务器先处理自己的游戏结束
-            HandleGameOver(msg);
+            //HandleGameOver(msg);
             Debug.Log($"[网络-服务器] 处理游戏结束消息并广播给所有客户端");
         }
         else
