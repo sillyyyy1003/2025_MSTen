@@ -26,7 +26,7 @@ public class ResultUIManager : MonoBehaviour
 	public Button GameExitButton;
 
 	// 25.12.10 RI add ResultData
-	private ResultData UI_ResultData=new ResultData();
+	private ResultData UI_ResultData = new ResultData();
 
 	[Header("ResultComponent")]
 	public ResultDetailUI ResultDetailUIComponent;
@@ -61,7 +61,7 @@ public class ResultUIManager : MonoBehaviour
 		
 	}
 
-	public void Initialize(int victoryID, List<ResultData> datas)
+	public void Initialize(int victoryID)
 	{
 		// 设定胜利还是失败
 		int victoryPlayerId = victoryID;	
@@ -80,13 +80,13 @@ public class ResultUIManager : MonoBehaviour
 		int spriteSerial = (int)GameManage.Instance.GetPlayerData(victoryPlayerId).PlayerReligion - 1;
 		ReligionIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.IconList_Religion, spriteSerial);
 
-		//25.12.10 RI 修改结局逻辑
-		//List<ResultData> datass = GameManage.Instance.GetResultDatas();
+		//List<ResultData> datas = GameManage.Instance.GetResultDatas();
 		// 初始化Detail数据
 		//InitResultData(datas);
 
 		// 暂时代用
-		//List<ResultData> datas = new List<ResultData>();
+		List<ResultData> datas = new List<ResultData>();
+		datas.Add(UI_ResultData);
 		//ResultData data1 = new ResultData(
 		//	"Player1",
 		//	25,
@@ -208,33 +208,14 @@ public class ResultUIManager : MonoBehaviour
 		// 如果单人模式直接结算 否则发送投降消息
 		if (SceneStateManager.Instance.bIsSingle)
 		{
-			//25.12.10 RI 修改结局信息
 			// 初始化ui并进行结算
-			ResultData data = new ResultData();
-			List<ResultData> datas = new List<ResultData>();
-			datas.Add(data);
-            Initialize(GameManage.Instance.LocalPlayerID, datas);
+			Initialize(GameManage.Instance.LocalPlayerID);
 		}
 		else
 		{
 			//发送投降消息
 			int localId = GameManage.Instance.LocalPlayerID;
-
-			ResultData data = new ResultData()
-			{
-				PlayerId =SaveLoadManager.Instance.CurrentData.userID,            // 玩家ID
-				CellNumber = PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
-				PieceNumber = PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
-				BuildingNumber = PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
-				PieceDestroyedNumber = PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
-				BuildingDestroyedNumber = PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
-				CharmSucceedNumber = PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
-				ResourceGet = PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
-				ResourceUsed = PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
-			};
-
-
-            NetGameSystem.Instance.SendGameOverMessage(GetVictoryPlayerIdBySurrender(), localId,data, "surrender");
+			NetGameSystem.Instance.SendGameOverMessage(GetVictoryPlayerIdBySurrender(), localId, "surrender");
 		}
 
 	}
@@ -256,11 +237,11 @@ public class ResultUIManager : MonoBehaviour
 		ResultDetailButton.gameObject.SetActive(true);
 	}
 
-  //25.12.10 RI 添加ResultData
-  public void SetResultData(ResultData data)
-  {
-		UI_ResultData = data;
-  }
+	  //25.12.10 RI 添加ResultData
+	  public void SetResultData(ResultData data)
+	  {
+			UI_ResultData = data;
+	  }
     
 	private void InitResultData(List<ResultData> data)
 	{
