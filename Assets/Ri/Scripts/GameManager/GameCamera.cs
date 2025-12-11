@@ -72,7 +72,7 @@ public class GameCamera : MonoBehaviour
         if (bCanUseCamera)
         {
             HandleZoom();
-            HandleRotation();
+            //HandleRotation();
             HandleMovement();
             UpdateCameraPosition();
         }
