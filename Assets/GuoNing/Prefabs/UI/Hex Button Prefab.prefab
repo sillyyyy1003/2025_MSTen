@@ -89,7 +89,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
-  m_EffectDistance: {x: -5.49, y: -1}
+  m_EffectDistance: {x: -4, y: -2}
   m_UseGraphicAlpha: 1
 --- !u!1 &787414348981969728
 GameObject:
@@ -385,6 +385,8 @@ MonoBehaviour:
   pressedColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
   disabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   selectedColor: {r: 0.6, g: 0.8, b: 1, a: 1}
+  normalFrameColor: {r: 1, g: 1, b: 1, a: 1}
+  pressedFrameColor: {r: 1, g: 1, b: 1, a: 1}
   normalTextColor: {r: 1, g: 1, b: 1, a: 1}
   pressedTextColor: {r: 1, g: 1, b: 1, a: 1}
   interactable: 1

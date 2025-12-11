@@ -61,7 +61,7 @@ public class ResultUIManager : MonoBehaviour
 		
 	}
 
-	public void Initialize(int victoryID)
+	public void Initialize(int victoryID, List<ResultData> datas)
 	{
 		// 设定胜利还是失败
 		int victoryPlayerId = victoryID;	
@@ -80,40 +80,7 @@ public class ResultUIManager : MonoBehaviour
 		int spriteSerial = (int)GameManage.Instance.GetPlayerData(victoryPlayerId).PlayerReligion - 1;
 		ReligionIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.IconList_Religion, spriteSerial);
 
-		//List<ResultData> datas = GameManage.Instance.GetResultDatas();
-		// 初始化Detail数据
-		//InitResultData(datas);
-
-		// 暂时代用
-		List<ResultData> datas = new List<ResultData>();
-		datas.Add(UI_ResultData);
-		//ResultData data1 = new ResultData(
-		//	"Player1",
-		//	25,
-		//	15,
-		//	5,
-		//	10,
-		//	2,
-		//	3,
-		//	100,
-		//	80
-		//	);
-		//datas.Add(data1);
-		//ResultData data2 = new ResultData(
-		//	"Player2",
-		//	20,
-		//	10,
-		//	3,
-		//	5,
-		//	1,
-		//	1,
-		//	90,
-		//	80
-		//	);
-		//datas.Add(data2);
-
 		InitResultData(datas);
-		
 
 		// 设定演出
 		OpenResultPanel();
@@ -208,14 +175,16 @@ public class ResultUIManager : MonoBehaviour
 		// 如果单人模式直接结算 否则发送投降消息
 		if (SceneStateManager.Instance.bIsSingle)
 		{
+			List<ResultData> datas = new List<ResultData>();
+			datas.Add(GameManage.Instance.GetLocalResultData());
 			// 初始化ui并进行结算
-			Initialize(GameManage.Instance.LocalPlayerID);
+			Initialize(GameManage.Instance.LocalPlayerID,datas);
 		}
 		else
 		{
 			//发送投降消息
 			int localId = GameManage.Instance.LocalPlayerID;
-			NetGameSystem.Instance.SendGameOverMessage(GetVictoryPlayerIdBySurrender(), localId, "surrender");
+			NetGameSystem.Instance.SendGameOverMessage(GetVictoryPlayerIdBySurrender(), localId, GameManage.Instance.GetLocalResultData(), "surrender");
 		}
 
 	}
@@ -262,12 +231,18 @@ public class ResultUIManager : MonoBehaviour
 			// 生成 UI
 			ResultDetailUI detailUI = Instantiate(ResultDetailUIComponent, ResultDetail);
 
-			//Religion religion = GameManage.Instance.GetPlayerData(GameManage.Instance.GetAllPlayerIds()[i]).PlayerReligion;
-			Religion religion = Religion.RedMoonReligion;
+			Religion religion = Religion.None;
+			if (SceneStateManager.Instance.bIsSingle)
+			{
+				religion = Religion.RedMoonReligion;
+			}
+			else
+			{
+				religion = GameManage.Instance.GetPlayerData(GameManage.Instance.GetAllPlayerIds()[i]).PlayerReligion;
+			}
+				
 			detailUI.Initialize(data[i], religion);
-
 			resultDetailUIs.Add(detailUI);
-
 			RectTransform rt = detailUI.GetComponent<RectTransform>();
 
 			//------------- 核心：位置计算 -------------

@@ -18,15 +18,17 @@ public class GameOption : MonoBehaviour
 	public Button SettingButton;
 	public Button SurrenderButton;
 	public Button BackToFirstLayerButton;
+	public Button BackToSelectSceneButton;
 	
 	public Toggle ResolutionButton;
 	public Toggle SoundButton;
 	public Toggle OtherButton;
 
 	[Header("UI Component")]
-	public RectTransform ResulotionMenu;
-	public RectTransform SoundMunu;
+	public RectTransform ResolutionMenu;
+	public RectTransform SoundMenu;
 	public RectTransform OtherMenu;
+
 
 	[Header("Sound Slider")]
 	public Slider MasterSlider;
@@ -34,8 +36,10 @@ public class GameOption : MonoBehaviour
 	public Slider SESlider;
 
 	[Header("Surrender Window")]
-	public Button SurrenderConfirmButton;
 	public RectTransform SurrenderComponent;
+
+	[Header("BackToMainSceneWindow")]
+	public RectTransform BackToSelectSceneComponent;
 
 	[Header("SynchroMenu")] 
 	public TMP_Dropdown resolutionDropdown;
@@ -101,14 +105,7 @@ public class GameOption : MonoBehaviour
 		// Press Escape to open/close menu
 		if (Input.GetKeyUp(KeyCode.Escape))
 		{
-			if (isOpen)
-			{
-				CloseMenu();
-			}
-			else
-			{
-				OpenMenu();
-			}
+			DoMenu();
 		}
 	}
 	
@@ -160,44 +157,44 @@ public class GameOption : MonoBehaviour
 
 	private void OnResolutionToggleValueChanged(bool isOn)
 	{
-		ResulotionMenu.gameObject.SetActive(isOn);
-		SoundMunu.gameObject.SetActive(!isOn);
+		ResolutionMenu.gameObject.SetActive(isOn);
+		SoundMenu.gameObject.SetActive(!isOn);
 		OtherMenu.gameObject.SetActive(!isOn);
 	}
 
 	private void OnSoundToggleValueChanged(bool isOn)
 	{
-		ResulotionMenu.gameObject.SetActive(!isOn);
-		SoundMunu.gameObject.SetActive(isOn);
+		ResolutionMenu.gameObject.SetActive(!isOn);
+		SoundMenu.gameObject.SetActive(isOn);
 		OtherMenu.gameObject.SetActive(!isOn);
 	}
 
 	private void OnOtherToggleValueChanged(bool isOn)
 	{
-		ResulotionMenu.gameObject.SetActive(!isOn);
-		SoundMunu.gameObject.SetActive(!isOn);
+		ResolutionMenu.gameObject.SetActive(!isOn);
+		SoundMenu.gameObject.SetActive(!isOn);
 		OtherMenu.gameObject.SetActive(isOn);
 	}
 
 	public void OpenResolutionMenu()
 	{
 		ResolutionButton.Select();
-		ResulotionMenu.gameObject.SetActive(true);
-		SoundMunu.gameObject.SetActive(false);
+		ResolutionMenu.gameObject.SetActive(true);
+		SoundMenu.gameObject.SetActive(false);
 		OtherMenu.gameObject.SetActive(false);
 	}
 
 	private void OpenSoundMenu()
 	{
-		ResulotionMenu.gameObject.SetActive(false);
-		SoundMunu.gameObject.SetActive(true);
+		ResolutionMenu.gameObject.SetActive(false);
+		SoundMenu.gameObject.SetActive(true);
 		OtherMenu.gameObject.SetActive(false);
 	}
 
 	private void OpenOtherMenu()
 	{
-		ResulotionMenu.gameObject.SetActive(false);
-		SoundMunu.gameObject.SetActive(false);
+		ResolutionMenu.gameObject.SetActive(false);
+		SoundMenu.gameObject.SetActive(false);
 		OtherMenu.gameObject.SetActive(true);
 	}
 
@@ -212,5 +209,10 @@ public class GameOption : MonoBehaviour
 	private void OpenSurrenderMenu()
 	{
 		SurrenderComponent.gameObject.SetActive(true);
+	}
+
+	private void OpenBackToMainSceneMenu()
+	{
+		BackToSelectSceneComponent.gameObject.SetActive(true);
 	}
 }
