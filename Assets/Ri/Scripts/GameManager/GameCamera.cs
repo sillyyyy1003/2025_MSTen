@@ -200,14 +200,11 @@ public class GameCamera : MonoBehaviour
 
     void HandleMovement()
     {
-        if (GameManage.Instance.IsPointerOverUIElement())
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("<color=yellow>鼠标在UI上，跳过移动</color>");
-            }
-            return;
-        }
+        //if (GameManage.Instance.IsPointerOverUIElement())
+        //{
+          
+        //    return;
+        //}
 
         Vector3 keyboardInput = Vector3.zero;
 

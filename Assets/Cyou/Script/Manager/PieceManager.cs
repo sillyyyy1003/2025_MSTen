@@ -1967,12 +1967,12 @@ public class PieceManager : MonoBehaviour
 
                 if(piece is Pope && piece.ProcessPopeSwapCD())
                 {
-                    Debug.Log($"今の教皇駒ID={pieceID}のスキル発動残りCDは{piece.PopeSwapPosRemaining}です。");
+                    //Debug.Log($"今の教皇駒ID={pieceID}のスキル発動残りCDは{piece.PopeSwapPosRemaining}です。");
                 }
             }
         }
 
-        Debug.Log($"プレイヤー{playerID}のターン開始処理を実行しました（駒数: {playerPieces.Count}、魅惑解除: {charmedPiecesCount}）");
+        //Debug.Log($"プレイヤー{playerID}のターン開始処理を実行しました（駒数: {playerPieces.Count}、魅惑解除: {charmedPiecesCount}）");
     }
 
     #endregion
