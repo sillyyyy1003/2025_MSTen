@@ -2302,6 +2302,39 @@ public class NetGameSystem : MonoBehaviour
 
         Debug.Log($"游戏结束! 获胜者: 玩家 {data.WinnerPlayerId}, 失败者: 玩家 {data.LoserPlayerId}, 原因: {data.Reason}");
 
+        ResultData r_data = new ResultData()
+        {
+            PlayerId = SaveLoadManager.Instance.CurrentData.userID,            // 玩家ID
+            CellNumber = PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
+            PieceNumber = PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
+            BuildingNumber = PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
+            PieceDestroyedNumber = PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
+            BuildingDestroyedNumber = PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
+            CharmSucceedNumber = PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
+            ResourceGet = PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
+            ResourceUsed = PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
+        };
+
+        GameOverMessage server_gameOverData = new GameOverMessage
+        {
+            WinnerPlayerId = data.WinnerPlayerId,
+            LoserPlayerId = data.LoserPlayerId,
+            Reason = data.Reason,
+            ResultData = r_data
+        };
+        NetworkMessage server_gameOverMsg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.GAME_OVER,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(server_gameOverData)
+        };
+
+        // 如果是服务器，广播游戏结束消息给所有客户端
+        if (isServer && clients != null && clients.Count > 0)
+        {
+            Debug.Log($"[服务器] 广播游戏结束消息给所有客户端");
+            BroadcastToClients(server_gameOverMsg, uint.MaxValue);
+        }
         // 触发游戏结束事件
         MainThreadDispatcher.Enqueue(() =>
         {
@@ -2312,12 +2345,7 @@ public class NetGameSystem : MonoBehaviour
             }
         });
 
-        // 如果是服务器，广播游戏结束消息给所有客户端
-        if (isServer && clients != null && clients.Count > 0)
-        {
-            Debug.Log($"[服务器] 广播游戏结束消息给所有客户端");
-            BroadcastToClients(message, uint.MaxValue);
-        }
+     
     }
     #region 处理具体单位操作消息
     // 单位移动
