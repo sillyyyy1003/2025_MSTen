@@ -314,8 +314,6 @@ public class SkillTreeUIManager : MonoBehaviour
             default:
                 return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "08lock");
         }
-
-		return null;
 	}
 	private void OnToggleChanged(PieceType type, bool isOn)
 	{
