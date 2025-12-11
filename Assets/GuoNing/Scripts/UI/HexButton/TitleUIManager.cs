@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -30,6 +31,7 @@ public class TitleUIManager : MonoBehaviour
 	public RectTransform OptionMenu;
 	public RectTransform OnlineMenu;
 	public RectTransform RightDetailMenu;
+	public HexButton Button_CloseRightPanel;
 
 	// Screen UI
 	[Header("OnlineButton")]
@@ -38,12 +40,11 @@ public class TitleUIManager : MonoBehaviour
 	public RectTransform UserID;
 	public TMP_Text Text_UserID;
 
+
 	[Header("Building")]
-	/// <summary>
-	/// 画面に表示する建物モデル
-	/// </summary>
 	public Transform Building;
 	public Transform Lighting;
+	public Transform pivot;  // 手动设置成与 Building 同位置
 
 	[Header("DisplayComponent")]
 	public TMP_Dropdown ResolutionDropdown;
@@ -54,7 +55,6 @@ public class TitleUIManager : MonoBehaviour
 	public Slider MasterSlider;
 	public Slider BGMSlider;
 	public Slider SESlider;
-
 
 	//--------------------------------------------------------------------------------
 	// メソッド
@@ -69,30 +69,13 @@ public class TitleUIManager : MonoBehaviour
 		if (Input.GetMouseButton(1))
 		{
 			//  Close all option menu& online menu for next usage
-			OptionMenu.gameObject.SetActive(false);
-			OnlineMenu.gameObject.SetActive(false);
-			UpdateBackground(false);
+			CloseRightPanel();
 
 			// Reset button state
 			Button_Setting.ResetHexButton();
 			Button_OnlineGame.ResetHexButton();
-			SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 
-			//  Open UserID display
-			UserID.gameObject.SetActive(true);
 		}
-
-		//=========Building model update
-		if (Building)
-		{
-			Building.Rotate(Vector3.up, 20f * Time.deltaTime);
-		}
-
-		if (Lighting)
-		{
-			Lighting.RotateAround(Building.position, Vector3.up, 40f * Time.deltaTime);
-		}
-
 		
 	}
 
@@ -113,6 +96,8 @@ public class TitleUIManager : MonoBehaviour
 
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
+
+		Button_CloseRightPanel.onClick.AddListener(() => CloseRightPanel());
 	
 		//  Close all option menu& online menu for next usage
 		OptionMenu.gameObject.SetActive(false);
@@ -170,7 +155,55 @@ public class TitleUIManager : MonoBehaviour
 			Text_UserID.text = "Not Set";
 		}
 
+
+		//=======
+		// Building 自转
+		if (Building)
+		{
+			Building.DORotate(
+					new Vector3(0, 360, 0),
+					18f,
+					RotateMode.FastBeyond360
+				).SetEase(Ease.Linear)
+				.SetLoops(-1);
+		}
+
+		// Lighting 围绕 Building 旋转
+		if (Lighting)
+		{
+			pivot = new GameObject("LightingPivot").transform;
+			pivot.position = Building.position;
+			pivot.rotation = Quaternion.identity;
+
+			Lighting.SetParent(pivot, true);
+
+			// 40°/秒 = 9 秒一圈
+			pivot.DORotate(
+					new Vector3(0, 360, 0),
+					9f,
+					RotateMode.FastBeyond360
+				).SetEase(Ease.Linear)
+				.SetLoops(-1);
+		}
 	}
+
+
+
+	private void CloseRightPanel()
+	{
+		Button_CloseRightPanel.gameObject.SetActive(false);
+		OptionMenu.gameObject.SetActive(false);
+		OnlineMenu.gameObject.SetActive(false); 
+		RightDetailMenu.gameObject.SetActive(false);
+		UpdateBackground(false);
+
+		//  Open UserID display
+		UserID.gameObject.SetActive(true);
+
+		Button_Setting.ResetHexButton();
+		Button_OnlineGame.ResetHexButton();
+	}
+
 
 
 	private void OnClickMapEditor()
@@ -208,9 +241,14 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickOnlineGame()
 	{
+		Button_CloseRightPanel.gameObject.SetActive(true);
 
 		//  Set option menu active
 		OnlineMenu.gameObject.SetActive(true);
+		OptionMenu.gameObject.SetActive(false);
+
+		// 关闭UserID显示
+		UserID.gameObject.SetActive(false);
 
 		// Change material
 		UpdateBackground(true);
@@ -221,10 +259,11 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickSetting()
 	{
-		
 		//  Set option menu active
 		OptionMenu.gameObject.SetActive(true);
 		OnlineMenu.gameObject.SetActive(false);
+
+		Button_CloseRightPanel.gameObject.SetActive(true);
 
 		// Change material
 		UpdateBackground(true);

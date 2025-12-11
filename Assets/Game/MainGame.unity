@@ -1700,7 +1700,7 @@ GameObject:
   - component: {fileID: 130488594}
   - component: {fileID: 130488593}
   m_Layer: 0
-  m_Name: SurrendorWindow
+  m_Name: BackToTitleWindow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9068,7 +9068,7 @@ GameObject:
   - component: {fileID: 537382325}
   - component: {fileID: 537382324}
   m_Layer: 0
-  m_Name: Surrendor
+  m_Name: BackToTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9138,21 +9138,10 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: GameOption, Assembly-CSharp
-        m_MethodName: CloseMenu
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 2117784781}
-        m_TargetAssemblyTypeName: ResultUIManager, Assembly-CSharp
-        m_MethodName: Surrender
+      - m_Target: {fileID: 1888084853070597338, guid: e8e8499d8d01e8147ad12b97facba60a,
+          type: 3}
+        m_TargetAssemblyTypeName: SceneController, Assembly-CSharp
+        m_MethodName: SwitchToTitleScene
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -22439,7 +22428,7 @@ GameObject:
   - component: {fileID: 1316164655}
   - component: {fileID: 1316164654}
   m_Layer: 0
-  m_Name: BackTo
+  m_Name: BackToGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23351,7 +23340,7 @@ GameObject:
   - component: {fileID: 1371780466}
   - component: {fileID: 1371780465}
   m_Layer: 0
-  m_Name: "Surrendor\uFF1F"
+  m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28383,18 +28372,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e8e8499d8d01e8147ad12b97facba60a, type: 3}
---- !u!114 &1660054031 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1888084853070597338, guid: e8e8499d8d01e8147ad12b97facba60a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1660054030}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1a2029496af8f943896044bf7354396, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1660620733
 GameObject:
   m_ObjectHideFlags: 0
@@ -32021,7 +31998,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1907882513
 RectTransform:
   m_ObjectHideFlags: 0
@@ -34192,9 +34169,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1660054031}
+      - m_Target: {fileID: 2117784775}
         m_TargetAssemblyTypeName: SceneController, Assembly-CSharp
-        m_MethodName: SwitchToTitleScene
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -35527,21 +35504,22 @@ MonoBehaviour:
   SettingButton: {fileID: 1749960371}
   SurrenderButton: {fileID: 1396530095}
   BackToFirstLayerButton: {fileID: 966037594}
+  BackToSelectSceneButton: {fileID: 2043560183}
   ResolutionButton: {fileID: 301067778}
   SoundButton: {fileID: 2143469503}
   OtherButton: {fileID: 1034250147}
-  ResulotionMenu: {fileID: 1143721642}
-  SoundMunu: {fileID: 481538023}
+  ResolutionMenu: {fileID: 1143721642}
+  SoundMenu: {fileID: 481538023}
   OtherMenu: {fileID: 1391758995}
   MasterSlider: {fileID: 1368646475}
   BGMSlider: {fileID: 808380724}
   SESlider: {fileID: 1709274563}
-  SurrenderConfirmButton: {fileID: 96157198}
   SurrenderComponent: {fileID: 1088450583}
+  BackToSelectSceneComponent: {fileID: 1907882513}
   resolutionDropdown: {fileID: 174602638}
   fullScreenDropdown: {fileID: 1040283214}
   gridToggle: {fileID: 1180549202}
-  EndTrunButton: {fileID: 2062960769}
+  EndTurnButton: {fileID: 2062960769}
 --- !u!114 &2117784783
 MonoBehaviour:
   m_ObjectHideFlags: 0

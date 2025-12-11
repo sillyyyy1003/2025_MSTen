@@ -520,7 +520,8 @@ public class SoundManager : MonoBehaviour
         seManager.SetVolume(volumeSettings.masterVolume * volumeSettings.seVolume);
 
         // 将更改保存在SaveLoadManager
-        SaveLoadManager.Instance.UpdateVolume(MasterVolume,BGMVolume,SEVolume);
+        if(SaveLoadManager.Instance!=null)
+	        SaveLoadManager.Instance.UpdateVolume(MasterVolume,BGMVolume,SEVolume);
     }
 
     #endregion 音量設定関連メソッド

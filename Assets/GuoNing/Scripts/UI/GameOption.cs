@@ -46,7 +46,7 @@ public class GameOption : MonoBehaviour
 	public TMP_Dropdown fullScreenDropdown;
 	public Toggle gridToggle;
 
-	public RectTransform EndTrunButton;
+	public RectTransform EndTurnButton;
 	private bool isOpen = false;
 
 	void Start()
@@ -94,10 +94,13 @@ public class GameOption : MonoBehaviour
 		SettingButton.onClick.AddListener(OpenSettingMenu);
 		SurrenderButton.onClick.AddListener(OpenSurrenderMenu);
 		BackToFirstLayerButton.onClick.AddListener(CloseSecondLayer);
+		BackToSelectSceneButton.onClick.AddListener(OpenBackToMainSceneMenu);
+
 
 		SoundButton.onValueChanged.AddListener(OnSoundToggleValueChanged);
 		ResolutionButton.onValueChanged.AddListener(OnResolutionToggleValueChanged);
 		OtherButton.onValueChanged.AddListener(OnOtherToggleValueChanged);
+	
 
 	}
 	private void Update()
@@ -122,7 +125,7 @@ public class GameOption : MonoBehaviour
 		Menu.gameObject.SetActive(true);
 		FirstLayer.gameObject.SetActive(true);
 		SecondLayer.gameObject.SetActive(false);
-		EndTrunButton.gameObject.SetActive(false);
+		EndTurnButton.gameObject.SetActive(false);
 	}
 
 	/// <summary>
@@ -134,7 +137,7 @@ public class GameOption : MonoBehaviour
 		GameManage.Instance.SetIsGamingOrNot(true);
 		Debug.Log(GameManage.Instance!=null);
 		Menu.gameObject.SetActive(false);
-		EndTrunButton.gameObject.SetActive(true);
+		EndTurnButton.gameObject.SetActive(true);
 	}
 
 	public void DoMenu()
