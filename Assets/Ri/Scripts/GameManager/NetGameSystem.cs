@@ -2303,18 +2303,7 @@ public class NetGameSystem : MonoBehaviour
         Debug.Log($"游戏结束! 获胜者: 玩家 {data.WinnerPlayerId}, 失败者: 玩家 {data.LoserPlayerId}, 原因: {data.Reason}");
 
         // 发送自己的数据
-        ResultData thisData = new ResultData()
-        {
-            PlayerId = SaveLoadManager.Instance.CurrentData.userID,            // 玩家ID
-            CellNumber = PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
-            PieceNumber = PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
-            BuildingNumber = PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
-            PieceDestroyedNumber = PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
-            BuildingDestroyedNumber = PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
-            CharmSucceedNumber = PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
-            ResourceGet = PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
-            ResourceUsed = PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
-        };
+        ResultData thisData = GameManage.Instance.GetLocalResultData();
 
         GameOverMessage gameOverData = new GameOverMessage
         {

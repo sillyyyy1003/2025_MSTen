@@ -132,6 +132,9 @@ public class ResolutionManager : MonoBehaviour
 			// 窗口模式
 			Screen.SetResolution(setting.width, setting.height, false);
 		}
+
+		// 保存设定
+		SaveLoadManager.Instance.UpdateResolutionIndex(currentResolutionIndex);
 	}
 
 	public void OnChangeFullScreenMode(int index)
@@ -151,6 +154,8 @@ public class ResolutionManager : MonoBehaviour
 			Screen.fullScreenMode = FullScreenMode.Windowed;
 			Screen.SetResolution(setting.width, setting.height, false);
 		}
+		// 保存设定
+		SaveLoadManager.Instance.UpdateResolutionIndex(currentFullScrrenIndex);
 	}
 
 	public void ApplyLoadedSettings(int resIndex, int fullIndex)
