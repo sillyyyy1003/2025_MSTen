@@ -499,7 +499,7 @@ public class GameManage : MonoBehaviour
     {
         _CurrentTurnPlayerID = playerId;
 
-        Debug.Log($"回合开始: 玩家 {playerId}" + (IsMyTurn ? " (你的回合)" : " (等待中)"));
+        Debug.Log($"回合开始: 玩家 {playerId} 回合{PlayerDataManager.Instance.TurnCount}" + (IsMyTurn ? " (你的回合)" : " (等待中)"));
 
         // 触发回合开始事件
         OnTurnStarted?.Invoke(playerId);
@@ -550,7 +550,7 @@ public class GameManage : MonoBehaviour
             return;
         }
 
-        Debug.Log($"玩家 {LocalPlayerID} 结束回合");
+        //Debug.Log($"玩家 {LocalPlayerID} 结束回合");
 
         // 处理被魅惑单位的倒计时和归还
         List<CharmExpireInfo> expiredUnits = _PlayerDataManager.UpdateCharmedUnits(LocalPlayerID);
@@ -908,37 +908,42 @@ public class GameManage : MonoBehaviour
     // 检测鼠标指针是否在可交互的UI元素上（按钮、输入框等）
     public bool IsPointerOverUIElement()
     {
-        if (EventSystem.current == null)
-            return false;
+        //if (EventSystem.current == null)
+        //    return false;
 
-        // 创建指针事件数据
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = Input.mousePosition;
+        //// 创建指针事件数据
+        //PointerEventData eventData = new PointerEventData(EventSystem.current);
+        //eventData.position = Input.mousePosition;
 
-        // 射线检测所有UI元素
-        List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-
-        // 只检查可交互的UI组件（按钮、输入框等）
-        foreach (var result in results)
+        //// 射线检测所有UI元素
+        //List<RaycastResult> results = new List<RaycastResult>();
+        //EventSystem.current.RaycastAll(eventData, results);
+    
+        if (EventSystem.current.IsPointerOverGameObject())
         {
-            if (result.gameObject.activeInHierarchy)
-            {
-                // 检查是否是按钮或其他可交互组件
-                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
-                    result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
-                    result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
-                {
-                    return true;
-                }
-            }
+            //Debug.Log("is on ui");
+            return true;
         }
+        //// 只检查可交互的UI组件（按钮、输入框等）
+        //foreach (var result in results)
+        //{
+        //    if (result.gameObject.activeInHierarchy)
+        //    {
+        //        // 检查是否是按钮或其他可交互组件
+        //        if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Image>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
+        //            result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
+        //            result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
+               
+        //    }
+        //}
 
+        //Debug.Log("is OUT ui");
         return false;
     }
 }

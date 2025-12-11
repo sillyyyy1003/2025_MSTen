@@ -393,7 +393,7 @@ public class GameUIManager : MonoBehaviour
         //2025.11.29 UI的更新在OnGameStarted里进行
         //Initialize();
 
-        Debug.Log($" 回合开始：玩家 {localPlayerId}");
+        //Debug.Log($" 回合开始：玩家 {localPlayerId}");
 
         StartTimer();
 
@@ -851,7 +851,7 @@ public class GameUIManager : MonoBehaviour
     {
         Resources = PlayerDataManager.Instance.GetPlayerResource();
         resourcesValue.text = Resources.ToString();
-		Debug.Log("[GameUIManager] 更新资源数据" + Resources + "/" + resourcesValue.text);
+		//Debug.Log("[GameUIManager] 更新资源数据" + Resources + "/" + resourcesValue.text);
 	}
 
 
