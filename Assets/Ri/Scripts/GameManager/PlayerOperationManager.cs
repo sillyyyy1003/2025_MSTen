@@ -3664,7 +3664,7 @@ public class PlayerOperationManager : MonoBehaviour
                 // 输出结束消息
                 if (msg.TargetSyncData.Value.piecetype==PieceType.Pope)
                 {
-                    Debug.Log("WINNER ID IS "+ GameManage.Instance.OtherPlayerID);
+                    //Debug.Log("WINNER ID IS "+ GameManage.Instance.OtherPlayerID);
                     ResultData data = new ResultData()
                     {
                         PlayerId = SaveLoadManager.Instance.CurrentData.userID,            // 玩家ID

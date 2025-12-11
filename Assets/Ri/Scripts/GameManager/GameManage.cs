@@ -226,7 +226,7 @@ public class GameManage : MonoBehaviour
     // 触发游戏结束事件
     public void TriggerGameEnded(int winnerPlayerId,ResultData data)
     {
-        Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
+        //Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
         OnGameEnded?.Invoke(winnerPlayerId);
 
         ResultData thisData = new ResultData()
