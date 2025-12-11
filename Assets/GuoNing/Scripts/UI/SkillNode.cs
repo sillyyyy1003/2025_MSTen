@@ -85,7 +85,7 @@ public class SkillNode : MonoBehaviour
 
 		if (LevelUpDescription) LevelUpDescription.text = SkillTreeUIManager.Instance.GetLevelUpInfo(pieceType);
 
-            Debug.Log("[SkillNode]CurrentLevel" + currentLevel);
+        Debug.Log("[SkillNode]CurrentLevel" + currentLevel);
 		Debug.Log("[SkillNode]Skill level:" + SkillIndex);
 		// ------------------------------------------------
 		// ⭐ ① index=0：初始等级，永远解锁，不需要升级
@@ -124,8 +124,14 @@ public class SkillNode : MonoBehaviour
 			{
 				levelUpButton.GetComponent<Button>().interactable = true;
 				levelUpButton.SetButton(OnLevelUpButtonClicked);
-			}
 
+
+            }
+			else
+			{
+                label.color = Color.white;
+                costNum.color = Color.white;
+            }
             if (LevelUpDescription) LevelUpDescription.text = SkillTreeUIManager.Instance.GetLevelUpInfo(pieceType, techTree);
 
             return;

@@ -1021,17 +1021,18 @@ public class GameUIManager : MonoBehaviour
     {
         if(tf)
         {
-            TurnMessageText1.text = "自分のターン";
-            TurnMessageText2.text = "Y o u r 　T u r n";
-            NextTurnReligionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(GetPlayerReligion()); 
-
-        }
-        else
-        {
             int playerId = GameManage.Instance.CurrentTurnPlayerID;
             TurnMessageText1.text = "敵のターン";
             TurnMessageText2.text = "E n e m y 　T u r n";
             NextTurnReligionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(allPlayersData[playerId].religion);
+
+        }
+        else
+        {
+            TurnMessageText1.text = "自分のターン";
+            TurnMessageText2.text = "Y o u r 　T u r n";
+            NextTurnReligionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(GetPlayerReligion());
+
 
         }
         TurnMessageObj.SetActive(true);

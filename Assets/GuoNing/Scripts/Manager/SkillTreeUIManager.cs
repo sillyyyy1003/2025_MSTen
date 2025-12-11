@@ -668,7 +668,7 @@ public class SkillTreeUIManager : MonoBehaviour
                         int maxlv = 2;
                         next = Mathf.Clamp(lv + 1, 0, maxlv);
 
-                        status = $"<color=#FF0000>Lv.{next + 1}</color>";
+                        status = $"<color=#FF0000>Lv.{next+1}</color>";
                     }
                     else
                     {

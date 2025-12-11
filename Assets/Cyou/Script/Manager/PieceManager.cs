@@ -603,7 +603,7 @@ public class PieceManager : MonoBehaviour
 				return false;
 		}
 
-		SkillTreeUIManager.Instance.UpgradeCurrentLevel(targetPieceType, techTree);
+
 
         // 同じ職業のすべての自分の駒を取得
         int playerID = GameManage.Instance.LocalPlayerID;
@@ -707,7 +707,6 @@ public class PieceManager : MonoBehaviour
 				return false;
 		}
 
-		SkillTreeUIManager.Instance.UpgradeCurrentLevel(targetPieceType, techTree);
 
 		// 同じ職業のすべての自分の駒を取得
 		int playerID = GameManage.Instance.LocalPlayerID;
