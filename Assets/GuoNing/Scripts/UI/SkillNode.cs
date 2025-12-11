@@ -68,7 +68,8 @@ public class SkillNode : MonoBehaviour
 	{
 		// 显示面板
 		levelUpPanel.gameObject.SetActive(true);
-		levelUpButton.GetComponent<Button>().interactable = false;
+        levelUpButton.gameObject.SetActive(true);
+        levelUpButton.GetComponent<Button>().interactable = false;
 		// 先判断是不是当前级别的
 		int currentLevel = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, techTree);
 
@@ -91,7 +92,7 @@ public class SkillNode : MonoBehaviour
 		// ------------------------------------------------
 		if (skillIndex == 0)
 		{
-			if (label) { label.text = "アンロック済"; label.color = Color.white; }
+			if (label) { label.alignment = TMPro.TextAlignmentOptions.Center; label.text = "レベルアップ済"; label.color = Color.white; }
             if (costNum) costNum.text = $"";
             if (costImage) costImage.SetActive(false);
             return;
@@ -102,7 +103,7 @@ public class SkillNode : MonoBehaviour
 		// ------------------------------------------------
 		if (skillIndex <= currentLevel)
 		{
-			if (label) { label.text = "アンロック済"; label.color = Color.white; }
+			if (label) { label.alignment = TMPro.TextAlignmentOptions.Center; label.text = "レベルアップ済"; label.color = Color.white; }
             if (costNum) costNum.text = $"";
             if (costImage) costImage.SetActive(false);
             return;
@@ -114,7 +115,7 @@ public class SkillNode : MonoBehaviour
 		if (skillIndex == currentLevel + 1)
 		{
 			int cost = GetUpgradeCostByTechType(skillIndex - 1);
-			if (label) {label.text = $"レベルアップ"; label.color = Color.black; }
+			if (label) { label.alignment = TMPro.TextAlignmentOptions.Left; label.text = $"レベルアップ"; label.color = Color.black; }
             if (costNum) costNum.text = $"{cost}";
             if (costImage) costImage.SetActive(true);
 
@@ -133,7 +134,7 @@ public class SkillNode : MonoBehaviour
 		// ------------------------------------------------
 		// ⭐ ④ 未来等级：skillIndex > currentLevel
 		// ------------------------------------------------
-		if (label) { label.text = "？？？"; label.color = Color.white; }
+		if (label) levelUpButton.gameObject.SetActive(false);
         if (costNum) costNum.text = $"";
         if (costImage) costImage.SetActive(false);
     }
@@ -233,7 +234,7 @@ public class SkillNode : MonoBehaviour
 
 		var so = ScriptableObject.CreateInstance<PieceDataSO>();
 
-        if (pieceType != PieceType.Building) UnitListTable.Instance.GetPieceDataSO(pieceType, pd);
+        if (pieceType != PieceType.Building) so = UnitListTable.Instance.GetPieceDataSO(pieceType, pd);
 
         switch (pieceType)
 		{ 
