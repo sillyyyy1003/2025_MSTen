@@ -11,6 +11,7 @@ using UnityEngine.SceneManagement;
 using GameData;
 using Unity.Mathematics;
 using UnityEngine.Rendering.Universal;
+using UnityEditor.PackageManager;
 
 
 
@@ -27,6 +28,7 @@ public enum NetworkMessageType
 
     // 游戏流程
     GAME_START,
+    GAME_OVER_MSG,
     GAME_OVER,
 
 
@@ -259,6 +261,7 @@ public class GameOverMessage
     public int WinnerPlayerId;     // 获胜的玩家ID
     public int LoserPlayerId;      // 失败的玩家ID
     public string Reason;          // 结束原因: "surrender"(投降), "building_destroyed"(建筑摧毁), "disconnect"(断线) 等
+    public ResultData ResultData;   // 结局数据
 }
 
 #endregion
@@ -620,6 +623,9 @@ public class NetGameSystem : MonoBehaviour
                 // 游戏流程相关
                 { NetworkMessageType.GAME_START, HandleGameStart },
                 { NetworkMessageType.GAME_OVER, HandleGameOver },  // 游戏结束 (包括投降)  ← 统一处理
+                { NetworkMessageType.GAME_OVER_MSG, HandleGameOverMsg },  // 游戏结束 (包括投降)  ← 统一处理
+               
+            
                 { NetworkMessageType.TURN_START, HandleTurnStart },
                 { NetworkMessageType.TURN_END, HandleTurnEnd },
                  // 单位相关
@@ -1806,18 +1812,19 @@ public class NetGameSystem : MonoBehaviour
     /// <param name="winnerPlayerId">获胜玩家ID</param>
     /// <param name="loserPlayerId">失败玩家ID</param>
     /// <param name="reason">结束原因: "surrender"(投降), "building_destroyed"(建筑摧毁), "disconnect"(断线) 等</param>
-    public void SendGameOverMessage(int winnerPlayerId, int loserPlayerId, string reason = "surrender")
+    public void SendGameOverMessage(int winnerPlayerId, int loserPlayerId,  ResultData data,string reason = "surrender")
     {
         GameOverMessage gameOverData = new GameOverMessage
         {
             WinnerPlayerId = winnerPlayerId,
             LoserPlayerId = loserPlayerId,
-            Reason = reason
+            Reason = reason,
+            ResultData= data
         };
 
         NetworkMessage msg = new NetworkMessage
         {
-            MessageType = NetworkMessageType.GAME_OVER,
+            MessageType = NetworkMessageType.GAME_OVER_MSG,
             SenderId = localClientId,
             JsonData = JsonConvert.SerializeObject(gameOverData)
         };
@@ -1826,8 +1833,8 @@ public class NetGameSystem : MonoBehaviour
      
         if (isServer)
         {
-            // 服务器先处理自己的游戏结束
-            HandleGameOver(msg);
+            BroadcastToClients(msg, localClientId);
+          
             Debug.Log($"[网络-服务器] 处理游戏结束消息并广播给所有客户端");
         }
         else
@@ -1835,6 +1842,9 @@ public class NetGameSystem : MonoBehaviour
             SendToServer(msg);
             Debug.Log($"[网络-客户端] 发送游戏结束消息到服务器");
         }
+        //if (isServer)
+        //    // 服务器处理自己的游戏结束
+        //    HandleGameOver(msg);
     }
     #endregion
     // 发送消息到服务器
@@ -1914,9 +1924,9 @@ public class NetGameSystem : MonoBehaviour
             return;
         }
 
-        if (clients == null)
+        if (!SceneStateManager.Instance.bIsSingle&&clients == null)
         {
-            Debug.LogError("clients 字典为 null!");
+            Debug.LogWarning("clients 字典为 null!");
             return;
         }
 
@@ -2284,7 +2294,63 @@ public class NetGameSystem : MonoBehaviour
             Debug.Log("[客户端] 收到 TURN_END 消息，等待服务器发送 TURN_START");
         }
     }
-    // 处理游戏结束消息
+
+    // 收到游戏结束消息，并发送自己的数据给输的一方
+    private void HandleGameOverMsg(NetworkMessage message)
+    {
+        GameOverMessage data = JsonConvert.DeserializeObject<GameOverMessage>(message.JsonData);
+
+        Debug.Log($"游戏结束! 获胜者: 玩家 {data.WinnerPlayerId}, 失败者: 玩家 {data.LoserPlayerId}, 原因: {data.Reason}");
+
+        // 发送自己的数据
+        ResultData thisData = new ResultData()
+        {
+            PlayerId = SaveLoadManager.Instance.CurrentData.userID,            // 玩家ID
+            CellNumber = PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
+            PieceNumber = PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
+            BuildingNumber = PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
+            PieceDestroyedNumber = PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
+            BuildingDestroyedNumber = PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
+            CharmSucceedNumber = PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
+            ResourceGet = PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
+            ResourceUsed = PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
+        };
+
+        GameOverMessage gameOverData = new GameOverMessage
+        {
+            WinnerPlayerId = data.WinnerPlayerId,
+            LoserPlayerId = data.LoserPlayerId,
+            Reason = data.Reason,
+            ResultData = thisData
+        };
+        NetworkMessage gameOverMsg = new NetworkMessage
+        {
+            MessageType = NetworkMessageType.GAME_OVER,
+            SenderId = 0,
+            JsonData = JsonConvert.SerializeObject(gameOverData)
+        };
+
+        // 如果是服务器，广播游戏结束消息给所有客户端
+        if (isServer && clients != null && clients.Count > 0)
+        {
+            Debug.Log($"[服务器] 广播游戏结束消息给所有客户端");
+            BroadcastToClients(gameOverMsg, uint.MaxValue);
+        }
+        else
+        {
+            SendToServer(gameOverMsg);
+        }
+        // 触发游戏结束事件
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            if (gameManage != null)
+            {
+                Debug.Log($"触发游戏结束事件，获胜者: {data.WinnerPlayerId}");
+                gameManage.TriggerGameEnded(data.WinnerPlayerId, data.ResultData);
+            }
+        });
+    }
+        // 处理游戏结束消息
     private void HandleGameOver(NetworkMessage message)
     {
         Debug.Log($"=== HandleGameOver 被调用 ===");
@@ -2298,22 +2364,27 @@ public class NetGameSystem : MonoBehaviour
 
         Debug.Log($"游戏结束! 获胜者: 玩家 {data.WinnerPlayerId}, 失败者: 玩家 {data.LoserPlayerId}, 原因: {data.Reason}");
 
+        //// 如果是服务器，广播游戏结束消息给所有客户端
+        //if (isServer && clients != null && clients.Count > 0)
+        //{
+        //    Debug.Log($"[服务器] 广播游戏结束消息给所有客户端");
+        //    BroadcastToClients(gameOverMsg, uint.MaxValue);
+        //}
+        //else
+        //{
+        //    SendToServer(gameOverMsg);
+        //}
         // 触发游戏结束事件
         MainThreadDispatcher.Enqueue(() =>
         {
             if (gameManage != null)
             {
                 Debug.Log($"触发游戏结束事件，获胜者: {data.WinnerPlayerId}");
-                gameManage.TriggerGameEnded(data.WinnerPlayerId);
+                gameManage.TriggerGameEnded(data.WinnerPlayerId,data.ResultData);
             }
         });
 
-        // 如果是服务器，广播游戏结束消息给所有客户端
-        if (isServer && clients != null && clients.Count > 0)
-        {
-            Debug.Log($"[服务器] 广播游戏结束消息给所有客户端");
-            BroadcastToClients(message, uint.MaxValue);
-        }
+     
     }
     #region 处理具体单位操作消息
     // 单位移动

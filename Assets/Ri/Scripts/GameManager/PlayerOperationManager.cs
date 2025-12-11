@@ -3664,9 +3664,22 @@ public class PlayerOperationManager : MonoBehaviour
                 // 输出结束消息
                 if (msg.TargetSyncData.Value.piecetype==PieceType.Pope)
                 {
-                    Debug.Log("WINNER ID IS "+ GameManage.Instance.OtherPlayerID);
+                    //Debug.Log("WINNER ID IS "+ GameManage.Instance.OtherPlayerID);
+                    ResultData data = new ResultData()
+                    {
+                        PlayerId = SaveLoadManager.Instance.CurrentData.userID,            // 玩家ID
+                        CellNumber = PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
+                        PieceNumber = PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
+                        BuildingNumber = PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
+                        PieceDestroyedNumber = PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
+                        BuildingDestroyedNumber = PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
+                        CharmSucceedNumber = PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
+                        ResourceGet = PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
+                        ResourceUsed = PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
+                    }
+                    ;
                     // 发送游戏结束消息，原因为教皇死亡
-                    NetGameSystem.Instance.SendGameOverMessage(GameManage.Instance.OtherPlayerID, localPlayerId, "POPE DEAD");
+                    NetGameSystem.Instance.SendGameOverMessage(GameManage.Instance.OtherPlayerID, localPlayerId, data,"POPE DEAD");
                 }
             }
             else

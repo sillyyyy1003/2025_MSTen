@@ -197,25 +197,25 @@ public class GameManage : MonoBehaviour
     /// <summary>
     /// 请求投降
     /// </summary>
-    private void RequestSurrender()
-    {
-        if (NetGameSystem.Instance == null)
-        {
-            Debug.LogError("[投降] NetGameSystem未初始化!");
-            return;
-        }
+    //private void RequestSurrender()
+    //{
+    //    if (NetGameSystem.Instance == null)
+    //    {
+    //        Debug.LogError("[投降] NetGameSystem未初始化!");
+    //        return;
+    //    }
 
-        // 确定获胜者ID (对手ID)
-        int winnerPlayerId = OtherPlayerID;
+    //    // 确定获胜者ID (对手ID)
+    //    int winnerPlayerId = OtherPlayerID;
 
-        Debug.Log($"[投降] 玩家 {_LocalPlayerID} 投降，玩家 {winnerPlayerId} 获胜");
+    //    Debug.Log($"[投降] 玩家 {_LocalPlayerID} 投降，玩家 {winnerPlayerId} 获胜");
 
-        // 发送游戏结束消息，原因为投降
-        NetGameSystem.Instance.SendGameOverMessage(winnerPlayerId, _LocalPlayerID, "surrender");
+    //    // 发送游戏结束消息，原因为投降
+    //    NetGameSystem.Instance.SendGameOverMessage(winnerPlayerId, _LocalPlayerID, "surrender");
 
-        // 本地也触发游戏结束
-        OnGameEnded?.Invoke(winnerPlayerId);
-    }
+    //    // 本地也触发游戏结束
+    //    OnGameEnded?.Invoke(winnerPlayerId);
+    //}
     // Update is called once per frame
 
 
@@ -224,15 +224,14 @@ public class GameManage : MonoBehaviour
     // *************************
 
     // 触发游戏结束事件
-    public void TriggerGameEnded(int winnerPlayerId)
+    public void TriggerGameEnded(int winnerPlayerId,ResultData data)
     {
-        Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
+        //Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
         OnGameEnded?.Invoke(winnerPlayerId);
-        ResultUIManager.Instance.Initialize(winnerPlayerId);
-        ResultData data = new ResultData()
-        {
 
-           PlayerId = LocalPlayerID.ToString(),            // 玩家ID
+        ResultData thisData = new ResultData()
+        {
+           PlayerId = SaveLoadManager.Instance.CurrentData.userID,    
            CellNumber=PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
            PieceNumber= PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
            BuildingNumber= PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
@@ -243,6 +242,19 @@ public class GameManage : MonoBehaviour
            ResourceUsed= PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
         };
         ResultUIManager.Instance.SetResultData(data);
+        List<ResultData> datas = new List<ResultData>();
+        if(winnerPlayerId==LocalPlayerID)
+        {
+            datas.Add(thisData);
+            datas.Add(data);
+        }
+        else
+        {
+            datas.Add(data);
+            datas.Add(thisData);
+        }
+
+        ResultUIManager.Instance.Initialize(winnerPlayerId, datas);
         GameOver(winnerPlayerId);
     }
 
