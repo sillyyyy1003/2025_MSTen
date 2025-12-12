@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
-using static HexCell;
 
 /// <summary>
 /// Component that manages the map feature visualizations for a hex grid chunk.

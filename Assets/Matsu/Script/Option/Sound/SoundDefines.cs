@@ -26,6 +26,7 @@ namespace SoundSystem
 		SPAWNUNIT,			// ユニット出てきたとき
 		SPREADCARD,			// Open card panel
 		CHARMED,            // ユニットが魅了されたとき
+		HEAL,
 	}
 
 

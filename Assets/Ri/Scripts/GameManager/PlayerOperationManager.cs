@@ -2274,7 +2274,15 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType);
                 PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
-            }
+
+                Vector3 targetPosition = PlayerBoardInforDict[i].Cells3DPos;
+
+				// 2025.12.02 Guoning 特效播放
+				EffectManager.Instance.PlayerEffect(OperationType.Occupy, targetPosition, Quaternion.identity, null, true);
+
+                // 2025.11.14 Guoning 音声再生
+                SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.HEAL);
+			}
         }
 
         {
@@ -3047,7 +3055,7 @@ public class PlayerOperationManager : MonoBehaviour
                     // 2025.12.02 播放攻击特效
                     Vector3 hitPos = targetUnit.transform.position;
                     hitPos.y += 5.0f;
-                    EffectManager.Instance.PlayerEffect(OperationType.Attack, hitPos, targetUnit.transform.rotation);
+                    EffectManager.Instance.PlayerEffect(OperationType.Attack,hitPos, targetUnit.transform.rotation);
                 }
 
                 // 网络同步攻击
@@ -3973,11 +3981,6 @@ public class PlayerOperationManager : MonoBehaviour
             //更新AP
             UnitStatusUIManager.Instance.UpdateAPByID(PlayerDataManager.Instance.nowChooseUnitID, PieceManager.Instance.GetPieceAP((PlayerDataManager.Instance.nowChooseUnitID)));
 
-            // 2025.12.02 Guoning 特效播放
-            EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position, UnityEngine.Quaternion.identity);
-
-            // 2025.11.14 Guoning 音声再生
-            SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 
             // 添加结局数据
             PlayerDataManager.Instance.Result_CellNumber += 1;

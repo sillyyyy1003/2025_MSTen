@@ -13894,6 +13894,9 @@ MonoBehaviour:
   - type: 12
     prefab: {fileID: 7895234138524244904, guid: 34453de091a1f6b4da0663e930ab21b8,
       type: 3}
+  - type: 13
+    prefab: {fileID: 7895234138524244904, guid: 34453de091a1f6b4da0663e930ab21b8,
+      type: 3}
 --- !u!4 &755171157
 Transform:
   m_ObjectHideFlags: 0
@@ -27467,6 +27470,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: SoundManger
       objectReference: {fileID: 0}
+    - target: {fileID: 1936843169679400816, guid: 8cf68396400b44448a7735db405b2141,
+        type: 3}
+      propertyPath: seResources.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1936843169679400816, guid: 8cf68396400b44448a7735db405b2141,
+        type: 3}
+      propertyPath: seResources.Array.data[5].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 3ba8db5ed660e2842a029d5597fb14b6, type: 3}
+    - target: {fileID: 1936843169679400816, guid: 8cf68396400b44448a7735db405b2141,
+        type: 3}
+      propertyPath: seResources.Array.data[5].type
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 6281259507739543426, guid: 8cf68396400b44448a7735db405b2141,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -36968,7 +36986,7 @@ MonoBehaviour:
   statusUIPrefab: {fileID: -8201623605849898354, guid: 007e9cb32bab8fb428eea97b6277c5da,
     type: 3}
   uiCanvas: {fileID: 1938065378}
-  defaultOffset: {x: 0, y: 20, z: 0}
+  defaultOffset: {x: 0, y: 30, z: 0}
 --- !u!114 &2117784784
 MonoBehaviour:
   m_ObjectHideFlags: 0
