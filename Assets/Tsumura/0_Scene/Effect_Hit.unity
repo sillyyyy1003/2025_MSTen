@@ -123,6 +123,38 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &132126409
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 132126410}
+  m_Layer: 0
+  m_Name: Building_Pyramid_20251211
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &132126410
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132126409}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1296782608}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &203844586
 GameObject:
   m_ObjectHideFlags: 0
@@ -506,7 +538,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 132126410}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: a821b674848a7b3488a420ea5dddc884,
         type: 3}
@@ -531,17 +563,17 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: a821b674848a7b3488a420ea5dddc884,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a821b674848a7b3488a420ea5dddc884,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a821b674848a7b3488a420ea5dddc884,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a821b674848a7b3488a420ea5dddc884,
         type: 3}
@@ -576,7 +608,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: a821b674848a7b3488a420ea5dddc884,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4405491305936547933, guid: a821b674848a7b3488a420ea5dddc884,
         type: 3}
@@ -598,6 +630,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a821b674848a7b3488a420ea5dddc884, type: 3}
+--- !u!4 &1296782608 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a821b674848a7b3488a420ea5dddc884,
+    type: 3}
+  m_PrefabInstance: {fileID: 1296782607}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1577376110
 GameObject:
   m_ObjectHideFlags: 0
@@ -717,6 +755,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Building_ShirukuHaikyo_20251208
       objectReference: {fileID: 0}
+    - target: {fileID: 2116333133769737988, guid: a5756b791c32a2f40af980888fd223e8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6816210980090672716, guid: a5756b791c32a2f40af980888fd223e8,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -788,7 +831,7 @@ PrefabInstance:
     - target: {fileID: 1131748748731684570, guid: c2bf209419936dc46a3315e5c89d9265,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5701024872313953952, guid: c2bf209419936dc46a3315e5c89d9265,
         type: 3}
@@ -854,6 +897,6 @@ SceneRoots:
   - {fileID: 1160234427}
   - {fileID: 5116930448211084293}
   - {fileID: 1577376114}
-  - {fileID: 1296782607}
   - {fileID: 962231049}
   - {fileID: 3731972330067699143}
+  - {fileID: 132126410}
