@@ -32,7 +32,8 @@ MonoBehaviour:
   attackPowerByLevel: 00000000000000000000000000000000
   hpUpgradeCost: 050000000600000000000000
   apUpgradeCost: 060000000700000000000000
-  piecePrefab: {fileID: 0}
+  piecePrefab: {fileID: 4639449946712196576, guid: db70efd2aacd7b74c969e62c821a69f9,
+    type: 3}
   occupyAPCost: 2
   convertAPCost: 3
   conversionTurnDuration: 02000000030000000400000005000000

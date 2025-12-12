@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR;
+using static HexCell;
 
 /// <summary>
 /// Component that manages the map feature visualizations for a hex grid chunk.
@@ -18,7 +20,7 @@ public class HexFeatureManager : MonoBehaviour
 	HexFeatureCollection[] urbanCollections, farmCollections, plantCollections;
 
 	[SerializeField]
-	HexMesh walls;
+	HexMesh[] walls;
 
 	[SerializeField]
 	Transform wallTower, bridge;
@@ -41,13 +43,23 @@ public class HexFeatureManager : MonoBehaviour
 		}
 		container = new GameObject("Features Container").transform;
 		container.SetParent(transform, false);
-		walls.Clear();
+
+		for (int i = 0; i < walls.Length; i++)
+		{
+			walls[i].Clear();
+		}
 	}
 
 	/// <summary>
 	/// Apply triangulation.
 	/// </summary>
-	public void Apply() => walls.Apply();
+	public void Apply()
+	{
+		for (int i = 0; i < walls.Length; i++)
+		{
+			walls[i].Apply();
+		}
+	}
 
 
 	/// <summary>
@@ -440,24 +452,37 @@ public class HexFeatureManager : MonoBehaviour
 	bool hasRiver, bool hasRoad
 )
 	{
+		if (nearCell.IsUnderwater || farCell.IsUnderwater) return;
+		if (nearCell.GetEdgeType(farCell) == HexEdgeType.Cliff) return;
+
+		bool nearHas = nearCell.Walled;
+		bool farHas = farCell.Walled;
+
+		// 两边都没墙：不画
+		if (!nearHas && !farHas) return;
+
+		// 两边都有墙且类型相同：这是墙内部，不画（否则会重复画在每条边上）
+		if (nearHas && farHas && nearCell.WallType == farCell.WallType) return;
+		HexMesh mesh = walls[(int)nearCell.WallType];
+
 		if (nearCell.Walled != farCell.Walled)
 		{
-			AddWallSegment(near.v1, far.v1, near.v2, far.v2);
+			AddWallSegment(mesh,near.v1, far.v1, near.v2, far.v2);
 			if (hasRiver || hasRoad)
 			{
-				AddWallCap(near.v2, far.v2);
-				AddWallCap(far.v4, near.v4);
+				AddWallCap(mesh, near.v2, far.v2);
+				AddWallCap(mesh, far.v4, near.v4);
 			}
 			else
 			{
-				AddWallSegment(near.v2, far.v2, near.v3, far.v3);
-				AddWallSegment(near.v3, far.v3, near.v4, far.v4);
+				AddWallSegment(mesh, near.v2, far.v2, near.v3, far.v3);
+				AddWallSegment(mesh, near.v3, far.v3, near.v4, far.v4);
 			}
-			AddWallSegment(near.v4, far.v4, near.v5, far.v5);
+			AddWallSegment(mesh, near.v4, far.v4, near.v5, far.v5);
 		}
 	}
 
-	void AddWallSegment(
+	void AddWallSegment(HexMesh mesh,
 		Vector3 nearLeft, Vector3 farLeft, Vector3 nearRight, Vector3 farRight
 	)
 	{
@@ -482,25 +507,25 @@ public class HexFeatureManager : MonoBehaviour
 		v2 = v4 = right - rightThicknessOffset;
 		v3.y = leftTop;
 		v4.y = rightTop;
-		walls.AddQuadUnperturbed(v1, v2, v3, v4);
+		mesh.AddQuadUnperturbed(v1, v2, v3, v4);
 
 		Vector3 t1 = v3, t2 = v4;
 		v1 = v3 = left + leftThicknessOffset;
 		v2 = v4 = right + rightThicknessOffset;
 		v3.y = leftTop;
 		v4.y = rightTop;
-		walls.AddQuadUnperturbed(v2, v1, v4, v3);
+		mesh.AddQuadUnperturbed(v2, v1, v4, v3);
 
-		walls.AddQuadUnperturbed(t1, t2, v3, v4);
+		mesh.AddQuadUnperturbed(t1, t2, v3, v4);
 	}
 
-	void AddWallSegment(
+	void AddWallSegment(HexMesh mesh,
 		Vector3 pivot, HexCell pivotCell,
 		Vector3 left, HexCell leftCell,
 		Vector3 right, HexCell rightCell
 	)
 	{
-		AddWallSegment(pivot, left, pivot, right);
+		AddWallSegment(mesh,pivot, left, pivot, right);
 	}
 
 	public void AddWall(
@@ -509,42 +534,93 @@ public class HexFeatureManager : MonoBehaviour
 		Vector3 c3, HexCell cell3
 	)
 	{
+
+		/*
 		if (cell1.Walled)
 		{
 			if (cell2.Walled)
 			{
 				if (!cell3.Walled)
 				{
-					AddWallSegment(c3, cell3, c1, cell1, c2, cell2);
+					HexMesh mesh = walls[(int)cell3.WallType ];
+					AddWallSegment(mesh, c3, cell3, c1, cell1, c2, cell2);
 				}
 			}
 			else if (cell3.Walled)
 			{
-				AddWallSegment(c2, cell2, c3, cell3, c1, cell1);
+				HexMesh mesh = walls[(int)cell2.WallType];
+				AddWallSegment(mesh, c2, cell2, c3, cell3, c1, cell1);
 			}
 			else
 			{
-				AddWallSegment(c1, cell1, c2, cell2, c3, cell3);
+				HexMesh mesh = walls[(int)cell1.WallType];
+				AddWallSegment(mesh, c1, cell1, c2, cell2, c3, cell3);
 			}
 		}
 		else if (cell2.Walled)
 		{
 			if (cell3.Walled)
 			{
-				AddWallSegment(c1, cell1, c2, cell2, c3, cell3);
+				HexMesh mesh = walls[(int)cell1.WallType];
+				AddWallSegment(mesh, c1, cell1, c2, cell2, c3, cell3);
 			}
 			else
 			{
-				AddWallSegment(c2, cell2, c3, cell3, c1, cell1);
+				HexMesh mesh = walls[(int)cell2.WallType ];
+				AddWallSegment(mesh, c2, cell2, c3, cell3, c1, cell1);
 			}
 		}
 		else if (cell3.Walled)
 		{
-			AddWallSegment(c3, cell3, c1, cell1, c2, cell2);
+			HexMesh mesh = walls[(int)cell3.WallType ];
+			AddWallSegment(mesh, c3, cell3, c1, cell1, c2, cell2);
+		}
+		*/
+
+		bool w1 = cell1.Walled;
+		bool w2 = cell2.Walled;
+		bool w3 = cell3.Walled;
+
+		// 没墙或全有墙：角点不需要画
+		int count = (w1 ? 1 : 0) + (w2 ? 1 : 0) + (w3 ? 1 : 0);
+		if (count == 0 || count == 3) return;
+
+		// 选 pivot：优先选“有墙”的那格作为 pivot（并把左右按顺序传进去）
+		if (w1 && !w2 && !w3)
+		{
+			var mesh = walls[(int)cell1.WallType];
+			if (mesh != null) AddWallSegment(mesh, c1, cell1, c2, cell2, c3, cell3);
+			return;
+		}
+		if (w2 && !w3 && !w1)
+		{
+			var mesh = walls[(int)cell2.WallType];
+			if (mesh != null) AddWallSegment(mesh, c2, cell2, c3, cell3, c1, cell1);
+			return;
+		}
+		if (w3 && !w1 && !w2)
+		{
+			var mesh = walls[(int)cell3.WallType];
+			if (mesh != null) AddWallSegment(mesh, c3, cell3, c1, cell1, c2, cell2);
+			return;
+		}
+
+		// 2 个有墙、1 个没墙的情况：
+		// 这时 pivot 是“没墙的那格”，原版 Catlike 的逻辑会选不同组合来补角
+		// 你当前简化版 AddWallSegment(pivot,left,pivot,right) 不做 wedge/cap，
+		// 这里保持最小改动：用其中一个墙类型画（这里先用 cell1/2/3 中第一个有墙者）
+		HexCell pick = w1 ? cell1 : (w2 ? cell2 : cell3);
+		var mesh2 = walls[(int)pick.WallType];
+		if (mesh2 != null)
+		{
+			// 让“没墙那格”当 pivot
+			if (!w1) AddWallSegment(mesh2, c1, cell1, c2, cell2, c3, cell3);
+			else if (!w2) AddWallSegment(mesh2, c2, cell2, c3, cell3, c1, cell1);
+			else AddWallSegment(mesh2, c3, cell3, c1, cell1, c2, cell2);
 		}
 	}
 
-	void AddWallCap(Vector3 near, Vector3 far)
+	void AddWallCap(HexMesh mesh, Vector3 near, Vector3 far)
 	{
 		near = HexMetrics.Perturb(near);
 		far = HexMetrics.Perturb(far);
@@ -557,7 +633,7 @@ public class HexFeatureManager : MonoBehaviour
 		v1 = v3 = center - thickness;
 		v2 = v4 = center + thickness;
 		v3.y = v4.y = center.y + HexMetrics.wallHeight;
-		walls.AddQuadUnperturbed(v1, v2, v3, v4);
+		mesh.AddQuadUnperturbed(v1, v2, v3, v4);
 	}
 
 	public void UpdateFeature(int index,bool transparent)
