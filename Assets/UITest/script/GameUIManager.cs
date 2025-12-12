@@ -127,18 +127,17 @@ public class GameUIManager : MonoBehaviour
     public TextMeshProUGUI BuildingInfo;
 
     [Header("Timer")]
-	public Image TimeImage;     // TimeImage
-	public TextMeshProUGUI timeText; // 可选数字显示
+	public Image TurnTime;     // 回合时间
+    public Image PoolTime;     // 池子时间
+    public TextMeshProUGUI timeText; // 可选数字显示
+    private float poolTimelimit=0.0f;//上次剩下的池子时间
+    private float poolTimelength = 0.0f;//池子宽度
 
-	//public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
-	
-	//public RectTransform playerIconParent;
-	//public Image miniMap;
-	//public Button InactiveUnit;
-	//public TextMeshProUGUI CountdownTime;
-	
-    
-   
+    [Header("CountDownPanel")]
+    public RectTransform CountDownPanel;
+    public Image CountDownHint;     // 文字
+    public Image CountDownNum;     // 数字
+
 
     [Header("Script")]
     //时间
@@ -189,11 +188,16 @@ public class GameUIManager : MonoBehaviour
             UnitCardManager.Instance.OnCardDragCreated += HandleCardDragCreated;
         }
 
+        poolTimelength = PoolTime.rectTransform.sizeDelta.x;
         if (timer != null)
         {
             timer.OnTimeOut += HandleTimeIsOut;
             timer.OnTimePoolStarted += () => Debug.Log("开始使用倒计时池");
         }
+
+        CountDownPanel.gameObject.SetActive(false);
+        CountDownHint.sprite = UISpriteHelper.Instance.GetCountDownTitle(false);
+        CountDownNum.sprite = UISpriteHelper.Instance.GetCountDownNum(10);
 
         ReligionIcon.onClick.AddListener(() => HandleReligionIconClick());
         EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
@@ -457,41 +461,49 @@ public class GameUIManager : MonoBehaviour
 
     public void UpdateTimer()
     {
-		//float turnTime = timer.GetTurnTime();
-		//float poolTime = timer.GetTimePool();
-		//bool usingPool = timer.IsUsingTimePool();
-
-		//// 更新显示
-		//string turnTimeStr = FormatTime(turnTime);
-		//string poolTimeStr = FormatTime(poolTime);
-
-		//if (usingPool)
-		//{
-		//    CountdownTime.text = $"<color=orange>0:00</color>+{poolTimeStr}";
-		//}
-		//else
-		//{
-		//    CountdownTime.text = $"{turnTimeStr}+{poolTimeStr}";
-		//}
-
 
 		float turnTime = timer.GetTurnTime();
-		float poolTime = timer.GetTimePool();
-		bool usingPool = timer.IsUsingTimePool();
+        float turnTimeMax = timer.turnTimeLimit;
+        float poolTime = timer.GetTimePool();
+        bool usingPool = timer.IsUsingTimePool();
 
-		// 1. 总时间进度占比
-		float totalTime = turnTime + poolTime;
-		float maxTotalTime = timer.turnTimeLimit + timer.timePoolInitial;
-		float fill = Mathf.Clamp01(totalTime / maxTotalTime);
 
-		// 填充
-		TimeImage.fillAmount = fill;
+        float fillTurnTime = Mathf.Clamp01(turnTime / turnTimeMax);
+        float fillPoolTime = Mathf.Clamp01(poolTime / poolTimelimit);
 
-		// 2. 按当前使用 turn/pool 切换颜色
-		if (!usingPool)
-			TimeImage.color = Color.white;
-		else
-			TimeImage.color = Color.red;
+
+
+        TurnTime.fillAmount = fillTurnTime;
+        PoolTime.fillAmount = fillPoolTime;
+
+
+
+        if (!usingPool)
+        {
+
+            if (turnTime <= 10 && turnTime > 0)
+            {
+                CountDownPanel.gameObject.SetActive(true);
+                CountDownHint.sprite = UISpriteHelper.Instance.GetCountDownTitle(false);
+                CountDownNum.sprite = UISpriteHelper.Instance.GetCountDownNum((int)turnTime);
+            }
+        }
+        else
+        {
+
+            if (poolTime <=10 && poolTime>0)
+            {
+                CountDownPanel.gameObject.SetActive(true);
+                CountDownHint.sprite = UISpriteHelper.Instance.GetCountDownTitle(true);
+                CountDownNum.sprite = UISpriteHelper.Instance.GetCountDownNum((int)poolTime);
+            }
+            else
+            {
+                CountDownPanel.gameObject.SetActive(false);
+            }
+
+        }
+
 
 		// 显示数字（可选）
 		if (timeText != null)
@@ -585,9 +597,10 @@ public class GameUIManager : MonoBehaviour
         UpdateUIUnitDataListFromInterface(CardType.Pope);
 
         // 时间条显示为1
-        TimeImage.fillAmount = 1f;
+        TurnTime.fillAmount = 1f;
+        PoolTime.fillAmount = 1f;
 
-		isInitialize = true;
+        isInitialize = true;
     }
 
 
@@ -907,11 +920,27 @@ public class GameUIManager : MonoBehaviour
     {
         timer.StartTurn();
         //CountdownTime.gameObject.SetActive(true);
+
+        poolTimelimit= timer.GetTimePool();
+        float poolTimeMax = timer.timePoolInitial;
+
+        float PoolTimemul = Mathf.Clamp01(poolTimelimit / poolTimeMax);
+        var rt = PoolTime.rectTransform;
+        var size = rt.sizeDelta;
+        size.x = poolTimelength * PoolTimemul;
+        rt.sizeDelta = size;
+
+
+
+
+
     }
     private void StopTimer()
     {
         timer.StopTimer();
         //CountdownTime.gameObject.SetActive(false);
+
+        CountDownPanel.gameObject.SetActive(false);
     }
 
     // === 回调函数 ===

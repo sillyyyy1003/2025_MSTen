@@ -37,6 +37,9 @@ public enum UISpriteID
     IconList_MadScientist,  // 真理研究所棋子图标
     //20251211
     IconList_GeneralPiece,//通用棋子图标
+    //20251212
+    CountDown_Title,
+    CountDown_Num,
 }
 
 [System.Serializable]
@@ -356,6 +359,32 @@ public class UISpriteHelper : MonoBehaviour
 
 
     }
+
+
+
+    public Sprite GetCountDownTitle(bool isbouns)
+    {
+        if (isbouns)
+        {
+            return GetSubSprite(UISpriteID.CountDown_Title, "CountDown_Pool");
+
+        }
+        else
+        {
+
+            return GetSubSprite(UISpriteID.CountDown_Title, "CountDown_Turn");
+
+        }
+    }
+
+    public Sprite GetCountDownNum(int num)
+    {
+        UISpriteID ListName= UISpriteID.CountDown_Num;
+        int picid = Mathf.Clamp(num-1, 0, 9) ;
+        string iconId = ListName.ToString() + $"_{picid}";
+        return GetSubSprite(ListName, iconId);
+    }
+
 }
 
 
