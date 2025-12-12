@@ -43,6 +43,9 @@ public class UnitStatusUI : MonoBehaviour
 
 	[Header("UIBaseScale")]
 	[SerializeField] private float uiBaseScale = 0.01f;
+	[SerializeField] private float minOffsetFactor = 0.3f; // 最近时 offset 缩放比例
+	[SerializeField] private float minDistance = 5f;  // 最近距离
+	[SerializeField] private float maxDistance = 30f; // 最远距离
 
 	List<BuildingSlot> buildingSlots = new List<BuildingSlot>();
 
@@ -225,8 +228,8 @@ public class UnitStatusUI : MonoBehaviour
 			return;
 		}
 
-		if (apImage != null)
-			apImage.fillAmount = maxAP > 0 ? (float)currentAP / maxAP : 0f;
+		//if (apImage != null)
+		//	apImage.fillAmount = maxAP > 0 ? (float)currentAP / maxAP : 0f;
 
 		if (apText != null)
 			apText.text = $"{currentAP}/{maxAP}";
@@ -256,6 +259,9 @@ public class UnitStatusUI : MonoBehaviour
 	private void LateUpdate()
 	{
 		if (!pieceTarget) return;
+
+		UpdateAPUI();
+		UpdateHPUI();
 
 		// 跟随 + 朝向摄像机
 		transform.position = pieceTarget.position + offset;
