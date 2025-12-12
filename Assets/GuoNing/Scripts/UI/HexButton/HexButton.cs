@@ -9,7 +9,7 @@ public class HexButton : MonoBehaviour
 	private HexButtonCollider Collider;
 	private TextMeshProUGUI text;
 	private Image background;
-	private Image shadow;
+	//private Image shadow;
 	private Toggle toggle;
 	private Image frame;
 
@@ -42,7 +42,7 @@ public class HexButton : MonoBehaviour
 	{
 		Collider = GetComponentInChildren<HexButtonCollider>();
 		text = GetComponentInChildren<TextMeshProUGUI>();
-		shadow = transform.Find("Shadow")?.GetComponent<Image>();
+		//shadow = transform.Find("Shadow")?.GetComponent<Image>();
 		background = transform.Find("Background")?.GetComponent<Image>();
 		frame = transform.Find("Frame")?.GetComponent<Image>();
 		toggle = GetComponent<Toggle>();
@@ -110,7 +110,7 @@ public class HexButton : MonoBehaviour
 		if (inside && mouseDown && !isPressed)
 		{
 			isPressed = true;
-			shadow.gameObject.SetActive(false);
+			background.GetComponent<Shadow>().gameObject.SetActive(false);
 			UpdateVisual(pressedColor);
 			UpdateTextVisual(pressedTextColor);
 			UpdateFrameColor(pressedFrameColor);
@@ -121,7 +121,7 @@ public class HexButton : MonoBehaviour
 			// 点击确认
 			if (inside)
 			{
-				shadow.gameObject.SetActive(true);  // 启用阴影
+				background.GetComponent<Shadow>().gameObject.SetActive(true);  // 启用阴影
 				// 如果是切换状态
 				if (isToggle)
 				{

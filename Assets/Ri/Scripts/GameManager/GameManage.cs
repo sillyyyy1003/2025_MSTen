@@ -197,25 +197,25 @@ public class GameManage : MonoBehaviour
     /// <summary>
     /// 请求投降
     /// </summary>
-    private void RequestSurrender()
-    {
-        if (NetGameSystem.Instance == null)
-        {
-            Debug.LogError("[投降] NetGameSystem未初始化!");
-            return;
-        }
+    //private void RequestSurrender()
+    //{
+    //    if (NetGameSystem.Instance == null)
+    //    {
+    //        Debug.LogError("[投降] NetGameSystem未初始化!");
+    //        return;
+    //    }
 
-        // 确定获胜者ID (对手ID)
-        int winnerPlayerId = OtherPlayerID;
+    //    // 确定获胜者ID (对手ID)
+    //    int winnerPlayerId = OtherPlayerID;
 
-        Debug.Log($"[投降] 玩家 {_LocalPlayerID} 投降，玩家 {winnerPlayerId} 获胜");
+    //    Debug.Log($"[投降] 玩家 {_LocalPlayerID} 投降，玩家 {winnerPlayerId} 获胜");
 
-        // 发送游戏结束消息，原因为投降
-        NetGameSystem.Instance.SendGameOverMessage(winnerPlayerId, _LocalPlayerID, "surrender");
+    //    // 发送游戏结束消息，原因为投降
+    //    NetGameSystem.Instance.SendGameOverMessage(winnerPlayerId, _LocalPlayerID, "surrender");
 
-        // 本地也触发游戏结束
-        OnGameEnded?.Invoke(winnerPlayerId);
-    }
+    //    // 本地也触发游戏结束
+    //    OnGameEnded?.Invoke(winnerPlayerId);
+    //}
     // Update is called once per frame
 
 
@@ -224,31 +224,45 @@ public class GameManage : MonoBehaviour
     // *************************
 
     // 触发游戏结束事件
-    public void TriggerGameEnded(int winnerPlayerId)
+    public void TriggerGameEnded(int winnerPlayerId,ResultData data)
     {
-        Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
+        //Debug.Log($"[GameManage] 触发游戏结束事件，获胜者: {winnerPlayerId}");
         OnGameEnded?.Invoke(winnerPlayerId);
-      
-        // 设定数据
-        ResultData data = new ResultData()
-        {
 
-           PlayerId = SaveLoadManager.Instance.UserId,                             // 玩家ID
-           CellNumber=PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
-           PieceNumber= PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
-           BuildingNumber= PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
-           PieceDestroyedNumber= PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
-           BuildingDestroyedNumber= PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
-           CharmSucceedNumber= PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
-           ResourceGet= PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
-           ResourceUsed= PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
-        };
+        ResultData thisData = GetLocalResultData();
         ResultUIManager.Instance.SetResultData(data);
+        List<ResultData> datas = new List<ResultData>();
+        if (winnerPlayerId == LocalPlayerID) 
+        {
+            datas.Add(thisData);
+            datas.Add(data);
+        }
+        else
+        {
+            datas.Add(data);
+            datas.Add(thisData);
+        }
 
-        // 初始化ui
-        ResultUIManager.Instance.Initialize(winnerPlayerId);
+        ResultUIManager.Instance.Initialize(winnerPlayerId, datas);
+        GameOver(winnerPlayerId);
+    }
 
-		GameOver(winnerPlayerId);
+    public ResultData GetLocalResultData()
+    {
+	    ResultData thisData = new ResultData()
+	    {
+		    PlayerId = SaveLoadManager.Instance.CurrentData.userID,
+		    CellNumber = PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
+		    PieceNumber = PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
+		    BuildingNumber = PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
+		    PieceDestroyedNumber = PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
+		    BuildingDestroyedNumber = PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
+		    CharmSucceedNumber = PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
+		    ResourceGet = PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
+		    ResourceUsed = PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
+	    };
+
+	    return thisData;
     }
 
     // 房间状态待机管理
@@ -485,7 +499,7 @@ public class GameManage : MonoBehaviour
     {
         _CurrentTurnPlayerID = playerId;
 
-        Debug.Log($"回合开始: 玩家 {playerId}" + (IsMyTurn ? " (你的回合)" : " (等待中)"));
+        Debug.Log($"回合开始: 玩家 {playerId} 回合{PlayerDataManager.Instance.TurnCount}" + (IsMyTurn ? " (你的回合)" : " (等待中)"));
 
         // 触发回合开始事件
         OnTurnStarted?.Invoke(playerId);
@@ -536,7 +550,7 @@ public class GameManage : MonoBehaviour
             return;
         }
 
-        Debug.Log($"玩家 {LocalPlayerID} 结束回合");
+        //Debug.Log($"玩家 {LocalPlayerID} 结束回合");
 
         // 处理被魅惑单位的倒计时和归还
         List<CharmExpireInfo> expiredUnits = _PlayerDataManager.UpdateCharmedUnits(LocalPlayerID);
@@ -564,12 +578,12 @@ public class GameManage : MonoBehaviour
             PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
 
+        _GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(OtherPlayerID));
         // 发送到网络
         if (NetGameSystem.Instance != null)
         {
             NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             //Debug.Log($" 已发送回合结束消息");
-
 
 
             NextTurn();
@@ -894,37 +908,42 @@ public class GameManage : MonoBehaviour
     // 检测鼠标指针是否在可交互的UI元素上（按钮、输入框等）
     public bool IsPointerOverUIElement()
     {
-        if (EventSystem.current == null)
-            return false;
+        //if (EventSystem.current == null)
+        //    return false;
 
-        // 创建指针事件数据
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = Input.mousePosition;
+        //// 创建指针事件数据
+        //PointerEventData eventData = new PointerEventData(EventSystem.current);
+        //eventData.position = Input.mousePosition;
 
-        // 射线检测所有UI元素
-        List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-
-        // 只检查可交互的UI组件（按钮、输入框等）
-        foreach (var result in results)
+        //// 射线检测所有UI元素
+        //List<RaycastResult> results = new List<RaycastResult>();
+        //EventSystem.current.RaycastAll(eventData, results);
+    
+        if (EventSystem.current.IsPointerOverGameObject())
         {
-            if (result.gameObject.activeInHierarchy)
-            {
-                // 检查是否是按钮或其他可交互组件
-                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
-                    result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
-                    result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
-                    result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
-                {
-                    return true;
-                }
-            }
+            //Debug.Log("is on ui");
+            return true;
         }
+        //// 只检查可交互的UI组件（按钮、输入框等）
+        //foreach (var result in results)
+        //{
+        //    if (result.gameObject.activeInHierarchy)
+        //    {
+        //        // 检查是否是按钮或其他可交互组件
+        //        if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Toggle>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Slider>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Image>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.InputField>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Dropdown>() != null ||
+        //            result.gameObject.GetComponent<UnityEngine.UI.Scrollbar>() != null ||
+        //            result.gameObject.GetComponent<TMPro.TMP_InputField>() != null ||
+        //            result.gameObject.GetComponent<TMPro.TMP_Dropdown>() != null)
+               
+        //    }
+        //}
 
+        //Debug.Log("is OUT ui");
         return false;
     }
 }

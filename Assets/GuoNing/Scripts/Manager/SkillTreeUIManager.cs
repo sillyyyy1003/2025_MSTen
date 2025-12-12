@@ -314,8 +314,6 @@ public class SkillTreeUIManager : MonoBehaviour
             default:
                 return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "08lock");
         }
-
-		return null;
 	}
 	private void OnToggleChanged(PieceType type, bool isOn)
 	{
@@ -511,7 +509,7 @@ public class SkillTreeUIManager : MonoBehaviour
 					if(isUpdate)
 					{
                         next = BuildingData.GetMaxHpByLevel(lv + 1);
-                        status = $"{num}"+ $"<color=#FF0000>+{next-num}</color>";
+                        status = $"{num} "+ $"<color=#FF0000>+{next-num}</color>";
                     }
                     else
                     {
@@ -524,7 +522,7 @@ public class SkillTreeUIManager : MonoBehaviour
                     if (isUpdate)
                     {
                         next = BuildingData.GetMaxSlotsByLevel(lv+1);
-                        status = $"{num}" + $"<color=#FF0000>+{next - num}</color>";
+                        status = $"{num} " + $"<color=#FF0000>+{next - num}</color>";
                     }
                     else
                     {
@@ -670,7 +668,7 @@ public class SkillTreeUIManager : MonoBehaviour
                         int maxlv = 2;
                         next = Mathf.Clamp(lv + 1, 0, maxlv);
 
-                        status = $"<color=#FF0000>Lv.{next + 1}</color>";
+                        status = $"<color=#FF0000>Lv.{next+1}</color>";
                     }
                     else
                     {

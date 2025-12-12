@@ -14,7 +14,7 @@ public class GameCamera : MonoBehaviour
     private float midPitch = 45f;             // 档位2：斜视
     private float maxPitch = 70f;             // 档位3：俯视
 
-    private float minZoomDistance = 10f;       // 档位1距离
+    private float minZoomDistance = 15f;       // 档位1距离
     private float midZoomDistance = 25f;      // 档位2距离
     private float maxZoomDistance = 50f;      // 档位3距离
 
@@ -72,7 +72,7 @@ public class GameCamera : MonoBehaviour
         if (bCanUseCamera)
         {
             HandleZoom();
-            HandleRotation();
+            //HandleRotation();
             HandleMovement();
             UpdateCameraPosition();
         }
@@ -200,14 +200,11 @@ public class GameCamera : MonoBehaviour
 
     void HandleMovement()
     {
-        if (GameManage.Instance.IsPointerOverUIElement())
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("<color=yellow>鼠标在UI上，跳过移动</color>");
-            }
-            return;
-        }
+        //if (GameManage.Instance.IsPointerOverUIElement())
+        //{
+          
+        //    return;
+        //}
 
         Vector3 keyboardInput = Vector3.zero;
 

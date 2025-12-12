@@ -1,4 +1,5 @@
 using GameData;
+using GameData.UI;
 using GamePieces;
 
 using UnityEngine;
@@ -29,10 +30,21 @@ public class MilitaryUnit : Piece
 
         base.Initialize(data, playerID);
 
-        if (UpgradeLevel>1)
-            specialSkillAvailable = true;
+        // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
+        if (playerID == PieceManager.Instance.GetLocalPlayerID())
+        {
+            SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.HP));
+            SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.AP));
+            attackPowerLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.ATK);
+        }
         else
-            specialSkillAvailable = false;
+        {
+            // 敵プレイヤーの駒はデフォルトレベル0
+            attackPowerLevel = 0;
+        }
+
+        // 特殊スキルは攻撃力レベル2以上で利用可能（将来の拡張用）
+        specialSkillAvailable = attackPowerLevel >= 2;
     }
 
     //25.10.26 RI 添加SOData回调
@@ -138,7 +150,7 @@ public class MilitaryUnit : Piece
     /// </summary>
     public int GetAttackPowerByLevel()
     {
-        return militaryData.GetAttackRangeByLevel(upgradeLevel);
+        return militaryData.GetAttackRangeByLevel(attackPowerLevel);
     }
 
     /// <summary>
@@ -151,54 +163,17 @@ public class MilitaryUnit : Piece
     }
 
     /// <summary>
-    /// 魅惑耐性スキルを持っているか（升級3）
+    /// 魅惑耐性スキルを持っているか（攻撃力レベル3）
     /// </summary>
     public bool HasAntiConversionSkill()
     {
-        return militaryData.HasAntiConversionSkill(upgradeLevel);
+        return militaryData.HasAntiConversionSkill(attackPowerLevel);
     }
 
     #region アップグレード管理
 
     // ===== プロパティ =====
     public int AttackPowerLevel => attackPowerLevel;
-
-    /// <summary>
-    /// アップグレード効果を適用
-    /// </summary>
-    protected override void ApplyUpgradeEffects()
-    {
-        if (militaryData == null) return;
-
-        // レベルに応じてHP、AP、攻撃力を更新
-        int newMaxHP = militaryData.GetMaxHPByLevel(upgradeLevel);
-        int newMaxAP = militaryData.GetMaxAPByLevel(upgradeLevel);
-        int newAttackPower = GetAttackPowerByLevel();
-
-        // 現在のHPとAPの割合を保持
-        int hpRatio = currentHP / currentMaxHP;
-        int apRatio = currentAP / currentMaxAP;
-
-        // 新しい最大値に基づいて現在値を更新
-        currentHP = newMaxHP * hpRatio;
-
-
-        Debug.Log($"十字軍のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}, 攻撃力={newAttackPower}");
-
-        // 新しいステータスのログ
-        if (upgradeLevel == 1)
-        {
-            Debug.Log("血量: 12, 行動力: 7, 攻撃力: 3");
-        }
-        else if (upgradeLevel == 2)
-        {
-            Debug.Log("血量: 15, 行動力: 8, 攻撃力: 5");
-        }
-        else if (upgradeLevel == 3)
-        {
-            Debug.Log("血量: 15, 行動力: 8, 攻撃力: 5, 魅惑耐性スキル獲得");
-        }
-    }
 
     /// <summary>
     /// 攻撃力をアップグレードする（リソース消費は呼び出し側で行う）

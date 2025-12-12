@@ -83,8 +83,8 @@ public class PlayerOperationManager : MonoBehaviour
     private int RuinID = 0;
     // 建筑废墟字典
     private Dictionary<int, Dictionary<int, GameObject>> BuildingRuins = new Dictionary<int, Dictionary<int, GameObject>>();
-    // 建筑废墟所在格子ID
-    private List<int> RuinCellID = new List<int>();
+    //// 建筑废墟所在格子ID
+    //private List<int> RuinCellID = new List<int>();
 
     // 格子list，检测移动范围用
     List<HexCell> HexCellList = new List<HexCell>();
@@ -112,8 +112,10 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 左键拖拽
     private bool isDraggingCamera = false;
+    private bool isDraggingUIorScreenOut = false;
     private Vector3 lastMousePosition;
-    private float dragThreshold = 5f; // 拖拽阈值（像素），防止误触
+    private float dragTime = 0;
+    private float dragThreshold = 50f; // 拖拽阈值（像素），防止误触
 
 
 
@@ -155,10 +157,27 @@ public class PlayerOperationManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn&& Input.GetKeyDown(KeyCode.U))
-        {
-            UnitUpgrade(TechTree.AltarCount, CardType.Building);
-        }
+        
+   //         if (Input.mousePosition.x <= 0 ||
+   //Input.mousePosition.x >= Screen.width ||
+   //Input.mousePosition.y <= 0 ||
+   //Input.mousePosition.y >= Screen.height)
+   //         {
+   //             isDraggingUIorScreenOut = true;
+   //         }
+   //         if (GameManage.Instance.IsPointerOverUIElement() )
+   //         {
+   //             //Debug.Log("CHECT UII");
+   //             isDraggingUIorScreenOut = true;
+   //         }
+
+        // 处理相机拖拽
+        HandleCameraDrag();
+
+        //if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn&& Input.GetKeyDown(KeyCode.U))
+        //{
+        //    UnitUpgrade(TechTree.AltarCount, CardType.Building);
+        //}
         // 鼠标判定
         if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn)
         {
@@ -177,7 +196,7 @@ public class PlayerOperationManager : MonoBehaviour
             else
             {
                 // 在UI上也要处理相机拖拽
-                HandleCameraDrag();
+                //HandleCameraDrag();
             }
 
             // 更新移动距离
@@ -202,6 +221,8 @@ public class PlayerOperationManager : MonoBehaviour
 			}
 
         }
+
+
     }
 
 	/// 2025.12.09 Guoning 更新移动范围高亮
@@ -432,18 +453,14 @@ public class PlayerOperationManager : MonoBehaviour
     #region =====输入处理=====
     private void HandleMouseInput()
     {
-        if (GameManage.Instance.IsPointerOverUIElement())
-        {
-            return;
-        }
-        // 处理相机拖拽
-        HandleCameraDrag();
         // 2025.11.13 GuoNing 清除高亮数据 
         ClearClickCellHighlightData();
 
         // 左键点击 - 选择单位
         if (Input.GetMouseButtonDown(0) && bCanContinue && !isDraggingCamera)
         {
+
+            isDraggingUIorScreenOut = false;
             //2025.12.07 Guoning 取消UI高光使用
             //_HexGrid.GetCell(selectCellID).DisableHighlight();
             //UpdateClickHighlight(_HexGrid.GetCell(selectCellID));   
@@ -451,6 +468,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 检测鼠标左键点击
             if (Input.GetMouseButtonDown(0))
             {
+                
                 float timeSinceLastClick = Time.time - lastClickTime;
 
                 if (timeSinceLastClick <= doubleClickTimeThreshold)
@@ -459,6 +477,7 @@ public class PlayerOperationManager : MonoBehaviour
                     clickCount++;
                     if (clickCount == 2)
                     {
+                        Debug.Log("双击！");
                         HandleLeftClick(true);
 
                         // 重置计数器
@@ -973,36 +992,66 @@ public class PlayerOperationManager : MonoBehaviour
     //    }
     //}
 
-    // 返回当前摄像机聚焦的单位id
-    public int GetFocusedUnitID()
-    {
-        return 0;
-    }
+   
     /// <summary>
     /// 处理鼠标拖拽移动相机
     /// </summary>
     private void HandleCameraDrag()
     {
+
         // 按下左键开始拖拽检测
         if (Input.GetMouseButtonDown(0))
         {
-            lastMousePosition = Input.mousePosition;
-            isDraggingCamera = false; // 重置拖拽状态
+            // 检查是否在UI上或屏幕外
+            if (Input.mousePosition.x <= 0 ||
+                Input.mousePosition.x >= Screen.width ||
+                Input.mousePosition.y <= 0 ||
+                Input.mousePosition.y >= Screen.height ||
+                GameManage.Instance.IsPointerOverUIElement())
+            {
+                isDraggingUIorScreenOut = true;
+                // 不更新 lastMousePosition,避免位置跳跃
+            }
+            else
+            {
+                // 有效区域内的点击
+                isDraggingUIorScreenOut = false;
+                lastMousePosition = Input.mousePosition;
+                isDraggingCamera = false; // 重置拖拽状态
+                dragTime = 0;
+            }
         }
 
         // 持续按住左键
         if (Input.GetMouseButton(0))
         {
+            // 如果标记为UI或屏幕外,直接返回
+            if (isDraggingUIorScreenOut)
+            {
+                return;
+            }
+
+            dragTime += Time.deltaTime;
             Vector3 currentMousePosition = Input.mousePosition;
+
+            // 再次检查是否移出屏幕(拖拽过程中)
+            if (currentMousePosition.x <= 0 ||
+                currentMousePosition.x >= Screen.width ||
+                currentMousePosition.y <= 0 ||
+                currentMousePosition.y >= Screen.height)
+            {
+                return; // 移出屏幕时停止拖拽,但不更新标志
+            }
+
             float dragDistance = Vector3.Distance(currentMousePosition, lastMousePosition);
 
-            // 如果移动距离超过阈值，开始拖拽相机
+            // 如果移动距离超过阈值,开始拖拽相机
             if (dragDistance > dragThreshold)
             {
                 isDraggingCamera = true;
             }
 
-            // 如果正在拖拽，移动相机
+            // 如果正在拖拽,移动相机
             if (isDraggingCamera)
             {
                 Vector3 mouseDelta = currentMousePosition - lastMousePosition;
@@ -1020,7 +1069,10 @@ public class PlayerOperationManager : MonoBehaviour
         // 松开左键
         if (Input.GetMouseButtonUp(0))
         {
-            // 如果发生了拖拽，则不处理点击事件
+            dragTime = 0;
+            isDraggingUIorScreenOut = false; // 重置标志
+
+            // 如果发生了拖拽,则不处理点击事件
             if (isDraggingCamera)
             {
                 isDraggingCamera = false;
@@ -1066,14 +1118,17 @@ public class PlayerOperationManager : MonoBehaviour
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
         // 回合开始计算疯狂科学家教被动
         if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
-        { 
+        {
             if (PlayerDataManager.Instance.CrazyTurnCooldown >= 10)
             {
+                PlayerDataManager.Instance.CrazyTurnCooldown = 0;
+                Debug.Log("mad start!");
                 for (int i = 0; i < PlayerDataManager.Instance.GetPlayerRuinCells().Count; i++)
                 {
                     int id = PlayerDataManager.Instance.GetPlayerRuinCells()[i];
                     if (PlayerDataManager.Instance.FindCellHasUnit(PlayerBoardInforDict[id].Cells2DPos))
                     {
+                        Debug.Log("此格子上有单位，跳过");
                         // 当前格子有单位，先记录id，下回合再依次复活
                         PlayerDataManager.Instance.NextTurnReBuildCellID.Add(id);
                         // 从当前废墟cellList中移除
@@ -1094,7 +1149,7 @@ public class PlayerOperationManager : MonoBehaviour
                 for(int i=0;i<PlayerDataManager.Instance.NextTurnReBuildCellID.Count;i++)
                 {
                     int id = PlayerDataManager.Instance.NextTurnReBuildCellID[i];
-                    if (PlayerDataManager.Instance.FindCellHasUnit(PlayerBoardInforDict[id].Cells2DPos))
+                    if (!PlayerDataManager.Instance.FindCellHasUnit(PlayerBoardInforDict[id].Cells2DPos))
                     {
                         // 依旧有单位存在，跳过
                         Debug.Log("此格子上依旧有单位，跳过");
@@ -1122,7 +1177,7 @@ public class PlayerOperationManager : MonoBehaviour
         PlayerDataManager.Instance.Result_ResourceGet += Addres;
 
         PlayerUnitDataInterface.Instance.GetPopeSwapCooldown();
-        Debug.Log("你的回合开始!获取资源行动 " + res+" 目前资源: " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
+        //Debug.Log("你的回合开始!获取资源行动 " + res+" 目前资源: " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
 
         List<PlayerUnitData> buildingsToDestroy = new List<PlayerUnitData>();
 
@@ -2294,6 +2349,7 @@ public class PlayerOperationManager : MonoBehaviour
             if (isReBuild)
             {
                 buildData.currentHP = 10;
+
                 Debug.Log("复活成功！当前建筑HP:"+ buildData.currentHP);
             }
               
@@ -3046,15 +3102,14 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 // 建筑被摧毁，攻击者前进到建筑位置
                 ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
-
-                // 创建废墟
-                GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0], GameManage.Instance.FindCell(targetCellId).Cells3DPos, Quaternion.identity);
+                GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[targetOwnerId].PlayerReligion, GameManage.Instance.FindCell(targetCellId).Cells2DPos);
+              
                 // 保存废墟引用
-                if (!BuildingRuins.ContainsKey(localPlayerId))
+                if (!BuildingRuins.ContainsKey(targetOwnerId))
                 {
-                    BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
+                    BuildingRuins[targetOwnerId] = new Dictionary<int, GameObject>();
                 }
-                BuildingRuins[localPlayerId][RuinID] = ruin;
+                BuildingRuins[targetOwnerId][RuinID] = ruin;
                 RuinID++;
 
                 // 添加结局数据
@@ -3334,19 +3389,16 @@ public class PlayerOperationManager : MonoBehaviour
                 {
                     otherPlayersUnits[msg.BuildingOwnerId].Remove(buildingPos);
                 }
-
-                // 3. 创建废墟
-                GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0],
-                    GameManage.Instance.GetCell2D(buildingPos).Cells3DPos,
-                    Quaternion.identity);
                 
-                // 保存废墟引用
+                GameObject ruin = CreateRuin(SceneStateManager.Instance.PlayerReligion, buildingPos);
+
                 if (!BuildingRuins.ContainsKey(localPlayerId))
                 {
                     BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
                 }
                 BuildingRuins[localPlayerId][RuinID] = ruin;
                 RuinID++;
+             
                 // 获取当前cell的ID
                 int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
 
@@ -3479,12 +3531,15 @@ public class PlayerOperationManager : MonoBehaviour
                 otherPlayersUnits[msg.BuildingOwnerId].Remove(buildingPos);
             }
 
-            // 3. 创建废墟
-            GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0],
-                GameManage.Instance.GetCell2D(buildingPos).Cells3DPos,
-                Quaternion.identity);
+            //// 3. 创建废墟
+            //GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0],
+            //    GameManage.Instance.GetCell2D(buildingPos).Cells3DPos,
+            //    Quaternion.identity);
 
+            // 5. 创建废墟
+            GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[msg.BuildingOwnerId].PlayerReligion, buildingPos);
            
+
             // 保存废墟引用
             if (!BuildingRuins.ContainsKey(msg.BuildingOwnerId))
             {
@@ -3666,9 +3721,22 @@ public class PlayerOperationManager : MonoBehaviour
                 // 输出结束消息
                 if (msg.TargetSyncData.Value.piecetype==PieceType.Pope)
                 {
-                    Debug.Log("WINNER ID IS "+ GameManage.Instance.OtherPlayerID);
+                    //Debug.Log("WINNER ID IS "+ GameManage.Instance.OtherPlayerID);
+                    ResultData data = new ResultData()
+                    {
+                        PlayerId = SaveLoadManager.Instance.CurrentData.userID,            // 玩家ID
+                        CellNumber = PlayerDataManager.Instance.Result_CellNumber,          // 占领的格子的数量
+                        PieceNumber = PlayerDataManager.Instance.Result_PieceNumber,         // 棋子的数量
+                        BuildingNumber = PlayerDataManager.Instance.Result_BuildingNumber,      // 建筑数量
+                        PieceDestroyedNumber = PlayerDataManager.Instance.Result_PieceDestroyedNumber, // 消灭的棋子数量
+                        BuildingDestroyedNumber = PlayerDataManager.Instance.Result_BuildingDestroyedNumber, // 摧毁的建筑的数量
+                        CharmSucceedNumber = PlayerDataManager.Instance.Result_CharmSucceedNumber,  // 成功魅惑棋子的数量
+                        ResourceGet = PlayerDataManager.Instance.Result_ResourceGet,     // 获得的资源数量
+                        ResourceUsed = PlayerDataManager.Instance.Result_ResourceUsed     // 使用的资源数量
+                    }
+                    ;
                     // 发送游戏结束消息，原因为教皇死亡
-                    NetGameSystem.Instance.SendGameOverMessage(GameManage.Instance.OtherPlayerID, localPlayerId, "POPE DEAD");
+                    NetGameSystem.Instance.SendGameOverMessage(GameManage.Instance.OtherPlayerID, localPlayerId, data,"POPE DEAD");
                 }
             }
             else
@@ -4764,11 +4832,8 @@ public class PlayerOperationManager : MonoBehaviour
                 }
 
                 // 5. 创建废墟
-                GameObject ruin = Instantiate(UnitListTable.Instance.Ruins[0],
-                    GameManage.Instance.GetCell2D(buildingPos).Cells3DPos,
-                    Quaternion.identity);
+                GameObject ruin =CreateRuin(SceneStateManager.Instance.PlayerReligion, buildingPos);
              
-               
                 // 6. 保存废墟引用
                 if (!BuildingRuins.ContainsKey(localPlayerId))
                 {
@@ -4787,8 +4852,6 @@ public class PlayerOperationManager : MonoBehaviour
                 RuinID++;
 
                 Debug.Log($"[建筑摧毁] 废墟已创建,cellID: {cellID}");
-            });
-        }
 
         // 8. 从PlayerDataManager中移除建筑单位
         PlayerDataManager.Instance.RemoveUnit(localPlayerId, buildingPos);
@@ -4803,6 +4866,41 @@ public class PlayerOperationManager : MonoBehaviour
         SyncBuildingDestruction(buildingPos, buildingID);
 
         Debug.Log($"[建筑摧毁] 摧毁逻辑处理完成");
+            });
+        }
+    }
+
+    // 创建废墟
+    private GameObject CreateRuin(Religion re,int2 pos)
+    {
+        GameObject ruin = new GameObject();
+
+        // 5. 创建废墟
+        switch (SceneStateManager.Instance.PlayerReligion)
+        {
+            case Religion.RedMoonReligion:
+                ruin = Instantiate(UnitListTable.Instance.Ruins[1],
+        GameManage.Instance.GetCell2D(pos).Cells3DPos,
+        Quaternion.identity);
+                break;
+            case Religion.SilkReligion:
+                ruin = Instantiate(UnitListTable.Instance.Ruins[0],
+            GameManage.Instance.GetCell2D(pos).Cells3DPos,
+            Quaternion.identity);
+                break;
+            case Religion.MadScientistReligion:
+                ruin = Instantiate(UnitListTable.Instance.Ruins[3],
+        GameManage.Instance.GetCell2D(pos).Cells3DPos,
+        Quaternion.identity);
+                break;
+            case Religion.MayaReligion:
+                ruin = Instantiate(UnitListTable.Instance.Ruins[2],
+       GameManage.Instance.GetCell2D(pos).Cells3DPos,
+       Quaternion.identity);
+                break;
+        }
+
+        return ruin;
     }
     /// <summary>
     /// 同步建筑摧毁到网络

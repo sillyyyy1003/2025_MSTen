@@ -72,6 +72,9 @@ public class DisplayManager : MonoBehaviour
 	{
 		isGridOn = isOn;
 		ShowGrid();
+		
+		// 将设定保存到SaveLoadManager
+		SaveLoadManager.Instance.UpdateGridState(isGridOn);
 	}
 
 	public void SetGridState(bool on)

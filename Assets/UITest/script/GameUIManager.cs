@@ -81,11 +81,16 @@ public class GameUIManager : MonoBehaviour
     public TextMeshProUGUI activateFarmerValue;     // 农民激活数
     public TextMeshProUGUI allUnitValue;       // 当前人口 / 人口上限
 	public Button EndTurn;         // 结束Button
+
+    [Header("NextTurnPanel Elements")]
     public GameObject TurnMessageObj;//回合开始提示件
-    public TextMeshProUGUI TurnMessageText;//回合开始提示内容
-    public RectTransform ReligionInfoPanel;         // 宗教信息和科技树
+    public Image NextTurnReligionIcon;
+    public TextMeshProUGUI TurnMessageText1;//回合开始提示内容
+    public TextMeshProUGUI TurnMessageText2;//回合开始提示内容
+
 
     [Header("ReligionInfo Elements")]
+    public RectTransform ReligionInfoPanel;         // 宗教信息和科技树
     public Image ReligionInfoIcon;
     public Image ReligionColor;
     public TextMeshProUGUI ReligionName;
@@ -388,7 +393,7 @@ public class GameUIManager : MonoBehaviour
         //2025.11.29 UI的更新在OnGameStarted里进行
         //Initialize();
 
-        Debug.Log($" 回合开始：玩家 {localPlayerId}");
+        //Debug.Log($" 回合开始：玩家 {localPlayerId}");
 
         StartTimer();
 
@@ -846,7 +851,7 @@ public class GameUIManager : MonoBehaviour
     {
         Resources = PlayerDataManager.Instance.GetPlayerResource();
         resourcesValue.text = Resources.ToString();
-		Debug.Log("[GameUIManager] 更新资源数据" + Resources + "/" + resourcesValue.text);
+		//Debug.Log("[GameUIManager] 更新资源数据" + Resources + "/" + resourcesValue.text);
 	}
 
 
@@ -1016,12 +1021,19 @@ public class GameUIManager : MonoBehaviour
     {
         if(tf)
         {
-            TurnMessageText.text = "Enemy\n" + "Turn";
-            
+            int playerId = GameManage.Instance.CurrentTurnPlayerID;
+            TurnMessageText1.text = "敵のターン";
+            TurnMessageText2.text = "E n e m y 　T u r n";
+            NextTurnReligionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(allPlayersData[playerId].religion);
+
         }
         else
         {
-            TurnMessageText.text = "Your\n" + "Turn";
+            TurnMessageText1.text = "自分のターン";
+            TurnMessageText2.text = "Y o u r 　T u r n";
+            NextTurnReligionIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(GetPlayerReligion());
+
+
         }
         TurnMessageObj.SetActive(true);
         yield return new WaitForSeconds(1f);

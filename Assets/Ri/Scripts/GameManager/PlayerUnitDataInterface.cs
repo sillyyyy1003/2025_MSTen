@@ -554,7 +554,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
             case TechTree.HP: return "HP";
             case TechTree.AP: return "行動力";
             case TechTree.Occupy: return "占領確率";
-            case TechTree.Conversion: return "伝教確率";
+            case TechTree.Conversion: return "洗脳確率";
             case TechTree.ATK: return "攻撃力";
             case TechTree.Sacrifice: return "奉仕";
             case TechTree.AttackPosition: return "攻撃口";
