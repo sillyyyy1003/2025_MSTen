@@ -3891,7 +3891,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 4aa878fe0c61c544094188c86a7d1b44, type: 2}
+      objectReference: {fileID: 2100000, guid: 1c21100abc9a6424295457fe2b532700, type: 2}
     - target: {fileID: 7441539803873123012, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
       propertyPath: m_enableAutoSizing
@@ -11826,7 +11826,7 @@ PrefabInstance:
     - target: {fileID: 7441539803873123012, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
       propertyPath: m_text
-      value: "\u305D\u306E\u307B\u304B"
+      value: "\u305D\u306E\u4ED6"
       objectReference: {fileID: 0}
     - target: {fileID: 7441539803873123012, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}

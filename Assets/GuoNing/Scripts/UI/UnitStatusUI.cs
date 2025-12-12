@@ -228,8 +228,8 @@ public class UnitStatusUI : MonoBehaviour
 			return;
 		}
 
-		//if (apImage != null)
-		//	apImage.fillAmount = maxAP > 0 ? (float)currentAP / maxAP : 0f;
+		if (apImage != null)
+			apImage.fillAmount = maxAP > 0 ? (float)currentAP / maxAP : 0f;
 
 		if (apText != null)
 			apText.text = $"{currentAP}/{maxAP}";
