@@ -63,7 +63,7 @@ MonoBehaviour:
   uiBaseScale: 0.005
   minOffsetFactor: 0.3
   minDistance: 5
-  maxDistance: 30
+  maxDistance: 20
 --- !u!1 &1310281299318851894
 GameObject:
   m_ObjectHideFlags: 0
