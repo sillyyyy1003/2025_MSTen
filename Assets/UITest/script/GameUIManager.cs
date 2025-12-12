@@ -481,21 +481,25 @@ public class GameUIManager : MonoBehaviour
         if (!usingPool)
         {
 
-            if (turnTime <= 10 && turnTime > 0)
+            if (turnTime <11 && turnTime > 0)
             {
                 CountDownPanel.gameObject.SetActive(true);
                 CountDownHint.sprite = UISpriteHelper.Instance.GetCountDownTitle(false);
                 CountDownNum.sprite = UISpriteHelper.Instance.GetCountDownNum((int)turnTime);
+                CountDownNum.color = (turnTime<4)? new Color32(0xFF, 0x00, 0x04, 0xFF):new Color32(0x48, 0xFF, 0xE1, 0xFF);
+
             }
+
         }
         else
         {
 
-            if (poolTime <=10 && poolTime>0)
+            if (poolTime <11 && poolTime>0)
             {
                 CountDownPanel.gameObject.SetActive(true);
                 CountDownHint.sprite = UISpriteHelper.Instance.GetCountDownTitle(true);
                 CountDownNum.sprite = UISpriteHelper.Instance.GetCountDownNum((int)poolTime);
+                CountDownNum.color = (poolTime < 4) ? new Color32(0xFF, 0x00, 0x04, 0xFF) : new Color32(0x48, 0xFF, 0xE1, 0xFF);
             }
             else
             {

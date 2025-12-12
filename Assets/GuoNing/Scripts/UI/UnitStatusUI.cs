@@ -215,7 +215,13 @@ public class UnitStatusUI : MonoBehaviour
 
 	private void UpdateHPUI()
 	{
-		if (hpImage != null)
+        if (maxAP == 0)
+        {
+            hpBarTransform.anchoredPosition = new Vector2(hpBarTransform.anchoredPosition.x,-14f);
+
+        }
+
+        if (hpImage != null)
 			hpImage.fillAmount = (float)currentHP / maxHP;
 
 		if (hpText != null)

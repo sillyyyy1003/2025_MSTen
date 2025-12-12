@@ -1,12 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ReligionColor : MonoBehaviour
 {
     public Image Icon;
+    public TMP_Text Text;
+
 
     // Start is called before the first frame update
     void Start()
@@ -17,8 +20,8 @@ public class ReligionColor : MonoBehaviour
             GameUIManager.Instance.ReligionInfoSetOver += ReligionInfoSetOver;
         }
 
-        Icon.color = GameUIManager.Instance.MainColor;
-
+        if(Icon) Icon.color = GameUIManager.Instance.MainColor;
+        if(Text) Text.color = GameUIManager.Instance.MainColor;
 
     }
 
@@ -34,6 +37,7 @@ public class ReligionColor : MonoBehaviour
 
     private void ReligionInfoSetOver()
     {
-        Icon.color = GameUIManager.Instance.MainColor;
+        if (Icon) Icon.color = GameUIManager.Instance.MainColor;
+        if (Text) Text.color = GameUIManager.Instance.MainColor;
     }
 }
