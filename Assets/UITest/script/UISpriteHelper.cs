@@ -250,7 +250,7 @@ public class UISpriteHelper : MonoBehaviour
             case Religion.MadScientistReligion:
                 return GetSubSprite(UISpriteID.IconList_Religion, "04_Religiousicon");
             default:
-                return GetSubSprite(UISpriteID.IconList_Religion, "Sampler_Pic08"); ;
+                return GetSubSprite(UISpriteID.IconList_Religion, "01_Religiousicon"); ;
         }
 
 
