@@ -15,7 +15,6 @@ public class TitleUIManager : MonoBehaviour
 	// プロパティ
 	//--------------------------------------------------------------------------------
 	[Header("Menus")]
-	public RectTransform LeftMenu;
 	public RectTransform RightMenu;
 	public Material mat;
 	// World UI
@@ -71,9 +70,7 @@ public class TitleUIManager : MonoBehaviour
 			//  Close all option menu& online menu for next usage
 			CloseRightPanel();
 
-			// Reset button state
-			Button_Setting.ResetHexButton();
-			Button_OnlineGame.ResetHexButton();
+
 
 		}
 		
@@ -191,10 +188,13 @@ public class TitleUIManager : MonoBehaviour
 
 	private void CloseRightPanel()
 	{
-		Button_CloseRightPanel.gameObject.SetActive(false);
-		OptionMenu.gameObject.SetActive(false);
-		OnlineMenu.gameObject.SetActive(false); 
+		RightMenu.gameObject.SetActive(false);
+		//Button_CloseRightPanel.gameObject.SetActive(false);
+
+		//OptionMenu.gameObject.SetActive(false);
+		//OnlineMenu.gameObject.SetActive(false); 
 		RightDetailMenu.gameObject.SetActive(false);
+
 		UpdateBackground(false);
 
 		//  Open UserID display
@@ -241,6 +241,7 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickOnlineGame()
 	{
+		RightMenu.gameObject.SetActive(true);
 		Button_CloseRightPanel.gameObject.SetActive(true);
 
 		//  Set option menu active
@@ -259,6 +260,7 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickSetting()
 	{
+		RightMenu.gameObject.SetActive(true);
 		//  Set option menu active
 		OptionMenu.gameObject.SetActive(true);
 		OnlineMenu.gameObject.SetActive(false);
