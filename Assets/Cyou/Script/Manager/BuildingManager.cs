@@ -1149,7 +1149,7 @@ public class BuildingManager : MonoBehaviour
 
         }
 
-        Debug.Log($"前ターンにて{lastTurnResourceTotal}の資源が生成されました。");
+        //Debug.Log($"前ターンにて{lastTurnResourceTotal}の資源が生成されました。");
         return lastTurnResourceTotal;
     }
     //25.12.5 RI add GoldMine

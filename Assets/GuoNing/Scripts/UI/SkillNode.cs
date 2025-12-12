@@ -68,7 +68,8 @@ public class SkillNode : MonoBehaviour
 	{
 		// 显示面板
 		levelUpPanel.gameObject.SetActive(true);
-		levelUpButton.GetComponent<Button>().interactable = false;
+        levelUpButton.gameObject.SetActive(true);
+        levelUpButton.GetComponent<Button>().interactable = false;
 		// 先判断是不是当前级别的
 		int currentLevel = SkillTreeUIManager.Instance.GetCurrentLevel(pieceType, techTree);
 
@@ -82,6 +83,8 @@ public class SkillNode : MonoBehaviour
 
         if (PieceName) PieceName.text = PlayerUnitDataInterface.Instance.GetPieceNameByPieceType(pieceType);
 
+		if (LevelUpDescription) LevelUpDescription.text = SkillTreeUIManager.Instance.GetLevelUpInfo(pieceType);
+
         Debug.Log("[SkillNode]CurrentLevel" + currentLevel);
 		Debug.Log("[SkillNode]Skill level:" + SkillIndex);
 		// ------------------------------------------------
@@ -89,7 +92,7 @@ public class SkillNode : MonoBehaviour
 		// ------------------------------------------------
 		if (skillIndex == 0)
 		{
-			if (label) { label.text = "アンロック済"; label.color = Color.white; }
+			if (label) { label.alignment = TMPro.TextAlignmentOptions.Center; label.text = "レベルアップ済"; label.color = Color.white; }
             if (costNum) costNum.text = $"";
             if (costImage) costImage.SetActive(false);
             return;
@@ -100,7 +103,7 @@ public class SkillNode : MonoBehaviour
 		// ------------------------------------------------
 		if (skillIndex <= currentLevel)
 		{
-			if (label) { label.text = "アンロック済"; label.color = Color.white; }
+			if (label) { label.alignment = TMPro.TextAlignmentOptions.Center; label.text = "レベルアップ済"; label.color = Color.white; }
             if (costNum) costNum.text = $"";
             if (costImage) costImage.SetActive(false);
             return;
@@ -112,7 +115,7 @@ public class SkillNode : MonoBehaviour
 		if (skillIndex == currentLevel + 1)
 		{
 			int cost = GetUpgradeCostByTechType(skillIndex - 1);
-			if (label) {label.text = $"レベルアップ"; label.color = Color.black; }
+			if (label) { label.alignment = TMPro.TextAlignmentOptions.Left; label.text = $"レベルアップ"; label.color = Color.black; }
             if (costNum) costNum.text = $"{cost}";
             if (costImage) costImage.SetActive(true);
 
@@ -121,14 +124,23 @@ public class SkillNode : MonoBehaviour
 			{
 				levelUpButton.GetComponent<Button>().interactable = true;
 				levelUpButton.SetButton(OnLevelUpButtonClicked);
-			}
-			return;
+
+
+            }
+			else
+			{
+                label.color = Color.white;
+                costNum.color = Color.white;
+            }
+            if (LevelUpDescription) LevelUpDescription.text = SkillTreeUIManager.Instance.GetLevelUpInfo(pieceType, techTree);
+
+            return;
 		}
 
 		// ------------------------------------------------
 		// ⭐ ④ 未来等级：skillIndex > currentLevel
 		// ------------------------------------------------
-		if (label) { label.text = "？？？"; label.color = Color.white; }
+		if (label) levelUpButton.gameObject.SetActive(false);
         if (costNum) costNum.text = $"";
         if (costImage) costImage.SetActive(false);
     }
@@ -142,17 +154,27 @@ public class SkillNode : MonoBehaviour
 		// Update 棋子数据和UIBar数据
 		UpgradePieces(techTree, pieceType);
 
-		// UpdateUI
-		// 消耗资源
-		int cost = GetUpgradeCostByTechType(skillIndex);
+
+
+        // 消耗资源
+        int cost = GetUpgradeCostByTechType(skillIndex);
 		int playerId = GameManage.Instance.LocalPlayerID;
 		int res = PlayerDataManager.Instance.GetPlayerData(playerId).Resources;
 		res -= cost;
 		PlayerDataManager.Instance.SetPlayerResourses(res);
 		GameUIManager.Instance.UpdateResourcesData();
 
-		//与外部侧边栏联动
+        //25.12.10 RI 添加结局数据
+        PlayerDataManager.Instance.Result_ResourceUsed += cost;
+
+        // UpdateUI
         SkillTreeUIManager.Instance.UpdateSimpleSkillPanel(pieceType);
+        GameUIManager.Instance.UpdateSimplePanelInfo();
+
+
+		//刷新
+		OnSkillButtonClick();
+
     }
 
 
@@ -216,8 +238,11 @@ public class SkillNode : MonoBehaviour
 		UnitListTable.PieceDetail pd =
 		new UnitListTable.PieceDetail(pieceType, SceneStateManager.Instance.PlayerReligion);
 
-		var so = UnitListTable.Instance.GetPieceDataSO(pieceType, pd);
-		switch (pieceType)
+		var so = ScriptableObject.CreateInstance<PieceDataSO>();
+
+        if (pieceType != PieceType.Building) so = UnitListTable.Instance.GetPieceDataSO(pieceType, pd);
+
+        switch (pieceType)
 		{ 
 			case PieceType.Pope:
 				{

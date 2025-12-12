@@ -1,4 +1,4 @@
-﻿using GameData;
+using GameData;
 using GameData.UI;
 using System.Collections.Generic;
 using TMPro;
@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using UnityEngine.EventSystems;
+using System.Runtime.Versioning;
 
 public class SimpleSkillButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -117,9 +118,15 @@ public class SimpleSkillButton : MonoBehaviour, IPointerEnterHandler, IPointerEx
 		res -= cost;
 		PlayerDataManager.Instance.SetPlayerResourses(res);
 
-		// 提升等级
-		SkillTreeUIManager.Instance.UpgradeCurrentLevel(pieceType, tech);
+        //25.12.10 RI 添加结局数据
+        PlayerDataManager.Instance.Result_ResourceUsed += cost;
+
+        // 提升等级
+        SkillTreeUIManager.Instance.UpgradeCurrentLevel(pieceType, tech);
+
+		//刷新UI
 		SkillTreeUIManager.Instance.RefreshSkillTreeByPieceType(pieceType);
+        GameUIManager.Instance.UpdateSimplePanelInfo();
 
         // 升级单位 & 建筑等
         UpgradeRelatedUnits();

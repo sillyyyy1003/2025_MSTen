@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -29,10 +30,13 @@ public enum UISpriteID
     HPBar_Icon,     // 血条图标
     MouseInteraction,   // 鼠标交互图标
     Icon_SkillIcon,  // 技能图标
+    //20251207
     IconList_RedMoon,  // 红月教棋子图标
     IconList_Silk,  // 丝织教棋子图标
     IconList_Maya,  // NCG_1300 星界教団棋子图标
     IconList_MadScientist,  // 真理研究所棋子图标
+    //20251211
+    IconList_GeneralPiece,//通用棋子图标
 }
 
 [System.Serializable]
@@ -315,7 +319,43 @@ public class UISpriteHelper : MonoBehaviour
 
     }
 
+    public Sprite GetGeneralPieceIcon(PieceType type, bool hascolor=false)
+    {
+        UISpriteID ListName = UISpriteID.IconList_GeneralPiece;
+        string iconId;
 
+        switch (type)
+        {
+            case PieceType.Pope:
+                iconId = hascolor? "General_Pope_color" : "General_Pope_bg";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.Missionary:
+                iconId = hascolor ? "General_Missionary_color" : "General_Missionary_bg";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.Military:
+                iconId = hascolor ? "General_Soldier_color" : "General_Soldier_bg";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.Farmer:
+                iconId = hascolor ? "General_Believer_color" : "General_Believer_bg";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.Building:
+                iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
+                return GetSubSprite(ListName, iconId);
+            case PieceType.None:
+                iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
+                return GetSubSprite(ListName, iconId);
+            default:
+                iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
+                return GetSubSprite(ListName, iconId);
+
+
+        }
+
+
+
+
+
+    }
 }
 
 

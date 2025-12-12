@@ -7,6 +7,7 @@ using GamePieces;
 using DG.Tweening.Core.Easing;
 using UnityEngine.UIElements;
 using DG.Tweening;
+using GameData.UI;
 using static UnityEngine.GraphicsBuffer;
 
 //25.11.4 RI 添加序列化Vector3 变量
@@ -586,6 +587,24 @@ public class PieceManager : MonoBehaviour
 			Debug.LogError($"駒の職業が不明です.");
 			return false;
 		}
+
+		// SkillTreeUIManagerでグローバルレベルを更新
+		TechTree techTree = TechTree.None;
+		switch (upgradeType)
+		{
+			case PieceUpgradeType.HP:
+				techTree = TechTree.HP;
+				break;
+			case PieceUpgradeType.AP:
+				techTree = TechTree.AP;
+				break;
+			default:
+				Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+				return false;
+		}
+
+
+
         // 同じ職業のすべての自分の駒を取得
         int playerID = GameManage.Instance.LocalPlayerID;
 		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
@@ -622,7 +641,7 @@ public class PieceManager : MonoBehaviour
 				if (index >= 0)
 				{
 					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
-                    unit.PlayerUnitDataSO.pieceID = targetID;  
+                    unit.PlayerUnitDataSO.pieceID = targetID;
 					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
 				}
 
@@ -660,6 +679,35 @@ public class PieceManager : MonoBehaviour
 			Debug.LogError($"駒の職業が不明です.");
 			return false;
 		}
+
+		// SkillTreeUIManagerでグローバルレベルを更新
+		TechTree techTree = TechTree.None;
+		switch (specialUpgradeType)
+		{
+			case SpecialUpgradeType.FarmerSacrifice:
+				techTree = TechTree.Sacrifice;
+				break;
+			case SpecialUpgradeType.MilitaryAttackPower:
+				techTree = TechTree.ATK;
+				break;
+			case SpecialUpgradeType.MissionaryOccupy:
+				techTree = TechTree.Occupy;
+				break;
+			case SpecialUpgradeType.MissionaryConvertEnemy:
+				techTree = TechTree.Conversion;
+				break;
+			case SpecialUpgradeType.PopeSwapCooldown:
+				techTree = TechTree.MovementCD;
+				break;
+			case SpecialUpgradeType.PopeBuff:
+				techTree = TechTree.Buff;
+				break;
+			default:
+				Debug.LogError($"不明なアップグレードタイプ: {specialUpgradeType}");
+				return false;
+		}
+
+
 		// 同じ職業のすべての自分の駒を取得
 		int playerID = GameManage.Instance.LocalPlayerID;
 		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
@@ -1492,7 +1540,26 @@ public class PieceManager : MonoBehaviour
         }
         return false;
     }
-
+    //25.12.10 RI add get Convert data
+    public int GetConvertData(int missionaryID,int targetID)
+    {
+        if (!allPieces.TryGetValue(missionaryID, out Piece missionaryPiece))
+        {
+            Debug.LogError($"宣教師が見つかりません: ID={missionaryID}");
+            return -1;
+        }
+        if (!allPieces.TryGetValue(targetID, out Piece target))
+        {
+            Debug.LogError($"敵駒が見つかりません: ID={targetID}");
+            return -1;
+        }
+        if (missionaryPiece is not Missionary missionary)
+        {
+            Debug.LogError($"駒ID={missionaryID}は宣教師ではありません");
+            return -1;
+        }
+        return missionary.GetConvertData(target);
+    }
     /// <summary>
     /// 宣教師が敵を魅惑
     /// </summary>
@@ -1900,12 +1967,12 @@ public class PieceManager : MonoBehaviour
 
                 if(piece is Pope && piece.ProcessPopeSwapCD())
                 {
-                    Debug.Log($"今の教皇駒ID={pieceID}のスキル発動残りCDは{piece.PopeSwapPosRemaining}です。");
+                    //Debug.Log($"今の教皇駒ID={pieceID}のスキル発動残りCDは{piece.PopeSwapPosRemaining}です。");
                 }
             }
         }
 
-        Debug.Log($"プレイヤー{playerID}のターン開始処理を実行しました（駒数: {playerPieces.Count}、魅惑解除: {charmedPiecesCount}）");
+        //Debug.Log($"プレイヤー{playerID}のターン開始処理を実行しました（駒数: {playerPieces.Count}、魅惑解除: {charmedPiecesCount}）");
     }
 
     #endregion

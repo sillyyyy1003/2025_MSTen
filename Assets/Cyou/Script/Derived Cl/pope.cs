@@ -1,5 +1,6 @@
 using System;
 using GameData;
+using GameData.UI;
 using GamePieces;
 using UnityEngine;
 
@@ -32,6 +33,22 @@ public class Pope : Piece
         }
 
         base.Initialize(data, playerID);
+
+        // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
+        if (playerID == PieceManager.Instance.GetLocalPlayerID())
+        {
+            SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.HP));
+            SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.MovementCD));
+            swapCooldownLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.MovementCD);
+            // buffLevelは使用しない
+            buffLevel = 0;
+        }
+        else
+        {
+            // 敵プレイヤーの駒はデフォルトレベル0
+            swapCooldownLevel = 0;
+            buffLevel = 0;
+        }
     }
 
     ///この関数は廃止されました
@@ -77,27 +94,6 @@ public class Pope : Piece
     public int SwapCooldownLevel => swapCooldownLevel;
     public int BuffLevel => buffLevel;
 
-    /// <summary>
-    /// アップグレード効果を適用
-    /// </summary>
-    protected override void ApplyUpgradeEffects()
-    {
-        if (popeData == null) return;
-
-        // レベルに応じてHP、AP、攻撃力を更新
-        int newMaxHP = popeData.GetMaxHPByLevel(upgradeLevel);
-        int newMaxAP = popeData.GetMaxAPByLevel(upgradeLevel);
-
-        // 現在のHPとAPの割合を保持
-        int hpRatio = currentHP / currentMaxHP;
-        int apRatio = currentAP / currentMaxAP;
-
-        // 新しい最大値に基づいて現在値を更新
-        currentHP = newMaxHP * hpRatio;
-
-
-        Debug.Log($"教皇のアップグレード効果適用: レベル{upgradeLevel} HP={newMaxHP}, AP={newMaxAP}");
-    }
 
     /// <summary>
     /// 位置交換クールダウンをアップグレードする（リソース消費は呼び出し側で行う）

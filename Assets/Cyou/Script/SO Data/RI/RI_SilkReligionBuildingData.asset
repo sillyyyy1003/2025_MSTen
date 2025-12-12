@@ -25,13 +25,12 @@ MonoBehaviour:
   baseProductionAmount: 2
   goldenProductionAmount: 4
   productionMultiplier: 1
-  maxHpByLevel: 190000001e0000002d000000
+  maxHpByLevel: 050000000600000007000000
   attackRangeByLevel: 000000000100000002000000
   maxSlotsByLevel: 030000000400000005000000
   hasCounterAttack: 000000
   counterAttackDamage: 000000000000000000000000
-  hpUpgradeCost: 0600000008000000
+  hpUpgradeCost: 0600000007000000
   attackRangeUpgradeCost: 080000000a000000
   slotsUpgradeCost: 080000000a000000
-  buildingPrefab: {fileID: 5820619560128198455, guid: d886dbf77c82ac94cb02a54e6a3121d5,
-    type: 3}
+  buildingPrefab: {fileID: 0}
