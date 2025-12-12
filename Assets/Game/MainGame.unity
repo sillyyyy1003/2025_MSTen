@@ -36927,7 +36927,7 @@ MonoBehaviour:
   resolutionDropdown: {fileID: 174602638}
   fullScreenDropdown: {fileID: 1040283214}
   gridToggle: {fileID: 1180549202}
-  EndTrunButton: {fileID: 2062960769}
+  EndTurnButton: {fileID: 2062960769}
 --- !u!114 &2117784783
 MonoBehaviour:
   m_ObjectHideFlags: 0

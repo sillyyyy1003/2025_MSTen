@@ -4279,6 +4279,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 512c81af43988164c875600a70d586d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  RightMenu: {fileID: 879802354}
   mat: {fileID: 2100000, guid: 8ad16ad75b9524147b68c340e53f08bb, type: 2}
   Button_EndGame: {fileID: 2066091215}
   Button_GameTutorial: {fileID: 1286433448}
@@ -4907,7 +4908,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 4aa878fe0c61c544094188c86a7d1b44, type: 2}
+      objectReference: {fileID: 2100000, guid: 1c21100abc9a6424295457fe2b532700, type: 2}
     - target: {fileID: 7441539803873123012, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
       propertyPath: m_enableAutoSizing
@@ -8307,7 +8308,7 @@ PrefabInstance:
     - target: {fileID: 7441539803873123012, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
       propertyPath: m_text
-      value: "\u30B7\u30F3\u30B0\u30EB\u30D7\u30EC\u30A4"
+      value: "\u8A13\u7DF4\u5834"
       objectReference: {fileID: 0}
     - target: {fileID: 7441539803873123012, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
@@ -10471,7 +10472,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 4aa878fe0c61c544094188c86a7d1b44, type: 2}
+      objectReference: {fileID: 2100000, guid: 1c21100abc9a6424295457fe2b532700, type: 2}
     - target: {fileID: 7441539803873123012, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
       propertyPath: m_enableAutoSizing
@@ -11559,7 +11560,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 4aa878fe0c61c544094188c86a7d1b44, type: 2}
+      objectReference: {fileID: 2100000, guid: 1c21100abc9a6424295457fe2b532700, type: 2}
     - target: {fileID: 7441539803873123012, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
       propertyPath: m_enableAutoSizing
