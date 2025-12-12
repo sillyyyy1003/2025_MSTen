@@ -170,13 +170,6 @@ public class Missionary : Piece
             ChangeState(PieceState.Idle);
             OnOccupyCompleted?.Invoke(success);
 
-
-            // 2025.12.02 Guoning 特效播放
-            EffectManager.Instance.PlayerEffect(OperationType.Occupy, targetPosition, Quaternion.identity, null,true);
-
-            // 2025.11.14 Guoning 音声再生
-            SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
-
 			return true;
         }
         else
@@ -185,11 +178,6 @@ public class Missionary : Piece
             isOccupying = false;
             ChangeState(PieceState.Idle);
 
-            // 2025.12.02 Guoning 特效播放
-            EffectManager.Instance.PlayerEffect(OperationType.Occupy, targetPosition, Quaternion.identity, null, false);
-
-            // 2025.11.14 Guoning 音声再生
-            SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 			return false;
         }
 

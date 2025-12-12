@@ -309,7 +309,7 @@ MonoBehaviour:
   PlayerIP: 
   PlayerID: 0
   PlayerUnitLimit: 20
-  PlayerReligion: 4
+  PlayerReligion: 1
   bIsSingle: 0
   bIsDirectConnect: 0
   mapSerialNumber: -1

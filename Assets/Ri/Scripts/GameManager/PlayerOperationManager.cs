@@ -13,8 +13,7 @@ using static UnityEngine.GraphicsBuffer;
 using GameData.UI;
 using Buildings;
 using System.Linq;
-
-
+using SoundSystem;
 
 
 #if UNITY_EDITORR
@@ -2278,7 +2277,7 @@ public class PlayerOperationManager : MonoBehaviour
                 Vector3 targetPosition = PlayerBoardInforDict[i].Cells3DPos;
 
 				// 2025.12.02 Guoning 特效播放
-				EffectManager.Instance.PlayerEffect(OperationType.Occupy, targetPosition, Quaternion.identity, null, true);
+				EffectManager.Instance.PlayerEffect(OperationType.Cure, targetPosition, Quaternion.identity, null, true);
 
                 // 2025.11.14 Guoning 音声再生
                 SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.HEAL);
@@ -2439,6 +2438,11 @@ public class PlayerOperationManager : MonoBehaviour
                 );
                 Debug.Log($"已发送建筑创建网络消息(UNIT_ADD): BuildingID={buildData.buildingID}");
             }
+
+            // 播放特效
+            EffectManager.Instance.PlayerEffect(OperationType.Work, _HexGrid.GetCell(cellID).Position,
+	            Quaternion.identity);
+            // 播放声效
         }
         else
         {
@@ -3985,6 +3989,9 @@ public class PlayerOperationManager : MonoBehaviour
             // 添加结局数据
             PlayerDataManager.Instance.Result_CellNumber += 1;
 
+            EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position,
+	            Quaternion.identity, null, true);
+            SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
             // 取消选择状态
             ReturnToDefault();
         }
@@ -3993,7 +4000,10 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
             //更新AP
             UnitStatusUIManager.Instance.UpdateAPByID(PlayerDataManager.Instance.nowChooseUnitID, PieceManager.Instance.GetPieceAP((PlayerDataManager.Instance.nowChooseUnitID)));
-        }
+            EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position,
+	            Quaternion.identity, null, false);
+            SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
+		}
     }
     // ============================================
     // ExecuteCharm - 传教士魅惑敌方单位

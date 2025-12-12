@@ -221,7 +221,11 @@ public class EffectManager : MonoBehaviour
 		    case OperationType.Cure:
 			    return EffectType.Piece_Heal;
 
-		    default:
+			case OperationType.Work:
+				return EffectType.Building_Build;
+			
+
+			default:
 			    return EffectType.None;
 	    }
     }
