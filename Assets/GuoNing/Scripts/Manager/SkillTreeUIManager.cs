@@ -247,8 +247,8 @@ public class SkillTreeUIManager : MonoBehaviour
 		SkillBranch branch = Instantiate(skillBranchprefab, parent);
 
 		// 2. 节点图片
-		Sprite sprite = GetSprite(tech);
-
+		Sprite sprite = UISpriteHelper.Instance.GetSkillTreeSprite(tech);
+        
         // 设定纵向布局
         float nodeHeight = skillNodePrefab.GetComponent<RectTransform>().rect.height;
 		float nodeSpacing = nodeHeight + VerticalSpacing;
@@ -291,30 +291,7 @@ public class SkillTreeUIManager : MonoBehaviour
 		return count;
 	}
 
-	Sprite GetSprite(TechTree type)
-	{
-		switch (type)
-		{
-			case TechTree.ATK:
-				return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "03attack");
-			case TechTree.HP:
-				return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "01hp");
-			case TechTree.AP:
-				return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "02action");
-			case TechTree.AltarCount:
-				return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "07altar");
-			case TechTree.Conversion:
-				return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "04missionary");
-			case TechTree.Occupy:
-				return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "06occupation");
-			case TechTree.MovementCD:
-				return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "02action");
-			case TechTree.Sacrifice:
-				return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "05service");
-            default:
-                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "08lock");
-        }
-	}
+
 	private void OnToggleChanged(PieceType type, bool isOn)
 	{
 		if (!isOn) return; // 只有 toggle 被选中时处理

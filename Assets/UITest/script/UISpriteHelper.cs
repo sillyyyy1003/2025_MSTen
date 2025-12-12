@@ -1,4 +1,5 @@
 ﻿using GameData;
+using GameData.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -385,6 +386,30 @@ public class UISpriteHelper : MonoBehaviour
         return GetSubSprite(ListName, iconId);
     }
 
+    public Sprite GetSkillTreeSprite(TechTree type)
+    {
+        switch (type)
+        {
+            case TechTree.ATK:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "03attack");
+            case TechTree.HP:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "01hp");
+            case TechTree.AP:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "02action");
+            case TechTree.AltarCount:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "07altar");
+            case TechTree.Conversion:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "04missionary");
+            case TechTree.Occupy:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "06occupation");
+            case TechTree.MovementCD:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "02action");
+            case TechTree.Sacrifice:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "05service");
+            default:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "08lock");
+        }
+    }
 }
 
 
