@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using GameData;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,9 +37,10 @@ public class UnitStatusUI : MonoBehaviour
 	[SerializeField] private TMP_Text apText;
 
 	[Header("PieceIcon")]
-	[SerializeField] private Image pieceIcon;
+	[SerializeField] private Image Icon;
+    [SerializeField] private Image IconColor;
 
-	[Header("BuildingIcon")]
+    [Header("BuildingIcon")]
 	[SerializeField] private BuildingSlot slotPrefab;
 
 	[Header("UIBaseScale")]
@@ -237,24 +239,15 @@ public class UnitStatusUI : MonoBehaviour
 
 	private void UpdatePieceIcon(CardType type)
 	{
-		if (pieceIcon == null) return;
+		if (Icon == null) return;
+        if (IconColor == null) return;
 
-		switch (type)
-		{
-			case CardType.Missionary:
-				pieceIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.HPBar_Icon, "Temp_missionary");
-				break;
-			case CardType.Soldier:
-				pieceIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.HPBar_Icon, "Temp_soldier");
-				break;
-			case CardType.Farmer:
-				pieceIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.HPBar_Icon, "Temp_farmer");
-				break;
-			case CardType.Pope:
-				pieceIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.HPBar_Icon, "Temp_pope");
-				break;
-		}
-	}
+        PieceType pt = PlayerUnitDataInterface.Instance.ConvertCardTypeToPieceType(type);
+
+        Icon.sprite = UISpriteHelper.Instance.GetGeneralPieceIcon(pt);
+        IconColor.sprite = UISpriteHelper.Instance.GetGeneralPieceIcon(pt,true);
+
+    }
 
 	private void LateUpdate()
 	{

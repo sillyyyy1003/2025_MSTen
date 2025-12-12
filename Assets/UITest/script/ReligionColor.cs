@@ -17,7 +17,7 @@ public class ReligionColor : MonoBehaviour
             GameUIManager.Instance.ReligionInfoSetOver += ReligionInfoSetOver;
         }
 
-        Icon.color = GameUIManager.Instance.Backgroundcolor;
+        Icon.color = GameUIManager.Instance.MainColor;
 
 
     }
@@ -34,6 +34,6 @@ public class ReligionColor : MonoBehaviour
 
     private void ReligionInfoSetOver()
     {
-        Icon.color = GameUIManager.Instance.Backgroundcolor;
+        Icon.color = GameUIManager.Instance.MainColor;
     }
 }

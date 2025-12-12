@@ -91,7 +91,7 @@ public class GameUIManager : MonoBehaviour
 
 
     [Header("ReligionInfo Elements")]
-    public Color Backgroundcolor= new Color32(0xD9, 0xB9, 0x52, 0xFF);
+    public Color MainColor= new Color32(0xD9, 0xB9, 0x52, 0xFF);
     public RectTransform ReligionInfoPanel;         // 宗教信息和科技树
     public Image ReligionInfoIcon;
     public Image ReligionColor;
@@ -723,7 +723,7 @@ public class GameUIManager : MonoBehaviour
         {
             case Religion.SilkReligion://丝织教
                 ReligionColor.color = new Color32(0xE2, 0x77, 0x19, 0xFF);
-                Backgroundcolor = new Color32(0xFF, 0x78, 0x00, 0xFF);
+                MainColor = new Color32(0xE2, 0x77, 0x19, 0xFF);
                 ReligionName.text = "シルク村";
                 ReligionType.text = "資源転換と制御型部族";
                 ReligionDescribe01.text = "・啓蒙者誘惑の成功率が大幅に上昇\n" +
@@ -732,15 +732,14 @@ public class GameUIManager : MonoBehaviour
                     "・全体の重量系テクノロジーの消費がやや軽減\n\n" +
                     "・教皇周囲のバフ：攻撃力が上昇\n" +
                     "・信徒の献祭による恩恵：周囲6マス以内の駒のHPを回復\n";
-                ReligionDescribe02.text = "森林地形に生成された揺らぎポイントが遺跡へと変化した際、" +
-                    "即座に紅利資源を獲得する（投入された信徒の総数1人につき = 2△△）\n" +
+                ReligionDescribe02.text = "森林地形に生成された揺らぎポイントが遺跡へと変化した際、即座に紅利資源を獲得する（投入された信徒の総数1人につき = 2△△）\n" +
                      "※各建築につき、この効果は一度のみ発動";
                 ReligionDescribe03.text = "";
 
                 break;
             case Religion.RedMoonReligion://红月教
                 ReligionColor.color = new Color32(0x68, 0x01, 0x91, 0xFF);
-                Backgroundcolor = new Color32(0xB8, 0x00, 0xFF, 0xFF);
+                MainColor = new Color32(0x68, 0x01, 0x91, 0xFF);
                 ReligionName.text = "紅月教";
                 ReligionType.text = "人海戦術型部族";
                 ReligionDescribe01.text = "・総人口が多い\n" +
@@ -756,7 +755,7 @@ public class GameUIManager : MonoBehaviour
 
             case Religion.MayaReligion://星界教团
                 ReligionColor.color = new Color32(0x82, 0xC6, 0x3F, 0xFF);
-                Backgroundcolor = new Color32(0x7F, 0xFF, 0x00, 0xFF);
+                MainColor = new Color32(0x82, 0xC6, 0x3F, 0xFF);
                 ReligionName.text = "NCG_1300 星界教団";
                 ReligionType.text = "戦闘特化型部族";
                 ReligionDescribe01.text = "・洗脳成功率が大幅に低下\n" +
@@ -771,7 +770,7 @@ public class GameUIManager : MonoBehaviour
                 break;
             case Religion.MadScientistReligion://真理研究所
                 ReligionColor.color = new Color32(0x1E, 0x3A, 0x6A, 0xFF);
-                Backgroundcolor = new Color32(0x00, 0x5E, 0xFF, 0xFF);
+                MainColor = new Color32(0x1E, 0x3A, 0x6A, 0xFF);
                 ReligionName.text = "真理研究所";
                 ReligionType.text = "知識こそ力だと信じる部族";
                 ReligionDescribe01.text = "・撃破時の獲得ポイントが多い\n" +
@@ -786,7 +785,7 @@ public class GameUIManager : MonoBehaviour
                 break;
             default://默认
                 ReligionColor.color = new Color32(255, 255, 255, 255);
-                Backgroundcolor = new Color32(255, 255, 255, 255);
+                MainColor = new Color32(255, 255, 255, 255);
                 ReligionName.text = "？？教";
                 ReligionType.text = "？？？？型部族";
                 ReligionDescribe01.text = "・？？？が多い\n" +
