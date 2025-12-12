@@ -272,18 +272,18 @@ public class UISpriteHelper : MonoBehaviour
         {
             case Religion.SilkReligion:  // 丝织教棋子图标
                 //ListName = UISpriteID.IconList_Silk;
-                ListName = UISpriteID.IconList_RedMoon;
+                ListName = UISpriteID.IconList_Silk;
                 break;
             case Religion.RedMoonReligion:  // 红月教棋子图标
                 ListName = UISpriteID.IconList_RedMoon;
                 break;
             case Religion.MayaReligion:  // NCG_1300 星界教団棋子图标
                 //ListName = UISpriteID.IconList_Maya;
-                ListName = UISpriteID.IconList_RedMoon;
+                ListName = UISpriteID.IconList_Maya;
                 break;
             case Religion.MadScientistReligion:  // 真理研究所棋子图标
                 //ListName = UISpriteID.IconList_MadScientist;
-                ListName = UISpriteID.IconList_RedMoon;
+                ListName = UISpriteID.IconList_MadScientist;
                 break;
             default:
                 ListName = UISpriteID.IconList_RedMoon;
@@ -342,10 +342,10 @@ public class UISpriteHelper : MonoBehaviour
                 iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
                 return GetSubSprite(ListName, iconId);
             case PieceType.None:
-                iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
+                iconId = hascolor ? "General_Population_color" : "General_Population_bg";
                 return GetSubSprite(ListName, iconId);
             default:
-                iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
+                iconId = hascolor ? "General_money_color" : "General_money_bg";
                 return GetSubSprite(ListName, iconId);
 
 
