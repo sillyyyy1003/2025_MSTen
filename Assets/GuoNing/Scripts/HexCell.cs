@@ -361,13 +361,12 @@ public class HexCell : MonoBehaviour
 
 	public enum Walls
 	{
-		None,
 		WallLocal,
 		WallEnemy
 	}
 
 	[SerializeField] 
-	private Walls wallType = Walls.None;
+	private Walls wallType = Walls.WallLocal;
 	public Walls WallType
 	{
 		get => wallType;

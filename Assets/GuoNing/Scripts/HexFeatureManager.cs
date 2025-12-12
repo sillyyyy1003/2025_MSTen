@@ -452,14 +452,17 @@ public class HexFeatureManager : MonoBehaviour
 	bool hasRiver, bool hasRoad
 )
 	{
-		// 两边必须是同一种墙
-		if (nearCell.WallType != farCell.WallType)
-			return;
+		if (nearCell.IsUnderwater || farCell.IsUnderwater) return;
+		if (nearCell.GetEdgeType(farCell) == HexEdgeType.Cliff) return;
 
-		// None 不画
-		if (nearCell.WallType == Walls.None)
-			return;
+		bool nearHas = nearCell.Walled;
+		bool farHas = farCell.Walled;
 
+		// 两边都没墙：不画
+		if (!nearHas && !farHas) return;
+
+		// 两边都有墙且类型相同：这是墙内部，不画（否则会重复画在每条边上）
+		if (nearHas && farHas && nearCell.WallType == farCell.WallType) return;
 		HexMesh mesh = walls[(int)nearCell.WallType];
 
 		if (nearCell.Walled != farCell.Walled)
@@ -532,90 +535,89 @@ public class HexFeatureManager : MonoBehaviour
 	)
 	{
 
-
-		//if (cell1.Walled)
-		//{
-		//	if (cell2.Walled)
-		//	{
-		//		if (!cell3.Walled)
-		//		{
-		//			AddWallSegment(mesh,c3, cell3, c1, cell1, c2, cell2);
-		//		}
-		//	}
-		//	else if (cell3.Walled)
-		//	{
-		//		AddWallSegment(mesh,c2, cell2, c3, cell3, c1, cell1);
-		//	}
-		//	else
-		//	{
-		//		AddWallSegment(mesh, c1, cell1, c2, cell2, c3, cell3);
-		//	}
-		//}
-		//else if (cell2.Walled)
-		//{
-		//	if (cell3.Walled)
-		//	{
-		//		AddWallSegment(mesh, c1, cell1, c2, cell2, c3, cell3);
-		//	}
-		//	else
-		//	{
-		//		AddWallSegment(mesh, c2, cell2, c3, cell3, c1, cell1);
-		//	}
-		//}
-		//else if (cell3.Walled)
-		//{
-		//	AddWallSegment(mesh, c3, cell3, c1, cell1, c2, cell2);
-		//}
-
-		HexCell pivotCell = null;
-		Vector3 pivot = Vector3.zero;
-		Vector3 left = Vector3.zero;
-		Vector3 right = Vector3.zero;
-		HexCell leftCell = null;
-		HexCell rightCell = null;
-
-		if (cell1.WallType != Walls.None)
+		/*
+		if (cell1.Walled)
 		{
-			pivotCell = cell1;
-			pivot = c1;
-			left = c2;
-			leftCell = cell2;
-			right = c3;
-			rightCell = cell3;
+			if (cell2.Walled)
+			{
+				if (!cell3.Walled)
+				{
+					HexMesh mesh = walls[(int)cell3.WallType ];
+					AddWallSegment(mesh, c3, cell3, c1, cell1, c2, cell2);
+				}
+			}
+			else if (cell3.Walled)
+			{
+				HexMesh mesh = walls[(int)cell2.WallType];
+				AddWallSegment(mesh, c2, cell2, c3, cell3, c1, cell1);
+			}
+			else
+			{
+				HexMesh mesh = walls[(int)cell1.WallType];
+				AddWallSegment(mesh, c1, cell1, c2, cell2, c3, cell3);
+			}
 		}
-		else if (cell2.WallType != Walls.None)
+		else if (cell2.Walled)
 		{
-			pivotCell = cell2;
-			pivot = c2;
-			left = c3;
-			leftCell = cell3;
-			right = c1;
-			rightCell = cell1;
+			if (cell3.Walled)
+			{
+				HexMesh mesh = walls[(int)cell1.WallType];
+				AddWallSegment(mesh, c1, cell1, c2, cell2, c3, cell3);
+			}
+			else
+			{
+				HexMesh mesh = walls[(int)cell2.WallType ];
+				AddWallSegment(mesh, c2, cell2, c3, cell3, c1, cell1);
+			}
 		}
-		else if (cell3.WallType != Walls.None)
+		else if (cell3.Walled)
 		{
-			pivotCell = cell3;
-			pivot = c3;
-			left = c1;
-			leftCell = cell1;
-			right = c2;
-			rightCell = cell2;
+			HexMesh mesh = walls[(int)cell3.WallType ];
+			AddWallSegment(mesh, c3, cell3, c1, cell1, c2, cell2);
 		}
-		else
+		*/
+
+		bool w1 = cell1.Walled;
+		bool w2 = cell2.Walled;
+		bool w3 = cell3.Walled;
+
+		// 没墙或全有墙：角点不需要画
+		int count = (w1 ? 1 : 0) + (w2 ? 1 : 0) + (w3 ? 1 : 0);
+		if (count == 0 || count == 3) return;
+
+		// 选 pivot：优先选“有墙”的那格作为 pivot（并把左右按顺序传进去）
+		if (w1 && !w2 && !w3)
 		{
-			// 三个都没墙
+			var mesh = walls[(int)cell1.WallType];
+			if (mesh != null) AddWallSegment(mesh, c1, cell1, c2, cell2, c3, cell3);
+			return;
+		}
+		if (w2 && !w3 && !w1)
+		{
+			var mesh = walls[(int)cell2.WallType];
+			if (mesh != null) AddWallSegment(mesh, c2, cell2, c3, cell3, c1, cell1);
+			return;
+		}
+		if (w3 && !w1 && !w2)
+		{
+			var mesh = walls[(int)cell3.WallType];
+			if (mesh != null) AddWallSegment(mesh, c3, cell3, c1, cell1, c2, cell2);
 			return;
 		}
 
-		// 选用 pivot cell 的墙类型
-		HexMesh mesh = walls[(int)pivotCell.WallType];
-
-		AddWallSegment(
-			mesh,
-			pivot, pivotCell,
-			left, leftCell,
-			right, rightCell
-		);
+		// 2 个有墙、1 个没墙的情况：
+		// 这时 pivot 是“没墙的那格”，原版 Catlike 的逻辑会选不同组合来补角
+		// 你当前简化版 AddWallSegment(pivot,left,pivot,right) 不做 wedge/cap，
+		// 这里保持最小改动：用其中一个墙类型画（这里先用 cell1/2/3 中第一个有墙者）
+		HexCell pick = w1 ? cell1 : (w2 ? cell2 : cell3);
+		var mesh2 = walls[(int)pick.WallType];
+		if (mesh2 != null)
+		{
+			// 让“没墙那格”当 pivot
+			if (!w1) AddWallSegment(mesh2, c1, cell1, c2, cell2, c3, cell3);
+			else if (!w2) AddWallSegment(mesh2, c2, cell2, c3, cell3, c1, cell1);
+			else AddWallSegment(mesh2, c3, cell3, c1, cell1, c2, cell2);
+		}
 	}
 
 	void AddWallCap(HexMesh mesh, Vector3 near, Vector3 far)

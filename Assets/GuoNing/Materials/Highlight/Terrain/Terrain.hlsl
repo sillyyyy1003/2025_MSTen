@@ -1,4 +1,4 @@
-﻿#include "../HexCellData.hlsl"
+﻿#include "Assets/GuoNing/Materials/HexCellData.hlsl"
 
 //------------------------------------------------------------
 float4 _HoverColor; // hover 高亮颜色
