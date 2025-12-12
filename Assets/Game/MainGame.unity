@@ -97,8 +97,10 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 0}
-  m_LightingSettings: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: f79a337789f033141a057943c5ec2af8,
+    type: 2}
+  m_LightingSettings: {fileID: 4890085278179872738, guid: c5988e82a75bf4c16ac6f2fb6d0ad4cd,
+    type: 2}
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -9276,7 +9278,7 @@ MonoBehaviour:
   m_fontSize: 20
   m_fontSizeBase: 20
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -9309,7 +9311,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 24.98169, z: -18.875244, w: 25.30188}
+  m_margin: {x: -15.373901, y: 24.98169, z: -18.875244, w: 25.30188}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -12360,7 +12362,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &687295695
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12377,7 +12379,7 @@ MonoBehaviour:
   priority: 0
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: fa951fa5bbb517b47b1322a625532760, type: 2}
+  sharedProfile: {fileID: 11400000, guid: b2c9e72ae3724384aac83e700a3f3bc9, type: 2}
 --- !u!4 &687295696
 Transform:
   m_ObjectHideFlags: 0
@@ -13871,16 +13873,27 @@ MonoBehaviour:
     prefab: {fileID: 2287748394462068371, guid: fc6a1277fbf4c7f4f9f2f79ed66a584e,
       type: 3}
   - type: 5
-    prefab: {fileID: 875499218615645650, guid: 363b9c475f7350c4f8ebada57e548899, type: 3}
+    prefab: {fileID: 1131748748731684570, guid: c2bf209419936dc46a3315e5c89d9265,
+      type: 3}
   - type: 6
     prefab: {fileID: 732283997023231252, guid: 73198fb2a8959c444bf8a99c548f4e62, type: 3}
   - type: 7
     prefab: {fileID: 875499218615645650, guid: 363b9c475f7350c4f8ebada57e548899, type: 3}
   - type: 8
-    prefab: {fileID: 5484644431481706695, guid: cb426bdf07fa3e743b74af539e514b82,
+    prefab: {fileID: 5484644431481706695, guid: 83bb0f42e04db3b41b809a683c94033e,
       type: 3}
-  - type: 7
-    prefab: {fileID: 875499218615645650, guid: 363b9c475f7350c4f8ebada57e548899, type: 3}
+  - type: 9
+    prefab: {fileID: 3550239465980860401, guid: f7cf08fc62042244fb00c40c9ffa5c56,
+      type: 3}
+  - type: 10
+    prefab: {fileID: 5484644431481706695, guid: 6cda04f739976084a9c8b3c03bec138b,
+      type: 3}
+  - type: 11
+    prefab: {fileID: 6886881817419016237, guid: 7cfbf3bf356661643bd76f536738d5e0,
+      type: 3}
+  - type: 12
+    prefab: {fileID: 7895234138524244904, guid: 34453de091a1f6b4da0663e930ab21b8,
+      type: 3}
 --- !u!4 &755171157
 Transform:
   m_ObjectHideFlags: 0
@@ -28807,6 +28820,18 @@ MonoBehaviour:
   - pieceType: 4
     religion: 3
     pieceDataSO: {fileID: 11400000, guid: 9a0f48b02bda2f14f87211bb70b1af1c, type: 2}
+  - pieceType: 4
+    religion: 4
+    pieceDataSO: {fileID: 11400000, guid: 90c7f036959b2174e9b07f50cb70ab16, type: 2}
+  - pieceType: 3
+    religion: 4
+    pieceDataSO: {fileID: 11400000, guid: f59141327b8e4664287d1643bc5c7a27, type: 2}
+  - pieceType: 2
+    religion: 4
+    pieceDataSO: {fileID: 11400000, guid: cd0ab0709fdff234bad164068fc1668c, type: 2}
+  - pieceType: 1
+    religion: 4
+    pieceDataSO: {fileID: 11400000, guid: 38b876209528806419b2aee7cfa281e2, type: 2}
   Ruins:
   - {fileID: 4260726415608013866, guid: 20286ce8a2fb0e74da04e89d59cade0a, type: 3}
   - {fileID: 4985360878437811999, guid: 52c574026133b6d4e87760c08edea4bc, type: 3}
@@ -36927,7 +36952,7 @@ MonoBehaviour:
   resolutionDropdown: {fileID: 174602638}
   fullScreenDropdown: {fileID: 1040283214}
   gridToggle: {fileID: 1180549202}
-  EndTrunButton: {fileID: 2062960769}
+  EndTurnButton: {fileID: 2062960769}
 --- !u!114 &2117784783
 MonoBehaviour:
   m_ObjectHideFlags: 0
