@@ -73,6 +73,7 @@ public class GameUIManager : MonoBehaviour
     private Dictionary<int, UIPlayerData> allPlayersData;
 
 
+
     [Header("StatusBar Elements")]
     public Button ReligionIcon;                      // 宗教图标
     public TextMeshProUGUI resourcesValue;          // 资源值
@@ -90,6 +91,7 @@ public class GameUIManager : MonoBehaviour
 
 
     [Header("ReligionInfo Elements")]
+    public Color Backgroundcolor= new Color32(0xD9, 0xB9, 0x52, 0xFF);
     public RectTransform ReligionInfoPanel;         // 宗教信息和科技树
     public Image ReligionInfoIcon;
     public Image ReligionColor;
@@ -116,12 +118,6 @@ public class GameUIManager : MonoBehaviour
     public Image SoliderIcon;
     public Image FarmerIcon;
     public Image BuildingIcon;
-
-    public Image PopeBackground;
-    public Image MissionaryBackground;
-    public Image SoliderBackground;
-    public Image FarmerBackground;
-    public Image BuildingBackground;
 
 
     public TextMeshProUGUI PopeInfo;
@@ -153,7 +149,7 @@ public class GameUIManager : MonoBehaviour
     //public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
     public event System.Action TimeIsOut;//时间结束
     public event System.Action OnEndTurnButtonPressed;//回合结束按钮按下
-
+    public event System.Action ReligionInfoSetOver;//宗教初始化完成
 
 
     public static GameUIManager Instance { get; private set; }
@@ -721,7 +717,7 @@ public class GameUIManager : MonoBehaviour
     public void SetReligionInfo(Religion religion)
     {
         ReligionInfoIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
-        Color Backgroundcolor;
+        
 
         switch (religion)
         {
@@ -817,12 +813,7 @@ public class GameUIManager : MonoBehaviour
         FarmerSkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Farmer, religion);
         BuildingSkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Building, religion);
 
-
-        PopeBackground.color= Backgroundcolor;
-        MissionaryBackground.color = Backgroundcolor;
-        SoliderBackground.color = Backgroundcolor;
-        FarmerBackground.color = Backgroundcolor;
-        BuildingBackground.color = Backgroundcolor;
+        ReligionInfoSetOver?.Invoke();
 
         UpdateSimplePanelInfo();
 

@@ -10,11 +10,11 @@ public class GameCamera : MonoBehaviour
     //private float zoomSpeed = 2f;             // 滚轮缩放速度
 
     [Header("视角设置 - 三档锁定")]
-    private float minPitch = 30f;             // 档位1：平视
+    private float minPitch = 13f;             // 档位1：平视
     private float midPitch = 45f;             // 档位2：斜视
     private float maxPitch = 70f;             // 档位3：俯视
 
-    private float minZoomDistance = 15f;       // 档位1距离
+    private float minZoomDistance = 17f;       // 档位1距离
     private float midZoomDistance = 25f;      // 档位2距离
     private float maxZoomDistance = 50f;      // 档位3距离
 
@@ -305,7 +305,7 @@ public class GameCamera : MonoBehaviour
         point.z = Mathf.Clamp(point.z, zMinWorld, zMaxWorld);
 
         // 保持中心点在地面附近
-        point.y = 10f;
+        point.y = 13f;
 
         return point;
     }
