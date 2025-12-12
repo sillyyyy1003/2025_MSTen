@@ -578,12 +578,12 @@ public class GameManage : MonoBehaviour
             PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
 
+        _GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(OtherPlayerID));
         // 发送到网络
         if (NetGameSystem.Instance != null)
         {
             NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             //Debug.Log($" 已发送回合结束消息");
-
 
 
             NextTurn();

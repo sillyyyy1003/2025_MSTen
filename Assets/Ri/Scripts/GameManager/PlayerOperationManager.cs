@@ -114,7 +114,8 @@ public class PlayerOperationManager : MonoBehaviour
     private bool isDraggingCamera = false;
     private bool isDraggingUIorScreenOut = false;
     private Vector3 lastMousePosition;
-    private float dragThreshold = 5f; // 拖拽阈值（像素），防止误触
+    private float dragTime = 0;
+    private float dragThreshold = 50f; // 拖拽阈值（像素），防止误触
 
 
 
@@ -157,20 +158,22 @@ public class PlayerOperationManager : MonoBehaviour
     void Update()
     {
         
-            if (Input.mousePosition.x <= 0 ||
-   Input.mousePosition.x >= Screen.width ||
-   Input.mousePosition.y <= 0 ||
-   Input.mousePosition.y >= Screen.height)
-            {
-                isDraggingUIorScreenOut = true;
-            }
-            if (GameManage.Instance.IsPointerOverUIElement() )
-            {
-                //Debug.Log("CHECT UII");
-                isDraggingUIorScreenOut = true;
-            }
-       
-       
+   //         if (Input.mousePosition.x <= 0 ||
+   //Input.mousePosition.x >= Screen.width ||
+   //Input.mousePosition.y <= 0 ||
+   //Input.mousePosition.y >= Screen.height)
+   //         {
+   //             isDraggingUIorScreenOut = true;
+   //         }
+   //         if (GameManage.Instance.IsPointerOverUIElement() )
+   //         {
+   //             //Debug.Log("CHECT UII");
+   //             isDraggingUIorScreenOut = true;
+   //         }
+
+        // 处理相机拖拽
+        HandleCameraDrag();
+
         //if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn&& Input.GetKeyDown(KeyCode.U))
         //{
         //    UnitUpgrade(TechTree.AltarCount, CardType.Building);
@@ -450,8 +453,6 @@ public class PlayerOperationManager : MonoBehaviour
     #region =====输入处理=====
     private void HandleMouseInput()
     {
-        // 处理相机拖拽
-        HandleCameraDrag();
         // 2025.11.13 GuoNing 清除高亮数据 
         ClearClickCellHighlightData();
 
@@ -991,38 +992,66 @@ public class PlayerOperationManager : MonoBehaviour
     //    }
     //}
 
-    // 返回当前摄像机聚焦的单位id
-    public int GetFocusedUnitID()
-    {
-        return 0;
-    }
+   
     /// <summary>
     /// 处理鼠标拖拽移动相机
     /// </summary>
     private void HandleCameraDrag()
-    {  
-       
+    {
+
         // 按下左键开始拖拽检测
-        if (Input.GetMouseButtonDown(0) && !isDraggingUIorScreenOut)
+        if (Input.GetMouseButtonDown(0))
         {
+            // 检查是否在UI上或屏幕外
+            if (Input.mousePosition.x <= 0 ||
+                Input.mousePosition.x >= Screen.width ||
+                Input.mousePosition.y <= 0 ||
+                Input.mousePosition.y >= Screen.height ||
+                GameManage.Instance.IsPointerOverUIElement())
+            {
+                isDraggingUIorScreenOut = true;
+                // 不更新 lastMousePosition,避免位置跳跃
+            }
+            else
+            {
+                // 有效区域内的点击
+                isDraggingUIorScreenOut = false;
                 lastMousePosition = Input.mousePosition;
                 isDraggingCamera = false; // 重置拖拽状态
+                dragTime = 0;
+            }
         }
 
         // 持续按住左键
-        if (Input.GetMouseButton(0)&& !isDraggingUIorScreenOut)
+        if (Input.GetMouseButton(0))
         {
+            // 如果标记为UI或屏幕外,直接返回
+            if (isDraggingUIorScreenOut)
+            {
+                return;
+            }
 
+            dragTime += Time.deltaTime;
             Vector3 currentMousePosition = Input.mousePosition;
+
+            // 再次检查是否移出屏幕(拖拽过程中)
+            if (currentMousePosition.x <= 0 ||
+                currentMousePosition.x >= Screen.width ||
+                currentMousePosition.y <= 0 ||
+                currentMousePosition.y >= Screen.height)
+            {
+                return; // 移出屏幕时停止拖拽,但不更新标志
+            }
+
             float dragDistance = Vector3.Distance(currentMousePosition, lastMousePosition);
 
-            // 如果移动距离超过阈值，开始拖拽相机
+            // 如果移动距离超过阈值,开始拖拽相机
             if (dragDistance > dragThreshold)
             {
                 isDraggingCamera = true;
             }
 
-            // 如果正在拖拽，移动相机
+            // 如果正在拖拽,移动相机
             if (isDraggingCamera)
             {
                 Vector3 mouseDelta = currentMousePosition - lastMousePosition;
@@ -1040,18 +1069,16 @@ public class PlayerOperationManager : MonoBehaviour
         // 松开左键
         if (Input.GetMouseButtonUp(0))
         {
-            //Debug.Log("mouse up");
-            isDraggingUIorScreenOut = false;
+            dragTime = 0;
+            isDraggingUIorScreenOut = false; // 重置标志
 
-            // 如果发生了拖拽，则不处理点击事件
+            // 如果发生了拖拽,则不处理点击事件
             if (isDraggingCamera)
             {
                 isDraggingCamera = false;
                 return; // 跳过点击处理
             }
         }
-
-
     }
     #endregion
     // *************************

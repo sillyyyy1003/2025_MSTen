@@ -1000,7 +1000,18 @@ public class PlayerDataManager : MonoBehaviour
         }
         return new List<int2>();
     }
-
+    public Vector3 GetPlayerPopePosition(int playerId)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            foreach (var a in allPlayersData[playerId].PlayerUnits)
+            {
+                if (a.UnitType == CardType.Pope)
+                    return GetUnitPos(a.UnitID);
+            }
+        }
+        return new Vector3(0,0,0);
+    }
     // 获取某玩家的单位数量
     public int GetPlayerUnitCount(int playerId)
     {
