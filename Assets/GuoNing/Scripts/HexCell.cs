@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -357,6 +358,29 @@ public class HexCell : MonoBehaviour
 			}
 		}
 	}
+
+	public enum Walls
+	{
+		None,
+		WallLocal,
+		WallEnemy
+	}
+
+	[SerializeField] 
+	private Walls wallType = Walls.None;
+	public Walls WallType
+	{
+		get => wallType;
+		set
+		{
+			if (wallType != value)
+			{
+				wallType = value;
+				Refresh();
+			}
+		}
+	}
+
 
 	/// <summary>
 	/// Terrain type index.

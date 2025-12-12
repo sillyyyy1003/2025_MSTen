@@ -1255,6 +1255,7 @@ public class PlayerOperationManager : MonoBehaviour
                 if (_HexGrid.GetCell(cellId) != null)
                 {
                     _HexGrid.GetCell(cellId).Walled = true;
+                    _HexGrid.GetCell(cellId).WallType = HexCell.Walls.WallEnemy;
                 }
             }
         }
@@ -1341,6 +1342,7 @@ public class PlayerOperationManager : MonoBehaviour
 			if (_HexGrid.GetCell(c).Elevation > 2||_HexGrid.GetCell(c).Elevation <= 0) continue;
 
             _HexGrid.GetCell(c).Walled = true;
+            _HexGrid.GetCell(c).WallType = HexCell.Walls.WallLocal;
             PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(c);
 		}
 
@@ -3896,6 +3898,7 @@ public class PlayerOperationManager : MonoBehaviour
         if (PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
         {
             _HexGrid.GetCell(LastSelectingCellID).Walled = true;
+            _HexGrid.GetCell(LastSelectingCellID).WallType = HexCell.Walls.WallLocal;
             PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
             HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
 

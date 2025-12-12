@@ -255,7 +255,11 @@ public class UnitStatusUI : MonoBehaviour
 
 	private void LateUpdate()
 	{
+
 		if (!pieceTarget) return;
+
+		UpdateAPUI();
+		UpdateHPUI();
 
 		// 跟随 + 朝向摄像机
 		transform.position = pieceTarget.position + offset;
