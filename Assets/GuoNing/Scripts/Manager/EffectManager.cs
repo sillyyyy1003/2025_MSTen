@@ -20,6 +20,11 @@ public enum EffectType
 
     LevelUp_HP,
     LevelUp_AP,
+	LevelUp_ATK,
+	LevelUp_Occupy,
+	LevelUp_Charm,
+	LevelUp_Cure,
+
 }
 
 /// <summary>
