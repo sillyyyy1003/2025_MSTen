@@ -509,17 +509,28 @@ public class GameUIManager : MonoBehaviour
         }
 
 
-		// 显示数字（可选）
+		// 显示数字
 		if (timeText != null)
 		{
 			string turnStr = FormatTime(turnTime);
 			string poolStr = FormatTime(poolTime);
 
-			if (usingPool)
-				timeText.text = $"<color=orange>0:00</color> + {poolStr}";
-			else
-				timeText.text = $"{turnStr} + {poolStr}";
-		}
+
+
+            if (usingPool)
+            {
+
+                timeText.text = $"プール時間：{poolStr} | ターン時間：00";
+
+            }
+            else
+            {
+
+                timeText.text = $"プール時間：60 | ターン時間：{turnStr}";
+
+            }
+
+        }
 	}
     public void SetCountdownTime(int time)
     {
