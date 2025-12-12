@@ -624,7 +624,7 @@ public class BuildingManager : MonoBehaviour
 
 	#region アップグレード関連
 
-	// 2025.12.01 追加只通过升级类型升级
+	// 2025.12.01 upgradeTypeのみによってアップグレードする
 	public bool UpgradeBuilding(BuildingUpgradeType upgradeType)
 	{
 		bool anySuccess = false;
@@ -662,10 +662,10 @@ public class BuildingManager : MonoBehaviour
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetBuilding.BuildingID);
 				if (index >= 0)
 				{
-					var unit = playerData.PlayerUnits[index];  // 拷贝
-					unit.BuildingData = newBuildingData;          // 修改拷贝
+					var unit = playerData.PlayerUnits[index];  // コピー
+					unit.BuildingData = newBuildingData;          // コピー変更
 					unit.PlayerUnitDataSO.pieceID = targetBuilding.BuildingID;
-					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+					playerData.PlayerUnits[index] = unit;      //List書き戻し（重要）
 				}
 				Debug.Log($"建物ID={kvp.Key}の{upgradeType}をアップグレードしました");
 			}
