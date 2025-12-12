@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 875499218615645650}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.18, y: 1.51, z: -3}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4871,7 +4871,7 @@ Transform:
   m_GameObject: {fileID: 3783573666048166960}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.01, y: 1.9300001, z: 2.89}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4885,7 +4885,7 @@ ParticleSystem:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3783573666048166960}
   serializedVersion: 8
-  lengthInSec: 4
+  lengthInSec: 2.2
   simulationSpeed: 2.5
   stopAction: 0
   cullingMode: 0
@@ -5824,7 +5824,7 @@ ParticleSystem:
       countCurve:
         serializedVersion: 2
         minMaxState: 0
-        scalar: 4.56
+        scalar: 5
         minScalar: 30
         maxCurve:
           serializedVersion: 2
@@ -5878,7 +5878,7 @@ ParticleSystem:
       repeatInterval: 0.21
       probability: 1
   SizeModule:
-    enabled: 1
+    enabled: 0
     curve:
       serializedVersion: 2
       minMaxState: 1
@@ -9178,7 +9178,7 @@ ParticleSystem:
     colorLabel0: Color
     vector0_0:
       serializedVersion: 2
-      minMaxState: 2
+      minMaxState: 1
       scalar: 1
       minScalar: 0
       maxCurve:
@@ -9186,7 +9186,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 3
           time: 0
-          value: 0
+          value: -1
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -9194,8 +9194,26 @@ ParticleSystem:
           inWeight: 0.33333334
           outWeight: 0.33333334
         - serializedVersion: 3
+          time: 0.23875527
+          value: 0
+          inSlope: -0
+          outSlope: -0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0.35263288
+        - serializedVersion: 3
+          time: 0.75
+          value: 0
+          inSlope: -0
+          outSlope: -0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0.20717888
+        - serializedVersion: 3
           time: 1
-          value: 1
+          value: -1
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -9218,8 +9236,17 @@ ParticleSystem:
           inWeight: 0.33333334
           outWeight: 0.33333334
         - serializedVersion: 3
+          time: 0.22997561
+          value: 0.13434008
+          inSlope: 1.062521
+          outSlope: 1.062521
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0.33333334
+        - serializedVersion: 3
           time: 1
-          value: 0.5846138
+          value: 1
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -9775,7 +9802,7 @@ Transform:
   m_GameObject: {fileID: 5043369044980601655}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.6, y: 1.93, z: 1.07}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9789,7 +9816,7 @@ ParticleSystem:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5043369044980601655}
   serializedVersion: 8
-  lengthInSec: 4
+  lengthInSec: 2.2
   simulationSpeed: 2.5
   stopAction: 0
   cullingMode: 0
@@ -14679,7 +14706,7 @@ Transform:
   m_GameObject: {fileID: 8604356030612324464}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.6, y: -1.52, z: 1.07}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14693,7 +14720,7 @@ ParticleSystem:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8604356030612324464}
   serializedVersion: 8
-  lengthInSec: 4
+  lengthInSec: 2.2
   simulationSpeed: 2.5
   stopAction: 0
   cullingMode: 0
