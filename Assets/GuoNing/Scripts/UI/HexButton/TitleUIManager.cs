@@ -177,7 +177,7 @@ public class TitleUIManager : MonoBehaviour
 			// 40°/秒 = 9 秒一圈
 			pivot.DORotate(
 					new Vector3(0, 360, 0),
-					9f,
+					30f,
 					RotateMode.FastBeyond360
 				).SetEase(Ease.Linear)
 				.SetLoops(-1);

@@ -4575,7 +4575,7 @@ MonoBehaviour:
   Button_AddGame: {fileID: 64319158}
   UserID: {fileID: 366579152}
   Text_UserID: {fileID: 874457034}
-  Building: {fileID: 1346650601}
+  Building: {fileID: 0}
   Lighting: {fileID: 1931269576}
   pivot: {fileID: 908718221}
   ResolutionDropdown: {fileID: 856839082}
@@ -6072,6 +6072,11 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7201198407605140221, guid: 179c8758b4346b64cb1e18b209903149,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.5
+      objectReference: {fileID: 0}
     - target: {fileID: 7656560725897599482, guid: 179c8758b4346b64cb1e18b209903149,
         type: 3}
       propertyPath: m_LocalScale.x
@@ -6095,7 +6100,7 @@ PrefabInstance:
     - target: {fileID: 7656560725897599482, guid: 179c8758b4346b64cb1e18b209903149,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2
+      value: -2.2
       objectReference: {fileID: 0}
     - target: {fileID: 7656560725897599482, guid: 179c8758b4346b64cb1e18b209903149,
         type: 3}
@@ -8871,12 +8876,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
---- !u!4 &1346650601 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6268013892893489895, guid: 179c8758b4346b64cb1e18b209903149,
-    type: 3}
-  m_PrefabInstance: {fileID: 908718220}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1351382740
 GameObject:
   m_ObjectHideFlags: 0

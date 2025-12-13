@@ -322,10 +322,10 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 863044223}
   - {fileID: 1996214245}
   - {fileID: 2062960769}
   - {fileID: 2044284238}
+  - {fileID: 863044223}
   - {fileID: 2077009679}
   - {fileID: 482334148}
   - {fileID: 1714685702}
@@ -5974,8 +5974,8 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_NormalColor: {r: 1, g: 0.9019608, b: 0.7607843, a: 1}
+    m_HighlightedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_PressedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_SelectedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -6528,7 +6528,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u305D\u306E\u307B\u304B"
+  m_text: "\u305D\u306E\u4ED6"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e9b65ea5aff1bf0418bed55a989fcba0, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 1c21100abc9a6424295457fe2b532700, type: 2}
@@ -19102,7 +19102,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &863044223
 RectTransform:
   m_ObjectHideFlags: 0
@@ -21430,7 +21430,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_NormalColor: {r: 1, g: 0.9019608, b: 0.7607843, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -23021,8 +23021,8 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_NormalColor: {r: 1, g: 0.9019608, b: 0.7607843, a: 1}
+    m_HighlightedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_PressedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_SelectedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -28070,7 +28070,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1907882512}
+      - m_Target: {fileID: 1229873339}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
         m_Mode: 6
@@ -29967,7 +29967,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1409855868
 RectTransform:
   m_ObjectHideFlags: 0
@@ -35169,18 +35169,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e8e8499d8d01e8147ad12b97facba60a, type: 3}
---- !u!114 &1660054031 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1888084853070597338, guid: e8e8499d8d01e8147ad12b97facba60a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1660054030}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1a2029496af8f943896044bf7354396, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1660620733
 GameObject:
   m_ObjectHideFlags: 0
@@ -43068,10 +43056,10 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1660054031}
-        m_TargetAssemblyTypeName: SceneController, Assembly-CSharp
-        m_MethodName: SwitchToTitleScene
-        m_Mode: 1
+      - m_Target: {fileID: 1229873339}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -45875,8 +45863,8 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_NormalColor: {r: 1, g: 0.9019608, b: 0.7607843, a: 1}
+    m_HighlightedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_PressedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_SelectedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
