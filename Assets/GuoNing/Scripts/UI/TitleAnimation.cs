@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,8 +7,8 @@ using DG.Tweening;
 public class TitleAnimation : MonoBehaviour
 {
 	public Image titleImage;
-	public float fadeDuration = 1f;   // µ­Èë/µ­³öÊ±¼ä
-	public float stayDuration = 1f;   // Í£ÁôÊ±¼ä
+	public float fadeDuration = 1f;   // æ·¡å…¥/æ·¡å‡ºæ—¶é—´
+	public float stayDuration = 1f;   // åœç•™æ—¶é—´
 	public UserIDPanel userIDPanel;
 	void Start()
 	{
@@ -19,14 +19,14 @@ public class TitleAnimation : MonoBehaviour
 
 	void PlayAnimation()
 	{
-		// ³õÊ¼Í¸Ã÷
+		// åˆå§‹é€æ˜Ž
 		titleImage.color = new Color(1, 1, 1, 0);
 
 		Sequence seq = DOTween.Sequence();
 
-		seq.Append(titleImage.DOFade(1f, fadeDuration))   // 0 ¡ú 1
-		   .AppendInterval(stayDuration)                 // Í£¶Ù
-		   .Append(titleImage.DOFade(0f, fadeDuration)) // 1 ¡ú 0
+		seq.Append(titleImage.DOFade(1f, fadeDuration))   // 0 â†’ 1
+		   .AppendInterval(stayDuration)                 // åœé¡¿
+		   .Append(titleImage.DOFade(0f, fadeDuration)) // 1 â†’ 0
 		   .OnComplete(() =>
 		   {
 			   if (userIDPanel != null)
