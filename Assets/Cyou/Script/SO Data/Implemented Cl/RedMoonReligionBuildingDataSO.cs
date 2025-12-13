@@ -23,12 +23,8 @@ namespace GameData
             // 祭壇格子数（初始, 升級1, 升級2）
             maxSlotsByLevel = new int[3] { 4, 5, 6 };
 
-            // 攻撃範囲
-            attackRangeByLevel = new int[3] { 0, 1, 2 };
-
             // 各項目のアップグレードコスト (Excel行67-70)
             hpUpgradeCost = new int[2] { 6, 9 }; // 血量: 4→5(6資源), 5→6(9資源)
-            attackRangeUpgradeCost = new int[2] { 8, 10 }; // 攻撃範囲: 無→範囲1(8資源), 範囲1→範囲2(10資源)
             slotsUpgradeCost = new int[2] { 8, 10 }; // 祭壇格子數: 4→5(8資源), 5→6(10資源)
 
             // 資源生成設定

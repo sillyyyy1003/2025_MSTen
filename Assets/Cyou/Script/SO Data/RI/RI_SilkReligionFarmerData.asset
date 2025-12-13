@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bee82f1a331b757409e17e5c2e86d127, type: 3}
   m_Name: RI_SilkReligionFarmerData
   m_EditorClassIdentifier: 
-  piecePrefabResourcePath: Cyou/Prefab/farmer
+  piecePrefabResourcePath: 
   originalPID: 0
   religion: 0
   pieceName: "\u7D72\u7E54\u6559_\u8FB2\u6C11"
@@ -38,4 +38,6 @@ MonoBehaviour:
   productEfficiency: 1
   devotionAPCost: 1
   maxSacrificeLevel: 010000000200000002000000
+  maxAPRecoveryLevel: 000000000000000000000000
   sacrificeUpgradeCost: 0600000000000000
+  apRecoveryUpgradeCost: 0000000000000000

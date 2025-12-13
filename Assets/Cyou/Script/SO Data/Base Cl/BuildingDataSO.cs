@@ -33,7 +33,6 @@ namespace GameData
 
         [Header("アップグレードレベルごとのデータ（升級1,2）")]
         public int[] maxHpByLevel = new int[3]; // 血量（Excel基礎数値）
-        public int[] attackRangeByLevel = new int[3] { 0, 1, 2 }; // 攻撃範囲（無、有攻撃範囲1、攻撃範囲2）
         public int[] maxSlotsByLevel = new int[3] { 3, 5, 5 }; // 投入信徒数量（Excel基礎数値: 3, 5, 升級2未記載なので5を踏襲）
 
         [Header("反撃機能（鏡湖教用）")]
@@ -42,7 +41,6 @@ namespace GameData
 
         [Header("各項目のアップグレードコスト")]
         public int[] hpUpgradeCost = new int[2]; // 血量アップグレード資源コスト（0→1, 1→2）。0=アップグレード不可
-        public int[] attackRangeUpgradeCost = new int[2]; // 攻撃範囲アップグレード資源コスト（0→1, 1→2）
         public int[] slotsUpgradeCost = new int[2]; // 祭壇格子数アップグレード資源コスト（0→1, 1→2）
 
         [Header("Prefab")]
@@ -63,15 +61,6 @@ namespace GameData
         {
             level = Mathf.Clamp(level, 0, maxHpByLevel.Length - 1);
             return maxHpByLevel[level];
-        }
-
-        /// <summary>
-        /// レベルに応じた攻撃範囲を取得
-        /// </summary>
-        public int GetAttackRangeByLevel(int level)
-        {
-            level = Mathf.Clamp(level, 0, attackRangeByLevel.Length - 1);
-            return attackRangeByLevel[level];
         }
 
         /// <summary>
