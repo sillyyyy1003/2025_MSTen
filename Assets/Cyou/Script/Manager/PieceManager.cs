@@ -645,7 +645,6 @@ public class PieceManager : MonoBehaviour
 					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
 				}
 
-
 				// 更新UI
 				if (UnitStatusUIManager.Instance != null)
                 {

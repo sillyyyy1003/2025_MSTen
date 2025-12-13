@@ -45,9 +45,6 @@ public class UnitStatusUI : MonoBehaviour
 
 	[Header("UIBaseScale")]
 	[SerializeField] private float uiBaseScale = 0.01f;
-	[SerializeField] private float minOffsetFactor = 0.3f; // 最近时 offset 缩放比例
-	[SerializeField] private float minDistance = 5f;  // 最近距离
-	[SerializeField] private float maxDistance = 30f; // 最远距离
 
 	List<BuildingSlot> buildingSlots = new List<BuildingSlot>();
 
