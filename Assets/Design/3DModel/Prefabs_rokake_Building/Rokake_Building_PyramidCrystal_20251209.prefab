@@ -46,6 +46,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: Building_PyramidCrystal_20251125
       objectReference: {fileID: 0}
+    - target: {fileID: 1360516538909502300, guid: b19954b6dc990174592b4c2131b8a3af,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1360516538909502300, guid: b19954b6dc990174592b4c2131b8a3af,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1360516538909502300, guid: b19954b6dc990174592b4c2131b8a3af,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1433870943528105050, guid: b19954b6dc990174592b4c2131b8a3af,
         type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -54,17 +69,17 @@ PrefabInstance:
     - target: {fileID: 5870554812663966536, guid: b19954b6dc990174592b4c2131b8a3af,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5870554812663966536, guid: b19954b6dc990174592b4c2131b8a3af,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.86
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5870554812663966536, guid: b19954b6dc990174592b4c2131b8a3af,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 5.01
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5870554812663966536, guid: b19954b6dc990174592b4c2131b8a3af,
         type: 3}
