@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ffd4666a14aedd47ac8cd659cb3b84b, type: 3}
   m_Name: RI_RedMoonReligionPopeData
   m_EditorClassIdentifier: 
-  piecePrefabResourcePath: Cyou/Prefab/pope
+  piecePrefabResourcePath: 
   originalPID: 0
+  religion: 0
   pieceName: "\u7D05\u6708\u6559_\u6559\u7687"
   populationCost: 5
   resourceCost: 10
@@ -41,5 +42,10 @@ MonoBehaviour:
   - 0.05
   - 0.08
   - 0.08
+  defenseBuff:
+  - 0
+  - 0
+  - 0
+  - 0
   swapCooldownUpgradeCost: 0600000000000000
   buffUpgradeCost: 060000000800000000000000

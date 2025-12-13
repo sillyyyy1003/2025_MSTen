@@ -15,7 +15,7 @@ MonoBehaviour:
   piecePrefabResourcePath: 
   religion: 1
   buildingName: "\u7D72\u7E54\u6559_\u7279\u6B8A\u5EFA\u7BC9"
-  maxHp: 100
+  maxHp: 0
   buildingResourceCost: 12
   resourceGenInterval: 1
   cellType: 0
@@ -26,12 +26,10 @@ MonoBehaviour:
   goldenProductionAmount: 4
   productionMultiplier: 1
   maxHpByLevel: 050000000600000007000000
-  attackRangeByLevel: 000000000100000002000000
   maxSlotsByLevel: 030000000400000005000000
   hasCounterAttack: 000000
   counterAttackDamage: 000000000000000000000000
   hpUpgradeCost: 0600000007000000
-  attackRangeUpgradeCost: 080000000a000000
   slotsUpgradeCost: 080000000a000000
   buildingPrefab: {fileID: 360910642605532894, guid: 54ae2b5fc12fc4040be4fec89869c571,
     type: 3}
