@@ -31,11 +31,15 @@ public class MilitaryUnit : Piece
         base.Initialize(data, playerID);
 
         // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
-        if (playerID == PieceManager.Instance.GetLocalPlayerID())
+        if (playerID == GameManage.Instance.LocalPlayerID)
         {
             SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.HP));
             SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.AP));
             attackPowerLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Military, TechTree.ATK);
+
+            currentAP = currentMaxAP;
+            currentHP = currentMaxHP;
+
         }
         else
         {

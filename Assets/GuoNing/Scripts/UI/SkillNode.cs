@@ -166,8 +166,6 @@ public class SkillNode : MonoBehaviour
 		// Update 棋子数据和UIBar数据
 		UpgradePieces(techTree, pieceType);
 
-
-
         // 消耗资源
         int cost = GetUpgradeCostByTechType(skillIndex);
 		int playerId = GameManage.Instance.LocalPlayerID;
@@ -186,7 +184,6 @@ public class SkillNode : MonoBehaviour
 
 		//刷新
 		OnSkillButtonClick();
-
     }
 
 

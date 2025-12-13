@@ -80,6 +80,7 @@ namespace GamePieces
         /// <param name="playerID">所属するプレイヤーID</param>
         public virtual void Initialize(PieceDataSO data, int playerID)
         {
+        
             pieceData = data;
             originalPID = playerID;  // 引数から設定（SOデータではなく実行時の所有者）
             currentPID = playerID;

@@ -9,6 +9,7 @@ using UnityEngine.UIElements;
 using DG.Tweening;
 using GameData.UI;
 using static UnityEngine.GraphicsBuffer;
+using UnityEditor.Networking.PlayerConnection;
 
 //25.11.4 RI 添加序列化Vector3 变量
 
@@ -352,17 +353,18 @@ public class PieceManager : MonoBehaviour
         Debug.Log($"駒を生成しました: ID={pieceID}, Type={pieceType}, Religion={religion}, PlayerID={playerID}");
         OnPieceCreated?.Invoke(pieceID);
 
-        if (isUpgraded)
-        {
-            if (ApplyUpgradeLevelToNew(piece))
-            {
-                Debug.Log("新たに生成された駒に現存のアップグレードレベルを適用しました。");
-            }
-            else
-            {
-                Debug.LogError("現存のアップグレードレベルの適用に問題が発生しました。");
-            }
-        }
+        // 已经在Init状态完成当前等级的改变了，不需要额外升级
+        //if (isUpgraded)
+        //{
+        //    if (ApplyUpgradeLevelToNew(piece))
+        //    {
+        //        Debug.Log("新たに生成された駒に現存のアップグレードレベルを適用しました。");
+        //    }
+        //    else
+        //    {
+        //        Debug.LogError("現存のアップグレードレベルの適用に問題が発生しました。");
+        //    }
+        //}
         
 
         // 25.11.12 RI change return data
@@ -706,12 +708,11 @@ public class PieceManager : MonoBehaviour
 				return false;
 		}
 
-
 		// 同じ職業のすべての自分の駒を取得
 		int playerID = GameManage.Instance.LocalPlayerID;
 		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
 
-		bool anySuccess = false;;
+		bool anySuccess = false;
 
 		foreach (int targetID in sameProfessionPieces)
 		{
@@ -761,11 +762,12 @@ public class PieceManager : MonoBehaviour
 					unit.PlayerUnitDataSO.pieceID = targetID;
 					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
 				}
+                
 			}
 		}
-
         return anySuccess;
 	}
+
 	//================追加Upgrade方法================
 
 
