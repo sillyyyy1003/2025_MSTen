@@ -715,9 +715,9 @@ public class PlayerDataManager : MonoBehaviour
         }
 
 
-        Debug.Log("unit ID is " + unitID +
-            " unit 2Dpos is " + pos
-            + " unit 3D pos is " + GameManage.Instance.GetCellObject(pos).transform.position);
+        //Debug.Log("unit ID is " + unitID +
+        //    " unit 2Dpos is " + pos
+        //    + " unit 3D pos is " + GameManage.Instance.GetCellObject(pos).transform.position);
 
         return GameManage.Instance.GetCellObject(pos).transform.position;
     }

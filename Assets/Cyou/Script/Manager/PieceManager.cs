@@ -1155,7 +1155,7 @@ public class PieceManager : MonoBehaviour
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return -1;
         }
-        Debug.Log("piece all HP is " + piece.GetPieceMaxHP(hpLV));
+        //Debug.Log("piece all HP is " + piece.GetPieceMaxHP(hpLV));
         return piece.GetPieceMaxHP(hpLV);
     }
     /// <summary>

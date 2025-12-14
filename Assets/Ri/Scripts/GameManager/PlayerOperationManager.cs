@@ -2279,7 +2279,8 @@ public class PlayerOperationManager : MonoBehaviour
     // 献祭
     public void FarmerSacrifice()
     {
-        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(selectCellID, false);
+        List<int> pos = _HexGrid.GetAllCellsWithinRange(1, selectCellID);
+
         int farmerID = PlayerDataManager.Instance.nowChooseUnitID;
         int2 farmerPos = PlayerDataManager.Instance.GetUnitDataById(farmerID).Value.Position;
         foreach (var i in pos)
