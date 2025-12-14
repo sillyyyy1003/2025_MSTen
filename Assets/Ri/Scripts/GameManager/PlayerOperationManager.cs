@@ -4155,7 +4155,7 @@ public class PlayerOperationManager : MonoBehaviour
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
             // 魅惑持续
-			EffectManager.Instance.PlayCharmEffect(targetUnit.transform, _HexGrid.GetCell(LastSelectingCellID).Position, Quaternion.identity, true);
+			EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
 
 			// 2025.11.14 Guoning 添加魅惑音效
 			SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
