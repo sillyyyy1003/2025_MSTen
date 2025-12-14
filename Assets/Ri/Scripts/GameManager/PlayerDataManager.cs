@@ -852,14 +852,14 @@ public class PlayerDataManager : MonoBehaviour
                 {
                     case CardType.Farmer:
                         pieceType = PieceType.Farmer;
-                        PlayerDataManager.Instance.NowPopulation -=
+                        NowPopulation -=
                             PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, SceneStateManager.Instance.PlayerReligion);
 
 
                         break;
                     case CardType.Soldier:
                         pieceType = PieceType.Military;
-                        PlayerDataManager.Instance.NowPopulation -=
+                        NowPopulation -=
                          PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
 
 
@@ -867,18 +867,21 @@ public class PlayerDataManager : MonoBehaviour
                         break;
                     case CardType.Missionary:
                         pieceType = PieceType.Missionary;
-                        PlayerDataManager.Instance.NowPopulation -=
+                        NowPopulation -=
                        PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
                         break;
 
                     case CardType.Building:
-                     
+
+                       pieceType = PieceType.None;
                         break;
 
                     case CardType.Pope:
 
+                       pieceType = PieceType.None;
                         break;
                     default:
+                        pieceType = PieceType.None;
                         Debug.LogWarning($"未知的单位类型");
                         break;
                 }

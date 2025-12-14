@@ -1369,6 +1369,9 @@ public class PlayerOperationManager : MonoBehaviour
                 // 已存在，但需要验证是否是正确的单位
                 GameObject existingUnit = otherPlayersUnits[playerId][unit.Position];
 
+                // 更新HP
+                UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP);
+
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
                 Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");

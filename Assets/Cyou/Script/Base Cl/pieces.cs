@@ -353,9 +353,10 @@ namespace GamePieces
             // レベルアップ実行
             apLevel++;
             int newMaxAP = pieceData.GetMaxAPByLevel(apLevel);
-            int apRatio = currentAP / currentMaxAP; // 現在のAP割合を保持
             currentMaxAP = newMaxAP;
-            currentAP = newMaxAP * apRatio; // 割合を維持してAPを再計算
+            //25.12.14 RI change current ap
+            //int apRatio = currentAP / currentMaxAP; // 現在のAP割合を保持
+            //currentAP = newMaxAP * apRatio; // 割合を維持してAPを再計算
 
             Debug.Log($"{pieceData.pieceName} のAPがレベル{apLevel}にアップグレードしました（最大AP: {currentMaxAP}）");
             return true;
