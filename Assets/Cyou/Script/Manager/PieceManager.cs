@@ -9,7 +9,6 @@ using UnityEngine.UIElements;
 using DG.Tweening;
 using GameData.UI;
 using static UnityEngine.GraphicsBuffer;
-using UnityEditor.Networking.PlayerConnection;
 
 //25.11.4 RI 添加序列化Vector3 变量
 
@@ -590,20 +589,20 @@ public class PieceManager : MonoBehaviour
 			return false;
 		}
 
-		// SkillTreeUIManagerでグローバルレベルを更新
-		TechTree techTree = TechTree.None;
-		switch (upgradeType)
-		{
-			case PieceUpgradeType.HP:
-				techTree = TechTree.HP;
-				break;
-			case PieceUpgradeType.AP:
-				techTree = TechTree.AP;
-				break;
-			default:
-				Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
-				return false;
-		}
+		//// SkillTreeUIManagerでグローバルレベルを更新
+		//TechTree techTree = TechTree.None;
+		//switch (upgradeType)
+		//{
+		//	case PieceUpgradeType.HP:
+		//		techTree = TechTree.HP;
+		//		break;
+		//	case PieceUpgradeType.AP:
+		//		techTree = TechTree.AP;
+		//		break;
+		//	default:
+		//		Debug.LogError($"不明なアップグレードタイプ: {upgradeType}");
+		//		return false;
+		//}
 
 
 
@@ -681,32 +680,32 @@ public class PieceManager : MonoBehaviour
 			return false;
 		}
 
-		// SkillTreeUIManagerでグローバルレベルを更新
-		TechTree techTree = TechTree.None;
-		switch (specialUpgradeType)
-		{
-			case SpecialUpgradeType.FarmerSacrifice:
-				techTree = TechTree.Sacrifice;
-				break;
-			case SpecialUpgradeType.MilitaryAttackPower:
-				techTree = TechTree.ATK;
-				break;
-			case SpecialUpgradeType.MissionaryOccupy:
-				techTree = TechTree.Occupy;
-				break;
-			case SpecialUpgradeType.MissionaryConvertEnemy:
-				techTree = TechTree.Conversion;
-				break;
-			case SpecialUpgradeType.PopeSwapCooldown:
-				techTree = TechTree.MovementCD;
-				break;
-			case SpecialUpgradeType.PopeBuff:
-				techTree = TechTree.Buff;
-				break;
-			default:
-				Debug.LogError($"不明なアップグレードタイプ: {specialUpgradeType}");
-				return false;
-		}
+		//// SkillTreeUIManagerでグローバルレベルを更新
+		//TechTree techTree = TechTree.None;
+		//switch (specialUpgradeType)
+		//{
+		//	case SpecialUpgradeType.FarmerSacrifice:
+		//		techTree = TechTree.Sacrifice;
+		//		break;
+		//	case SpecialUpgradeType.MilitaryAttackPower:
+		//		techTree = TechTree.ATK;
+		//		break;
+		//	case SpecialUpgradeType.MissionaryOccupy:
+		//		techTree = TechTree.Occupy;
+		//		break;
+		//	case SpecialUpgradeType.MissionaryConvertEnemy:
+		//		techTree = TechTree.Conversion;
+		//		break;
+		//	case SpecialUpgradeType.PopeSwapCooldown:
+		//		techTree = TechTree.MovementCD;
+		//		break;
+		//	case SpecialUpgradeType.PopeBuff:
+		//		techTree = TechTree.Buff;
+		//		break;
+		//	default:
+		//		Debug.LogError($"不明なアップグレードタイプ: {specialUpgradeType}");
+		//		return false;
+		//}
 
 		// 同じ職業のすべての自分の駒を取得
 		int playerID = GameManage.Instance.LocalPlayerID;

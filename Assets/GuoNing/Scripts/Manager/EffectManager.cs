@@ -7,22 +7,31 @@ public enum EffectType
 {
 	None,
 
-	Piece_Charm_RedMoon_Start,
-	Piece_Charm_RedMoon_End,
-	Piece_Charm_Silk_Start,
-	Piece_Charm_Silk_End,
+	Piece_Charm_RedMoon_Fail,
+	Piece_Charm_RedMoon_Continue,
+	Piece_Charm_Silk_Fail,
+	Piece_Charm_Silk_Continue,
+	Piece_Charm_Maya_Fail,
+	Piece_Charm_Maya_Continue,
+	Piece_Charm_Mad_Fail,
+	Piece_Charm_Mad_Continue,
+
 	// 追加更多特效
 
 
 	Piece_Occupy_RedMoon_Success,
 	Piece_Occupy_Silk_Sucess,
+	Piece_Occupy_Maya_Success,
+	Piece_Occupy_Mad_Success,
+
 	Piece_Occupy_RedMoon_Fail,
 	Piece_Occupy_Silk_Fail,
+	Piece_Occupy_Maya_Fail,
+	Piece_Occupy_Mad_Fail,
 	// 追加更多特效
 
 	Piece_Hit,
     Piece_Heal,
-
 	Building_Build,
 
     LevelUp_HP,
@@ -31,7 +40,7 @@ public enum EffectType
 	LevelUp_Occupy,
 	LevelUp_Charm,
 	LevelUp_Cure,
-
+	
 }
 
 /// <summary>
@@ -50,6 +59,7 @@ public class EffectManager : MonoBehaviour
 
     public List<Effect> effects = new List<Effect>();
     private Dictionary<EffectType, Queue<GameObject>> pool = new();
+	private Dictionary<Transform, Dictionary<EffectType, GameObject>> activeLoopEffects = new();
 
 	private void Awake()
 	{
@@ -74,7 +84,8 @@ public class EffectManager : MonoBehaviour
 			pool[effect.type] = new Queue<GameObject>();
 		}
     }
-
+	
+	// 普通升级特效播放
 	public GameObject PlayEffect(PieceUpgradeType type, Vector3 position, Quaternion rotation, Transform parent = null)
 	{
 		switch (type)
@@ -84,31 +95,32 @@ public class EffectManager : MonoBehaviour
 
 			case PieceUpgradeType.AP:
 				return PlayEffect(EffectType.LevelUp_AP, position, rotation, parent);
-
 			default:
 				return null;
 		}
-
 	}
 
-	public GameObject PlayerEffect(OperationType type, Vector3 position, Quaternion rotation, Transform parent = null, bool isSuccess = false)
+	// 特殊升级播放特效
+	public GameObject PlayEffect(SpecialUpgradeType type, Vector3 position, Quaternion rotation, Transform parent = null)
 	{
-		Religion religion = SceneStateManager.Instance.PlayerReligion;
-
-		EffectType effect = GetEffectByOperation(type, religion, isSuccess);
-
-		if (effect == EffectType.None)
+		switch (type)
 		{
-			Debug.LogWarning($"No effect found for operation {type}, religion {religion}");
-			return null;
+			case SpecialUpgradeType.MilitaryAttackPower:
+				return PlayEffect(EffectType.LevelUp_ATK, position, rotation, parent);
+			case SpecialUpgradeType.MissionaryConvertEnemy:
+				return PlayEffect(EffectType.LevelUp_Charm, position, rotation, parent);
+			case SpecialUpgradeType.MissionaryOccupy:
+				return PlayEffect(EffectType.LevelUp_Occupy, position, rotation, parent);
+			case SpecialUpgradeType.FarmerSacrifice:
+				return PlayEffect(EffectType.LevelUp_Cure, position, rotation, parent);
+			default:
+				return null;
 		}
-
-		return PlayEffect(effect, position, rotation, parent);
 	}
 
 
 	// 播放特效
-	public GameObject PlayEffect(EffectType type,Vector3 position,Quaternion rotation,Transform parent = null)
+	public GameObject PlayEffect(EffectType type, Vector3 position, Quaternion rotation, bool isLoop = false, Transform parent = null)
     {
         if (!pool.ContainsKey(type))
         {
@@ -134,33 +146,53 @@ public class EffectManager : MonoBehaviour
 		obj.transform.rotation = rotation;
         obj.transform.SetParent(parent);
 		var instance = obj.GetComponent<EffectInstance>();
-		instance.SetUp(type);
+		instance.SetUp(type, isLoop);
 
-   //     // 25.12.4 RI 添加攻击特效回收
-   //     if (type == EffectType.Piece_Hit)
-			//StartCoroutine(RecycleAttackEffect(type, obj));
+
+		if (isLoop && parent != null)
+		{
+			if (!activeLoopEffects.ContainsKey(parent))
+				activeLoopEffects[parent] = new Dictionary<EffectType, GameObject>();
+
+			// 不允许同类型重复
+			if (!activeLoopEffects[parent].ContainsKey(type))
+				activeLoopEffects[parent].Add(type, obj);
+		}
 
 		return obj;
 
-	}
-    // 25.12.4 RI 添加攻击特效回收
-    private IEnumerator RecycleAttackEffect(EffectType type, GameObject prefab)
-	{
-        yield return new WaitForSeconds(1.0f);
-        Debug.Log("回收特效");
-        var ps = prefab.GetComponentsInChildren<ParticleSystem>();
-        foreach (var p in ps)
-        {
-            p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-        }
 
-        prefab.SetActive(false);
-        prefab.transform.SetParent(transform);
-        pool[type].Enqueue(prefab);
-    }
+	}
+
+
     // 回收特效
     public void Recycle(EffectType type,GameObject prefab)
     {
+		/*
+		var ps = prefab.GetComponentsInChildren<ParticleSystem>();
+		foreach (var p in ps)
+		{
+			p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+		}
+
+		prefab.SetActive(false);
+		prefab.transform.SetParent(transform);
+		pool[type].Enqueue(prefab);
+		*/
+		// ⭐ 先从 activeLoopEffects 中移除
+		if (prefab.transform.parent != null)
+		{
+			var parent = prefab.transform.parent;
+			if (activeLoopEffects.TryGetValue(parent, out var dict))
+			{
+				if (dict.ContainsKey(type))
+					dict.Remove(type);
+
+				if (dict.Count == 0)
+					activeLoopEffects.Remove(parent);
+			}
+		}
+
 		var ps = prefab.GetComponentsInChildren<ParticleSystem>();
 		foreach (var p in ps)
 		{
@@ -172,62 +204,126 @@ public class EffectManager : MonoBehaviour
 		pool[type].Enqueue(prefab);
 	}
 
-    private EffectType GetEffectByOperation(
-	    OperationType op,
-	    Religion rel,
-	    bool isSuccess)
-    {
-	    switch (op)
-	    {
-		    case OperationType.Occupy:
-			    return rel switch
-			    {
-				    Religion.SilkReligion =>
-					    isSuccess
-						    ? EffectType.Piece_Occupy_Silk_Sucess
-						    : EffectType.Piece_Occupy_Silk_Fail,
+	public void StopEffect(Transform target, EffectType type)
+	{
+		if (!activeLoopEffects.TryGetValue(target, out var dict))
+			return;
 
-				    Religion.RedMoonReligion =>
-					    isSuccess
-						    ? EffectType.Piece_Occupy_RedMoon_Success
-						    : EffectType.Piece_Occupy_RedMoon_Fail,
+		if (!dict.TryGetValue(type, out var obj))
+			return;
 
-				    _ => EffectType.None
-			    };
+		Recycle(type, obj);
+	}
 
-		    case OperationType.Charm:
-			    // ⚠️ Charm 这里假设：
-			    // isSuccess = true  → Start）
-			    // isSuccess = false → End（失败也走 End）
-			    // Start 由别的地方显式播放
-			    return rel switch
-			    {
-				    Religion.SilkReligion =>
-					    isSuccess
-						    ? EffectType.Piece_Charm_Silk_Start
-						    : EffectType.Piece_Charm_Silk_End,
 
-				    Religion.RedMoonReligion =>
-					    isSuccess
-						    ? EffectType.Piece_Charm_RedMoon_Start
-							: EffectType.Piece_Charm_RedMoon_End,
+	private EffectType GetOccupyEffectType(Religion religion, bool isSuccess)
+	{
+		return religion switch
+		{
+			Religion.SilkReligion =>
+				isSuccess
+					? EffectType.Piece_Occupy_Silk_Sucess
+					: EffectType.Piece_Occupy_Silk_Fail,
 
-				    _ => EffectType.None
-			    };
+			Religion.RedMoonReligion =>
+				isSuccess
+					? EffectType.Piece_Occupy_RedMoon_Success
+					: EffectType.Piece_Occupy_RedMoon_Fail,
 
-		    case OperationType.Attack:
-			    return EffectType.Piece_Hit;
+			Religion.MayaReligion =>
+				isSuccess
+					? EffectType.Piece_Occupy_Maya_Success
+					: EffectType.Piece_Occupy_Maya_Fail,
 
-		    case OperationType.Cure:
-			    return EffectType.Piece_Heal;
+			Religion.MadScientistReligion =>
+				isSuccess
+					? EffectType.Piece_Occupy_Mad_Success
+					: EffectType.Piece_Occupy_Mad_Fail,
 
-			case OperationType.Work:
-				return EffectType.Building_Build;
-			
+			_ => EffectType.None
+		};
+	}
 
-			default:
-			    return EffectType.None;
-	    }
-    }
+	public GameObject PlayOccupyEffect(
+	Vector3 position,
+	Quaternion rotation,
+	Transform parent,
+	bool isSuccess)
+	{
+		var religion = SceneStateManager.Instance.PlayerReligion;
 
+		EffectType effectType = GetOccupyEffectType(religion, isSuccess);
+
+		if (effectType == EffectType.None)
+		{
+			Debug.LogWarning($"[Effect] No Occupy effect for {religion}");
+			return null;
+		}
+
+		return PlayEffect(effectType, position, rotation, false, parent);
+	}
+
+	
+	private EffectType GetCharmEffectType(Religion religion, bool isFail)
+	{
+		return religion switch
+		{
+			Religion.SilkReligion =>
+				isFail
+					? EffectType.Piece_Charm_Silk_Fail
+					: EffectType.Piece_Charm_Silk_Continue,
+
+			Religion.RedMoonReligion =>
+				isFail
+					? EffectType.Piece_Charm_RedMoon_Fail
+					: EffectType.Piece_Charm_RedMoon_Continue,
+
+			Religion.MayaReligion =>
+				isFail
+					? EffectType.Piece_Charm_Maya_Fail
+					: EffectType.Piece_Charm_Maya_Continue,
+
+			Religion.MadScientistReligion =>
+			isFail
+					? EffectType.Piece_Charm_Mad_Fail
+					: EffectType.Piece_Charm_Mad_Continue,
+
+			_ => EffectType.None
+		};
+	}
+
+	public void PlayCharmEffect(
+	Transform target,
+	Vector3 position,
+	Quaternion rotation,
+	bool isSuccess)
+	{
+		var religion = SceneStateManager.Instance.PlayerReligion;
+		var effectType = GetCharmEffectType(religion, !isSuccess);
+
+		if (effectType == EffectType.None) return;
+
+		if (isSuccess)
+		{
+			PlayEffect(
+			effectType,
+			position,
+			rotation,
+			isLoop: true,
+			parent: target
+			);
+		}
+		else
+		{
+			PlayEffect(
+			effectType,
+			position,
+			rotation,
+			isLoop: false,
+			parent: target
+		);
+		}
+
+	
+	}
 }
