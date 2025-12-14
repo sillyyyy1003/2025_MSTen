@@ -31,4 +31,5 @@ MonoBehaviour:
   counterAttackDamage: 000000000000000000000000
   hpUpgradeCost: 0600000009000000
   slotsUpgradeCost: 080000000a000000
-  buildingPrefab: {fileID: 0}
+  buildingPrefab: {fileID: 2193762852899578588, guid: 90206617e66999a4299a5950b74ca676,
+    type: 3}

@@ -35,7 +35,7 @@ public class UnitListTable : MonoBehaviour
     private Dictionary<PieceDetail, PieceDataSO> pieceDataDict;
 
     //25.11.18 RI 添加废墟预制体
-    public List<GameObject> Ruins;
+    public List<GameObject> Ruins = new List<GameObject>();
 
     //// 新增：通过资源路径查找（用于网络同步）
     //private Dictionary<string, PieceDataSO> pieceDataByPath;

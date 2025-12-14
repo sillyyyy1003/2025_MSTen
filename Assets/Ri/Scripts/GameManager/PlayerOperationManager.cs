@@ -4898,26 +4898,29 @@ public class PlayerOperationManager : MonoBehaviour
     private GameObject CreateRuin(Religion re,int2 pos)
     {
         GameObject ruin = new GameObject();
-
         // 5. 创建废墟
         switch (SceneStateManager.Instance.PlayerReligion)
         {
             case Religion.RedMoonReligion:
+                Debug.Log("ruin RedMoon is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[1],
         GameManage.Instance.GetCell2D(pos).Cells3DPos,
         Quaternion.identity);
                 break;
             case Religion.SilkReligion:
+                Debug.Log("ruin SilkReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[0],
             GameManage.Instance.GetCell2D(pos).Cells3DPos,
             Quaternion.identity);
                 break;
             case Religion.MadScientistReligion:
+                Debug.Log("ruin MadScientistReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[3],
         GameManage.Instance.GetCell2D(pos).Cells3DPos,
         Quaternion.identity);
                 break;
             case Religion.MayaReligion:
+                Debug.Log("ruin MayaReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[2],
        GameManage.Instance.GetCell2D(pos).Cells3DPos,
        Quaternion.identity);
