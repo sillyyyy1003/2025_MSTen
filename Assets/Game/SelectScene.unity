@@ -665,7 +665,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &89347751
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5440,14 +5440,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 39c83b076ae7f6b4a9905dac2ab06f77, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6739,7 +6739,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1036203717}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.6666667
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7979,7 +7979,7 @@ RectTransform:
   m_Father: {fileID: 1371067572}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0.6666667}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -8038,7 +8038,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1068075492
 RectTransform:
   m_ObjectHideFlags: 0
@@ -13241,14 +13241,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.4}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 39c83b076ae7f6b4a9905dac2ab06f77, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -15486,6 +15486,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: ResolutionManager
       objectReference: {fileID: 0}
+    - target: {fileID: 6342773428112124178, guid: 1e29633c4e08377418ebb74526e4dee4,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7923134767170616355, guid: 1e29633c4e08377418ebb74526e4dee4,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -15604,6 +15609,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: SceneController
       objectReference: {fileID: 0}
+    - target: {fileID: 1072966569449982286, guid: e8e8499d8d01e8147ad12b97facba60a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1888084853070597338, guid: e8e8499d8d01e8147ad12b97facba60a,
         type: 3}
       propertyPath: minLoadingTime
@@ -15682,6 +15692,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: FadeManager
       objectReference: {fileID: 0}
+    - target: {fileID: 5272915650527566459, guid: 3e5b60a25b8056242875cfe987a32eec,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -15750,6 +15765,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: DisplayManager
       objectReference: {fileID: 0}
+    - target: {fileID: 3277835522267900005, guid: 3cb759b7bc7680a4b833e6338b4ada9a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -15767,6 +15787,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: SoundManger
+      objectReference: {fileID: 0}
+    - target: {fileID: 1685802893652899877, guid: 8cf68396400b44448a7735db405b2141,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6281259507739543426, guid: 8cf68396400b44448a7735db405b2141,
         type: 3}
