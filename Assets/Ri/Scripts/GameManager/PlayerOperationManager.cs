@@ -2287,9 +2287,9 @@ public class PlayerOperationManager : MonoBehaviour
         {
             PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
 
-            if (data != null && data.Value.UnitType != CardType.Building)
+            if (data != null && data.Value.UnitType != CardType.Building&&i!= selectCellID)
             {
-                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType);
+                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType+ " unit pos is " + PlayerBoardInforDict[i].Cells2DPos);
                 syncPieceData? targetSyncData = PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
                
                 //更新同步数据
