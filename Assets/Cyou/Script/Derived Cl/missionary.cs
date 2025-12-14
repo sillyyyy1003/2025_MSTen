@@ -197,9 +197,9 @@ public class Missionary : Piece
     #region 特殊攻撃（駒変換）
 
     //25.12.10 RI add get Convert data
-    public int GetConvertData(Piece target)
+    public float GetConvertData(Piece target)
     {
-        return (int)GetConversionChanceByPieceType(target);
+        return GetConversionChanceByPieceType(target);
     }
     /// <summary>
     /// 特殊攻撃: 敵駒を自軍駒に変換

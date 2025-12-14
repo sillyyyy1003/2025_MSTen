@@ -360,6 +360,12 @@ public class GameSceneUIManager : MonoBehaviour
     }
     private void OnEndTurnButtonPressed()
     {
+        if (SceneStateManager.Instance.bIsSingle)
+        {
+
+            GameManage.Instance._PlayerOperation.TurnStart();
+            return;
+        }
         EndTurn();
         GameManage.Instance._PlayerOperation.TurnEnd();
     }

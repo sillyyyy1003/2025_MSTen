@@ -1115,6 +1115,9 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = true;
 
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
+
+        // 移动摄像机到我方教皇
+        GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
         // 回合开始计算疯狂科学家教被动
         if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
         {
@@ -1239,12 +1242,21 @@ public class PlayerOperationManager : MonoBehaviour
     // 回合结束
     public void TurnEnd()
     {
+       
         if (!isMyTurn)
         {
             Debug.LogWarning("不是你的回合!");
             return;
         }
-
+        //PieceManager.Instance.GetTestConvertData();
+        //PlayerData data= PlayerDataManager.Instance.GetPlayerData(localPlayerId);
+        //foreach(var a in data.PlayerUnits)
+        //{
+        //    if(a.UnitType==CardType.Missionary)
+        //    {
+        //        Debug.Log("Missionary MeiHuo is "+a.PlayerUnitDataSO.convertEnemyLevel);
+        //    }
+        //}
         isMyTurn = false;
         bCanContinue = false;
 
@@ -1264,6 +1276,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 更新本地玩家数据到PlayerDataManager
         localPlayerData = PlayerDataManager.Instance.GetPlayerData(localPlayerId);
 
+      
         // 通知GameManage结束回合
         GameManage.Instance.EndTurn();
     }
@@ -1359,6 +1372,9 @@ public class PlayerOperationManager : MonoBehaviour
                 // 已存在，但需要验证是否是正确的单位
                 GameObject existingUnit = otherPlayersUnits[playerId][unit.Position];
 
+                // 更新HP
+                UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID,unit.PlayerUnitDataSO.currentHPLevel));
+                Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.PlayerUnitDataSO.piecetype} unitHp {unit.PlayerUnitDataSO.currentHP}");
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
                 Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
@@ -1878,6 +1894,7 @@ public class PlayerOperationManager : MonoBehaviour
                         unit.PlayerUnitDataSO = newData;
                         unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
+                        Debug.Log("Mei huo is "+ unit.PlayerUnitDataSO.convertEnemyLevel);
                     }
                  
                 }
@@ -2262,18 +2279,22 @@ public class PlayerOperationManager : MonoBehaviour
     // 献祭
     public void FarmerSacrifice()
     {
-        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(selectCellID, false);
+        List<int> pos = _HexGrid.GetAllCellsWithinRange(1, selectCellID);
+
         int farmerID = PlayerDataManager.Instance.nowChooseUnitID;
         int2 farmerPos = PlayerDataManager.Instance.GetUnitDataById(farmerID).Value.Position;
         foreach (var i in pos)
         {
             PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
 
-            if (data != null && data.Value.UnitType != CardType.Building)
+            if (data != null && data.Value.UnitType != CardType.Building&&i!= selectCellID)
             {
-                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType);
-                PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
-
+                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType+ " unit pos is " + PlayerBoardInforDict[i].Cells2DPos);
+                syncPieceData? targetSyncData = PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
+               
+                //更新同步数据
+                PlayerDataManager.Instance.UpdateUnitSyncDataByUnitID(localPlayerId, data.Value.UnitID, (syncPieceData)targetSyncData);
+              
                 Vector3 targetPosition = PlayerBoardInforDict[i].Cells3DPos;
 
 				// 2025.12.02 Guoning 特效播放
@@ -2281,6 +2302,10 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 2025.11.14 Guoning 音声再生
                 SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.HEAL);
+
+                // 添加回复后的HP显示
+                UnitStatusUIManager.Instance.UpdateHPByID(targetSyncData.Value.pieceID, PlayerDataManager.Instance.GetUnitDataById(targetSyncData.Value.pieceID).Value.PlayerUnitDataSO.currentHP);
+
 			}
         }
 
@@ -4038,7 +4063,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 获取目标数据
         PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, targetPos);
-        if (!targetData.HasValue)
+        if (!targetData.HasValue||targetData.Value.UnitType!=CardType.Soldier)
         {
             Debug.LogError("[ExecuteCharm] 找不到目标数据");
             bCanContinue = true;
@@ -4060,7 +4085,7 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
+        //Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
         if(targetData.Value.bIsCharmed)
         {
             Debug.Log("不能魅惑已被魅惑的单位！");
@@ -4887,26 +4912,29 @@ public class PlayerOperationManager : MonoBehaviour
     private GameObject CreateRuin(Religion re,int2 pos)
     {
         GameObject ruin = new GameObject();
-
         // 5. 创建废墟
-        switch (SceneStateManager.Instance.PlayerReligion)
+        switch (re)
         {
             case Religion.RedMoonReligion:
+                Debug.Log("ruin RedMoon is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[1],
         GameManage.Instance.GetCell2D(pos).Cells3DPos,
         Quaternion.identity);
                 break;
             case Religion.SilkReligion:
+                Debug.Log("ruin SilkReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[0],
             GameManage.Instance.GetCell2D(pos).Cells3DPos,
             Quaternion.identity);
                 break;
             case Religion.MadScientistReligion:
+                Debug.Log("ruin MadScientistReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[3],
         GameManage.Instance.GetCell2D(pos).Cells3DPos,
         Quaternion.identity);
                 break;
             case Religion.MayaReligion:
+                Debug.Log("ruin MayaReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[2],
        GameManage.Instance.GetCell2D(pos).Cells3DPos,
        Quaternion.identity);
