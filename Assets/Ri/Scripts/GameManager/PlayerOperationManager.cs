@@ -2283,8 +2283,11 @@ public class PlayerOperationManager : MonoBehaviour
             if (data != null && data.Value.UnitType != CardType.Building)
             {
                 Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType);
-                PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
-
+                syncPieceData? targetSyncData = PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
+               
+                //更新同步数据
+                PlayerDataManager.Instance.UpdateUnitSyncDataByUnitID(localPlayerId, data.Value.UnitID, (syncPieceData)targetSyncData);
+              
                 Vector3 targetPosition = PlayerBoardInforDict[i].Cells3DPos;
 
 				// 2025.12.02 Guoning 特效播放
@@ -2292,6 +2295,10 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 2025.11.14 Guoning 音声再生
                 SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.HEAL);
+
+                // 添加回复后的HP显示
+                UnitStatusUIManager.Instance.UpdateHPByID(targetSyncData.Value.pieceID, targetSyncData.Value.currentHP);
+
 			}
         }
 

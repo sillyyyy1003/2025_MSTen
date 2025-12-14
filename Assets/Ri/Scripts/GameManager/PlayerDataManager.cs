@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 
 
@@ -125,7 +126,20 @@ public struct PlayerData
         }
         return false;
     }
-
+    public bool UpdateUnitSyncDataByid(int id, syncPieceData newData)
+    {
+        for (int i = 0; i < PlayerUnits.Count; i++)
+        {
+            if (PlayerUnits[i].UnitID==id)
+            {
+                PlayerUnitData updatedUnit = PlayerUnits[i];
+                updatedUnit.PlayerUnitDataSO = newData;
+                PlayerUnits[i] = updatedUnit;
+                return true;
+            }
+        }
+        return false;
+    }
 
     public void AddOwnedCell(int id)
     {
@@ -448,10 +462,44 @@ public class PlayerDataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 根据位置更新单位的同步数据
+    /// 根据UnitID更新单位的同步数据
     /// 这个方法对于网络同步非常重要
     /// </summary>
-    public bool UpdateUnitSyncDataByPos(int playerId, int2 pos, syncPieceData newData)
+    public bool UpdateUnitSyncDataByUnitID(int playerId, int ID, syncPieceData newData)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+            bool success = data.UpdateUnitSyncDataByPos(ID, newData);
+
+            if (success)
+            {
+                allPlayersData[playerId] = data;
+
+                // 触发数据变更事件
+                OnPlayerDataChanged?.Invoke(playerId, data);
+
+                Debug.Log($"[PlayerDataManager] 玩家 {playerId}  的{newData.pieceID}同步数据已更新");
+                return true;
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerDataManager] 找不到玩家 {playerId} ");
+            }
+        }
+        else
+        {
+            Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
+        }
+
+        return false;
+    }
+
+        /// <summary>
+        /// 根据位置更新单位的同步数据
+        /// 这个方法对于网络同步非常重要
+        /// </summary>
+        public bool UpdateUnitSyncDataByPos(int playerId, int2 pos, syncPieceData newData)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
