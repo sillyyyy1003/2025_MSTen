@@ -446,7 +446,7 @@ namespace GamePieces
         protected virtual void Die()
         {
             ChangeState(PieceState.Dead);
-            // 25.11.27 RI 修改销毁逻辑
+            // 25.11.27 RI 削除ロジック変更
             //OnPieceDeath?.Invoke(this);
             //Destroy(gameObject);
             //StartCoroutine(DeathAnimation());//死亡アニメーションも一応
