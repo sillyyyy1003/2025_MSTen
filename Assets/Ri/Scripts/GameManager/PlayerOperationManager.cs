@@ -4899,7 +4899,7 @@ public class PlayerOperationManager : MonoBehaviour
     {
         GameObject ruin = new GameObject();
         // 5. 创建废墟
-        switch (SceneStateManager.Instance.PlayerReligion)
+        switch (re)
         {
             case Religion.RedMoonReligion:
                 Debug.Log("ruin RedMoon is " + re);
