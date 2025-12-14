@@ -126,7 +126,7 @@ public struct PlayerData
         }
         return false;
     }
-    public bool UpdateUnitSyncDataByid(int id, syncPieceData newData)
+    public bool UpdateUnitSyncDataByID(int id, syncPieceData newData)
     {
         for (int i = 0; i < PlayerUnits.Count; i++)
         {
@@ -470,7 +470,7 @@ public class PlayerDataManager : MonoBehaviour
         if (allPlayersData.ContainsKey(playerId))
         {
             PlayerData data = allPlayersData[playerId];
-            bool success = data.UpdateUnitSyncDataByPos(ID, newData);
+            bool success = data.UpdateUnitSyncDataByID(ID, newData);
 
             if (success)
             {
@@ -985,7 +985,7 @@ public class PlayerDataManager : MonoBehaviour
         }
 
         int playerId = unitIdToPlayerIdMap[unitId];
-        Debug.Log($"Player:ID为 {playerId}");
+        //Debug.Log($"Player:ID为 {playerId}");
         PlayerData data = GetPlayerData(playerId);
 
         return data.FindUnitById(unitId);

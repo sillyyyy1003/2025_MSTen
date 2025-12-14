@@ -2300,7 +2300,7 @@ public class PlayerOperationManager : MonoBehaviour
                 SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.HEAL);
 
                 // 添加回复后的HP显示
-                UnitStatusUIManager.Instance.UpdateHPByID(targetSyncData.Value.pieceID, targetSyncData.Value.currentHP);
+                UnitStatusUIManager.Instance.UpdateHPByID(targetSyncData.Value.pieceID, PlayerDataManager.Instance.GetUnitDataById(targetSyncData.Value.pieceID).Value.PlayerUnitDataSO.currentHP);
 
 			}
         }
