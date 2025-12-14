@@ -596,11 +596,11 @@ public class GameUIManager : MonoBehaviour
         PlayerDataManager.Instance.SetPlayerResourses(32);
 
         localPlayerId = GameManage.Instance.LocalPlayerID;
-        playerReligion = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerReligion;
+        playerReligion = SceneStateManager.Instance.PlayerReligion;
 
         SetPlayerReligionIcon(playerReligion);
         SetReligionInfo(playerReligion);
-        UpdatePopulationData(); // 更新人口显示
+        //UpdatePopulationData(); // 更新人口显示
 		UpdateResourcesData();
 
         UpdatePlayerIconsData();
@@ -610,11 +610,11 @@ public class GameUIManager : MonoBehaviour
         DeckFarmerCount = 0;
         DeckBuildingCount = 0;
 
-        UpdateUIUnitDataListFromInterface(CardType.Missionary);
-        UpdateUIUnitDataListFromInterface(CardType.Soldier);
-        UpdateUIUnitDataListFromInterface(CardType.Farmer);
-        UpdateUIUnitDataListFromInterface(CardType.Building);
-        UpdateUIUnitDataListFromInterface(CardType.Pope);
+        //UpdateUIUnitDataListFromInterface(CardType.Missionary);
+        //UpdateUIUnitDataListFromInterface(CardType.Soldier);
+        //UpdateUIUnitDataListFromInterface(CardType.Farmer);
+        //UpdateUIUnitDataListFromInterface(CardType.Building);
+        //UpdateUIUnitDataListFromInterface(CardType.Pope);
 
         // 时间条显示为1
         TurnTime.fillAmount = 1f;
@@ -622,6 +622,7 @@ public class GameUIManager : MonoBehaviour
 
         isInitialize = true;
     }
+
 
 
     private void UpdateUIUnitDataListFromInterface(CardType type)
@@ -650,7 +651,6 @@ public class GameUIManager : MonoBehaviour
             }
 
             UpdateActivateUnitCount(type, uiList.Count);
-            UpdateUnitCost(type);
             //Debug.Log($"[GameUIManager] UnitType = {type} UnitIDs.Count = {UnitIDs.Count}");
             // 25.12.8 ri add error test 
             try
@@ -724,18 +724,18 @@ public class GameUIManager : MonoBehaviour
         switch (type)
         {
             case CardType.Missionary:
-                MissionaryCost.text = PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, playerReligion).ToString();
-                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, playerReligion);
+                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
+                MissionaryCost.text = $"{cost}";
                 MissionaryCostHint.text = $"啓蒙者:{cost}人口";
                 return;
             case CardType.Soldier:
-                SoliderCost.text = PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, playerReligion).ToString();
-                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, playerReligion);
+                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
+                SoliderCost.text = $"{cost}";
                 SoliderCostHint.text = $"守護者:{cost}人口";
                 return;
             case CardType.Farmer:
-                FarmerCost.text = PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, playerReligion).ToString();
-                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, playerReligion);
+                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, SceneStateManager.Instance.PlayerReligion);
+                FarmerCost.text = $"{cost}";
                 FarmerCostHint.text = $"市民:{cost}人口";
                 return;
             default:
@@ -983,8 +983,6 @@ public class GameUIManager : MonoBehaviour
         rt.sizeDelta = size;
 
 
-
-        UpdatePopulationData();
 
     }
     private void StopTimer()
