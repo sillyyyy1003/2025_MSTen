@@ -438,6 +438,8 @@ public class PlayerDataManager : MonoBehaviour
                     break;
 
             }
+        if (SceneStateManager.Instance.bIsSingle)
+            PopulationCost = 999;
             Debug.Log(" PopulationCost is " + PopulationCost);
     }
         // 获取玩家数据
