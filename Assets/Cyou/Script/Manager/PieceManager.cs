@@ -1542,7 +1542,7 @@ public class PieceManager : MonoBehaviour
         return false;
     }
     //25.12.10 RI add get Convert data
-    public int GetConvertData(int missionaryID,int targetID)
+    public float GetConvertData(int missionaryID,int targetID)
     {
         if (!allPieces.TryGetValue(missionaryID, out Piece missionaryPiece))
         {

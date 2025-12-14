@@ -4071,7 +4071,7 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
+        //Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
         if(targetData.Value.bIsCharmed)
         {
             Debug.Log("不能魅惑已被魅惑的单位！");
