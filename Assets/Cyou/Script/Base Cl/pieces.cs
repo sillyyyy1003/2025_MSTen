@@ -190,6 +190,14 @@ namespace GamePieces
             // Prefabの外見をそのまま使用するため、動的な適用は不要
         }
 
+        // 256.12.14 ri add get max hp
+        public int GetPieceMaxHP(int hpLV)
+        {
+            int maxHP = pieceData.GetMaxHPByLevel(hpLV);
+
+
+            return maxHP;
+        }
         #endregion
 
         #region 行動力管理
