@@ -577,13 +577,13 @@ public class GameManage : MonoBehaviour
 
             PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
-
+        Debug.Log("other player id is "+ OtherPlayerID);
+        _GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(OtherPlayerID));
         // 发送到网络
         if (NetGameSystem.Instance != null)
         {
             NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_END, turnEndMsg);
             //Debug.Log($" 已发送回合结束消息");
-
 
 
             NextTurn();
@@ -648,30 +648,30 @@ public class GameManage : MonoBehaviour
         StartTurn(playerId);
     }
 
-    private void OnReceiveTurnEnd(TurnEndData data)
-    {
-        Debug.Log($"接收到玩家 {data.PlayerId} 的回合结束数据");
+    //private void OnReceiveTurnEnd(TurnEndData data)
+    //{
+    //    Debug.Log($"接收到玩家 {data.PlayerId} 的回合结束数据");
 
-        // 更新该玩家的数据
-        _PlayerDataManager.UpdatePlayerData(data.PlayerId, data.UpdatedPlayerData);
+    //    // 更新该玩家的数据
+    //    _PlayerDataManager.UpdatePlayerData(data.PlayerId, data.UpdatedPlayerData);
 
-        // 如果不是本地玩家,需要更新显示
-        if (data.PlayerId != LocalPlayerID)
-        {
-            _PlayerOperation.UpdateOtherPlayerDisplay(data.PlayerId, data.UpdatedPlayerData);
-        }
-    }
+    //    // 如果不是本地玩家,需要更新显示
+    //    if (data.PlayerId != LocalPlayerID)
+    //    {
+    //        _PlayerOperation.UpdateOtherPlayerDisplay(data.PlayerId, data.UpdatedPlayerData);
+    //    }
+    //}
 
-    private void OnReceivePlayerDataSync(PlayerDataSyncMessage data)
-    {
-        // 同步所有玩家数据
-        _PlayerDataManager.UpdatePlayerData(data.PlayerId, data.PlayerData);
+    //private void OnReceivePlayerDataSync(PlayerDataSyncMessage data)
+    //{
+    //    // 同步所有玩家数据
+    //    _PlayerDataManager.UpdatePlayerData(data.PlayerId, data.PlayerData);
 
-        if (data.PlayerId != LocalPlayerID)
-        {
-            _PlayerOperation.UpdateOtherPlayerDisplay(data.PlayerId, data.PlayerData);
-        }
-    }
+    //    if (data.PlayerId != LocalPlayerID)
+    //    {
+    //        _PlayerOperation.UpdateOtherPlayerDisplay(data.PlayerId, data.PlayerData);
+    //    }
+    //}
 
     public void HandleNetworkTurnStart(NetworkMessage message)
     {
@@ -689,25 +689,25 @@ public class GameManage : MonoBehaviour
     }
 
 
-    // 同步玩家数据的方法
-    public void SyncPlayerData(int playerId, PlayerData data)
-    {
-        Debug.Log($"同步玩家 {playerId} 的数据，单位数: {data.GetUnitCount()}");
+    //// 同步玩家数据的方法
+    //public void SyncPlayerData(int playerId, PlayerData data)
+    //{
+    //    Debug.Log($"同步玩家 {playerId} 的数据，单位数: {data.GetUnitCount()}");
 
-        // 更新数据管理器
-        _PlayerDataManager.UpdatePlayerData(playerId, data);
+    //    // 更新数据管理器
+    //    _PlayerDataManager.UpdatePlayerData(playerId, data);
 
-        // 更新显示
-        if (playerId != LocalPlayerID)
-        {
-            _PlayerOperation.UpdateOtherPlayerDisplay(playerId, data);
-            Debug.Log($"已更新玩家 {playerId} 的显示");
-        }
-        else
-        {
-            Debug.Log($"这是本地玩家的数据，不需要更新显示");
-        }
-    }
+    //    // 更新显示
+    //    if (playerId != LocalPlayerID)
+    //    {
+    //        _PlayerOperation.UpdateOtherPlayerDisplay(playerId, data);
+    //        Debug.Log($"已更新玩家 {playerId} 的显示");
+    //    }
+    //    else
+    //    {
+    //        Debug.Log($"这是本地玩家的数据，不需要更新显示");
+    //    }
+    //}
     public void UpdateOtherPlayerShow(int playerId, PlayerData data)
     {
         _PlayerOperation.UpdateOtherPlayerDisplay(playerId, data);
@@ -864,7 +864,7 @@ public class GameManage : MonoBehaviour
         // 正确的添加起始位置方式  
         if (infor.bIsStartPos)
         {
-            Debug.Log("Add start pos id :" + infor.id);
+            //Debug.Log("Add start pos id :" + infor.id);
             PlayerStartPositions.Add(infor.id);
         }
         // 测试用

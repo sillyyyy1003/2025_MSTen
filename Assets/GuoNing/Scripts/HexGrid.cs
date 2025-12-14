@@ -1411,7 +1411,8 @@ public class HexGrid : MonoBehaviour
 
 	public bool GetIsForest(int cellIndex)
 	{
-		return IsForest((PlantType)GetCell(cellIndex).PlantIndex);
+		return false;
+		//return IsForest((PlantType)GetCell(cellIndex).PlantIndex);
 	}
 
 	public void ConsumeGoldMine(int cellIndex)

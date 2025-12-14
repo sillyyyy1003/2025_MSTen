@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed41a46d664f4324e88e57bd495150e4, type: 3}
   m_Name: RI_SilkReligionMilitaryData
   m_EditorClassIdentifier: 
-  piecePrefabResourcePath: Cyou/Prefab/military
+  piecePrefabResourcePath: 
   originalPID: 0
   religion: 0
   pieceName: "\u7D72\u7E54\u6559_\u5341\u5B57\u8ECD"
@@ -23,7 +23,7 @@ MonoBehaviour:
   moveAPCost: 1
   moveSpeed: 1
   canAttack: 1
-  attackPower: 1
+  attackPower: 0
   attackRange: 2
   attackCooldown: 1
   attackAPCost: 1

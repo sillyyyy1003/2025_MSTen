@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections;
+﻿using GameData;
+using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using GameData;
-using UnityEngine.UIElements;
-using TMPro;
-using System.Linq;
-using System.Runtime.InteropServices;
+using static UnityEditor.PlayerSettings;
 
 
 
@@ -130,7 +126,20 @@ public struct PlayerData
         }
         return false;
     }
-
+    public bool UpdateUnitSyncDataByID(int id, syncPieceData newData)
+    {
+        for (int i = 0; i < PlayerUnits.Count; i++)
+        {
+            if (PlayerUnits[i].UnitID==id)
+            {
+                PlayerUnitData updatedUnit = PlayerUnits[i];
+                updatedUnit.PlayerUnitDataSO = newData;
+                PlayerUnits[i] = updatedUnit;
+                return true;
+            }
+        }
+        return false;
+    }
 
     public void AddOwnedCell(int id)
     {
@@ -453,10 +462,44 @@ public class PlayerDataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 根据位置更新单位的同步数据
+    /// 根据UnitID更新单位的同步数据
     /// 这个方法对于网络同步非常重要
     /// </summary>
-    public bool UpdateUnitSyncDataByPos(int playerId, int2 pos, syncPieceData newData)
+    public bool UpdateUnitSyncDataByUnitID(int playerId, int ID, syncPieceData newData)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            PlayerData data = allPlayersData[playerId];
+            bool success = data.UpdateUnitSyncDataByID(ID, newData);
+
+            if (success)
+            {
+                allPlayersData[playerId] = data;
+
+                // 触发数据变更事件
+                OnPlayerDataChanged?.Invoke(playerId, data);
+
+                Debug.Log($"[PlayerDataManager] 玩家 {playerId}  的{newData.pieceID}同步数据已更新");
+                return true;
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerDataManager] 找不到玩家 {playerId} ");
+            }
+        }
+        else
+        {
+            Debug.LogError($"[PlayerDataManager] 找不到玩家 {playerId}");
+        }
+
+        return false;
+    }
+
+        /// <summary>
+        /// 根据位置更新单位的同步数据
+        /// 这个方法对于网络同步非常重要
+        /// </summary>
+        public bool UpdateUnitSyncDataByPos(int playerId, int2 pos, syncPieceData newData)
     {
         if (allPlayersData.ContainsKey(playerId))
         {
@@ -672,9 +715,9 @@ public class PlayerDataManager : MonoBehaviour
         }
 
 
-        Debug.Log("unit ID is " + unitID +
-            " unit 2Dpos is " + pos
-            + " unit 3D pos is " + GameManage.Instance.GetCellObject(pos).transform.position);
+        //Debug.Log("unit ID is " + unitID +
+        //    " unit 2Dpos is " + pos
+        //    + " unit 3D pos is " + GameManage.Instance.GetCellObject(pos).transform.position);
 
         return GameManage.Instance.GetCellObject(pos).transform.position;
     }
@@ -809,14 +852,14 @@ public class PlayerDataManager : MonoBehaviour
                 {
                     case CardType.Farmer:
                         pieceType = PieceType.Farmer;
-                        PlayerDataManager.Instance.NowPopulation -=
+                        NowPopulation -=
                             PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, SceneStateManager.Instance.PlayerReligion);
 
 
                         break;
                     case CardType.Soldier:
                         pieceType = PieceType.Military;
-                        PlayerDataManager.Instance.NowPopulation -=
+                        NowPopulation -=
                          PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, SceneStateManager.Instance.PlayerReligion);
 
 
@@ -824,18 +867,21 @@ public class PlayerDataManager : MonoBehaviour
                         break;
                     case CardType.Missionary:
                         pieceType = PieceType.Missionary;
-                        PlayerDataManager.Instance.NowPopulation -=
+                        NowPopulation -=
                        PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, SceneStateManager.Instance.PlayerReligion);
                         break;
 
                     case CardType.Building:
-                     
+
+                       pieceType = PieceType.None;
                         break;
 
                     case CardType.Pope:
 
+                       pieceType = PieceType.None;
                         break;
                     default:
+                        pieceType = PieceType.None;
                         Debug.LogWarning($"未知的单位类型");
                         break;
                 }
@@ -939,7 +985,7 @@ public class PlayerDataManager : MonoBehaviour
         }
 
         int playerId = unitIdToPlayerIdMap[unitId];
-        Debug.Log($"Player:ID为 {playerId}");
+        //Debug.Log($"Player:ID为 {playerId}");
         PlayerData data = GetPlayerData(playerId);
 
         return data.FindUnitById(unitId);
@@ -1000,7 +1046,18 @@ public class PlayerDataManager : MonoBehaviour
         }
         return new List<int2>();
     }
-
+    public Vector3 GetPlayerPopePosition(int playerId)
+    {
+        if (allPlayersData.ContainsKey(playerId))
+        {
+            foreach (var a in allPlayersData[playerId].PlayerUnits)
+            {
+                if (a.UnitType == CardType.Pope)
+                    return GetUnitPos(a.UnitID);
+            }
+        }
+        return new Vector3(0,0,0);
+    }
     // 获取某玩家的单位数量
     public int GetPlayerUnitCount(int playerId)
     {
@@ -1138,6 +1195,9 @@ public class PlayerDataManager : MonoBehaviour
     // 设置玩家资源
     public void SetPlayerResourses(int newResources)
     {
+        if (SceneStateManager.Instance.bIsSingle)
+            newResources = 999;
+
         int playerId = GameManage.Instance.LocalPlayerID;
 
         if (!allPlayersData.TryGetValue(playerId, out PlayerData data))

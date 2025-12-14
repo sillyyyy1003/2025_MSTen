@@ -29,12 +29,14 @@ public class Farmer : Piece
         base.Initialize(data, playerID);
 
         // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
-        if (playerID == PieceManager.Instance.GetLocalPlayerID())
+        if (playerID == GameManage.Instance.LocalPlayerID)
         {
             SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Farmer, TechTree.HP));
             SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Farmer, TechTree.AP));
             sacrificeLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Farmer, TechTree.Sacrifice);
-        }
+			currentAP = currentMaxAP;
+			currentHP = currentMaxHP;
+		}
         else
         {
             // 敵プレイヤーの駒はデフォルトレベル0

@@ -13,8 +13,7 @@ using static UnityEngine.GraphicsBuffer;
 using GameData.UI;
 using Buildings;
 using System.Linq;
-
-
+using SoundSystem;
 
 
 #if UNITY_EDITORR
@@ -114,7 +113,8 @@ public class PlayerOperationManager : MonoBehaviour
     private bool isDraggingCamera = false;
     private bool isDraggingUIorScreenOut = false;
     private Vector3 lastMousePosition;
-    private float dragThreshold = 5f; // 拖拽阈值（像素），防止误触
+    private float dragTime = 0;
+    private float dragThreshold = 50f; // 拖拽阈值（像素），防止误触
 
 
 
@@ -157,20 +157,22 @@ public class PlayerOperationManager : MonoBehaviour
     void Update()
     {
         
-            if (Input.mousePosition.x <= 0 ||
-   Input.mousePosition.x >= Screen.width ||
-   Input.mousePosition.y <= 0 ||
-   Input.mousePosition.y >= Screen.height)
-            {
-                isDraggingUIorScreenOut = true;
-            }
-            if (GameManage.Instance.IsPointerOverUIElement() )
-            {
-                //Debug.Log("CHECT UII");
-                isDraggingUIorScreenOut = true;
-            }
-       
-       
+   //         if (Input.mousePosition.x <= 0 ||
+   //Input.mousePosition.x >= Screen.width ||
+   //Input.mousePosition.y <= 0 ||
+   //Input.mousePosition.y >= Screen.height)
+   //         {
+   //             isDraggingUIorScreenOut = true;
+   //         }
+   //         if (GameManage.Instance.IsPointerOverUIElement() )
+   //         {
+   //             //Debug.Log("CHECT UII");
+   //             isDraggingUIorScreenOut = true;
+   //         }
+
+        // 处理相机拖拽
+        HandleCameraDrag();
+
         //if (GameManage.Instance.GetIsGamingOrNot() && isMyTurn&& Input.GetKeyDown(KeyCode.U))
         //{
         //    UnitUpgrade(TechTree.AltarCount, CardType.Building);
@@ -450,8 +452,6 @@ public class PlayerOperationManager : MonoBehaviour
     #region =====输入处理=====
     private void HandleMouseInput()
     {
-        // 处理相机拖拽
-        HandleCameraDrag();
         // 2025.11.13 GuoNing 清除高亮数据 
         ClearClickCellHighlightData();
 
@@ -991,38 +991,66 @@ public class PlayerOperationManager : MonoBehaviour
     //    }
     //}
 
-    // 返回当前摄像机聚焦的单位id
-    public int GetFocusedUnitID()
-    {
-        return 0;
-    }
+   
     /// <summary>
     /// 处理鼠标拖拽移动相机
     /// </summary>
     private void HandleCameraDrag()
-    {  
-       
+    {
+
         // 按下左键开始拖拽检测
-        if (Input.GetMouseButtonDown(0) && !isDraggingUIorScreenOut)
+        if (Input.GetMouseButtonDown(0))
         {
+            // 检查是否在UI上或屏幕外
+            if (Input.mousePosition.x <= 0 ||
+                Input.mousePosition.x >= Screen.width ||
+                Input.mousePosition.y <= 0 ||
+                Input.mousePosition.y >= Screen.height ||
+                GameManage.Instance.IsPointerOverUIElement())
+            {
+                isDraggingUIorScreenOut = true;
+                // 不更新 lastMousePosition,避免位置跳跃
+            }
+            else
+            {
+                // 有效区域内的点击
+                isDraggingUIorScreenOut = false;
                 lastMousePosition = Input.mousePosition;
                 isDraggingCamera = false; // 重置拖拽状态
+                dragTime = 0;
+            }
         }
 
         // 持续按住左键
-        if (Input.GetMouseButton(0)&& !isDraggingUIorScreenOut)
+        if (Input.GetMouseButton(0))
         {
+            // 如果标记为UI或屏幕外,直接返回
+            if (isDraggingUIorScreenOut)
+            {
+                return;
+            }
 
+            dragTime += Time.deltaTime;
             Vector3 currentMousePosition = Input.mousePosition;
+
+            // 再次检查是否移出屏幕(拖拽过程中)
+            if (currentMousePosition.x <= 0 ||
+                currentMousePosition.x >= Screen.width ||
+                currentMousePosition.y <= 0 ||
+                currentMousePosition.y >= Screen.height)
+            {
+                return; // 移出屏幕时停止拖拽,但不更新标志
+            }
+
             float dragDistance = Vector3.Distance(currentMousePosition, lastMousePosition);
 
-            // 如果移动距离超过阈值，开始拖拽相机
+            // 如果移动距离超过阈值,开始拖拽相机
             if (dragDistance > dragThreshold)
             {
                 isDraggingCamera = true;
             }
 
-            // 如果正在拖拽，移动相机
+            // 如果正在拖拽,移动相机
             if (isDraggingCamera)
             {
                 Vector3 mouseDelta = currentMousePosition - lastMousePosition;
@@ -1040,18 +1068,16 @@ public class PlayerOperationManager : MonoBehaviour
         // 松开左键
         if (Input.GetMouseButtonUp(0))
         {
-            //Debug.Log("mouse up");
-            isDraggingUIorScreenOut = false;
+            dragTime = 0;
+            isDraggingUIorScreenOut = false; // 重置标志
 
-            // 如果发生了拖拽，则不处理点击事件
+            // 如果发生了拖拽,则不处理点击事件
             if (isDraggingCamera)
             {
                 isDraggingCamera = false;
                 return; // 跳过点击处理
             }
         }
-
-
     }
     #endregion
     // *************************
@@ -1089,6 +1115,9 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = true;
 
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
+
+        // 移动摄像机到我方教皇
+        GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
         // 回合开始计算疯狂科学家教被动
         if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
         {
@@ -1213,12 +1242,21 @@ public class PlayerOperationManager : MonoBehaviour
     // 回合结束
     public void TurnEnd()
     {
+       
         if (!isMyTurn)
         {
             Debug.LogWarning("不是你的回合!");
             return;
         }
-
+        //PieceManager.Instance.GetTestConvertData();
+        //PlayerData data= PlayerDataManager.Instance.GetPlayerData(localPlayerId);
+        //foreach(var a in data.PlayerUnits)
+        //{
+        //    if(a.UnitType==CardType.Missionary)
+        //    {
+        //        Debug.Log("Missionary MeiHuo is "+a.PlayerUnitDataSO.convertEnemyLevel);
+        //    }
+        //}
         isMyTurn = false;
         bCanContinue = false;
 
@@ -1238,6 +1276,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 更新本地玩家数据到PlayerDataManager
         localPlayerData = PlayerDataManager.Instance.GetPlayerData(localPlayerId);
 
+      
         // 通知GameManage结束回合
         GameManage.Instance.EndTurn();
     }
@@ -1283,6 +1322,7 @@ public class PlayerOperationManager : MonoBehaviour
                 if (_HexGrid.GetCell(cellId) != null)
                 {
                     _HexGrid.GetCell(cellId).Walled = true;
+                    _HexGrid.GetCell(cellId).WallType = HexCell.Walls.WallEnemy;
                 }
             }
         }
@@ -1332,6 +1372,9 @@ public class PlayerOperationManager : MonoBehaviour
                 // 已存在，但需要验证是否是正确的单位
                 GameObject existingUnit = otherPlayersUnits[playerId][unit.Position];
 
+                // 更新HP
+                UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID,unit.PlayerUnitDataSO.currentHPLevel));
+                Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.PlayerUnitDataSO.piecetype} unitHp {unit.PlayerUnitDataSO.currentHP}");
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
                 Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
@@ -1369,6 +1412,7 @@ public class PlayerOperationManager : MonoBehaviour
 			if (_HexGrid.GetCell(c).Elevation > 2||_HexGrid.GetCell(c).Elevation <= 0) continue;
 
             _HexGrid.GetCell(c).Walled = true;
+            _HexGrid.GetCell(c).WallType = HexCell.Walls.WallLocal;
             PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(c);
 		}
 
@@ -1850,6 +1894,7 @@ public class PlayerOperationManager : MonoBehaviour
                         unit.PlayerUnitDataSO = newData;
                         unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
+                        Debug.Log("Mei huo is "+ unit.PlayerUnitDataSO.convertEnemyLevel);
                     }
                  
                 }
@@ -2234,18 +2279,34 @@ public class PlayerOperationManager : MonoBehaviour
     // 献祭
     public void FarmerSacrifice()
     {
-        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(selectCellID, false);
+        List<int> pos = _HexGrid.GetAllCellsWithinRange(1, selectCellID);
+
         int farmerID = PlayerDataManager.Instance.nowChooseUnitID;
         int2 farmerPos = PlayerDataManager.Instance.GetUnitDataById(farmerID).Value.Position;
         foreach (var i in pos)
         {
             PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
 
-            if (data != null && data.Value.UnitType != CardType.Building)
+            if (data != null && data.Value.UnitType != CardType.Building&&i!= selectCellID)
             {
-                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType);
-                PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
-            }
+                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType+ " unit pos is " + PlayerBoardInforDict[i].Cells2DPos);
+                syncPieceData? targetSyncData = PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
+               
+                //更新同步数据
+                PlayerDataManager.Instance.UpdateUnitSyncDataByUnitID(localPlayerId, data.Value.UnitID, (syncPieceData)targetSyncData);
+              
+                Vector3 targetPosition = PlayerBoardInforDict[i].Cells3DPos;
+
+				// 2025.12.02 Guoning 特效播放
+				EffectManager.Instance.PlayerEffect(OperationType.Cure, targetPosition, Quaternion.identity, null, true);
+
+                // 2025.11.14 Guoning 音声再生
+                SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.HEAL);
+
+                // 添加回复后的HP显示
+                UnitStatusUIManager.Instance.UpdateHPByID(targetSyncData.Value.pieceID, PlayerDataManager.Instance.GetUnitDataById(targetSyncData.Value.pieceID).Value.PlayerUnitDataSO.currentHP);
+
+			}
         }
 
         {
@@ -2402,6 +2463,11 @@ public class PlayerOperationManager : MonoBehaviour
                 );
                 Debug.Log($"已发送建筑创建网络消息(UNIT_ADD): BuildingID={buildData.buildingID}");
             }
+
+            // 播放特效
+            EffectManager.Instance.PlayerEffect(OperationType.Work, _HexGrid.GetCell(cellID).Position,
+	            Quaternion.identity);
+            // 播放声效
         }
         else
         {
@@ -3018,7 +3084,7 @@ public class PlayerOperationManager : MonoBehaviour
                     // 2025.12.02 播放攻击特效
                     Vector3 hitPos = targetUnit.transform.position;
                     hitPos.y += 5.0f;
-                    EffectManager.Instance.PlayerEffect(OperationType.Attack, hitPos, targetUnit.transform.rotation);
+                    EffectManager.Instance.PlayerEffect(OperationType.Attack,hitPos, targetUnit.transform.rotation);
                 }
 
                 // 网络同步攻击
@@ -3937,21 +4003,20 @@ public class PlayerOperationManager : MonoBehaviour
         if (PieceManager.Instance.OccupyTerritory(PlayerDataManager.Instance.nowChooseUnitID, PlayerBoardInforDict[selectCellID].Cells3DPos))
         {
             _HexGrid.GetCell(LastSelectingCellID).Walled = true;
+            _HexGrid.GetCell(LastSelectingCellID).WallType = HexCell.Walls.WallLocal;
             PlayerDataManager.Instance.GetPlayerData(localPlayerId).AddOwnedCell(LastSelectingCellID);
             HexCellList.Add(_HexGrid.GetCell(LastSelectingCellID));
 
             //更新AP
             UnitStatusUIManager.Instance.UpdateAPByID(PlayerDataManager.Instance.nowChooseUnitID, PieceManager.Instance.GetPieceAP((PlayerDataManager.Instance.nowChooseUnitID)));
 
-            // 2025.12.02 Guoning 特效播放
-            EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position, UnityEngine.Quaternion.identity);
-
-            // 2025.11.14 Guoning 音声再生
-            SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
 
             // 添加结局数据
             PlayerDataManager.Instance.Result_CellNumber += 1;
 
+            EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position,
+	            Quaternion.identity, null, true);
+            SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
             // 取消选择状态
             ReturnToDefault();
         }
@@ -3960,7 +4025,10 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
             //更新AP
             UnitStatusUIManager.Instance.UpdateAPByID(PlayerDataManager.Instance.nowChooseUnitID, PieceManager.Instance.GetPieceAP((PlayerDataManager.Instance.nowChooseUnitID)));
-        }
+            EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position,
+	            Quaternion.identity, null, false);
+            SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
+		}
     }
     // ============================================
     // ExecuteCharm - 传教士魅惑敌方单位
@@ -3995,7 +4063,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 获取目标数据
         PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, targetPos);
-        if (!targetData.HasValue)
+        if (!targetData.HasValue||targetData.Value.UnitType!=CardType.Soldier)
         {
             Debug.LogError("[ExecuteCharm] 找不到目标数据");
             bCanContinue = true;
@@ -4017,7 +4085,7 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
+        //Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
         if(targetData.Value.bIsCharmed)
         {
             Debug.Log("不能魅惑已被魅惑的单位！");
@@ -4844,26 +4912,29 @@ public class PlayerOperationManager : MonoBehaviour
     private GameObject CreateRuin(Religion re,int2 pos)
     {
         GameObject ruin = new GameObject();
-
         // 5. 创建废墟
-        switch (SceneStateManager.Instance.PlayerReligion)
+        switch (re)
         {
             case Religion.RedMoonReligion:
+                Debug.Log("ruin RedMoon is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[1],
         GameManage.Instance.GetCell2D(pos).Cells3DPos,
         Quaternion.identity);
                 break;
             case Religion.SilkReligion:
+                Debug.Log("ruin SilkReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[0],
             GameManage.Instance.GetCell2D(pos).Cells3DPos,
             Quaternion.identity);
                 break;
             case Religion.MadScientistReligion:
+                Debug.Log("ruin MadScientistReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[3],
         GameManage.Instance.GetCell2D(pos).Cells3DPos,
         Quaternion.identity);
                 break;
             case Religion.MayaReligion:
+                Debug.Log("ruin MayaReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[2],
        GameManage.Instance.GetCell2D(pos).Cells3DPos,
        Quaternion.identity);

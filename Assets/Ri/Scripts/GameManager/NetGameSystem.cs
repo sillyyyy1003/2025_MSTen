@@ -2200,7 +2200,7 @@ public class NetGameSystem : MonoBehaviour
         // 如果是服务器,切换到下一个回合
         if (isServer)
         {
-            Debug.Log("[服务器] 处理回合切换...");
+            //Debug.Log("[服务器] 处理回合切换...");
 
             if (gameManage == null)
             {
@@ -2226,7 +2226,7 @@ public class NetGameSystem : MonoBehaviour
                 if ((int)connectedPlayers[i] == currentPlayerId)
                 {
                     currentIndex = i;
-                    Debug.Log($"[服务器] 找到当前玩家索引: {currentIndex}");
+                    //Debug.Log($"[服务器] 找到当前玩家索引: {currentIndex}");
                     break;
                 }
             }
@@ -2241,8 +2241,8 @@ public class NetGameSystem : MonoBehaviour
             int nextIndex = (currentIndex + 1) % connectedPlayers.Count;
             int nextPlayerId = (int)connectedPlayers[nextIndex];
 
-            Debug.Log($"[服务器] 下一个玩家索引: {nextIndex}");
-            Debug.Log($"[服务器] 下一个玩家ID: {nextPlayerId}");
+            //Debug.Log($"[服务器] 下一个玩家索引: {nextIndex}");
+            //Debug.Log($"[服务器] 下一个玩家ID: {nextPlayerId}");
             Debug.Log($"[服务器] 切换回合: 玩家 {currentPlayerId} -> 玩家 {nextPlayerId}");
 
             // 创建回合开始消息
@@ -2258,8 +2258,8 @@ public class NetGameSystem : MonoBehaviour
                 JsonData = JsonConvert.SerializeObject(turnStartData)
             };
 
-            Debug.Log($"[服务器] 已创建 TURN_START 消息");
-            Debug.Log($"[服务器] 消息内容: {turnStartMsg.JsonData}");
+            //Debug.Log($"[服务器] 已创建 TURN_START 消息");
+            //Debug.Log($"[服务器] 消息内容: {turnStartMsg.JsonData}");
             Debug.Log($"[服务器] clients 字典状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
 
             // 广播给所有客户端
@@ -2276,7 +2276,7 @@ public class NetGameSystem : MonoBehaviour
                 // 广播（不排除任何客户端）
                 BroadcastToClients(turnStartMsg, uint.MaxValue);
 
-                Debug.Log($"[服务器]  BroadcastToClients 调用完成");
+                //Debug.Log($"[服务器]  BroadcastToClients 调用完成");
             }
             else
             {
@@ -2284,7 +2284,7 @@ public class NetGameSystem : MonoBehaviour
             }
 
             // 服务器自己也开始回合
-            Debug.Log($"[服务器] 服务器自己开始回合: {nextPlayerId}");
+            //Debug.Log($"[服务器] 服务器自己开始回合: {nextPlayerId}");
             gameManage.StartTurn(nextPlayerId);
 
             Debug.Log($"[服务器]  回合切换完成");

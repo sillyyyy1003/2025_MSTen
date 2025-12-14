@@ -29,9 +29,12 @@ public class SkillNode : MonoBehaviour
 	[SerializeField]
 	private TMP_Text text;		// 用于显示简易技能说明
 	[SerializeField]	
-	private Image iconImage;	// 用于显示技能图标
+	private Image iconImage;    // 用于显示技能图标
+    [SerializeField]
+    private Image bgImage;    // 背景图标
 
-	private RectTransform levelUpPanel;
+
+    private RectTransform levelUpPanel;
 	private LevelUpButton levelUpButton;
 
 
@@ -53,10 +56,19 @@ public class SkillNode : MonoBehaviour
 		levelUpPanel = _levelUpPanel;
 		levelUpButton = _button;
 
-		if (SkillTreeUIManager.Instance.GetCurrentLevel(pieceType,techTree) >= _skillIndex)
+		if (techTree == TechTree.Conversion && skillIndex == 0)
+		{
+			bgImage.sprite = UISpriteHelper.Instance.GetSkillTreeSprite(TechTree.None);
+			iconImage.color = new Color(1f, 1f, 1f, 0f);
+            text.color = new Color(1f, 1f, 1f, 0f);
+
+        }
+
+        if (SkillTreeUIManager.Instance.GetCurrentLevel(pieceType,techTree) >= _skillIndex)
 		{
 			UnlockSkillNode();
 		}
+
 	}
 
 	public void UnlockSkillNode()
@@ -154,8 +166,6 @@ public class SkillNode : MonoBehaviour
 		// Update 棋子数据和UIBar数据
 		UpgradePieces(techTree, pieceType);
 
-
-
         // 消耗资源
         int cost = GetUpgradeCostByTechType(skillIndex);
 		int playerId = GameManage.Instance.LocalPlayerID;
@@ -174,7 +184,6 @@ public class SkillNode : MonoBehaviour
 
 		//刷新
 		OnSkillButtonClick();
-
     }
 
 

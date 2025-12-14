@@ -15,7 +15,6 @@ public class TitleUIManager : MonoBehaviour
 	// プロパティ
 	//--------------------------------------------------------------------------------
 	[Header("Menus")]
-	public RectTransform LeftMenu;
 	public RectTransform RightMenu;
 	public Material mat;
 	// World UI
@@ -26,12 +25,30 @@ public class TitleUIManager : MonoBehaviour
 	public HexButton Button_OnlineGame;
 	public HexButton Button_Setting;
 	public HexButton Button_MapEditor;
+	public HexButton Button_ExtraContents;//Gallery用 12/12 張
 
 	[Header("Right Menu")]
 	public RectTransform OptionMenu;
 	public RectTransform OnlineMenu;
 	public RectTransform RightDetailMenu;
 	public HexButton Button_CloseRightPanel;
+
+	[Header("Extra Contents")]
+	public RectTransform ExtraContentsMenu;
+	public HexButton Button_CloseExtraContents;
+
+	[Header("Tribe Buttons")]
+	public Button Button_Silk;
+	public Button Button_RedMoon;
+	public Button Button_NGC1300;
+	public Button Button_Researcher;
+
+	[Header("Tribe Detail Panels")]
+	public RectTransform Panel_Silk;
+	public RectTransform Panel_RedMoon;
+	public RectTransform Panel_NGC1300;
+	public RectTransform Panel_Researcher;
+	public HexButton Button_BackToTribeList;
 
 	// Screen UI
 	[Header("OnlineButton")]
@@ -71,9 +88,7 @@ public class TitleUIManager : MonoBehaviour
 			//  Close all option menu& online menu for next usage
 			CloseRightPanel();
 
-			// Reset button state
-			Button_Setting.ResetHexButton();
-			Button_OnlineGame.ResetHexButton();
+
 
 		}
 		
@@ -93,16 +108,32 @@ public class TitleUIManager : MonoBehaviour
 		Button_OnlineGame.onClick.AddListener(() => OnClickOnlineGame());
 		Button_Setting.onClick.AddListener(() => OnClickSetting());
 		Button_MapEditor.onClick.AddListener(() => OnClickMapEditor());
+		Button_ExtraContents.onClick.AddListener(() => OnClickExtraContents());//追加内容12/12
 
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
 
 		Button_CloseRightPanel.onClick.AddListener(() => CloseRightPanel());
+		Button_CloseExtraContents.onClick.AddListener(() => CloseExtraContents());
+
+		// 部族ボタンのイベント登録
+		Button_Silk.onClick.AddListener(() => ShowTribeDetail(Panel_Silk));
+		Button_RedMoon.onClick.AddListener(() => ShowTribeDetail(Panel_RedMoon));
+		Button_NGC1300.onClick.AddListener(() => ShowTribeDetail(Panel_NGC1300));
+		Button_Researcher.onClick.AddListener(() => ShowTribeDetail(Panel_Researcher));
+		Button_BackToTribeList.onClick.AddListener(() => BackToTribeList());
 	
 		//  Close all option menu& online menu for next usage
 		OptionMenu.gameObject.SetActive(false);
 		OnlineMenu.gameObject.SetActive(false);
+		ExtraContentsMenu.gameObject.SetActive(false);
 		UpdateBackground(false);
+
+		// 部族詳細パネルを初期化時に非表示
+		Panel_Silk.gameObject.SetActive(false);
+		Panel_RedMoon.gameObject.SetActive(false);
+		Panel_NGC1300.gameObject.SetActive(false);
+		Panel_Researcher.gameObject.SetActive(false);
 
 		// Reset button state
 		Button_Setting.ResetHexButton();
@@ -180,7 +211,7 @@ public class TitleUIManager : MonoBehaviour
 			// 40°/秒 = 9 秒一圈
 			pivot.DORotate(
 					new Vector3(0, 360, 0),
-					9f,
+					30f,
 					RotateMode.FastBeyond360
 				).SetEase(Ease.Linear)
 				.SetLoops(-1);
@@ -191,10 +222,13 @@ public class TitleUIManager : MonoBehaviour
 
 	private void CloseRightPanel()
 	{
-		Button_CloseRightPanel.gameObject.SetActive(false);
-		OptionMenu.gameObject.SetActive(false);
-		OnlineMenu.gameObject.SetActive(false); 
+		RightMenu.gameObject.SetActive(false);
+		//Button_CloseRightPanel.gameObject.SetActive(false);
+
+		//OptionMenu.gameObject.SetActive(false);
+		//OnlineMenu.gameObject.SetActive(false); 
 		RightDetailMenu.gameObject.SetActive(false);
+
 		UpdateBackground(false);
 
 		//  Open UserID display
@@ -241,6 +275,7 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickOnlineGame()
 	{
+		RightMenu.gameObject.SetActive(true);
 		Button_CloseRightPanel.gameObject.SetActive(true);
 
 		//  Set option menu active
@@ -259,6 +294,7 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickSetting()
 	{
+		RightMenu.gameObject.SetActive(true);
 		//  Set option menu active
 		OptionMenu.gameObject.SetActive(true);
 		OnlineMenu.gameObject.SetActive(false);
@@ -290,11 +326,76 @@ public class TitleUIManager : MonoBehaviour
 		SceneController.Instance.SwitchScene("MainGame");
 	}
 
+	///<summary>
+	///Extra Contents ボタンイベント 12/12 張
+	///</summary>
+	private void OnClickExtraContents()
+	{
+		// 全画面でExtraContentsメニューを表示
+		ExtraContentsMenu.gameObject.SetActive(true);
 
-	/// <summary>
-	/// Join game button event
-	/// </summary>
-	private void OnClickAddGame()
+		//ギャラリーを閉じるボタンを有効化
+		Button_CloseExtraContents.gameObject.SetActive(true);
+
+		// 背景のブラー効果を有効化
+		UpdateBackground(true);
+
+        UserID.gameObject.SetActive(false);
+    }
+
+	///<summary>
+	///Extra Contents を閉じる
+	///</summary>
+	private void CloseExtraContents()
+	{
+		ExtraContentsMenu.gameObject.SetActive(false);
+
+		// 背景のブラー効果を無効化
+		UpdateBackground(false);
+
+        UserID.gameObject.SetActive(true);
+    }
+
+	///<summary>
+	///部族詳細画面を表示
+	///</summary>
+	private void ShowTribeDetail(RectTransform tribePanel)
+	{
+		Button_CloseExtraContents.gameObject.SetActive(false);
+
+		// すべての部族パネルを非表示
+		Panel_Silk.gameObject.SetActive(false);
+		Panel_RedMoon.gameObject.SetActive(false);
+		Panel_NGC1300.gameObject.SetActive(false);
+		Panel_Researcher.gameObject.SetActive(false);
+
+		// 指定された部族パネルのみ表示
+		tribePanel.gameObject.SetActive(true);
+
+		Button_BackToTribeList.gameObject.SetActive(true);
+	}
+
+	///<summary>
+	///部族一覧に戻る
+	///</summary>
+	private void BackToTribeList()
+	{
+		// すべての部族詳細パネルを非表示
+		Panel_Silk.gameObject.SetActive(false);
+		Panel_RedMoon.gameObject.SetActive(false);
+		Panel_NGC1300.gameObject.SetActive(false);
+		Panel_Researcher.gameObject.SetActive(false);
+
+        Button_BackToTribeList.gameObject.SetActive(false);
+        Button_CloseExtraContents.gameObject.SetActive(true);
+
+    }
+
+
+    /// <summary>
+    /// Join game button event
+    /// </summary>
+    private void OnClickAddGame()
 	{
 		
 		if (SceneStateManager.Instance != null)

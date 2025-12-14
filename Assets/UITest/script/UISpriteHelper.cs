@@ -1,4 +1,5 @@
 ﻿using GameData;
+using GameData.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +38,9 @@ public enum UISpriteID
     IconList_MadScientist,  // 真理研究所棋子图标
     //20251211
     IconList_GeneralPiece,//通用棋子图标
+    //20251212
+    CountDown_Title,
+    CountDown_Num,
 }
 
 [System.Serializable]
@@ -250,7 +254,7 @@ public class UISpriteHelper : MonoBehaviour
             case Religion.MadScientistReligion:
                 return GetSubSprite(UISpriteID.IconList_Religion, "04_Religiousicon");
             default:
-                return GetSubSprite(UISpriteID.IconList_Religion, "Sampler_Pic08"); ;
+                return GetSubSprite(UISpriteID.IconList_Religion, "01_Religiousicon"); ;
         }
 
 
@@ -272,18 +276,18 @@ public class UISpriteHelper : MonoBehaviour
         {
             case Religion.SilkReligion:  // 丝织教棋子图标
                 //ListName = UISpriteID.IconList_Silk;
-                ListName = UISpriteID.IconList_RedMoon;
+                ListName = UISpriteID.IconList_Silk;
                 break;
             case Religion.RedMoonReligion:  // 红月教棋子图标
                 ListName = UISpriteID.IconList_RedMoon;
                 break;
             case Religion.MayaReligion:  // NCG_1300 星界教団棋子图标
                 //ListName = UISpriteID.IconList_Maya;
-                ListName = UISpriteID.IconList_RedMoon;
+                ListName = UISpriteID.IconList_Maya;
                 break;
             case Religion.MadScientistReligion:  // 真理研究所棋子图标
                 //ListName = UISpriteID.IconList_MadScientist;
-                ListName = UISpriteID.IconList_RedMoon;
+                ListName = UISpriteID.IconList_MadScientist;
                 break;
             default:
                 ListName = UISpriteID.IconList_RedMoon;
@@ -342,10 +346,10 @@ public class UISpriteHelper : MonoBehaviour
                 iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
                 return GetSubSprite(ListName, iconId);
             case PieceType.None:
-                iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
+                iconId = hascolor ? "General_Population_color" : "General_Population_bg";
                 return GetSubSprite(ListName, iconId);
             default:
-                iconId = hascolor ? "General_Bulid_color" : "General_Bulid_bg";
+                iconId = hascolor ? "General_money_color" : "General_money_bg";
                 return GetSubSprite(ListName, iconId);
 
 
@@ -355,6 +359,56 @@ public class UISpriteHelper : MonoBehaviour
 
 
 
+    }
+
+
+
+    public Sprite GetCountDownTitle(bool isbouns)
+    {
+        if (isbouns)
+        {
+            return GetSubSprite(UISpriteID.CountDown_Title, "CountDown_Pool");
+
+        }
+        else
+        {
+
+            return GetSubSprite(UISpriteID.CountDown_Title, "CountDown_Turn");
+
+        }
+    }
+
+    public Sprite GetCountDownNum(int num)
+    {
+        UISpriteID ListName= UISpriteID.CountDown_Num;
+        int picid = Mathf.Clamp(num-1, 0, 9) ;
+        string iconId = ListName.ToString() + $"_{picid}";
+        return GetSubSprite(ListName, iconId);
+    }
+
+    public Sprite GetSkillTreeSprite(TechTree type)
+    {
+        switch (type)
+        {
+            case TechTree.ATK:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "03attack");
+            case TechTree.HP:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "01hp");
+            case TechTree.AP:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "02action");
+            case TechTree.AltarCount:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "07altar");
+            case TechTree.Conversion:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "04missionary");
+            case TechTree.Occupy:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "06occupation");
+            case TechTree.MovementCD:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "02action");
+            case TechTree.Sacrifice:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "05service");
+            default:
+                return UISpriteHelper.Instance.GetSubSprite(UISpriteID.Icon_SkillIcon, "08lock");
+        }
     }
 }
 

@@ -358,6 +358,28 @@ public class HexCell : MonoBehaviour
 		}
 	}
 
+	public enum Walls
+	{
+		WallLocal,
+		WallEnemy
+	}
+
+	[SerializeField] 
+	private Walls wallType = Walls.WallLocal;
+	public Walls WallType
+	{
+		get => wallType;
+		set
+		{
+			if (wallType != value)
+			{
+				wallType = value;
+				Refresh();
+			}
+		}
+	}
+
+
 	/// <summary>
 	/// Terrain type index.
 	/// </summary>

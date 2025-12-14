@@ -7,11 +7,18 @@ public enum EffectType
 {
 	None,
 
-	Piece_Charm_RedMoon,
-	Piece_Charm_Silk,
+	Piece_Charm_RedMoon_Start,
+	Piece_Charm_RedMoon_End,
+	Piece_Charm_Silk_Start,
+	Piece_Charm_Silk_End,
+	// 追加更多特效
 
-	Piece_Occupy_RedMoon,
-	Piece_Occupy_Silk,
+
+	Piece_Occupy_RedMoon_Success,
+	Piece_Occupy_Silk_Sucess,
+	Piece_Occupy_RedMoon_Fail,
+	Piece_Occupy_Silk_Fail,
+	// 追加更多特效
 
 	Piece_Hit,
     Piece_Heal,
@@ -20,6 +27,11 @@ public enum EffectType
 
     LevelUp_HP,
     LevelUp_AP,
+	LevelUp_ATK,
+	LevelUp_Occupy,
+	LevelUp_Charm,
+	LevelUp_Cure,
+
 }
 
 /// <summary>
@@ -79,11 +91,11 @@ public class EffectManager : MonoBehaviour
 
 	}
 
-	public GameObject PlayerEffect(OperationType type, Vector3 position, Quaternion rotation, Transform parent = null)
+	public GameObject PlayerEffect(OperationType type, Vector3 position, Quaternion rotation, Transform parent = null, bool isSuccess = false)
 	{
 		Religion religion = SceneStateManager.Instance.PlayerReligion;
 
-		EffectType effect = GetEffectByOperation(type, religion);
+		EffectType effect = GetEffectByOperation(type, religion, isSuccess);
 
 		if (effect == EffectType.None)
 		{
@@ -124,9 +136,9 @@ public class EffectManager : MonoBehaviour
 		var instance = obj.GetComponent<EffectInstance>();
 		instance.SetUp(type);
 
-        // 25.12.4 RI 添加攻击特效回收
-        if (type == EffectType.Piece_Hit)
-			StartCoroutine(RecycleAttackEffect(type, obj));
+   //     // 25.12.4 RI 添加攻击特效回收
+   //     if (type == EffectType.Piece_Hit)
+			//StartCoroutine(RecycleAttackEffect(type, obj));
 
 		return obj;
 
@@ -160,38 +172,62 @@ public class EffectManager : MonoBehaviour
 		pool[type].Enqueue(prefab);
 	}
 
-	private EffectType GetEffectByOperation(OperationType op, Religion rel)
-	{
-		switch (op)
-		{
-			case OperationType.Occupy:
-				return rel switch
-				{
-					Religion.SilkReligion => EffectType.Piece_Occupy_Silk,
-					Religion.RedMoonReligion => EffectType.Piece_Occupy_RedMoon,
-					_ => EffectType.None
-				};
+    private EffectType GetEffectByOperation(
+	    OperationType op,
+	    Religion rel,
+	    bool isSuccess)
+    {
+	    switch (op)
+	    {
+		    case OperationType.Occupy:
+			    return rel switch
+			    {
+				    Religion.SilkReligion =>
+					    isSuccess
+						    ? EffectType.Piece_Occupy_Silk_Sucess
+						    : EffectType.Piece_Occupy_Silk_Fail,
 
-			case OperationType.Charm:
-				return rel switch
-				{
-					Religion.SilkReligion => EffectType.Piece_Charm_Silk,
-					Religion.RedMoonReligion => EffectType.Piece_Charm_RedMoon,
-					_ => EffectType.None
-				};
+				    Religion.RedMoonReligion =>
+					    isSuccess
+						    ? EffectType.Piece_Occupy_RedMoon_Success
+						    : EffectType.Piece_Occupy_RedMoon_Fail,
 
-			case OperationType.Attack:
-				return EffectType.Piece_Hit;
+				    _ => EffectType.None
+			    };
 
-			case OperationType.Cure:
-				return EffectType.Piece_Heal;
+		    case OperationType.Charm:
+			    // ⚠️ Charm 这里假设：
+			    // isSuccess = true  → Start）
+			    // isSuccess = false → End（失败也走 End）
+			    // Start 由别的地方显式播放
+			    return rel switch
+			    {
+				    Religion.SilkReligion =>
+					    isSuccess
+						    ? EffectType.Piece_Charm_Silk_Start
+						    : EffectType.Piece_Charm_Silk_End,
 
-			// 如果以后你有更多技能升级特效……
-			//case OperationType.UpgradeHP:
-			//    return EffectType.LevelUp_HP;
+				    Religion.RedMoonReligion =>
+					    isSuccess
+						    ? EffectType.Piece_Charm_RedMoon_Start
+							: EffectType.Piece_Charm_RedMoon_End,
+
+				    _ => EffectType.None
+			    };
+
+		    case OperationType.Attack:
+			    return EffectType.Piece_Hit;
+
+		    case OperationType.Cure:
+			    return EffectType.Piece_Heal;
+
+			case OperationType.Work:
+				return EffectType.Building_Build;
+			
 
 			default:
-				return EffectType.None;
-		}
-	}
+			    return EffectType.None;
+	    }
+    }
+
 }

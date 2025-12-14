@@ -73,13 +73,14 @@ public class GameUIManager : MonoBehaviour
     private Dictionary<int, UIPlayerData> allPlayersData;
 
 
+
     [Header("StatusBar Elements")]
     public Button ReligionIcon;                      // 宗教图标
     public TextMeshProUGUI resourcesValue;          // 资源值
     public TextMeshProUGUI activateMissionaryValue; // 传教士激活数
     public TextMeshProUGUI activateSoliderValue;    // 士兵激活数
     public TextMeshProUGUI activateFarmerValue;     // 农民激活数
-    public TextMeshProUGUI allUnitValue;       // 当前人口 / 人口上限
+    public TextMeshProUGUI allUnitCost;       // 当前人口 / 人口上限
 	public Button EndTurn;         // 结束Button
 
     [Header("NextTurnPanel Elements")]
@@ -90,15 +91,16 @@ public class GameUIManager : MonoBehaviour
 
 
     [Header("ReligionInfo Elements")]
+    public Color MainColor= new Color32(0xD9, 0xB9, 0x52, 0xFF);
     public RectTransform ReligionInfoPanel;         // 宗教信息和科技树
     public Image ReligionInfoIcon;
     public Image ReligionColor;
     public TextMeshProUGUI ReligionName;
     public TextMeshProUGUI ReligionType;
     public TextMeshProUGUI Population;       // 当前人口 / 人口上限
-    public TextMeshProUGUI FarmerValue;     // 农民激活数
-    public TextMeshProUGUI SoliderValue;    // 士兵激活数
-    public TextMeshProUGUI MissionaryValue; // 传教士激活数
+    public TextMeshProUGUI FarmerCost;     // 农民占人口数
+    public TextMeshProUGUI SoliderCost;    // 士兵占人口数
+    public TextMeshProUGUI MissionaryCost; // 传教士占人口数
     public TextMeshProUGUI ReligionDescribe01;
     public TextMeshProUGUI ReligionDescribe02;
     public TextMeshProUGUI ReligionDescribe03;
@@ -117,12 +119,6 @@ public class GameUIManager : MonoBehaviour
     public Image FarmerIcon;
     public Image BuildingIcon;
 
-    public Image PopeBackground;
-    public Image MissionaryBackground;
-    public Image SoliderBackground;
-    public Image FarmerBackground;
-    public Image BuildingBackground;
-
 
     public TextMeshProUGUI PopeInfo;
     public TextMeshProUGUI MissionaryInfo;
@@ -131,18 +127,22 @@ public class GameUIManager : MonoBehaviour
     public TextMeshProUGUI BuildingInfo;
 
     [Header("Timer")]
-	public Image TimeImage;     // TimeImage
-	public TextMeshProUGUI timeText; // 可选数字显示
+	public Image TurnTime;     // 回合时间
+    public Image PoolTime;     // 池子时间
+    public TextMeshProUGUI timeText; // 可选数字显示
+    private float poolTimelimit=0.0f;//上次剩下的池子时间
+    private float poolTimelength = 0.0f;//池子宽度
 
-	//public TextMeshProUGUI unusedUnitValue;    // 未使用单位数
-	
-	//public RectTransform playerIconParent;
-	//public Image miniMap;
-	//public Button InactiveUnit;
-	//public TextMeshProUGUI CountdownTime;
-	
-    
-   
+    [Header("CountDownPanel")]
+    public RectTransform CountDownPanel;
+    public Image CountDownHint;     // 文字
+    public Image CountDownNum;     // 数字
+
+
+    [Header("StatusHint")]
+    public TextMeshProUGUI FarmerCostHint;     // 农民占人口数
+    public TextMeshProUGUI SoliderCostHint;    // 士兵占人口数
+    public TextMeshProUGUI MissionaryCostHint; // 传教士占人口数
 
     [Header("Script")]
     //时间
@@ -153,7 +153,7 @@ public class GameUIManager : MonoBehaviour
     //public event System.Action<CardType,int,int> OnCardDataUpdate;//种类，激活数，牌山数
     public event System.Action TimeIsOut;//时间结束
     public event System.Action OnEndTurnButtonPressed;//回合结束按钮按下
-
+    public event System.Action ReligionInfoSetOver;//宗教初始化完成
 
 
     public static GameUIManager Instance { get; private set; }
@@ -193,11 +193,16 @@ public class GameUIManager : MonoBehaviour
             UnitCardManager.Instance.OnCardDragCreated += HandleCardDragCreated;
         }
 
+        poolTimelength = PoolTime.rectTransform.sizeDelta.x;
         if (timer != null)
         {
             timer.OnTimeOut += HandleTimeIsOut;
             timer.OnTimePoolStarted += () => Debug.Log("开始使用倒计时池");
         }
+
+        CountDownPanel.gameObject.SetActive(false);
+        CountDownHint.sprite = UISpriteHelper.Instance.GetCountDownTitle(false);
+        CountDownNum.sprite = UISpriteHelper.Instance.GetCountDownNum(10);
 
         ReligionIcon.onClick.AddListener(() => HandleReligionIconClick());
         EndTurn.onClick.AddListener(() => HandleEndTurnButtonPressed());
@@ -461,53 +466,76 @@ public class GameUIManager : MonoBehaviour
 
     public void UpdateTimer()
     {
-		//float turnTime = timer.GetTurnTime();
-		//float poolTime = timer.GetTimePool();
-		//bool usingPool = timer.IsUsingTimePool();
-
-		//// 更新显示
-		//string turnTimeStr = FormatTime(turnTime);
-		//string poolTimeStr = FormatTime(poolTime);
-
-		//if (usingPool)
-		//{
-		//    CountdownTime.text = $"<color=orange>0:00</color>+{poolTimeStr}";
-		//}
-		//else
-		//{
-		//    CountdownTime.text = $"{turnTimeStr}+{poolTimeStr}";
-		//}
-
 
 		float turnTime = timer.GetTurnTime();
-		float poolTime = timer.GetTimePool();
-		bool usingPool = timer.IsUsingTimePool();
+        float turnTimeMax = timer.turnTimeLimit;
+        float poolTime = timer.GetTimePool();
+        bool usingPool = timer.IsUsingTimePool();
 
-		// 1. 总时间进度占比
-		float totalTime = turnTime + poolTime;
-		float maxTotalTime = timer.turnTimeLimit + timer.timePoolInitial;
-		float fill = Mathf.Clamp01(totalTime / maxTotalTime);
 
-		// 填充
-		TimeImage.fillAmount = fill;
+        float fillTurnTime = Mathf.Clamp01(turnTime / turnTimeMax);
+        float fillPoolTime = Mathf.Clamp01(poolTime / poolTimelimit);
 
-		// 2. 按当前使用 turn/pool 切换颜色
-		if (!usingPool)
-			TimeImage.color = Color.white;
-		else
-			TimeImage.color = Color.red;
 
-		// 显示数字（可选）
+
+        TurnTime.fillAmount = fillTurnTime;
+        PoolTime.fillAmount = fillPoolTime;
+
+
+
+        if (!usingPool)
+        {
+
+            if (turnTime <11 && turnTime > 0)
+            {
+                CountDownPanel.gameObject.SetActive(true);
+                CountDownHint.sprite = UISpriteHelper.Instance.GetCountDownTitle(false);
+                CountDownNum.sprite = UISpriteHelper.Instance.GetCountDownNum((int)turnTime);
+                CountDownNum.color = (turnTime<4)? new Color32(0xFF, 0x00, 0x04, 0xFF):new Color32(0x48, 0xFF, 0xE1, 0xFF);
+
+            }
+
+        }
+        else
+        {
+
+            if (poolTime <11 && poolTime>0)
+            {
+                CountDownPanel.gameObject.SetActive(true);
+                CountDownHint.sprite = UISpriteHelper.Instance.GetCountDownTitle(true);
+                CountDownNum.sprite = UISpriteHelper.Instance.GetCountDownNum((int)poolTime);
+                CountDownNum.color = (poolTime < 4) ? new Color32(0xFF, 0x00, 0x04, 0xFF) : new Color32(0x48, 0xFF, 0xE1, 0xFF);
+            }
+            else
+            {
+                CountDownPanel.gameObject.SetActive(false);
+            }
+
+        }
+
+
+		// 显示数字
 		if (timeText != null)
 		{
 			string turnStr = FormatTime(turnTime);
 			string poolStr = FormatTime(poolTime);
 
-			if (usingPool)
-				timeText.text = $"<color=orange>0:00</color> + {poolStr}";
-			else
-				timeText.text = $"{turnStr} + {poolStr}";
-		}
+
+
+            if (usingPool)
+            {
+
+                timeText.text = $"プール時間：{poolStr} | ターン時間：00";
+
+            }
+            else
+            {
+
+                timeText.text = $"プール時間：60 | ターン時間：{turnStr}";
+
+            }
+
+        }
 	}
     public void SetCountdownTime(int time)
     {
@@ -589,9 +617,10 @@ public class GameUIManager : MonoBehaviour
         UpdateUIUnitDataListFromInterface(CardType.Pope);
 
         // 时间条显示为1
-        TimeImage.fillAmount = 1f;
+        TurnTime.fillAmount = 1f;
+        PoolTime.fillAmount = 1f;
 
-		isInitialize = true;
+        isInitialize = true;
     }
 
 
@@ -607,18 +636,21 @@ public class GameUIManager : MonoBehaviour
 
             foreach (int id in UnitIDs)
             {
-                Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
-
+                //25.12.14 ri change unitData
+                //Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
+                PlayerUnitData unitData = (PlayerUnitData)PlayerDataManager.Instance.GetUnitDataById(id);
+                Debug.Log($"[unitData]  - unitID:{id} unitType{type} unitHp {unitData.PlayerUnitDataSO.currentHP}");
                 uiList.Add(new UIUnitData
                 {
                     UnitId = id,
                     UnitType = type,
-                    HP = (int)unitData.CurrentHP,
-                    AP = (int)unitData.CurrentAP,
+                    HP = (int)unitData.PlayerUnitDataSO.currentHP,
+                    AP = (int)unitData.PlayerUnitDataSO.currentAP,
                 });
             }
 
             UpdateActivateUnitCount(type, uiList.Count);
+            UpdateUnitCost(type);
             //Debug.Log($"[GameUIManager] UnitType = {type} UnitIDs.Count = {UnitIDs.Count}");
             // 25.12.8 ri add error test 
             try
@@ -664,20 +696,16 @@ public class GameUIManager : MonoBehaviour
         switch (type)
         {
             case CardType.Missionary:
-
                 ActivateMissionaryCount = count;
                 activateMissionaryValue.text = ActivateMissionaryCount.ToString();
-                MissionaryValue.text = ActivateMissionaryCount.ToString();
                 return;
             case CardType.Soldier:
                 ActivateSoliderCount = count;
                 activateSoliderValue.text = ActivateSoliderCount.ToString();
-                SoliderValue.text = ActivateSoliderCount.ToString();
                 return;
             case CardType.Farmer:
                 ActivateFarmerCount = count;
                 activateFarmerValue.text = ActivateFarmerCount.ToString();
-                FarmerValue.text = ActivateFarmerCount.ToString();
                 return;
             case CardType.Building:
                 ActivateBuildingCount = count;
@@ -688,6 +716,35 @@ public class GameUIManager : MonoBehaviour
         }
 
     }
+
+    private void UpdateUnitCost(CardType type)
+    {
+        int cost;
+
+        switch (type)
+        {
+            case CardType.Missionary:
+                MissionaryCost.text = PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, playerReligion).ToString();
+                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Missionary, playerReligion);
+                MissionaryCostHint.text = $"啓蒙者:{cost}人口";
+                return;
+            case CardType.Soldier:
+                SoliderCost.text = PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, playerReligion).ToString();
+                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Military, playerReligion);
+                SoliderCostHint.text = $"守護者:{cost}人口";
+                return;
+            case CardType.Farmer:
+                FarmerCost.text = PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, playerReligion).ToString();
+                cost = PieceManager.Instance.GetPiecePopulationCost(PieceType.Farmer, playerReligion);
+                FarmerCostHint.text = $"市民:{cost}人口";
+                return;
+            default:
+                return;
+
+        }
+
+    }
+
 
     private void ClearUIUnitDataList(CardType type)
     {
@@ -721,13 +778,13 @@ public class GameUIManager : MonoBehaviour
     public void SetReligionInfo(Religion religion)
     {
         ReligionInfoIcon.sprite = UISpriteHelper.Instance.GetIconByReligion(religion);
-        Color Backgroundcolor;
+        
 
         switch (religion)
         {
             case Religion.SilkReligion://丝织教
                 ReligionColor.color = new Color32(0xE2, 0x77, 0x19, 0xFF);
-                Backgroundcolor = new Color32(0xFF, 0x78, 0x00, 0xFF);
+                MainColor = new Color32(0xE2, 0x77, 0x19, 0xFF);
                 ReligionName.text = "シルク村";
                 ReligionType.text = "資源転換と制御型部族";
                 ReligionDescribe01.text = "・啓蒙者誘惑の成功率が大幅に上昇\n" +
@@ -736,15 +793,14 @@ public class GameUIManager : MonoBehaviour
                     "・全体の重量系テクノロジーの消費がやや軽減\n\n" +
                     "・教皇周囲のバフ：攻撃力が上昇\n" +
                     "・信徒の献祭による恩恵：周囲6マス以内の駒のHPを回復\n";
-                ReligionDescribe02.text = "森林地形に生成された揺らぎポイントが遺跡へと変化した際、" +
-                    "即座に紅利資源を獲得する（投入された信徒の総数1人につき = 2△△）\n" +
+                ReligionDescribe02.text = "森林地形に生成された揺らぎポイントが遺跡へと変化した際、即座に紅利資源を獲得する（投入された信徒の総数1人につき = 2△△）\n" +
                      "※各建築につき、この効果は一度のみ発動";
                 ReligionDescribe03.text = "";
 
                 break;
             case Religion.RedMoonReligion://红月教
                 ReligionColor.color = new Color32(0x68, 0x01, 0x91, 0xFF);
-                Backgroundcolor = new Color32(0xB8, 0x00, 0xFF, 0xFF);
+                MainColor = new Color32(0x68, 0x01, 0x91, 0xFF);
                 ReligionName.text = "紅月教";
                 ReligionType.text = "人海戦術型部族";
                 ReligionDescribe01.text = "・総人口が多い\n" +
@@ -760,7 +816,7 @@ public class GameUIManager : MonoBehaviour
 
             case Religion.MayaReligion://星界教团
                 ReligionColor.color = new Color32(0x82, 0xC6, 0x3F, 0xFF);
-                Backgroundcolor = new Color32(0x7F, 0xFF, 0x00, 0xFF);
+                MainColor = new Color32(0x82, 0xC6, 0x3F, 0xFF);
                 ReligionName.text = "NCG_1300 星界教団";
                 ReligionType.text = "戦闘特化型部族";
                 ReligionDescribe01.text = "・洗脳成功率が大幅に低下\n" +
@@ -775,7 +831,7 @@ public class GameUIManager : MonoBehaviour
                 break;
             case Religion.MadScientistReligion://真理研究所
                 ReligionColor.color = new Color32(0x1E, 0x3A, 0x6A, 0xFF);
-                Backgroundcolor = new Color32(0x00, 0x5E, 0xFF, 0xFF);
+                MainColor = new Color32(0x1E, 0x3A, 0x6A, 0xFF);
                 ReligionName.text = "真理研究所";
                 ReligionType.text = "知識こそ力だと信じる部族";
                 ReligionDescribe01.text = "・撃破時の獲得ポイントが多い\n" +
@@ -790,7 +846,7 @@ public class GameUIManager : MonoBehaviour
                 break;
             default://默认
                 ReligionColor.color = new Color32(255, 255, 255, 255);
-                Backgroundcolor = new Color32(255, 255, 255, 255);
+                MainColor = new Color32(255, 255, 255, 255);
                 ReligionName.text = "？？教";
                 ReligionType.text = "？？？？型部族";
                 ReligionDescribe01.text = "・？？？が多い\n" +
@@ -817,12 +873,7 @@ public class GameUIManager : MonoBehaviour
         FarmerSkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Farmer, religion);
         BuildingSkillTreeIcon.sprite = UISpriteHelper.Instance.GetReligionPieceIcon(PieceType.Building, religion);
 
-
-        PopeBackground.color= Backgroundcolor;
-        MissionaryBackground.color = Backgroundcolor;
-        SoliderBackground.color = Backgroundcolor;
-        FarmerBackground.color = Backgroundcolor;
-        BuildingBackground.color = Backgroundcolor;
+        ReligionInfoSetOver?.Invoke();
 
         UpdateSimplePanelInfo();
 
@@ -865,8 +916,12 @@ public class GameUIManager : MonoBehaviour
         InactiveUnitCount = maxPopulation- nowPopulation;
 
 
-        allUnitValue.text = $"{nowPopulation}/{maxPopulation}";
+        allUnitCost.text = $"{nowPopulation}/{maxPopulation}";
         Population.text = $"{maxPopulation}";
+
+        UpdateUnitCost(CardType.Missionary);
+        UpdateUnitCost(CardType.Soldier);
+        UpdateUnitCost(CardType.Farmer);
     }
 
     private void UpdateReligionBuff()
@@ -917,11 +972,27 @@ public class GameUIManager : MonoBehaviour
     {
         timer.StartTurn();
         //CountdownTime.gameObject.SetActive(true);
+
+        poolTimelimit= timer.GetTimePool();
+        float poolTimeMax = timer.timePoolInitial;
+
+        float PoolTimemul = Mathf.Clamp01(poolTimelimit / poolTimeMax);
+        var rt = PoolTime.rectTransform;
+        var size = rt.sizeDelta;
+        size.x = poolTimelength * PoolTimemul;
+        rt.sizeDelta = size;
+
+
+
+        UpdatePopulationData();
+
     }
     private void StopTimer()
     {
         timer.StopTimer();
         //CountdownTime.gameObject.SetActive(false);
+
+        CountDownPanel.gameObject.SetActive(false);
     }
 
     // === 回调函数 ===

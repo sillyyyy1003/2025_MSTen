@@ -9,6 +9,7 @@ using UnityEngine.UIElements;
 using DG.Tweening;
 using GameData.UI;
 using static UnityEngine.GraphicsBuffer;
+using UnityEditor.Networking.PlayerConnection;
 
 //25.11.4 RI SerializeableのVector3変数を追加
 
@@ -352,17 +353,18 @@ public class PieceManager : MonoBehaviour
         Debug.Log($"駒を生成しました: ID={pieceID}, Type={pieceType}, Religion={religion}, PlayerID={playerID}");
         OnPieceCreated?.Invoke(pieceID);
 
-        if (isUpgraded)
-        {
-            if (ApplyUpgradeLevelToNew(piece))
-            {
-                Debug.Log("新たに生成された駒に現存のアップグレードレベルを適用しました。");
-            }
-            else
-            {
-                Debug.LogError("現存のアップグレードレベルの適用に問題が発生しました。");
-            }
-        }
+        // 已经在Init状态完成当前等级的改变了，不需要额外升级
+        //if (isUpgraded)
+        //{
+        //    if (ApplyUpgradeLevelToNew(piece))
+        //    {
+        //        Debug.Log("新たに生成された駒に現存のアップグレードレベルを適用しました。");
+        //    }
+        //    else
+        //    {
+        //        Debug.LogError("現存のアップグレードレベルの適用に問題が発生しました。");
+        //    }
+        //}
         
 
         // 25.11.12 RI change return data
@@ -562,6 +564,10 @@ public class PieceManager : MonoBehaviour
 		{
 			if (!allPieces.TryGetValue(targetID, out Piece targetPiece)) continue;
 
+            //25.12.14 RI add upgrade check
+            if (targetPiece.CharmedTurnsRemaining>0)
+                continue;
+
 			bool success = false;
 			switch (upgradeType)
 			{
@@ -592,8 +598,7 @@ public class PieceManager : MonoBehaviour
 					playerData.PlayerUnits[index] = unit;      // 書き戻し（重要）
 				}
 
-
-				// UI更新
+				// Update UI
 				if (UnitStatusUIManager.Instance != null)
                 {
                     UnitStatusUIManager.Instance.UpdateHPByID(targetID, targetPiece.CurrentHP, targetPiece.CurrentMaxHP);
@@ -654,12 +659,11 @@ public class PieceManager : MonoBehaviour
 				return false;
 		}
 
-
 		// 同じ職業のすべての自分の駒を取得
 		int playerID = GameManage.Instance.LocalPlayerID;
 		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
 
-		bool anySuccess = false;;
+		bool anySuccess = false;
 
 		foreach (int targetID in sameProfessionPieces)
 		{
@@ -709,11 +713,12 @@ public class PieceManager : MonoBehaviour
 					unit.PlayerUnitDataSO.pieceID = targetID;
 					playerData.PlayerUnits[index] = unit;      // 書き戻し（重要）
 				}
+                
 			}
 		}
-
         return anySuccess;
 	}
+
 	//================追加Upgrade方法================
 
 
@@ -1085,6 +1090,20 @@ public class PieceManager : MonoBehaviour
         }
         Debug.Log("piece all HP is "+ piece.CurrentMaxHP);
         return piece.CurrentMaxHP;
+    }
+
+    /// <summary>
+    /// 25.12.14 RI Add 駒のMAX HPを取得
+    /// </summary>
+    public int GetPieceMaxHP(int pieceID,int hpLV)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+        //Debug.Log("piece all HP is " + piece.GetPieceMaxHP(hpLV));
+        return piece.GetPieceMaxHP(hpLV);
     }
     /// <summary>
     /// 駒の現在APを取得
@@ -1480,7 +1499,7 @@ public class PieceManager : MonoBehaviour
         return false;
     }
     //25.12.10 RI add get Convert data
-    public int GetConvertData(int missionaryID,int targetID)
+    public float GetConvertData(int missionaryID,int targetID)
     {
         if (!allPieces.TryGetValue(missionaryID, out Piece missionaryPiece))
         {

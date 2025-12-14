@@ -319,11 +319,6 @@ public class BuildingManager : MonoBehaviour
             building.SetHPLevel(sbd.hpLevel);
         }
 
-        if (sbd.attackRangeLevel > 0)
-        {
-            building.SetAttackRangeLevel(sbd.attackRangeLevel);
-        }
-
         if (sbd.slotsLevel > 0)
         {
             building.SetSlotsLevel(sbd.slotsLevel);
@@ -566,11 +561,6 @@ public class BuildingManager : MonoBehaviour
             building.SetHPLevel(sbd.hpLevel);
         }
 
-        if (sbd.attackRangeLevel > 0)
-        {
-            building.SetAttackRangeLevel(sbd.attackRangeLevel);
-        }
-
         if (sbd.slotsLevel > 0)
         {
             building.SetSlotsLevel(sbd.slotsLevel);
@@ -640,9 +630,6 @@ public class BuildingManager : MonoBehaviour
 				case BuildingUpgradeType.BuildingHP:
 					success = targetBuilding.UpgradeHP();
 					break;
-				case BuildingUpgradeType.attackRange:
-					success = targetBuilding.UpgradeAttackRange();
-					break;
 				case BuildingUpgradeType.slotsLevel:
 					success = targetBuilding.UpgradeSlots();
 					break;
@@ -710,9 +697,6 @@ public class BuildingManager : MonoBehaviour
                 case BuildingUpgradeType.BuildingHP:
                     success = targetBuilding.UpgradeHP();
                     break;
-                case BuildingUpgradeType.attackRange:
-                    success = targetBuilding.UpgradeAttackRange();
-                    break;
                 case BuildingUpgradeType.slotsLevel:
                     success = targetBuilding.UpgradeSlots();
                     break;
@@ -747,16 +731,11 @@ public class BuildingManager : MonoBehaviour
         bool anyApplied = false;
 
         int hpLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.BuildingHP) ? buildingUpgradeData[BuildingUpgradeType.BuildingHP] : 0;
-        int attackRangeLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.attackRange) ? buildingUpgradeData[BuildingUpgradeType.attackRange] : 0;
         int slotsLevel = buildingUpgradeData.ContainsKey(BuildingUpgradeType.slotsLevel) ? buildingUpgradeData[BuildingUpgradeType.slotsLevel] : 0;
 
         for (int i = 0; i < hpLevel; i++)
         {
             if (building.UpgradeHP()) anyApplied = true;
-        }
-        for (int i = 0; i < attackRangeLevel; i++)
-        {
-            if (building.UpgradeAttackRange()) anyApplied = true;
         }
         for (int i = 0; i < slotsLevel; i++)
         {
@@ -1206,7 +1185,7 @@ public struct syncBuildingData
 
     // アップグレードレベル
     public int hpLevel;            // HP等級 (0-3)
-    public int attackRangeLevel;   // 攻撃範囲等級 (0-3)
+    public int attackRangeLevel;
     public int slotsLevel;         // スロット数等級 (0-3)
 
     /// <summary>
@@ -1226,7 +1205,6 @@ public struct syncBuildingData
 
             // アップグレードレベル
             hpLevel = building.HPLevel,
-            attackRangeLevel = building.AttackRangeLevel,
             slotsLevel = building.SlotsLevel
         };
     }
@@ -1235,6 +1213,6 @@ public struct syncBuildingData
 public enum BuildingUpgradeType
 {
     BuildingHP,//建物のHP
-    attackRange,//建物の攻撃範囲
+    attackRange,
     slotsLevel//建物が持っているスロット数
 }
