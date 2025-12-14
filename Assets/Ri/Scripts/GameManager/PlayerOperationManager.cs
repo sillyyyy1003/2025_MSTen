@@ -4049,7 +4049,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 获取目标数据
         PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, targetPos);
-        if (!targetData.HasValue)
+        if (!targetData.HasValue||targetData.Value.UnitType!=CardType.Soldier)
         {
             Debug.LogError("[ExecuteCharm] 找不到目标数据");
             bCanContinue = true;
