@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections;
+﻿using GameData;
+using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using GameData;
-using UnityEngine.UIElements;
-using TMPro;
-using System.Linq;
-using System.Runtime.InteropServices;
 
 
 
@@ -1149,6 +1144,9 @@ public class PlayerDataManager : MonoBehaviour
     // 设置玩家资源
     public void SetPlayerResourses(int newResources)
     {
+        if (SceneStateManager.Instance.bIsSingle)
+            newResources = 999;
+
         int playerId = GameManage.Instance.LocalPlayerID;
 
         if (!allPlayersData.TryGetValue(playerId, out PlayerData data))

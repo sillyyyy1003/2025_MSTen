@@ -577,7 +577,7 @@ public class GameManage : MonoBehaviour
 
             PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
-
+        Debug.Log("other player id is "+ OtherPlayerID);
         _GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(OtherPlayerID));
         // 发送到网络
         if (NetGameSystem.Instance != null)
@@ -864,7 +864,7 @@ public class GameManage : MonoBehaviour
         // 正确的添加起始位置方式  
         if (infor.bIsStartPos)
         {
-            Debug.Log("Add start pos id :" + infor.id);
+            //Debug.Log("Add start pos id :" + infor.id);
             PlayerStartPositions.Add(infor.id);
         }
         // 测试用

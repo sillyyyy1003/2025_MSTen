@@ -1239,12 +1239,21 @@ public class PlayerOperationManager : MonoBehaviour
     // 回合结束
     public void TurnEnd()
     {
+       
         if (!isMyTurn)
         {
             Debug.LogWarning("不是你的回合!");
             return;
         }
-
+        //PieceManager.Instance.GetTestConvertData();
+        //PlayerData data= PlayerDataManager.Instance.GetPlayerData(localPlayerId);
+        //foreach(var a in data.PlayerUnits)
+        //{
+        //    if(a.UnitType==CardType.Missionary)
+        //    {
+        //        Debug.Log("Missionary MeiHuo is "+a.PlayerUnitDataSO.convertEnemyLevel);
+        //    }
+        //}
         isMyTurn = false;
         bCanContinue = false;
 
@@ -1264,6 +1273,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 更新本地玩家数据到PlayerDataManager
         localPlayerData = PlayerDataManager.Instance.GetPlayerData(localPlayerId);
 
+      
         // 通知GameManage结束回合
         GameManage.Instance.EndTurn();
     }
@@ -1878,6 +1888,7 @@ public class PlayerOperationManager : MonoBehaviour
                         unit.PlayerUnitDataSO = newData;
                         unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
+                        Debug.Log("Mei huo is "+ unit.PlayerUnitDataSO.convertEnemyLevel);
                     }
                  
                 }
