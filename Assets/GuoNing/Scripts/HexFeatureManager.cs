@@ -451,6 +451,34 @@ public class HexFeatureManager : MonoBehaviour
 	bool hasRiver, bool hasRoad
 )
 	{
+		//if (nearCell.IsUnderwater || farCell.IsUnderwater) return;
+		//if (nearCell.GetEdgeType(farCell) == HexEdgeType.Cliff) return;
+
+		//bool nearHas = nearCell.Walled;
+		//bool farHas = farCell.Walled;
+
+		//// 两边都没墙：不画
+		//if (!nearHas && !farHas) return;
+
+		//// 两边都有墙且类型相同：这是墙内部，不画（否则会重复画在每条边上）
+		//if (nearHas && farHas && nearCell.WallType == farCell.WallType) return;
+		//HexMesh mesh = walls[(int)nearCell.WallType];
+
+		//if (nearCell.Walled != farCell.Walled)
+		//{
+		//	AddWallSegment(mesh,near.v1, far.v1, near.v2, far.v2);
+		//	if (hasRiver || hasRoad)
+		//	{
+		//		AddWallCap(mesh, near.v2, far.v2);
+		//		AddWallCap(mesh, far.v4, near.v4);
+		//	}
+		//	else
+		//	{
+		//		AddWallSegment(mesh, near.v2, far.v2, near.v3, far.v3);
+		//		AddWallSegment(mesh, near.v3, far.v3, near.v4, far.v4);
+		//	}
+		//	AddWallSegment(mesh, near.v4, far.v4, near.v5, far.v5);
+		//}
 		if (nearCell.IsUnderwater || farCell.IsUnderwater) return;
 		if (nearCell.GetEdgeType(farCell) == HexEdgeType.Cliff) return;
 
@@ -460,25 +488,46 @@ public class HexFeatureManager : MonoBehaviour
 		// 两边都没墙：不画
 		if (!nearHas && !farHas) return;
 
-		// 两边都有墙且类型相同：这是墙内部，不画（否则会重复画在每条边上）
+		// 两边都有墙且类型相同：内部边，不画
 		if (nearHas && farHas && nearCell.WallType == farCell.WallType) return;
-		HexMesh mesh = walls[(int)nearCell.WallType];
 
-		if (nearCell.Walled != farCell.Walled)
+		// ------ 关键：决定“这条边用哪个类型的 mesh” ------
+		HexMesh mesh = null;
+
+		if (nearHas && !farHas)
 		{
-			AddWallSegment(mesh,near.v1, far.v1, near.v2, far.v2);
-			if (hasRiver || hasRoad)
-			{
-				AddWallCap(mesh, near.v2, far.v2);
-				AddWallCap(mesh, far.v4, near.v4);
-			}
-			else
-			{
-				AddWallSegment(mesh, near.v2, far.v2, near.v3, far.v3);
-				AddWallSegment(mesh, near.v3, far.v3, near.v4, far.v4);
-			}
-			AddWallSegment(mesh, near.v4, far.v4, near.v5, far.v5);
+			mesh = walls[(int)nearCell.WallType];
 		}
+		else if (!nearHas && farHas)
+		{
+			mesh = walls[(int)farCell.WallType];
+		}
+		else
+		{
+			// 两边都有墙但类型不同：为了避免两边都画导致重叠
+			// 用一个稳定规则：只让 Index 小的一侧负责画
+			if (nearCell.Index < farCell.Index)
+				mesh = walls[(int)nearCell.WallType];
+			else
+				return;
+		}
+
+		if (mesh == null) return;
+
+		// 这里不再用 (nearCell.Walled != farCell.Walled) 作为是否绘制的条件
+		// 因为“类型不同但都有墙”的边也应该被画出来（作为分界）
+		AddWallSegment(mesh, near.v1, far.v1, near.v2, far.v2);
+		if (hasRiver || hasRoad)
+		{
+			AddWallCap(mesh, near.v2, far.v2);
+			AddWallCap(mesh, far.v4, near.v4);
+		}
+		else
+		{
+			AddWallSegment(mesh, near.v2, far.v2, near.v3, far.v3);
+			AddWallSegment(mesh, near.v3, far.v3, near.v4, far.v4);
+		}
+		AddWallSegment(mesh, near.v4, far.v4, near.v5, far.v5);
 	}
 
 	void AddWallSegment(HexMesh mesh,
