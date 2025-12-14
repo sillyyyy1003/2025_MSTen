@@ -712,7 +712,8 @@ public class PieceManager : MonoBehaviour
 					unit.PlayerUnitDataSO.pieceID = targetID;
 					playerData.PlayerUnits[index] = unit;      // 書き戻し（重要）
 				}
-                
+				// エフェクト再生
+				EffectManager.Instance.PlayEffect(specialUpgradeType, targetPiece.transform.position, Quaternion.identity);
 			}
 		}
         return anySuccess;
