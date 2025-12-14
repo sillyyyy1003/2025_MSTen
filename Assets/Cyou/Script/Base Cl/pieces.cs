@@ -313,7 +313,8 @@ namespace GamePieces
             int newMaxHP = pieceData.GetMaxHPByLevel(hpLevel);
             int hpRatio = currentHP / currentMaxHP; // 現在のHP割合を保持
             currentMaxHP = newMaxHP;
-            currentHP = newMaxHP * hpRatio; // 割合を維持してHPを再計算
+            // 25.12.14 dont change currentHP
+            //currentHP = newMaxHP * hpRatio; // 割合を維持してHPを再計算
 
            
             Debug.Log($"{pieceData.pieceName} のHPがレベル{hpLevel}にアップグレードしました（最大HP: {currentMaxHP}）");

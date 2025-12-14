@@ -617,6 +617,10 @@ public class PieceManager : MonoBehaviour
 		{
 			if (!allPieces.TryGetValue(targetID, out Piece targetPiece)) continue;
 
+            //25.12.14 RI add upgrade check
+            if (targetPiece.CharmedTurnsRemaining>0)
+                continue;
+
 			bool success = false;
 			switch (upgradeType)
 			{
