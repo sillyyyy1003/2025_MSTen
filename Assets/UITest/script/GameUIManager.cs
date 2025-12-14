@@ -631,14 +631,16 @@ public class GameUIManager : MonoBehaviour
 
             foreach (int id in UnitIDs)
             {
-                Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
+                //25.12.14 ri change unitData
+                //Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
+                PlayerUnitData unitData = (PlayerUnitData)PlayerDataManager.Instance.GetUnitDataById(id);
 
                 uiList.Add(new UIUnitData
                 {
                     UnitId = id,
                     UnitType = type,
-                    HP = (int)unitData.CurrentHP,
-                    AP = (int)unitData.CurrentAP,
+                    HP = (int)unitData.PlayerUnitDataSO.currentHP,
+                    AP = (int)unitData.PlayerUnitDataSO.currentAP,
                 });
             }
 
