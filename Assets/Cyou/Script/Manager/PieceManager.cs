@@ -1144,6 +1144,20 @@ public class PieceManager : MonoBehaviour
         Debug.Log("piece all HP is "+ piece.CurrentMaxHP);
         return piece.CurrentMaxHP;
     }
+
+    /// <summary>
+    /// 25.12.14 RI Add 駒のMAX HPを取得
+    /// </summary>
+    public int GetPieceMaxHP(int pieceID)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+        Debug.Log("piece all HP is " + piece.CurrentMaxHP);
+        return piece.CurrentMaxHP;
+    }
     /// <summary>
     /// 駒の現在APを取得
     /// </summary>

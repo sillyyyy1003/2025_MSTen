@@ -1115,6 +1115,9 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = true;
 
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
+
+        // 移动摄像机到我方教皇
+        GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
         // 回合开始计算疯狂科学家教被动
         if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
         {
@@ -1370,8 +1373,8 @@ public class PlayerOperationManager : MonoBehaviour
                 GameObject existingUnit = otherPlayersUnits[playerId][unit.Position];
 
                 // 更新HP
-                //UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP);
-
+                UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceAllHP(unit.PlayerUnitDataSO.pieceID));
+                Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.PlayerUnitDataSO.piecetype} unitHp {unit.PlayerUnitDataSO.currentHP}");
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
                 Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
