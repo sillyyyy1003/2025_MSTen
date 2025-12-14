@@ -264,29 +264,29 @@ public class EffectManager : MonoBehaviour
 	}
 
 	
-	private EffectType GetCharmEffectType(Religion religion, bool isFail)
+	private EffectType GetCharmEffectType(Religion religion, bool isSuccess)
 	{
 		return religion switch
 		{
 			Religion.SilkReligion =>
-				isFail
-					? EffectType.Piece_Charm_Silk_Fail
-					: EffectType.Piece_Charm_Silk_Continue,
+				isSuccess
+					? EffectType.Piece_Charm_Silk_Continue
+					: EffectType.Piece_Charm_Silk_Fail ,
 
 			Religion.RedMoonReligion =>
-				isFail
-					? EffectType.Piece_Charm_RedMoon_Fail
-					: EffectType.Piece_Charm_RedMoon_Continue,
+				isSuccess
+					? EffectType.Piece_Charm_RedMoon_Continue
+					: EffectType.Piece_Charm_RedMoon_Fail,
 
 			Religion.MayaReligion =>
-				isFail
-					? EffectType.Piece_Charm_Maya_Fail
-					: EffectType.Piece_Charm_Maya_Continue,
+				isSuccess
+					? EffectType.Piece_Charm_Maya_Continue
+					: EffectType.Piece_Charm_Maya_Fail,
 
 			Religion.MadScientistReligion =>
-			isFail
-					? EffectType.Piece_Charm_Mad_Fail
-					: EffectType.Piece_Charm_Mad_Continue,
+			isSuccess
+					? EffectType.Piece_Charm_Mad_Continue
+					: EffectType.Piece_Charm_Mad_Fail,
 
 			_ => EffectType.None
 		};
@@ -299,31 +299,17 @@ public class EffectManager : MonoBehaviour
 	bool isSuccess)
 	{
 		var religion = SceneStateManager.Instance.PlayerReligion;
-		var effectType = GetCharmEffectType(religion, !isSuccess);
+		var effectType = GetCharmEffectType(religion, isSuccess);
 
 		if (effectType == EffectType.None) return;
 
-		if (isSuccess)
-		{
-			PlayEffect(
-			effectType,
-			position,
-			rotation,
-			isLoop: true,
-			parent: target
-			);
-		}
-		else
-		{
-			PlayEffect(
+		PlayEffect(
 			effectType,
 			position,
 			rotation,
 			isLoop: false,
 			parent: target
 		);
-		}
 
-	
 	}
 }

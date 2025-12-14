@@ -4095,7 +4095,10 @@ public class PlayerOperationManager : MonoBehaviour
         {
             Debug.Log("[ExecuteCharm] 魅惑失败");
 			OperationBroadcastManager.Instance.ShowMessage("洗脳失敗しました。");
-			//更新传教士AP
+
+            EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
+			
+            //更新传教士AP
 			UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID, PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
 
             ReturnToDefault();
@@ -4151,8 +4154,11 @@ public class PlayerOperationManager : MonoBehaviour
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
-            // 2025.11.14 Guoning 添加魅惑音效
-            SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
+            // 魅惑持续
+			EffectManager.Instance.PlayCharmEffect(targetUnit.transform, _HexGrid.GetCell(LastSelectingCellID).Position, Quaternion.identity, true);
+
+			// 2025.11.14 Guoning 添加魅惑音效
+			SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
 
             //更新传教士AP
             UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID,PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
@@ -4290,9 +4296,10 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
+            EffectManager.Instance.PlayCharmEffect(targetUnit.transform,Vector3.zero, Quaternion.identity, true);
 
-            // 移除本地HP显示
-            UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
+			// 移除本地HP显示
+			UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
          
             // 添加本地敌方单位显示
             UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, targetUnit.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype),true);
