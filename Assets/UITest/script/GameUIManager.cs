@@ -525,13 +525,13 @@ public class GameUIManager : MonoBehaviour
             if (usingPool)
             {
 
-                timeText.text = $"プール時間：{poolStr} | ターン時間：00";
+                timeText.text = $"ボーナス時間：{poolStr} | ターン時間：00";
 
             }
             else
             {
 
-                timeText.text = $"プール時間：60 | ターン時間：{turnStr}";
+                timeText.text = $"ボーナス時間：{(int)poolTimelimit} | ターン時間：{turnStr}";
 
             }
 
