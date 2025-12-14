@@ -425,7 +425,7 @@ public class GameManage : MonoBehaviour
     }
     private IEnumerator SingleStartGame()
     {
-        yield return 0.1f;
+        yield return  new WaitForSeconds(0.1f);
         if (GameBoardInforDict.Count > 0)
         {
             // 添加默认玩家
