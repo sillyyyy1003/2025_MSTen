@@ -190,6 +190,14 @@ namespace GamePieces
             // Prefabの外見をそのまま使用するため、動的な適用は不要
         }
 
+        // 256.12.14 ri add get max hp
+        public int GetPieceMaxHP(int hpLV)
+        {
+            int maxHP = pieceData.GetMaxHPByLevel(hpLV);
+
+
+            return maxHP;
+        }
         #endregion
 
         #region 行動力管理
@@ -313,7 +321,8 @@ namespace GamePieces
             int newMaxHP = pieceData.GetMaxHPByLevel(hpLevel);
             int hpRatio = currentHP / currentMaxHP; // 現在のHP割合を保持
             currentMaxHP = newMaxHP;
-            currentHP = newMaxHP * hpRatio; // 割合を維持してHPを再計算
+            // 25.12.14 dont change currentHP
+            //currentHP = newMaxHP * hpRatio; // 割合を維持してHPを再計算
 
            
             Debug.Log($"{pieceData.pieceName} のHPがレベル{hpLevel}にアップグレードしました（最大HP: {currentMaxHP}）");
@@ -352,9 +361,10 @@ namespace GamePieces
             // レベルアップ実行
             apLevel++;
             int newMaxAP = pieceData.GetMaxAPByLevel(apLevel);
-            int apRatio = currentAP / currentMaxAP; // 現在のAP割合を保持
             currentMaxAP = newMaxAP;
-            currentAP = newMaxAP * apRatio; // 割合を維持してAPを再計算
+            //25.12.14 RI change current ap
+            //int apRatio = currentAP / currentMaxAP; // 現在のAP割合を保持
+            //currentAP = newMaxAP * apRatio; // 割合を維持してAPを再計算
 
             Debug.Log($"{pieceData.pieceName} のAPがレベル{apLevel}にアップグレードしました（最大AP: {currentMaxAP}）");
             return true;
@@ -436,7 +446,7 @@ namespace GamePieces
         protected virtual void Die()
         {
             ChangeState(PieceState.Dead);
-            // 25.11.27 RI 修改销毁逻辑
+            // 25.11.27 RI 削除ロジック変更
             //OnPieceDeath?.Invoke(this);
             //Destroy(gameObject);
             //StartCoroutine(DeathAnimation());//死亡アニメーションも一応

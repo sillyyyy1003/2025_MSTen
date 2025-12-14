@@ -10,11 +10,11 @@ using DG.Tweening;
 using GameData.UI;
 using static UnityEngine.GraphicsBuffer;
 
-//25.11.4 RI 添加序列化Vector3 变量
+//25.11.4 RI SerializeableのVector3変数を追加
 
 /// <summary>
-/// 可序列化的Vector3包装类，用于网络传输
-/// 避免Unity Vector3的循环引用问题
+/// ネットワーク同期の為にSerializeableのVector3のラッパークラスを作成
+/// Unity Vector3のループ参照問題解消
 /// </summary>
 [Serializable]
 public struct SerializableVector3
@@ -37,13 +37,13 @@ public struct SerializableVector3
         this.z = vector.z;
     }
 
-    // 隐式转换：SerializableVector3 -> Vector3
+    // 暗黙的変換：SerializableVector3 -> Vector3
     public static implicit operator Vector3(SerializableVector3 sv)
     {
         return new Vector3(sv.x, sv.y, sv.z);
     }
 
-    // 隐式转换：Vector3 -> SerializableVector3
+    // 暗黙的変換：Vector3 -> SerializableVector3
     public static implicit operator SerializableVector3(Vector3 v)
     {
         return new SerializableVector3(v.x, v.y, v.z);
@@ -118,7 +118,7 @@ public struct syncPieceData
 }
 
 /// <summary>
-/// 用于SwapPositions的同步数据结构，包含两个棋子的同步数据
+/// SwapPositionsのための同期データ構造
 /// </summary>
 public struct swapPieceData
 {
@@ -371,16 +371,15 @@ public class PieceManager : MonoBehaviour
         //Debug.Log("piece re is " + pieceData.religion);
         allPiecesSyncData.Add(pieceID, pieceData);
         
-        // 只需要返回基本信息的同步数据
         return pieceData;
 
     }
 
     /// <summary>
-    /// 基于同步数据创建敌人棋子（用于网络同步）
+    /// シンクロデータに基づき敵駒を生成
     /// </summary>
-    /// <param name="spd">敌人棋子的同步数据</param>
-    /// <returns>成功创建则返回true，失败返回false</returns>
+    /// <param name="spd">敵駒のデータ</param>
+    /// <returns>成功→true，失敗→false</returns>
     public bool CreateEnemyPiece(syncPieceData spd)
     {
         // UnitListTableからSOデータを取得
@@ -414,10 +413,10 @@ public class PieceManager : MonoBehaviour
         int originalPlayerID = spd.pieceID / 10000;
         piece.Initialize(data, originalPlayerID);
 
-        // 同步ID（使用来自网络的ID）
+        // ネットワークから取ってきたIDを使用
         piece.SetPieceID(spd.pieceID);
 
-        // 记录到全駒集合
+        // 全駒の辞書に入れる
         allPieces[spd.pieceID] = piece;
         //25.11.5 RI add syncPieceData 
         if(!allPiecesSyncData.ContainsKey(spd.pieceID))
@@ -451,32 +450,6 @@ public class PieceManager : MonoBehaviour
             {
                 piece.SetCharmed(spd.charmedTurnsRemaining, spd.currentPID);
             }
-
-            // 職業別の専用レベルを同期
-        //int level = specialUpgradeData.ContainsKey(SpecialUpgradeType) ? specialUpgradeData[SpecialUpgradeType] : 0;
-
-        //    switch (piece)
-        //    {
-        //        case Pope pope:
-        //                pope.SetSwapCooldownLevel(spd.swapCooldownLevel);
-        //            if (spd.buffLevel > 0)
-        //                pope.SetBuffLevel(spd.buffLevel);
-        //            break;
-
-        //        case Missionary missionary:
-        //                missionary.SetOccupyLevel(spd.occupyLevel);
-        //            if (spd.convertEnemyLevel > 0)
-        //                missionary.SetConvertEnemyLevel(spd.convertEnemyLevel);
-        //            break;
-
-        //        case Farmer farmer:
-        //                farmer.SetSacrificeLevel(spd.sacrificeLevel);
-        //            break;
-
-        //        case MilitaryUnit military:
-        //                military.SetAttackPowerLevel(spd.attackPowerLevel);
-        //            break;
-        //    }
 
             Debug.Log($"敵駒を生成しました: ID={spd.pieceID}, Type={spd.piecetype}, Religion={spd.religion}, OriginalPlayerID={originalPlayerID}");
             OnEnemyPieceCreated?.Invoke(spd.pieceID);
@@ -530,31 +503,6 @@ public class PieceManager : MonoBehaviour
                 piece.SetCharmed(spd.charmedTurnsRemaining, spd.currentPID);
             }
 
-            // 職業別の専用レベルを同期
-        //int level = specialUpgradeData.ContainsKey(specialUpgradeType) ? specialUpgradeData[specialUpgradeType] : 0;
-
-        //    switch (piece)
-        //    {
-        //        case Pope pope:
-        //                pope.SetSwapCooldownLevel(spd.swapCooldownLevel);
-        //            if (spd.buffLevel > 0)
-        //                pope.SetBuffLevel(spd.buffLevel);
-        //            break;
-
-        //        case Missionary missionary:
-        //                missionary.SetOccupyLevel(spd.occupyLevel);
-        //            if (spd.convertEnemyLevel > 0)
-        //                missionary.SetConvertEnemyLevel(spd.convertEnemyLevel);
-        //            break;
-
-        //        case Farmer farmer:
-        //                farmer.SetSacrificeLevel(spd.sacrificeLevel);
-        //            break;
-
-        //        case MilitaryUnit military:
-        //                military.SetAttackPowerLevel(spd.attackPowerLevel);
-        //            break;
-        //    }
 
             Debug.Log($"敵駒の状態を同期しました: ID={spd.pieceID}");
             return true;
@@ -573,10 +521,10 @@ public class PieceManager : MonoBehaviour
 	//2025.12.01 Guoning
 
     /// <summary>
-    /// 通过PieceType和升级类型来给所有棋子升级
+    /// PieceType＆upgradeTypeを通して駒をアップグレード
     /// </summary>
-    /// <param name="pieceType">棋子类型</param>
-    /// <param name="upgradeType">升级类型</param>
+    /// <param name="pieceType"></param>
+    /// <param name="upgradeType"></param>
     /// <returns></returns>
 	public bool UpgradePiece(PieceType pieceType, PieceUpgradeType upgradeType)
 	{
@@ -605,7 +553,6 @@ public class PieceManager : MonoBehaviour
 		//}
 
 
-
         // 同じ職業のすべての自分の駒を取得
         int playerID = GameManage.Instance.LocalPlayerID;
 		var sameProfessionPieces = GetPlayerPiecesByType(playerID, targetPieceType);
@@ -615,6 +562,10 @@ public class PieceManager : MonoBehaviour
 		foreach (int targetID in sameProfessionPieces)
 		{
 			if (!allPieces.TryGetValue(targetID, out Piece targetPiece)) continue;
+
+            //25.12.14 RI add upgrade check
+            if (targetPiece.CharmedTurnsRemaining>0)
+                continue;
 
 			bool success = false;
 			switch (upgradeType)
@@ -632,28 +583,28 @@ public class PieceManager : MonoBehaviour
 
 			if (success)
 			{
-                // 创建新的同步数据
+                // 新たなシンクロデータを作成
                 syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
 
-                // 更新同步数据
+                // シンクデータ更新
 				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
-				var unit = playerData.PlayerUnits[index];  // 拷贝
+				var unit = playerData.PlayerUnits[index];  // コピー
 				if (index >= 0)
 				{
-					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
+					unit.PlayerUnitDataSO = syncData;          // コピーを変更
                     unit.PlayerUnitDataSO.pieceID = targetID;
-					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+					playerData.PlayerUnits[index] = unit;      // 書き戻し（重要）
 				}
 
-				// 更新UI
+				// Update UI
 				if (UnitStatusUIManager.Instance != null)
                 {
                     UnitStatusUIManager.Instance.UpdateHPByID(targetID, targetPiece.CurrentHP, targetPiece.CurrentMaxHP);
 					UnitStatusUIManager.Instance.UpdateAPByID(targetID, targetPiece.CurrentAP, targetPiece.CurrentMaxAP);
 				}
 
-                // 播放特效
+                // エフェクト再生
                 EffectManager.Instance.PlayEffect(upgradeType, targetPiece.transform.position, Quaternion.identity);
 
 				anySuccess = true;
@@ -748,18 +699,18 @@ public class PieceManager : MonoBehaviour
 			if (success)
 			{
 				anySuccess = true;
-				// 创建新的同步数据
+				// 新たなシンクロデータ作成
 				syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
 
-				// 更新同步数据
+				// シンクロデータ更新
 				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
 				if (index >= 0)
 				{
-					var unit = playerData.PlayerUnits[index];  // 拷贝
-					unit.PlayerUnitDataSO = syncData;          // 修改拷贝
+					var unit = playerData.PlayerUnits[index];  // コピー
+					unit.PlayerUnitDataSO = syncData;          // コピーを変更
 					unit.PlayerUnitDataSO.pieceID = targetID;
-					playerData.PlayerUnits[index] = unit;      // 写回列表（关键）
+					playerData.PlayerUnits[index] = unit;      // 書き戻し（重要）
 				}
                 
 			}
@@ -1139,6 +1090,20 @@ public class PieceManager : MonoBehaviour
         Debug.Log("piece all HP is "+ piece.CurrentMaxHP);
         return piece.CurrentMaxHP;
     }
+
+    /// <summary>
+    /// 25.12.14 RI Add 駒のMAX HPを取得
+    /// </summary>
+    public int GetPieceMaxHP(int pieceID,int hpLV)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+        //Debug.Log("piece all HP is " + piece.GetPieceMaxHP(hpLV));
+        return piece.GetPieceMaxHP(hpLV);
+    }
     /// <summary>
     /// 駒の現在APを取得
     /// </summary>
@@ -1166,13 +1131,10 @@ public class PieceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 駒の種類を取得
+    /// 任意の駒を取得
     /// </summary>
-    /// <summary>
-    /// 获取任意棋子（己方或敌方）
-    /// </summary>
-    /// <param name="pieceID">棋子ID</param>
-    /// <returns>找到的棋子，如果未找到返回null</returns>
+    /// <param name="pieceID">駒ID</param>
+    /// <returns>見つかった駒、見つからなかったらnull</returns>
     public Piece GetPiece(int pieceID)
     {
         if (allPieces.TryGetValue(pieceID, out Piece piece))
@@ -1219,12 +1181,6 @@ public class PieceManager : MonoBehaviour
             .ToList();
     }
 
-    //25.11.9 RI 添加设置玩家id下的魅惑单位归还
-    //public void SetPlayerPieces(int playerID,int unitID)
-    //{
-    //   for()
-       
-    //}
 
 
     /// <summary>
@@ -1338,7 +1294,7 @@ public class PieceManager : MonoBehaviour
             };
         }
 
-        //25.11.27 RI 修改销毁逻辑
+        //25.11.27 RI 修改駒削除ロジックを変更
         // 駒を削除（内部処理）
         //RemovePieceInternal(pieceID, piece);
 
@@ -1459,9 +1415,10 @@ public class PieceManager : MonoBehaviour
 
     #region 駒の行動
 
-    // 25.11.17 RI 添加攻击对象种类判定调用AttackEnemy或AttackBuilding
+    // 25.11.17 RI 攻撃対象種類判定はAttackEnemy又はAttackBuildingを呼び出す
     // true:piece
     // false:building
+
     /// <summary>
     /// 軍隊が敵を攻撃
     /// </summary>
@@ -1541,7 +1498,7 @@ public class PieceManager : MonoBehaviour
         return false;
     }
     //25.12.10 RI add get Convert data
-    public int GetConvertData(int missionaryID,int targetID)
+    public float GetConvertData(int missionaryID,int targetID)
     {
         if (!allPieces.TryGetValue(missionaryID, out Piece missionaryPiece))
         {
@@ -1666,7 +1623,7 @@ public class PieceManager : MonoBehaviour
     }
 
 
-    // 25.11.9 RI 添加被魅惑单位归还后的特殊数据处理
+    // 25.11.9 RI 魅惑された単位の復帰関連処理
     public void AddConvertedUnit(int playerID,int pieceID)
     {
         if (allPieces.ContainsKey(pieceID))
@@ -1849,7 +1806,7 @@ public class PieceManager : MonoBehaviour
     }
 
 
-    // 25.11.17 RI 添加HP同步管理，处理网络传过来的己方棋子受到伤害后的HP
+    // 25.11.17 RI HP同期処理
     public void SyncPieceHP(syncPieceData data)
     {
         if (!allPieces.TryGetValue(data.pieceID, out Piece piece))
@@ -1948,7 +1905,7 @@ public class PieceManager : MonoBehaviour
         {
             if (allPieces.TryGetValue(pieceID, out Piece piece))
             {
-                //25.11.9  RI 添加测试debug
+                //25.11.9  RI 追加debugテスト
                 //Debug.Log($"駒ID={pieceID} ");
 
                 // AP回復

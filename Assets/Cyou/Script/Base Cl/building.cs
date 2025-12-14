@@ -96,7 +96,7 @@ namespace Buildings
             slots = data.GetMaxSlotsByLevel(slotsLevel);
             //地面に金鉱があるか否かを判断すべき
 
-            // 25.11.10 RI 修改为直接创建完毕
+            // 25.11.10 RI 直接生成完了に変更
             ChangeState(BuildingState.Active);
 
             // スロット初期化
@@ -405,7 +405,7 @@ namespace Buildings
                     newFarmerSlots[i].canInSlot = false;
                     Debug.Log("this slot is " + i + " this slot ap is " + newFarmerSlots[i].farmerAP + " can In is " + newFarmerSlots[i].canInSlot);
 
-                    // 25.12.9 RI 添加格子UI效果
+                    // 25.12.9 RI スロットのUI効果を追加
                     UnitStatusUIManager.Instance.ActivateSlotByID(id,i);
                     break;
                 }
@@ -429,7 +429,7 @@ namespace Buildings
                     if (newFarmerSlots[i].farmerAP == 0)
                     {
                         newFarmerSlots[i].isActived = false;
-                        // 25.12.9 RI 添加格子UI效果
+                        // 25.12.9 RI スロットのUI効果を追加
                         UnitStatusUIManager.Instance.RemoveSlotFromUnit(id,i);
                         Debug.Log("this slot is unActived! " + i);
                     }
