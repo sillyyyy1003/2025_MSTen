@@ -17046,7 +17046,7 @@ MonoBehaviour:
   cellLabelPrefab: {fileID: 11470134, guid: f68794ca03b6f4510b9a5bd6ee9ba2f4, type: 3}
   cellPrefab: {fileID: 9067535797548090458, guid: 6f1669170fcf42d44af1cd24dcf51bfe,
     type: 3}
-  chunkPrefab: {fileID: 114000010052569294, guid: 30e5bcedf91cb4248928b07a55a2011c,
+  chunkPrefab: {fileID: 114000010052569294, guid: 8f68fa2c7097fa448826e0c439877909,
     type: 3}
   unitPrefab: {fileID: 114701888605048992, guid: 5661a1efcb9464721b4db3f694ded559,
     type: 3}
@@ -20771,11 +20771,6 @@ PrefabInstance:
       propertyPath: grid
       value: 
       objectReference: {fileID: 1571186511}
-    - target: {fileID: 7698797980731268316, guid: f239927840e5a3b4ca6b23300f65a738,
-        type: 3}
-      propertyPath: bCanUseCamera
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -22662,7 +22657,7 @@ MonoBehaviour:
   priority: 0
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: 912c53096a5659347a70bc7f1fe57d72, type: 2}
+  sharedProfile: {fileID: 11400000, guid: b2c9e72ae3724384aac83e700a3f3bc9, type: 2}
 --- !u!4 &2076084871
 Transform:
   m_ObjectHideFlags: 0
