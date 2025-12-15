@@ -1193,7 +1193,7 @@ public class PlayerOperationManager : MonoBehaviour
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction + " Resource is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
+            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction);
 
             // 更新AP
             if(unit.UnitType!=CardType.Building)
@@ -1347,7 +1347,9 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 更新HP
                 if(unit.UnitType!=CardType.Building)
-                    UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID,unit.PlayerUnitDataSO.currentHPLevel));
+                {
+                    UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHPLevel));
+                }
                 else
                 {
                     if(unit.BuildingData!=null)
@@ -4102,7 +4104,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("玩家ID: " + targetOwnerId + "已找到对方数据: " + targetData.Value.PlayerUnitDataSO.piecetype+ " 被魅惑过:"+ targetData.Value.hasBeenCharmed);
+            Debug.Log("玩家ID: " + targetOwnerId + "已找到对方数据: " + targetData.Value.PlayerUnitDataSO.piecetype);
         }
         // 获取双方的 PieceID
         int missionaryPieceID = missionaryData.Value.PlayerUnitDataSO.pieceID;
