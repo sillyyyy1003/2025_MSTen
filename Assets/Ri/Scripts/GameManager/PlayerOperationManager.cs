@@ -1380,7 +1380,10 @@ public class PlayerOperationManager : MonoBehaviour
                 if(unit.UnitType!=CardType.Building)
                     UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID,unit.PlayerUnitDataSO.currentHPLevel));
                 else
-                    UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP);
+                {
+                    UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.BuildingData.Value.currentHP);
+                }
+              
                 Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.PlayerUnitDataSO.piecetype} unitHp {unit.PlayerUnitDataSO.currentHP}");
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
@@ -3425,6 +3428,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             destroySequence.OnComplete(() =>
             {
+                //移除UI
+                UnitStatusUIManager.Instance.RemoveStatusUI(msg.BuildingID);
+
                 // 1. 销毁建筑GameObject
                 Destroy(buildingObj);
                 Debug.Log($"[网络建筑攻击] 建筑GameObject已销毁");
@@ -3448,7 +3454,7 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 BuildingRuins[localPlayerId][RuinID] = ruin;
                 RuinID++;
-             
+
                 // 获取当前cell的ID
                 int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
 
