@@ -150,7 +150,7 @@ public class BuildingManager : MonoBehaviour
         }
 
         // Prefabから建物を生成
-        GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position, Quaternion.identity);
+        GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position,  new Quaternion(0,180,0,0));
 
         // 25.11.11 RI init building gameObject
         buildingObject = buildingObj;
