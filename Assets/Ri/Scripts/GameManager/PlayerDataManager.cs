@@ -1246,34 +1246,34 @@ public class PlayerDataManager : MonoBehaviour
     /// <summary>
     /// 设置单位为被魅惑状态
     /// </summary>
-    public bool SetUnitCharmed(int playerId, int2 pos, int originalOwnerId, int turns = 3)
-    {
-        if (allPlayersData.ContainsKey(playerId))
-        {
-            PlayerData data = allPlayersData[playerId];
+    //public bool SetUnitCharmed(int playerId, int2 pos, int originalOwnerId, int turns = 3)
+    //{
+    //    if (allPlayersData.ContainsKey(playerId))
+    //    {
+    //        PlayerData data = allPlayersData[playerId];
 
-            for (int i = 0; i < data.PlayerUnits.Count; i++)
-            {
-                if (data.PlayerUnits[i].Position.Equals(pos))
-                {
-                    PlayerUnitData updatedUnit = data.PlayerUnits[i];
-                    updatedUnit.bIsCharmed = true;
-                    updatedUnit.charmedRemainingTurns = turns;
-                    updatedUnit.originalOwnerID = originalOwnerId;
+    //        for (int i = 0; i < data.PlayerUnits.Count; i++)
+    //        {
+    //            if (data.PlayerUnits[i].Position.Equals(pos))
+    //            {
+    //                PlayerUnitData updatedUnit = data.PlayerUnits[i];
+    //                updatedUnit.bIsCharmed = true;
+    //                updatedUnit.charmedRemainingTurns = turns;
+    //                updatedUnit.originalOwnerID = originalOwnerId;
 
-                    updatedUnit.SetHasBeenCharmed(true);
-                    data.PlayerUnits[i] = updatedUnit;
+    //                updatedUnit.SetHasBeenCharmed(true);
+    //                data.PlayerUnits[i] = updatedUnit;
 
-                    allPlayersData[playerId] = data;
-                    OnPlayerDataChanged?.Invoke(playerId, data);
+    //                allPlayersData[playerId] = data;
+    //                OnPlayerDataChanged?.Invoke(playerId, data);
 
-                    Debug.Log($"单位在 ({pos.x},{pos.y}) 被魅惑，原始所有者: {originalOwnerId}, 剩余回合: {turns}");
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+    //                Debug.Log($"单位在 ({pos.x},{pos.y}) 被魅惑，原始所有者: {originalOwnerId}, 剩余回合: {turns}");
+    //                return true;
+    //            }
+    //        }
+    //    }
+    //    return false;
+    //}
 
     /// <summary>
     /// 转移单位所有权（用于魅惑功能）
@@ -1347,7 +1347,7 @@ public class PlayerDataManager : MonoBehaviour
             transferredUnit.originalOwnerID = fromPlayerId;
 
             transferredUnit.SetHasBeenCharmed(true);
-            Debug.Log($"[TransferUnitOwnership] 设置魅惑状态 - 剩余回合:{charmedTurns}, 原所有者:{fromPlayerId}");
+            Debug.Log($"[TransferUnitOwnership] 设置魅惑状态 - 剩余回合:{charmedTurns}, 原所有者:{fromPlayerId}是否被魅惑:{transferredUnit.hasBeenCharmed}");
         }
         else
         {
@@ -1465,7 +1465,7 @@ public class PlayerDataManager : MonoBehaviour
         OnUnitAdded?.Invoke(originalOwnerId, returnedUnit);
         OnPlayerDataChanged?.Invoke(originalOwnerId, data);
 
-        Debug.Log($"单位 {returnedUnit.UnitID} 在 ({returnedUnit.Position.x},{returnedUnit.Position.y}) 归还给原始所有者 {originalOwnerId}");
+        Debug.Log($"单位 {returnedUnit.UnitID} 在 ({returnedUnit.Position.x},{returnedUnit.Position.y}) 归还给原始所有者 {originalOwnerId}是否被魅惑 {returnedUnit.hasBeenCharmed}");
         return true;
     }
 
