@@ -451,6 +451,7 @@ public class HexFeatureManager : MonoBehaviour
 	bool hasRiver, bool hasRoad
 )
 	{
+		/*
 		if (nearCell.IsUnderwater || farCell.IsUnderwater) return;
 		if (nearCell.GetEdgeType(farCell) == HexEdgeType.Cliff) return;
 
@@ -478,7 +479,48 @@ public class HexFeatureManager : MonoBehaviour
 				AddWallSegment(mesh, near.v3, far.v3, near.v4, far.v4);
 			}
 			AddWallSegment(mesh, near.v4, far.v4, near.v5, far.v5);
+		}*/
+		if (nearCell.IsUnderwater || farCell.IsUnderwater) return;
+		if (nearCell.GetEdgeType(farCell) == HexEdgeType.Cliff) return;
+
+		bool nearHas = nearCell.Walled;
+		bool farHas = farCell.Walled;
+
+		// 两边都不是领地：不画
+		if (!nearHas && !farHas) return;
+
+		// 两边都是领地：
+		// 1) 同类型：内部边，不画
+		// 2) 不同类型：这是“玩家之间的边界”，你要不要画？先给两种选择（见下）
+		if (nearHas && farHas)
+		{
+			if (nearCell.WallType == farCell.WallType) return;
+
+			// 选择A：不画（只显示“领地外圈”，不显示“领地之间边界”）
+			return;
+
+			// 选择B：要画“玩家边界线”，就用稳定规则避免重复（比如 Index 小者负责画）
+			// if (nearCell.Index > farCell.Index) return;
+			// // owner = nearCell (Index更小的一侧)
 		}
+
+		// 只有一边是领地：墙归属“领地那一侧”
+		HexCell owner = nearHas ? nearCell : farCell;
+		HexMesh mesh = walls[(int)owner.WallType];
+		if (mesh == null) return;
+
+		AddWallSegment(mesh, near.v1, far.v1, near.v2, far.v2);
+		if (hasRiver || hasRoad)
+		{
+			AddWallCap(mesh, near.v2, far.v2);
+			AddWallCap(mesh, far.v4, near.v4);
+		}
+		else
+		{
+			AddWallSegment(mesh, near.v2, far.v2, near.v3, far.v3);
+			AddWallSegment(mesh, near.v3, far.v3, near.v4, far.v4);
+		}
+		AddWallSegment(mesh, near.v4, far.v4, near.v5, far.v5);
 	}
 
 	void AddWallSegment(HexMesh mesh,

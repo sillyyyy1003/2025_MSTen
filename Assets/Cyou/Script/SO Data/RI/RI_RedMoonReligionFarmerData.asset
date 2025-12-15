@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de9c8be9c0b9344478ecfc9e5c44e3ba, type: 3}
   m_Name: RI_RedMoonReligionFarmerData
   m_EditorClassIdentifier: 
-  piecePrefabResourcePath: Cyou/Prefab/farmer
+  piecePrefabResourcePath: 
   originalPID: 0
+  religion: 0
   pieceName: "\u7D05\u6708\u6559_\u8FB2\u6C11"
   populationCost: 2
   resourceCost: 1
@@ -37,4 +38,6 @@ MonoBehaviour:
   productEfficiency: 1
   devotionAPCost: 1
   maxSacrificeLevel: 010000000200000002000000
+  maxAPRecoveryLevel: 000000000000000000000000
   sacrificeUpgradeCost: 0500000000000000
+  apRecoveryUpgradeCost: 0000000000000000

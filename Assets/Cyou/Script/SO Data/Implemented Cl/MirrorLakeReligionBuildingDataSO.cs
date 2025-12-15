@@ -24,16 +24,12 @@ namespace GameData
             // 祭壇格子数（初始, 升級1, 升級2, 升級3）
             maxSlotsByLevel = new int[4] { 3, 4, 5, 6 };
 
-            // 攻撃範囲（鏡湖教は通常攻撃なし、反撃のみ）
-            attackRangeByLevel = new int[4] { 0, 0, 0, 0 };
-
             // 反撃機能（無→受到攻擊反擊→受到攻擊反擊傷害+1→受到攻擊反擊傷害+2）
             hasCounterAttack = new bool[4] { false, true, true, true };
             counterAttackDamage = new int[4] { 0, 1, 2, 3 }; // 反撃ダメージ（0、基礎1、基礎+1で2、基礎+2で3）
 
             // 各項目のアップグレードコスト
             hpUpgradeCost = new int[3] { 6, 8, 10 }; // 血量: 6→7(6資源), 7→8(8資源), 8→10(10資源)
-            attackRangeUpgradeCost = new int[2] { 8, 10 }; // 反撃機能: 無→反撃(8資源), 反撃→反撃+1(10資源)
             slotsUpgradeCost = new int[2] { 8, 10 }; // 祭壇格子數: 3→4(8資源), 4→5(10資源)
 
             // 資源生成設定

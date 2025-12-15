@@ -31,7 +31,8 @@ public class Missionary : Piece
 
     public override void Initialize(PieceDataSO data, int playerID)
     {
-        missionaryData = data as MissionaryDataSO;
+
+		missionaryData = data as MissionaryDataSO;
         if (missionaryData == null)
         {
             Debug.LogError("宣教師にはMissionaryDataSOが必要です");
@@ -39,14 +40,18 @@ public class Missionary : Piece
         }
 
         base.Initialize(data, playerID);
-
-        // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
-        if (playerID == PieceManager.Instance.GetLocalPlayerID())
+		
+		// ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
+		if (playerID == GameManage.Instance.LocalPlayerID)
         {
-            SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.HP));
+			
+			SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.HP));
             SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.AP));
             occupyLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.Occupy);
             convertEnemyLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Missionary, TechTree.Conversion);
+			currentAP = currentMaxAP;
+			currentHP = currentMaxHP;
+		
         }
         else
         {
@@ -192,9 +197,9 @@ public class Missionary : Piece
     #region 特殊攻撃（駒変換）
 
     //25.12.10 RI add get Convert data
-    public int GetConvertData(Piece target)
+    public float GetConvertData(Piece target)
     {
-        return (int)GetConversionChanceByPieceType(target);
+        return GetConversionChanceByPieceType(target);
     }
     /// <summary>
     /// 特殊攻撃: 敵駒を自軍駒に変換

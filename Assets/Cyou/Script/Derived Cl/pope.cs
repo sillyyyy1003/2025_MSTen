@@ -23,6 +23,7 @@ public class Pope : Piece
     {
         return popeData;
     }
+
     public override void Initialize(PieceDataSO data, int playerID)
     {
         popeData = data as PopeDataSO;
@@ -35,14 +36,16 @@ public class Pope : Piece
         base.Initialize(data, playerID);
 
         // ローカルプレイヤーの駒の場合、SkillTreeUIManagerからレベルを取得
-        if (playerID == PieceManager.Instance.GetLocalPlayerID())
+        if (playerID == GameManage.Instance.LocalPlayerID)
         {
             SetHPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.HP));
             SetAPLevel(SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.MovementCD));
             swapCooldownLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Pope, TechTree.MovementCD);
             // buffLevelは使用しない
             buffLevel = 0;
-        }
+			currentAP = currentMaxAP;
+			currentHP = currentMaxHP;
+		}
         else
         {
             // 敵プレイヤーの駒はデフォルトレベル0

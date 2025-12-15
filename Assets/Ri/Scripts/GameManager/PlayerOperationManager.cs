@@ -569,8 +569,9 @@ public class PlayerOperationManager : MonoBehaviour
                     if (targetUnit.HasValue && !targetUnit.Value.IsBuilding())
                     {
                         if (!PieceManager.Instance.CanSwapPositions(PlayerDataManager.Instance.nowChooseUnitID, targetUnit.Value.UnitID))
-                        {
-                            Debug.Log("[Pope交换] 无法交换，尚未冷却");
+						{
+							OperationBroadcastManager.Instance.ShowMessage("スキルはクールダウン中です。");
+							Debug.Log("[Pope交换] 无法交换，尚未冷却");
                             return;
                         }
                         ExecutePopeSwapPosition(currentPos, targetPos, ClickCellid);
@@ -595,7 +596,7 @@ public class PlayerOperationManager : MonoBehaviour
 					}
 					else
 					{
-
+						OperationBroadcastManager.Instance.ShowMessage("建物はすでに満員です。");
 						Debug.LogWarning("[农民进建筑] 格子已满，无法进入!");
 					}
 				}
@@ -642,6 +643,7 @@ public class PlayerOperationManager : MonoBehaviour
                     }
 					else
 					{
+						OperationBroadcastManager.Instance.ShowMessage("攻撃範囲外です。\n敵ユニットの隣に移動してください。");
 						// 不在攻击范围内，无法攻击也无法移动到敌方单位位置
 						Debug.Log("[攻击] 目标不在相邻格，无法攻击。请先移动到敌方单位旁边再攻击。");
 						return;
@@ -671,6 +673,7 @@ public class PlayerOperationManager : MonoBehaviour
 					else
 					{
 						Debug.LogWarning("Missionary  Cant Move To That Cell!");
+                        OperationBroadcastManager.Instance.ShowMessage("領土から3マスを超えて移動することはできません。");
 					}
 
 				}
@@ -683,6 +686,7 @@ public class PlayerOperationManager : MonoBehaviour
 					}
 					else
 					{
+						OperationBroadcastManager.Instance.ShowMessage("領地以外のマスに移動することはできません。");
 						Debug.LogWarning("Farmer  Cant Move To That Cell!");
 					}
 
@@ -1115,6 +1119,9 @@ public class PlayerOperationManager : MonoBehaviour
         bCanContinue = true;
 
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
+
+        // 移动摄像机到我方教皇
+        GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
         // 回合开始计算疯狂科学家教被动
         if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
         {
@@ -1239,12 +1246,21 @@ public class PlayerOperationManager : MonoBehaviour
     // 回合结束
     public void TurnEnd()
     {
+       
         if (!isMyTurn)
         {
             Debug.LogWarning("不是你的回合!");
             return;
         }
-
+        //PieceManager.Instance.GetTestConvertData();
+        //PlayerData data= PlayerDataManager.Instance.GetPlayerData(localPlayerId);
+        //foreach(var a in data.PlayerUnits)
+        //{
+        //    if(a.UnitType==CardType.Missionary)
+        //    {
+        //        Debug.Log("Missionary MeiHuo is "+a.PlayerUnitDataSO.convertEnemyLevel);
+        //    }
+        //}
         isMyTurn = false;
         bCanContinue = false;
 
@@ -1264,6 +1280,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 更新本地玩家数据到PlayerDataManager
         localPlayerData = PlayerDataManager.Instance.GetPlayerData(localPlayerId);
 
+      
         // 通知GameManage结束回合
         GameManage.Instance.EndTurn();
     }
@@ -1359,6 +1376,9 @@ public class PlayerOperationManager : MonoBehaviour
                 // 已存在，但需要验证是否是正确的单位
                 GameObject existingUnit = otherPlayersUnits[playerId][unit.Position];
 
+                // 更新HP
+                UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID,unit.PlayerUnitDataSO.currentHPLevel));
+                Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.PlayerUnitDataSO.piecetype} unitHp {unit.PlayerUnitDataSO.currentHP}");
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
                 Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
@@ -1878,6 +1898,7 @@ public class PlayerOperationManager : MonoBehaviour
                         unit.PlayerUnitDataSO = newData;
                         unit.PlayerUnitDataSO.pieceID = ID[i];
                         list[i] = unit;
+                        Debug.Log("Mei huo is "+ unit.PlayerUnitDataSO.convertEnemyLevel);
                     }
                  
                 }
@@ -2119,7 +2140,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
         else
         {
-			OperationBroadcastManager.Instance.ShowMessage("行動力が足りない！");
+			OperationBroadcastManager.Instance.ShowMessage("行動力が足りません。");
 			Debug.Log("该单位AP不足！");
             ReturnToDefault();
             //bCanContinue = true;
@@ -2262,25 +2283,29 @@ public class PlayerOperationManager : MonoBehaviour
     // 献祭
     public void FarmerSacrifice()
     {
-        List<int> pos = GameManage.Instance.GetBoardNineSquareGrid(selectCellID, false);
+        List<int> pos = _HexGrid.GetAllCellsWithinRange(1, selectCellID);
+
         int farmerID = PlayerDataManager.Instance.nowChooseUnitID;
         int2 farmerPos = PlayerDataManager.Instance.GetUnitDataById(farmerID).Value.Position;
         foreach (var i in pos)
         {
             PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
 
-            if (data != null && data.Value.UnitType != CardType.Building)
+            if (data != null && data.Value.UnitType != CardType.Building&&i!= selectCellID)
             {
-                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType);
-                PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
-
+                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType+ " unit pos is " + PlayerBoardInforDict[i].Cells2DPos);
+                syncPieceData? targetSyncData = PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
+               
+                //更新同步数据
+                PlayerDataManager.Instance.UpdateUnitSyncDataByUnitID(localPlayerId, data.Value.UnitID, (syncPieceData)targetSyncData);
+              
                 Vector3 targetPosition = PlayerBoardInforDict[i].Cells3DPos;
 
 				// 2025.12.02 Guoning 特效播放
-				EffectManager.Instance.PlayerEffect(OperationType.Cure, targetPosition, Quaternion.identity, null, true);
+				EffectManager.Instance.PlayEffect(EffectType.Piece_Heal, targetPosition, Quaternion.identity);
 
-                // 2025.11.14 Guoning 音声再生
-                SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.HEAL);
+				// 2025.11.14 Guoning 音声再生
+				SoundManager.Instance.PlaySE(TYPE_SE.HEAL);
 			}
         }
 
@@ -2440,8 +2465,7 @@ public class PlayerOperationManager : MonoBehaviour
             }
 
             // 播放特效
-            EffectManager.Instance.PlayerEffect(OperationType.Work, _HexGrid.GetCell(cellID).Position,
-	            Quaternion.identity);
+            EffectManager.Instance.PlayEffect(EffectType.Building_Build, _HexGrid.GetCell(cellID).Position,Quaternion.identity);
             // 播放声效
         }
         else
@@ -2468,7 +2492,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         if (currentAP < requiredAP)
         {
-			OperationBroadcastManager.Instance.ShowMessage("行動力が足りない！");
+			OperationBroadcastManager.Instance.ShowMessage("行動力が足りません。");
 			Debug.Log($"[AP检查] 单位 PieceID:{pieceID} AP不足 (当前:{currentAP}, 需要:{requiredAP})");
             //ShowAPInsufficientMessage($"AP不足！当前AP: {currentAP}，需要: {requiredAP}");
             return false;
@@ -2867,7 +2891,6 @@ public class PlayerOperationManager : MonoBehaviour
 
         if (!_HexGrid.HasPath)
         {
-			OperationBroadcastManager.Instance.ShowMessage("移動できない！");
 			Debug.Log("[MoveFarmerToBuilding] 没有找到路径");
             _HexGrid.ClearPath();
             onComplete?.Invoke();
@@ -3059,7 +3082,7 @@ public class PlayerOperationManager : MonoBehaviour
                     // 2025.12.02 播放攻击特效
                     Vector3 hitPos = targetUnit.transform.position;
                     hitPos.y += 5.0f;
-                    EffectManager.Instance.PlayerEffect(OperationType.Attack,hitPos, targetUnit.transform.rotation);
+                    EffectManager.Instance.PlayEffect(EffectType.Piece_Hit, hitPos, targetUnit.transform.rotation);
                 }
 
                 // 网络同步攻击
@@ -3107,7 +3130,7 @@ public class PlayerOperationManager : MonoBehaviour
                 targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
 
 				// 2025.12.02 播放攻击特效
-				EffectManager.Instance.PlayerEffect(OperationType.Attack, targetUnit.transform.position, targetUnit.transform.rotation);
+                EffectManager.Instance.PlayEffect(EffectType.Piece_Hit, targetUnit.transform.position, targetUnit.transform.rotation);
 			}
 
             if (buildingDestroyed)
@@ -3989,9 +4012,8 @@ public class PlayerOperationManager : MonoBehaviour
             // 添加结局数据
             PlayerDataManager.Instance.Result_CellNumber += 1;
 
-            EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position,
-	            Quaternion.identity, null, true);
-            SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
+            EffectManager.Instance.PlayOccupyEffect(_HexGrid.GetCell(LastSelectingCellID).Position, Quaternion.identity, null, true);
+			SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
             // 取消选择状态
             ReturnToDefault();
         }
@@ -4000,9 +4022,8 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log("传教士 ID: " + PlayerDataManager.Instance.nowChooseUnitID + " 占领失败！");
             //更新AP
             UnitStatusUIManager.Instance.UpdateAPByID(PlayerDataManager.Instance.nowChooseUnitID, PieceManager.Instance.GetPieceAP((PlayerDataManager.Instance.nowChooseUnitID)));
-            EffectManager.Instance.PlayerEffect(OperationType.Occupy, _HexGrid.GetCell(LastSelectingCellID).Position,
-	            Quaternion.identity, null, false);
-            SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
+			EffectManager.Instance.PlayOccupyEffect(_HexGrid.GetCell(LastSelectingCellID).Position, Quaternion.identity, null, false);
+			SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
 		}
     }
     // ============================================
@@ -4019,8 +4040,8 @@ public class PlayerOperationManager : MonoBehaviour
         if (!IsAdjacentPosition(missionaryPos, targetPos))
         {
             Debug.LogError("[ExecuteCharm] 错误：目标不在魅惑范围内！");
-
-            ReturnToDefault();
+			OperationBroadcastManager.Instance.ShowMessage("洗脳範囲外です。\n敵ユニットの隣に移動してください。");
+			ReturnToDefault();
             //bCanContinue = true;
             return;
         }
@@ -4038,7 +4059,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 获取目标数据
         PlayerUnitData? targetData = PlayerDataManager.Instance.FindUnit(targetOwnerId, targetPos);
-        if (!targetData.HasValue)
+        if (!targetData.HasValue||targetData.Value.UnitType!=CardType.Soldier)
         {
             Debug.LogError("[ExecuteCharm] 找不到目标数据");
             bCanContinue = true;
@@ -4056,23 +4077,29 @@ public class PlayerOperationManager : MonoBehaviour
         if (PieceManager.Instance.GetConvertData(missionaryPieceID, targetPieceID)==0)
         {
             Debug.LogWarning("传教士目前无法魅惑");
-            ReturnToDefault();
+			OperationBroadcastManager.Instance.ShowMessage("洗脳できません。\nレベルアップしてください。");
+			ReturnToDefault();
             return;
         }
 
-        Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
+        //Debug.Log($"[ExecuteCharm] 魅惑尝试 - 传教士ID:{missionaryPieceID} 魅惑 目标ID:{targetPieceID}");
         if(targetData.Value.bIsCharmed)
         {
             Debug.Log("不能魅惑已被魅惑的单位！");
-            ReturnToDefault();
+			OperationBroadcastManager.Instance.ShowMessage("すでに洗脳状態のユニットには使用できません。");
+			ReturnToDefault();
             return;
         }
         // 调用PieceManager的ConvertEnemy方法
         if(PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID)==null)
         {
-            Debug.Log("[ExecuteCharm] 魅惑失败");  
+            Debug.Log("[ExecuteCharm] 魅惑失败");
+			OperationBroadcastManager.Instance.ShowMessage("洗脳失敗しました。");
+
+            EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
+			
             //更新传教士AP
-            UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID, PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
+			UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID, PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
 
             ReturnToDefault();
 
@@ -4127,8 +4154,11 @@ public class PlayerOperationManager : MonoBehaviour
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
-            // 2025.11.14 Guoning 添加魅惑音效
-            SoundManager.Instance.PlaySE(SoundSystem.TYPE_SE.CHARMED);
+            // 魅惑持续
+			EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
+
+			// 2025.11.14 Guoning 添加魅惑音效
+			SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
 
             //更新传教士AP
             UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID,PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
@@ -4266,9 +4296,10 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
+            EffectManager.Instance.PlayCharmEffect(targetUnit.transform,Vector3.zero, Quaternion.identity, true);
 
-            // 移除本地HP显示
-            UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
+			// 移除本地HP显示
+			UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
          
             // 添加本地敌方单位显示
             UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, targetUnit.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype),true);
@@ -4887,26 +4918,29 @@ public class PlayerOperationManager : MonoBehaviour
     private GameObject CreateRuin(Religion re,int2 pos)
     {
         GameObject ruin = new GameObject();
-
         // 5. 创建废墟
-        switch (SceneStateManager.Instance.PlayerReligion)
+        switch (re)
         {
             case Religion.RedMoonReligion:
+                Debug.Log("ruin RedMoon is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[1],
         GameManage.Instance.GetCell2D(pos).Cells3DPos,
         Quaternion.identity);
                 break;
             case Religion.SilkReligion:
+                Debug.Log("ruin SilkReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[0],
             GameManage.Instance.GetCell2D(pos).Cells3DPos,
             Quaternion.identity);
                 break;
             case Religion.MadScientistReligion:
+                Debug.Log("ruin MadScientistReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[3],
         GameManage.Instance.GetCell2D(pos).Cells3DPos,
         Quaternion.identity);
                 break;
             case Religion.MayaReligion:
+                Debug.Log("ruin MayaReligion is " + re);
                 ruin = Instantiate(UnitListTable.Instance.Ruins[2],
        GameManage.Instance.GetCell2D(pos).Cells3DPos,
        Quaternion.identity);

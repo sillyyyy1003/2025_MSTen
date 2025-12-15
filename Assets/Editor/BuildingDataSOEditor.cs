@@ -30,7 +30,7 @@ public class BuildingDataSOEditor : Editor
 
         EditorGUILayout.Space();
 
-        EditorGUILayout.HelpBox("レベル0:初期、1:升級1、2:升級2\n升級1: 攻撃範囲1獲得\n升級2: 攻撃範囲2、スロット数5に増加", MessageType.Info);
+        EditorGUILayout.HelpBox("レベル0:初期、1:升級1、2:升級2\n升級1、升級2でスロット数が増加", MessageType.Info);
 
         EditorGUILayout.PropertyField(serializedObject.FindProperty("maxHpByLevel"), new GUIContent("最大HP"), true);
         SerializedProperty hpUpgradeCost = serializedObject.FindProperty("hpUpgradeCost");
@@ -38,15 +38,6 @@ public class BuildingDataSOEditor : Editor
         {
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(hpUpgradeCost, new GUIContent("血量アップグレード花費"), true);
-            EditorGUI.indentLevel--;
-        }
-
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("attackRangeByLevel"), new GUIContent("攻撃範囲"), true);
-        SerializedProperty attackRangeUpgradeCost = serializedObject.FindProperty("attackRangeUpgradeCost");
-        if (attackRangeUpgradeCost != null)
-        {
-            EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(attackRangeUpgradeCost, new GUIContent("攻撃範囲アップグレード花費"), true);
             EditorGUI.indentLevel--;
         }
 

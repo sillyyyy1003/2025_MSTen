@@ -28,7 +28,6 @@ namespace Buildings
         // 25.11.26 RI add now slot count and cant use slot
         // ===== 各項目の個別レベル =====
         private int hpLevel = 0;            // HP レベル (0-2)
-        private int attackRangeLevel = 0;   // 攻撃範囲レベル (0-2)
         private int slotsLevel = 0;         // スロット数レベル (0-2)
 
         // 配置された農民のリスト
@@ -61,7 +60,6 @@ namespace Buildings
         public List<NewFarmerSlot> NewFarmerSlots => newFarmerSlots;
 
         public int HPLevel => hpLevel;
-        public int AttackRangeLevel => attackRangeLevel;
         public int SlotsLevel => slotsLevel;
 
         /// <summary>
@@ -84,14 +82,11 @@ namespace Buildings
             {
                 hpLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.HP);
                 slotsLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.AltarCount);
-                // attackRangeLevelは管理されない
-                attackRangeLevel = 0;
             }
             else
             {
                 // 敵プレイヤーの建物はデフォルトレベル0
                 hpLevel = 0;
-                attackRangeLevel = 0;
                 slotsLevel = 0;
             }
 
@@ -101,7 +96,7 @@ namespace Buildings
             slots = data.GetMaxSlotsByLevel(slotsLevel);
             //地面に金鉱があるか否かを判断すべき
 
-            // 25.11.10 RI 修改为直接创建完毕
+            // 25.11.10 RI 直接生成完了に変更
             ChangeState(BuildingState.Active);
 
             // スロット初期化
@@ -396,49 +391,6 @@ namespace Buildings
             return true;
         }
 
-        /// <summary>
-        /// 攻撃範囲をアップグレードする
-        /// </summary>
-        /// <returns>アップグレード成功したらtrue</returns>
-        public bool UpgradeAttackRange()
-        {
-            // 建物状態チェック
-            if (currentState != BuildingState.Inactive && currentState != BuildingState.Active)
-            {
-                Debug.LogWarning("建物が未完成または廃墟です。アップグレードできません");
-                return false;
-            }
-
-            // 最大レベルチェック
-            if (attackRangeLevel >= 2)
-            {
-                Debug.LogWarning($"{buildingData.buildingName} の攻撃範囲は既に最大レベル(2)です");
-                return false;
-            }
-
-            // アップグレードコスト配列の境界チェック
-            if (buildingData.attackRangeUpgradeCost == null || attackRangeLevel >= buildingData.attackRangeUpgradeCost.Length)
-            {
-                Debug.LogError($"{buildingData.buildingName} のattackRangeUpgradeCostが正しく設定されていません");
-                return false;
-            }
-
-            int cost = buildingData.attackRangeUpgradeCost[attackRangeLevel];
-
-            // コストが0の場合はアップグレード不可
-            if (cost <= 0)
-            {
-                Debug.LogWarning($"{buildingData.buildingName} の攻撃範囲レベル{attackRangeLevel}→{attackRangeLevel + 1}へのアップグレードは設定されていません（コスト0）");
-                return false;
-            }
-
-            // レベルアップ実行
-            attackRangeLevel++;
-            int newAttackRange = buildingData.GetAttackRangeByLevel(attackRangeLevel);
-
-            Debug.Log($"{buildingData.buildingName} の攻撃範囲がレベル{attackRangeLevel}にアップグレードしました（攻撃範囲: {newAttackRange}）");
-            return true;
-        }
         //25.11.26 RI add new FarmerEnter
         public bool FarmerEnter(int id,int ap)
         {
@@ -453,7 +405,7 @@ namespace Buildings
                     newFarmerSlots[i].canInSlot = false;
                     Debug.Log("this slot is " + i + " this slot ap is " + newFarmerSlots[i].farmerAP + " can In is " + newFarmerSlots[i].canInSlot);
 
-                    // 25.12.9 RI 添加格子UI效果
+                    // 25.12.9 RI スロットのUI効果を追加
                     UnitStatusUIManager.Instance.ActivateSlotByID(id,i);
                     break;
                 }
@@ -477,7 +429,7 @@ namespace Buildings
                     if (newFarmerSlots[i].farmerAP == 0)
                     {
                         newFarmerSlots[i].isActived = false;
-                        // 25.12.9 RI 添加格子UI效果
+                        // 25.12.9 RI スロットのUI効果を追加
                         UnitStatusUIManager.Instance.RemoveSlotFromUnit(id,i);
                         Debug.Log("this slot is unActived! " + i);
                     }
@@ -580,11 +532,6 @@ namespace Buildings
                         return -1;
                     return buildingData.hpUpgradeCost[level];
 
-                case BuildingUpgradeType.attackRange:
-                    if (level >= 2 || buildingData.attackRangeUpgradeCost == null || level >= buildingData.attackRangeUpgradeCost.Length)
-                        return -1;
-                    return buildingData.attackRangeUpgradeCost[level];
-
                 case BuildingUpgradeType.slotsLevel:
                     if (level >= 2 || buildingData.slotsUpgradeCost == null || level >= buildingData.slotsUpgradeCost.Length)
                         return -1;
@@ -607,22 +554,6 @@ namespace Buildings
             return cost > 0;
         }
 
-        /// <summary>
-        /// レベルに応じた攻撃範囲を取得
-        /// </summary>
-        public int GetAttackRange()
-        {
-            return buildingData.GetAttackRangeByLevel(attackRangeLevel);
-        }
-
-        /// <summary>
-        /// 攻撃可能かどうか
-        /// </summary>
-        public bool CanAttack()
-        {
-            return GetAttackRange() > 0 && IsOperational;
-        }
-
         #endregion
 
         #region ネットワーク同期用セッター
@@ -642,14 +573,6 @@ namespace Buildings
         {
             hpLevel = Mathf.Clamp(level, 0, 2);
             // HPレベルに応じて最大HPを更新（現在HPは変更しない）
-        }
-
-        /// <summary>
-        /// 攻撃範囲レベルを直接設定（ネットワーク同期用）
-        /// </summary>
-        public void SetAttackRangeLevel(int level)
-        {
-            attackRangeLevel = Mathf.Clamp(level, 0, 2);
         }
 
         /// <summary>

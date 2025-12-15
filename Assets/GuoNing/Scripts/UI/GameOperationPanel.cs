@@ -356,10 +356,6 @@ public class GameOperationPanel : MonoBehaviour
 		// 如果冷却未结束 则不能交换位置则显示冷却信息
 		if (!PieceManager.Instance.GetCanPopeSwap(dataManager.nowChooseUnitID))
 		{
-			//MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-			//ShowPanel("Switch is not ready!");
-			//UpdatePanelPos();
-			OperationBroadcastManager.Instance.ShowMessage("スキルはクールダウン中");
 			return;
 		}
 
