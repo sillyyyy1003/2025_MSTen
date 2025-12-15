@@ -1311,13 +1311,13 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.LogWarning($"更新玩家 {playerId} 的显示");
 
-        // 如果没有这个玩家的字典,创建一个
-        if (!otherPlayersUnits.ContainsKey(playerId))
-        {
-            otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
-        }
+        //// 如果没有这个玩家的字典,创建一个
+        //if (!otherPlayersUnits.ContainsKey(playerId))
+        //{
+        //    otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
+        //}
 
-        // ===== 修复1：更新领地显示 =====
+        // ===== 更新领地显示 =====
         if (data.PlayerOwnedCells != null && data.PlayerOwnedCells.Count > 0)
         {
             Debug.Log($"[显示更新] 玩家 {playerId} 拥有 {data.PlayerOwnedCells.Count} 个格子");
@@ -1331,41 +1331,41 @@ public class PlayerOperationManager : MonoBehaviour
             }
         }
 
-        // ===== 修复2：清理不存在的单位 =====
-        // 创建一个包含所有当前应该存在的位置的集合
-        HashSet<int2> currentPositions = new HashSet<int2>();
-        foreach (var unit in data.PlayerUnits)
-        {
-            currentPositions.Add(unit.Position);
-        }
+        //// ===== 修复2：清理不存在的单位 =====
+        //// 创建一个包含所有当前应该存在的位置的集合
+        //HashSet<int2> currentPositions = new HashSet<int2>();
+        //foreach (var unit in data.PlayerUnits)
+        //{
+        //    currentPositions.Add(unit.Position);
+        //}
 
-        // 找出并删除不应该存在的GameObject
-        List<int2> positionsToRemove = new List<int2>();
-        foreach (var kvp in otherPlayersUnits[playerId])
-        {
-            int2 pos = kvp.Key;
-            if (!currentPositions.Contains(pos))
-            {
-                // 这个位置的单位不应该存在，标记删除
-                positionsToRemove.Add(pos);
-                Debug.Log($"[显示更新] 标记删除过时的单位: ({pos.x},{pos.y})");
-            }
-        }
+        //// 找出并删除不应该存在的GameObject
+        //List<int2> positionsToRemove = new List<int2>();
+        //foreach (var kvp in otherPlayersUnits[playerId])
+        //{
+        //    int2 pos = kvp.Key;
+        //    if (!currentPositions.Contains(pos))
+        //    {
+        //        // 这个位置的单位不应该存在，标记删除
+        //        positionsToRemove.Add(pos);
+        //        Debug.Log($"[显示更新] 标记删除过时的单位: ({pos.x},{pos.y})");
+        //    }
+        //}
 
-        // 执行删除
-        foreach (int2 pos in positionsToRemove)
-        {
-            GameObject oldUnit = otherPlayersUnits[playerId][pos];
-            if (oldUnit != null)
-            {
-                Destroy(oldUnit);
-                Debug.Log($"[显示更新] 销毁过时的GameObject at ({pos.x},{pos.y})");
-            }
-            otherPlayersUnits[playerId].Remove(pos);
-            GameManage.Instance.SetCellObject(pos, null);
-        }
+        //// 执行删除
+        //foreach (int2 pos in positionsToRemove)
+        //{
+        //    GameObject oldUnit = otherPlayersUnits[playerId][pos];
+        //    if (oldUnit != null)
+        //    {
+        //        Destroy(oldUnit);
+        //        Debug.Log($"[显示更新] 销毁过时的GameObject at ({pos.x},{pos.y})");
+        //    }
+        //    otherPlayersUnits[playerId].Remove(pos);
+        //    GameManage.Instance.SetCellObject(pos, null);
+        //}
 
-        // ===== 修复3：更新或创建单位 =====
+        // ===== 更新单位 =====
         for (int i = 0; i < data.PlayerUnits.Count; i++)
         {
             PlayerUnitData unit = data.PlayerUnits[i];
@@ -1381,14 +1381,14 @@ public class PlayerOperationManager : MonoBehaviour
                 Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.PlayerUnitDataSO.piecetype} unitHp {unit.PlayerUnitDataSO.currentHP}");
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
-                Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
-                continue;
+                //Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
+                //continue;
             }
 
-            // 位置上没有GameObject，创建新的
-            Debug.LogWarning($"[显示更新] 创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}) player ID:{unit.PlayerUnitDataSO.currentPID} unit ID:{unit.PlayerUnitDataSO.pieceID}");
+            //// 位置上没有GameObject，创建新的
+            //Debug.LogWarning($"[显示更新] 创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}) player ID:{unit.PlayerUnitDataSO.currentPID} unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
-            CreateEnemyUnit(playerId, unit);
+            //CreateEnemyUnit(playerId, unit);
 
 		
 		}
@@ -3053,7 +3053,7 @@ public class PlayerOperationManager : MonoBehaviour
             bool targetDied = targetSyncData.Value.currentHP <= 0;
             Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
           
-                if (targetDied)
+            if (targetDied)
             {
                 // 目标死亡，攻击者前进到目标位置
                 Debug.Log("[ExecuteAttack] 目标死亡，攻击者前进到目标位置");
