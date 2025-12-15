@@ -158,7 +158,6 @@ namespace GamePieces
             if (charmedTurnsRemaining > 0)
             {
                 charmedTurnsRemaining-=1;
-                charmedTurnsRemaining --;
                 Debug.Log($"駒ID={PieceID}の魅惑残りターン: {charmedTurnsRemaining}");
 
                 if (charmedTurnsRemaining == 0)

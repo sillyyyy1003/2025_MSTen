@@ -1947,6 +1947,30 @@ public class PieceManager : MonoBehaviour
         //Debug.Log($"プレイヤー{playerID}のターン開始処理を実行しました（駒数: {playerPieces.Count}、魅惑解除: {charmedPiecesCount}）");
     }
 
+    /// <summary>
+    /// 指定プレイヤーのターン開始処理（AP回復、魅惑カウンター処理など）
+    /// </summary>
+    public void ProcessTurnEnd(int playerID)
+    {
+        var playerPieces = GetPlayerPieces(playerID);
+
+        foreach (int pieceID in playerPieces)
+        {
+            if (allPieces.TryGetValue(pieceID, out Piece piece))
+            {
+
+                if (piece.ProcessCharmedTurn())
+                {
+                    // 魅惑解除された（currentPIDが元のOriginalPIDに戻された）
+                    Debug.Log($"駒ID={pieceID}が魅惑解除により元の所有者（PID={piece.CurrentPID}）に戻りました");
+
+                    // GameManagerに通知（必要なら）
+                    // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
+                }
+
+            }
+        }
+    }
     #endregion
 }
 

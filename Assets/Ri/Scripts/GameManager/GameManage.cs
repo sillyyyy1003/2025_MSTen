@@ -551,7 +551,7 @@ public class GameManage : MonoBehaviour
         }
 
         //Debug.Log($"玩家 {LocalPlayerID} 结束回合");
-
+        PieceManager.Instance.ProcessTurnEnd(LocalPlayerID);
         // 处理被魅惑单位的倒计时和归还
         List<CharmExpireInfo> expiredUnits = _PlayerDataManager.UpdateCharmedUnits(LocalPlayerID);
 

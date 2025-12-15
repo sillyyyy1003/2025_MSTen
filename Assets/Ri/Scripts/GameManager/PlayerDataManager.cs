@@ -1260,6 +1260,7 @@ public class PlayerDataManager : MonoBehaviour
                     updatedUnit.bIsCharmed = true;
                     updatedUnit.charmedRemainingTurns = turns;
                     updatedUnit.originalOwnerID = originalOwnerId;
+                    updatedUnit.hasBeenCharmed = true;
                     data.PlayerUnits[i] = updatedUnit;
 
                     allPlayersData[playerId] = data;
@@ -1351,6 +1352,7 @@ public class PlayerDataManager : MonoBehaviour
             // 解除魅惑（归还控制权）
             transferredUnit.bIsCharmed = false;
             transferredUnit.charmedRemainingTurns = 0;
+            transferredUnit.hasBeenCharmed = true;
             Debug.Log($"[TransferUnitOwnership] 解除魅惑状态");
         }
 
@@ -1378,33 +1380,7 @@ public class PlayerDataManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// 批量转移单位所有权（用于一次性转移多个单位）
-    /// </summary>
-    public bool TransferMultipleUnits(int fromPlayerId, int toPlayerId, List<int2> positions, List<syncPieceData> updatedSyncDataList, int charmedTurns = 0)
-    {
-        if (positions.Count != updatedSyncDataList.Count)
-        {
-            Debug.LogError("[TransferMultipleUnits] 位置列表和同步数据列表长度不匹配");
-            return false;
-        }
-
-        bool allSuccess = true;
-        for (int i = 0; i < positions.Count; i++)
-        {
-            bool success = TransferUnitOwnership(fromPlayerId, toPlayerId, positions[i], updatedSyncDataList[i], charmedTurns);
-            if (!success)
-            {
-                Debug.LogWarning($"[TransferMultipleUnits] 转移单位失败 at ({positions[i].x},{positions[i].y})");
-                allSuccess = false;
-            }
-        }
-
-        return allSuccess;
-    }
-
-
-
+   
     /// <summary>
     /// 减少被魅惑单位的剩余回合数，并检查是否需要归还控制权
     /// 在回合结束时调用
