@@ -3026,7 +3026,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             if (updateSuccess)
             {
-                Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
+                //Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
             }
             else
             {
@@ -3149,6 +3149,7 @@ public class PlayerOperationManager : MonoBehaviour
             }
         }
         // 更新AP
+        Debug.Log("attack after ap is "+ PieceManager.Instance.GetPieceAP(attackerPieceID));
         UnitStatusUIManager.Instance.UpdateAPByID(attackerPieceID,PieceManager.Instance.GetPieceAP(attackerPieceID));
     }
 
