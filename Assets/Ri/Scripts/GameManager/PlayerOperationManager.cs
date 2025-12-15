@@ -782,19 +782,22 @@ public class PlayerOperationManager : MonoBehaviour
                 PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
 
                 OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
-
-                foreach (Transform child in SelectingUnit.transform)
+                if (PlayerDataManager.Instance.nowChooseUnitType!=CardType.Building)
                 {
-                    if (child.GetComponent<ChangeMaterial>())
-                        child.GetComponent<ChangeMaterial>().Outline();
-                    else
+                    foreach (Transform child in SelectingUnit.transform)
                     {
-                        Debug.LogWarning("this transform now have ChangeMaterial");
-                        break;
+                        if (child.GetComponent<ChangeMaterial>())
+                            child.GetComponent<ChangeMaterial>().Outline();
+                        else
+                        {
+                            Debug.LogWarning("this transform now have ChangeMaterial");
+                            break;
+                        }
+                        //Debug.Log("add outline");
                     }
-                    //Debug.Log("add outline");
+                    Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
                 }
-                Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
+               
             }
 
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
@@ -2075,20 +2078,27 @@ public class PlayerOperationManager : MonoBehaviour
     // 取消选择单位的描边
     private void ReturnToDefault()
     {
-        if (SelectingUnit != null)
+        if (SelectingUnit != null && PlayerDataManager.Instance.nowChooseUnitType != CardType.Building)
         {
             //Debug.Log("bow selecting unit is " + SelectingUnit == null ? 0 : SelectingUnit.name);
             foreach (Transform child in SelectingUnit.transform)
             {
 
                 child.GetComponent<ChangeMaterial>().Default();
-                SelectingUnit = null;
             }
+            SelectingUnit = null;
             PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
             PlayerDataManager.Instance.nowChooseUnitID = -1;
             bCanContinue = true;
 
-          
+
+        }
+        else
+        {
+            SelectingUnit = null;
+            PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+            PlayerDataManager.Instance.nowChooseUnitID = -1;
+            bCanContinue = true;
         }
     }
     private void ChooseEmptyCell(int cell)
@@ -2415,7 +2425,9 @@ public class PlayerOperationManager : MonoBehaviour
             // 添加PlayerDataManager中的位置映射
             PlayerDataManager.Instance.AddBuildingUnit(localPlayerId, buildData.buildingID);
             // 添加描边效果
-            GameManage.Instance._BuildingManager.GetBuildingGameObject().AddComponent<ChangeMaterial>();
+            //GameManage.Instance._BuildingManager.GetBuildingGameObject().AddComponent<ChangeMaterial>();
+            RecursiveFindBuildingTransform(GameManage.Instance._BuildingManager.GetBuildingGameObject().transform);
+
 
             GameManage.Instance.SetCellObject(buildingPos2D, GameManage.Instance._BuildingManager.GetBuildingGameObject());
             Debug.Log($"建筑已作为Unit添加到PlayerData.PlayerUnits: BuildingID={buildData.buildingID}");
@@ -2459,6 +2471,28 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
+    private void  RecursiveFindBuildingTransform(Transform parent)
+    {
+        // 遍历当前父物体的直接子物体
+        foreach (Transform child in parent)
+        {
+            //Debug.Log("遍历到: " + child.name);
+
+            //在这里处理你的逻辑...
+            // 添加描边组件
+            if (child.gameObject.GetComponent<ChangeMaterial>() == null && child.gameObject.GetComponent<MeshRenderer>() != null)
+            {
+                child.gameObject.AddComponent<ChangeMaterial>();
+                child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+            }
+            // 关键点：如果这个子物体还有子物体，继续向下深入
+            if (child.childCount > 0)
+            {
+                RecursiveFindBuildingTransform(child);
+            }
+        }
+    }
     // 检查指定位置的单位是否有足够的AP执行动作
     private bool CheckUnitHasEnoughAP(int2 position, int requiredAP = 1)
     {

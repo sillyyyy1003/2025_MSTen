@@ -124,6 +124,8 @@ public class BuildingManager : MonoBehaviour
     // 25.11.1 RI add return piece gameObject
     public GameObject GetBuildingGameObject()
     {
+
+
         if (buildingObject != null)
             return buildingObject;
         return null;
