@@ -1115,9 +1115,23 @@ public class PieceManager : MonoBehaviour
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return -1;
         }
+
         return piece.CurrentAP;
     }
 
+    /// <summary>
+    /// 駒の現在MAX APを取得
+    /// </summary>
+    public int GetPieceAllAP(int pieceID)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+
+        return piece.CurrentMaxAP;
+    }
     /// <summary>
     /// 駒の現在プレイヤーIDを取得
     /// </summary>

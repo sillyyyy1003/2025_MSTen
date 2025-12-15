@@ -626,7 +626,7 @@ public class PlayerOperationManager : MonoBehaviour
 					if (IsAdjacentPosition(currentPos, targetPos))
 					{
 						// 在攻击范围内，直接攻击
-						Debug.Log("[攻击] 目标在攻击范围内，执行攻击");
+						//Debug.Log("[攻击] 目标在攻击范围内，执行攻击");
 
 						// 检查AP（攻击需要消耗1点AP）
 						if (!CheckUnitHasEnoughAP(currentPos, 1))
@@ -1194,7 +1194,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 更新AP
             if(unit.UnitType!=CardType.Building)
-                UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID));
+                UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID), PieceManager.Instance.GetPieceAllAP(unit.UnitID));
 
             else
             {
@@ -2077,7 +2077,7 @@ public class PlayerOperationManager : MonoBehaviour
     {
         if (SelectingUnit != null)
         {
-            Debug.Log("bow selecting unit is " + SelectingUnit == null ? 0 : SelectingUnit.name);
+            //Debug.Log("bow selecting unit is " + SelectingUnit == null ? 0 : SelectingUnit.name);
             foreach (Transform child in SelectingUnit.transform)
             {
 

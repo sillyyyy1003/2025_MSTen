@@ -46,7 +46,7 @@ public class ChangeMaterial : MonoBehaviour
         {
             return;
         }
-        Debug.Log("Show outline");
+        //Debug.Log("Show outline");
         bIsChanged = true;
         thisRender.materials = outlineMaterials;
     }

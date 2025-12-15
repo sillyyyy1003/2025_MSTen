@@ -70,6 +70,9 @@ public class MilitaryUnit : Piece
         if (!ConsumeAP(militaryData.attackAPCost))
             return false;
 
+        //25.12.15 RI add check ap 
+        Debug.Log("Soilder atk ap cost is "+ militaryData.attackAPCost+" and  current ap is "+currentAP);
+
         PerformAttack(target);
         //lastAttackTime = Time.time;
         return true;
@@ -97,9 +100,9 @@ public class MilitaryUnit : Piece
     protected virtual void PerformAttack(Piece target)
     {
         int finalDamage = CalculateDamage();
-        Debug.Log("目标为 " + target.GetType() + " 目标HP " + target.CurrentHP+ " 攻击力 "+ finalDamage);
+        //Debug.Log("目标为 " + target.GetType() + " 目标HP " + target.CurrentHP+ " 攻击力 "+ finalDamage);
         target.TakeDamage(finalDamage, this);
-        Debug.Log("目标为 "+target.GetType()+" 目标HP "+target.CurrentHP);
+        //Debug.Log("目标为 "+target.GetType()+" 目标HP "+target.CurrentHP);
         // クリティカル判定
         //if (UnityEngine.Random.value < militaryData.criticalChance)
         //{
