@@ -1399,7 +1399,23 @@ public class PlayerOperationManager : MonoBehaviour
 		}
 
 	}
+    private void GetStartWallEnemy(int cellID)
+    {
+        // 设定初始范围为1
+        List<int> cellIDs = _HexGrid.GetAllCellsWithinRange(1, cellID);
 
+        foreach (var c in cellIDs)
+        {
+            // 森林无法占领
+            if (_HexGrid.GetIsForest(c)) continue;
+            // 高于2级地形无法占领
+            if (_HexGrid.GetCell(c).Elevation > 2 || _HexGrid.GetCell(c).Elevation <= 0) continue;
+
+            _HexGrid.GetCell(c).Walled = true;
+            _HexGrid.GetCell(c).WallType = HexCell.Walls.WallEnemy;
+        }
+
+    }
     // 在指定的格子创建单位实例
     private void CreateUnitAtPosition(CardType unitType, int cellId)
     {
@@ -4796,7 +4812,11 @@ public class PlayerOperationManager : MonoBehaviour
                     GameManage.Instance.SetCellObject(pos, unitObj);
 
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
-
+                    if (msg.UnitType ==(int) CardType.Pope)
+                    {
+                        int id=_HexGrid.GetCell(pos.x, pos.y).Index;
+                        GetStartWallEnemy(id);
+                    }
                     // 添加HP
                     UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype), true);
                     UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
