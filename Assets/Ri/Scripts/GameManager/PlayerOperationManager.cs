@@ -1681,6 +1681,18 @@ public class PlayerOperationManager : MonoBehaviour
                 unit.transform.position.z
             );
 
+            foreach (Transform child in unit.transform)
+            {
+                // 添加描边组件
+                if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+                {
+                    child.gameObject.AddComponent<ChangeMaterial>();
+                    child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                    child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+                }
+                else
+                    continue;
+            }
 
 
             // 保存引用
