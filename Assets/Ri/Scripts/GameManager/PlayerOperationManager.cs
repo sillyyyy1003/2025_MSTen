@@ -1124,7 +1124,7 @@ public class PlayerOperationManager : MonoBehaviour
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
 
         // 移动摄像机到我方教皇
-        GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
+        //GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
         // 回合开始计算疯狂科学家教被动
         if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
         {
