@@ -634,7 +634,7 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
                 { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },
                 { NetworkMessageType.BUILDING_ATTACK, HandleBuildingAttack },
-                          { NetworkMessageType.BUILDING_DESTRUCTION, HandleBuildingDestruction }, // 新增建筑摧毁
+                { NetworkMessageType.BUILDING_DESTRUCTION, HandleBuildingDestruction }, // 新增建筑摧毁
                 { NetworkMessageType.UNIT_CHARM, HandleUnitCharm },
                 { NetworkMessageType.CHARM_EXPIRE, HandleCharmExpire },
 

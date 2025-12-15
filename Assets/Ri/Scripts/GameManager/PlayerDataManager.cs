@@ -1470,7 +1470,7 @@ public class PlayerDataManager : MonoBehaviour
         PlayerUnitData returnedUnit = unitData;
         returnedUnit.bIsCharmed = false;
         returnedUnit.charmedRemainingTurns = 0;
-        returnedUnit.originalOwnerID = -1;
+        returnedUnit.hasBeenCharmed = true;
 
         // 更新同步数据中的playerID
         syncPieceData updatedSyncData = returnedUnit.PlayerUnitDataSO;
