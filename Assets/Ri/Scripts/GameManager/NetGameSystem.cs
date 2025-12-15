@@ -690,7 +690,7 @@ public class NetGameSystem : MonoBehaviour
             networkThread = new Thread(ServerLoop) { IsBackground = true };
             networkThread.Start();
 
-            Debug.Log($"[服务器] 启动成功 - 端口: {port}");
+            //Debug.Log($"[服务器] 启动成功 - 端口: {port}");
 
             // 启动服务器广播
             StartServerBroadcast();

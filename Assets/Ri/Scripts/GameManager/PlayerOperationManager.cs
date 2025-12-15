@@ -1331,40 +1331,6 @@ public class PlayerOperationManager : MonoBehaviour
             }
         }
 
-        //// ===== 修复2：清理不存在的单位 =====
-        //// 创建一个包含所有当前应该存在的位置的集合
-        //HashSet<int2> currentPositions = new HashSet<int2>();
-        //foreach (var unit in data.PlayerUnits)
-        //{
-        //    currentPositions.Add(unit.Position);
-        //}
-
-        //// 找出并删除不应该存在的GameObject
-        //List<int2> positionsToRemove = new List<int2>();
-        //foreach (var kvp in otherPlayersUnits[playerId])
-        //{
-        //    int2 pos = kvp.Key;
-        //    if (!currentPositions.Contains(pos))
-        //    {
-        //        // 这个位置的单位不应该存在，标记删除
-        //        positionsToRemove.Add(pos);
-        //        Debug.Log($"[显示更新] 标记删除过时的单位: ({pos.x},{pos.y})");
-        //    }
-        //}
-
-        //// 执行删除
-        //foreach (int2 pos in positionsToRemove)
-        //{
-        //    GameObject oldUnit = otherPlayersUnits[playerId][pos];
-        //    if (oldUnit != null)
-        //    {
-        //        Destroy(oldUnit);
-        //        Debug.Log($"[显示更新] 销毁过时的GameObject at ({pos.x},{pos.y})");
-        //    }
-        //    otherPlayersUnits[playerId].Remove(pos);
-        //    GameManage.Instance.SetCellObject(pos, null);
-        //}
-
         // ===== 更新单位 =====
         for (int i = 0; i < data.PlayerUnits.Count; i++)
         {
@@ -1381,10 +1347,11 @@ public class PlayerOperationManager : MonoBehaviour
                     UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID,unit.PlayerUnitDataSO.currentHPLevel));
                 else
                 {
-                    UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.BuildingData.Value.currentHP);
+                    if(unit.BuildingData!=null)
+                        UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID,GameManage.Instance._BuildingManager.GetEnemyBuilding(unit.PlayerUnitDataSO.pieceID).CurrentHP);
                 }
               
-                Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.PlayerUnitDataSO.piecetype} unitHp {unit.PlayerUnitDataSO.currentHP}");
+                Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.UnitType} unitHp {unit.PlayerUnitDataSO.currentHP}");
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
                 //Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
