@@ -293,7 +293,7 @@ public class BuildingManager : MonoBehaviour
         }
         // 25.11.11 RI 修改创建逻辑
         // Prefabから建物を生成
-        buildingObject = Instantiate(buildingData.buildingPrefab, sbd.position, Quaternion.identity);
+        buildingObject = Instantiate(buildingData.buildingPrefab, sbd.position, new Quaternion(0,180,0,0));
 
         //25.11.11 RI 修改为AddComponent
         //Building building = buildingObject.GetComponent<Building>();
