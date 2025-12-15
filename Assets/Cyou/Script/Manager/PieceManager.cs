@@ -73,6 +73,8 @@ public struct syncPieceData
     public int sacrificeLevel;//農民の自己犠牲スキルレベル
     public int attackPowerLevel;//軍隊の攻撃力レベル
     public int charmedTurnsRemaining; // 魅惑された駒の魅惑状態残りターン数（ネットワーク同期用）
+    //25.12.15 RI add hasBeenCharmed
+    public bool hasBeenCharmed ; // 魅惑された駒の魅惑状態残りターン数（ネットワーク同期用）
 
     // ヘルパープロパティ：pieceIDから元の所有者を計算
     public int OriginalPlayerID => pieceID / 10000;
@@ -112,7 +114,8 @@ public struct syncPieceData
             convertEnemyLevel = (piece is Missionary missionary2) ? missionary2.ConvertEnemyLevel : 0,
             sacrificeLevel = (piece is Farmer farmer) ? farmer.SacrificeLevel : 0,
             attackPowerLevel = (piece is MilitaryUnit military) ? military.AttackPowerLevel : 0,
-            charmedTurnsRemaining = piece.CharmedTurnsRemaining
+            charmedTurnsRemaining = piece.CharmedTurnsRemaining,
+            hasBeenCharmed=false,
         };
     }
 }

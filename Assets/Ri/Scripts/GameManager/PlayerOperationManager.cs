@@ -4124,7 +4124,7 @@ public class PlayerOperationManager : MonoBehaviour
 			ReturnToDefault();
             return;
         }
-        if (targetData.Value.hasBeenCharmed)
+        if (targetData.Value.PlayerUnitDataSO.hasBeenCharmed)
         {
             Debug.Log("不能魅惑已被魅惑过的单位！");
             OperationBroadcastManager.Instance.ShowMessage("すでに洗脳状態のユニットには使用できません。");
@@ -4147,7 +4147,7 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
         syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
-
+        convertResult.hasBeenCharmed = true;
         Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
 
         // 获取目标GameObject（需要转移到本地玩家）

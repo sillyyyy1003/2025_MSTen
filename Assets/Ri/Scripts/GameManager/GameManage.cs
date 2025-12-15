@@ -569,7 +569,13 @@ public class GameManage : MonoBehaviour
 
         // 获取本地玩家数据
         PlayerData localData = _PlayerDataManager.GetPlayerData(LocalPlayerID);
-
+        foreach(var a in localData.PlayerUnits)
+        {
+            if(a.bIsCharmed)
+            {
+                Debug.Log("unit "+a.UnitID+" hasCharmed is "+a.hasBeenCharmed);
+            }
+        }
         // 创建回合结束消息
         TurnEndMessage turnEndMsg = new TurnEndMessage
         {
