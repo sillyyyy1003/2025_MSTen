@@ -18,7 +18,7 @@ namespace GameData
 
         [Header("特殊攻撃設定")]
         public int convertAPCost = 3; // 基礎攻撃時変換確率
-        public int[] conversionTurnDuration = new int[4] { 3, 3, 3, 3 }; // 変換した駒が敵に戻るまでのターン数
+        public int[] conversionTurnDuration = new int[4] { 2, 2, 2, 2 }; // 変換した駒が敵に戻るまでのターン数
 
         [Header("特殊防御設定")]
         public float baseConversionDefenseChance = 0.2f; // 基礎防御時変換確率

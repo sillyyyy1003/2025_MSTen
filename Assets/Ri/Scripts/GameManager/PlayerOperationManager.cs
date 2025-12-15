@@ -4102,8 +4102,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
         else
         {
-
-            Debug.Log("已找到对方数据: " + targetData.Value.PlayerUnitDataSO.piecetype+ " 被魅惑过:"+ targetData.Value.hasBeenCharmed);
+            Debug.Log("玩家ID: " + targetOwnerId + "已找到对方数据: " + targetData.Value.PlayerUnitDataSO.piecetype+ " 被魅惑过:"+ targetData.Value.hasBeenCharmed);
         }
         // 获取双方的 PieceID
         int missionaryPieceID = missionaryData.Value.PlayerUnitDataSO.pieceID;
