@@ -761,18 +761,18 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
-                foreach (Transform child in SelectingUnit.transform)
-                {
-                    // 运行时动态添加组件
-                    if (child.gameObject.GetComponent<ChangeMaterial>() == null)
-                    {
-                        child.gameObject.AddComponent<ChangeMaterial>();
-                        child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
-                        child.gameObject.GetComponent<ChangeMaterial>().InitMat();
-                    }
-                    else
-                        break;
-                }
+                //foreach (Transform child in SelectingUnit.transform)
+                //{
+                //    // 运行时动态添加组件
+                //    if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+                //    {
+                //        child.gameObject.AddComponent<ChangeMaterial>();
+                //        child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                //        child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+                //    }
+                //    else
+                //        break;
+                //}
             
                 //SelectingUnit.GetComponent<ChangeMaterial>().Outline();
                 LastSelectingCellID = ClickCellid;
@@ -1492,6 +1492,18 @@ public class PlayerOperationManager : MonoBehaviour
 
         GameObject pieceObj = PieceManager.Instance.GetPieceGameObject();
 
+        foreach (Transform child in pieceObj.transform)
+        {
+            // 添加描边组件
+            if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+            {
+                child.gameObject.AddComponent<ChangeMaterial>();
+                child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+            }
+            else
+                continue;
+        }
         // 添加描边效果
         //pieceObj.AddComponent<ChangeMaterial>();
 
