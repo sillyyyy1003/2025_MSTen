@@ -1927,15 +1927,15 @@ public class PieceManager : MonoBehaviour
                 Debug.Log($"駒ID={pieceID} 駒AP={piece.CurrentAP}");
 
                 // 魅惑カウンター処理（ProcessCharmedTurn内でcurrentPIDが元に戻される）
-                if (piece.ProcessCharmedTurn())
-                {
-                    // 魅惑解除された（currentPIDが元のOriginalPIDに戻された）
-                    charmedPiecesCount++;
-                    Debug.Log($"駒ID={pieceID}が魅惑解除により元の所有者（PID={piece.CurrentPID}）に戻りました");
+                //if (piece.ProcessCharmedTurn())
+                //{
+                //    // 魅惑解除された（currentPIDが元のOriginalPIDに戻された）
+                //    charmedPiecesCount++;
+                //    Debug.Log($"駒ID={pieceID}が魅惑解除により元の所有者（PID={piece.CurrentPID}）に戻りました");
 
-                    // GameManagerに通知（必要なら）
-                    // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
-                }
+                //    // GameManagerに通知（必要なら）
+                //    // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
+                //}
 
                 if(piece is Pope && piece.ProcessPopeSwapCD())
                 {

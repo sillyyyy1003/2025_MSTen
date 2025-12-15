@@ -1260,7 +1260,8 @@ public class PlayerDataManager : MonoBehaviour
                     updatedUnit.bIsCharmed = true;
                     updatedUnit.charmedRemainingTurns = turns;
                     updatedUnit.originalOwnerID = originalOwnerId;
-                    updatedUnit.hasBeenCharmed = true;
+
+                    updatedUnit.SetHasBeenCharmed(true);
                     data.PlayerUnits[i] = updatedUnit;
 
                     allPlayersData[playerId] = data;
@@ -1344,7 +1345,8 @@ public class PlayerDataManager : MonoBehaviour
             transferredUnit.bIsCharmed = true;
             transferredUnit.charmedRemainingTurns = charmedTurns;
             transferredUnit.originalOwnerID = fromPlayerId;
-            transferredUnit.hasBeenCharmed = true;
+
+            transferredUnit.SetHasBeenCharmed(true);
             Debug.Log($"[TransferUnitOwnership] 设置魅惑状态 - 剩余回合:{charmedTurns}, 原所有者:{fromPlayerId}");
         }
         else
@@ -1352,7 +1354,7 @@ public class PlayerDataManager : MonoBehaviour
             // 解除魅惑（归还控制权）
             transferredUnit.bIsCharmed = false;
             transferredUnit.charmedRemainingTurns = 0;
-            transferredUnit.hasBeenCharmed = true;
+            transferredUnit.SetHasBeenCharmed(true);
             Debug.Log($"[TransferUnitOwnership] 解除魅惑状态");
         }
 
@@ -1446,7 +1448,7 @@ public class PlayerDataManager : MonoBehaviour
         PlayerUnitData returnedUnit = unitData;
         returnedUnit.bIsCharmed = false;
         returnedUnit.charmedRemainingTurns = 0;
-        returnedUnit.hasBeenCharmed = true;
+        returnedUnit.SetHasBeenCharmed(true);
 
         // 更新同步数据中的playerID
         syncPieceData updatedSyncData = returnedUnit.PlayerUnitDataSO;
