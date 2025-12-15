@@ -157,7 +157,7 @@ namespace GamePieces
         {
             if (charmedTurnsRemaining > 0)
             {
-                charmedTurnsRemaining--;
+                charmedTurnsRemaining-=1;
                 Debug.Log($"駒ID={PieceID}の魅惑残りターン: {charmedTurnsRemaining}");
 
                 if (charmedTurnsRemaining == 0)
@@ -226,7 +226,8 @@ namespace GamePieces
         
         protected void ModifyAP(int amount)
         {
-            float oldValue = currentAP;
+            float oldValue = currentAP; 
+            //25.12.15 RI Change AP 
             currentAP = Math.Clamp(currentAP + amount, 0, currentMaxAP);
 
             if (!Mathf.Approximately(oldValue, currentAP))

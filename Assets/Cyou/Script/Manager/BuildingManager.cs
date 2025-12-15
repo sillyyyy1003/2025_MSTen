@@ -124,6 +124,8 @@ public class BuildingManager : MonoBehaviour
     // 25.11.1 RI add return piece gameObject
     public GameObject GetBuildingGameObject()
     {
+
+
         if (buildingObject != null)
             return buildingObject;
         return null;
@@ -148,7 +150,7 @@ public class BuildingManager : MonoBehaviour
         }
 
         // Prefabから建物を生成
-        GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position, Quaternion.identity);
+        GameObject buildingObj = Instantiate(buildingData.buildingPrefab, position,  new Quaternion(0,180,0,0));
 
         // 25.11.11 RI init building gameObject
         buildingObject = buildingObj;
@@ -291,7 +293,7 @@ public class BuildingManager : MonoBehaviour
         }
         // 25.11.11 RI 修改创建逻辑
         // Prefabから建物を生成
-        buildingObject = Instantiate(buildingData.buildingPrefab, sbd.position, Quaternion.identity);
+        buildingObject = Instantiate(buildingData.buildingPrefab, sbd.position, new Quaternion(0,180,0,0));
 
         //25.11.11 RI 修改为AddComponent
         //Building building = buildingObject.GetComponent<Building>();
