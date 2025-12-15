@@ -40,9 +40,10 @@ public struct PlayerUnitData
     public bool bIsCharmed;              // 是否被魅惑
     public int charmedRemainingTurns;    // 魅惑剩余回合数（每个回合结束时-1）
     public int originalOwnerID;          // 原始所有者ID（用于归还控制权）
+    public bool hasBeenCharmed;          // 是否被魅惑过
 
 
-    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1, syncBuildingData? buildingData = null)
+    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1, syncBuildingData? buildingData = null, bool hasCharmed= false)
     {
         UnitID = unitId;
         UnitType = type;
@@ -54,6 +55,7 @@ public struct PlayerUnitData
         charmedRemainingTurns = charmedTurns;
         originalOwnerID = originalOwner;
         BuildingData = buildingData;
+        hasBeenCharmed = hasCharmed;
     }
     public void SetUnitDataSO(syncPieceData unitData)
     {
@@ -66,6 +68,10 @@ public struct PlayerUnitData
     public void SetCanDoAction(bool canDo)
     {
         bCanDoAction = canDo;
+    }
+    public void SetHasBeenCharmed(bool canDo)
+    {
+        hasBeenCharmed = canDo;
     }
 
     // 判断是否为建筑单位
@@ -1337,6 +1343,7 @@ public class PlayerDataManager : MonoBehaviour
             transferredUnit.bIsCharmed = true;
             transferredUnit.charmedRemainingTurns = charmedTurns;
             transferredUnit.originalOwnerID = fromPlayerId;
+            transferredUnit.hasBeenCharmed = true;
             Debug.Log($"[TransferUnitOwnership] 设置魅惑状态 - 剩余回合:{charmedTurns}, 原所有者:{fromPlayerId}");
         }
         else
@@ -1344,7 +1351,6 @@ public class PlayerDataManager : MonoBehaviour
             // 解除魅惑（归还控制权）
             transferredUnit.bIsCharmed = false;
             transferredUnit.charmedRemainingTurns = 0;
-            transferredUnit.originalOwnerID = -1;
             Debug.Log($"[TransferUnitOwnership] 解除魅惑状态");
         }
 

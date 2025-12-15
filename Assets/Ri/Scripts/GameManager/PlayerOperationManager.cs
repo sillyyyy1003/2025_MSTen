@@ -4125,8 +4125,15 @@ public class PlayerOperationManager : MonoBehaviour
 			ReturnToDefault();
             return;
         }
+        if (targetData.Value.hasBeenCharmed)
+        {
+            Debug.Log("不能魅惑已被魅惑过的单位！");
+            OperationBroadcastManager.Instance.ShowMessage("すでに洗脳状態のユニットには使用できません。");
+            ReturnToDefault();
+            return;
+        }
         // 调用PieceManager的ConvertEnemy方法
-        if(PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID)==null)
+        if (PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID)==null)
         {
             Debug.Log("[ExecuteCharm] 魅惑失败");
 			OperationBroadcastManager.Instance.ShowMessage("洗脳失敗しました。");
@@ -4189,9 +4196,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
-            // 魅惑持续
-			EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
-
+        
 			// 2025.11.14 Guoning 添加魅惑音效
 			SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
 
@@ -4209,6 +4214,9 @@ public class PlayerOperationManager : MonoBehaviour
                  PieceManager.Instance.GetPieceAP(targetPieceID),
                   targetUnit.transform,
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
+
+            // 魅惑持续
+            EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
 
 
 
