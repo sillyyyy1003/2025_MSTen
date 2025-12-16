@@ -4358,7 +4358,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
-            EffectManager.Instance.PlayCharmEffect(targetUnit.transform,Vector3.zero, Quaternion.identity, true);
+            EffectManager.Instance.PlayCharmEffect(null,Vector3.zero, Quaternion.identity, true);
 
 			// 移除本地HP显示
 			UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
