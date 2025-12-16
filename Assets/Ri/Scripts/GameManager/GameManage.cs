@@ -295,9 +295,9 @@ public class GameManage : MonoBehaviour
     // 游戏初始化 (由网络系统调用,传入游戏开始数据)
     public bool InitGameWithNetworkData(GameStartData data)
     {
-        Debug.Log("GameManage: 开始初始化游戏...");
+        //Debug.Log("GameManage: 开始初始化游戏...");
         Debug.Log($"接收到玩家数: {data.PlayerIds.Length}");
-        Debug.Log($"起始位置数: {data.StartPositions.Length}");
+        //Debug.Log($"起始位置数: {data.StartPositions.Length}");
 
         // 清空之前的数据
         AllPlayerIds.Clear();
@@ -347,7 +347,7 @@ public class GameManage : MonoBehaviour
         foreach (var pos in data.StartPositions)
         {
             PlayerStartPositions.Add(pos);
-            Debug.Log($"添加起始位置: {pos}");
+            //Debug.Log($"添加起始位置: {pos}");
         }
 
         // 确定本地玩家ID (如果是客户端,从网络系统获取)
@@ -377,7 +377,7 @@ public class GameManage : MonoBehaviour
         // 初始化棋盘数据 (如果还没有初始化)
         if (GameBoardInforDict.Count > 0)
         {
-            Debug.Log("开始初始化本地玩家...");
+            //Debug.Log("开始初始化本地玩家...");
             // 找到本地玩家的起始位置
             int localPlayerIndex = AllPlayerIds.IndexOf(LocalPlayerID);
             Debug.Log($"本地玩家索引: {localPlayerIndex}");
@@ -385,7 +385,7 @@ public class GameManage : MonoBehaviour
             if (localPlayerIndex >= 0 && localPlayerIndex < PlayerStartPositions.Count)
             {
                 int startPos = PlayerStartPositions[localPlayerIndex];
-                Debug.Log($"本地玩家起始位置: {startPos}");
+                //Debug.Log($"本地玩家起始位置: {startPos}");
 
                 // 使用起始位置初始化
                 _PlayerOperation.InitPlayer(_LocalPlayerID, startPos);
@@ -499,7 +499,7 @@ public class GameManage : MonoBehaviour
     {
         _CurrentTurnPlayerID = playerId;
 
-        Debug.Log($"回合开始: 玩家 {playerId} 回合{PlayerDataManager.Instance.TurnCount}" + (IsMyTurn ? " (你的回合)" : " (等待中)"));
+        //Debug.Log($"回合开始: 玩家 {playerId} 回合{PlayerDataManager.Instance.TurnCount}" + (IsMyTurn ? " (你的回合)" : " (等待中)"));
 
         // 触发回合开始事件
         OnTurnStarted?.Invoke(playerId);
