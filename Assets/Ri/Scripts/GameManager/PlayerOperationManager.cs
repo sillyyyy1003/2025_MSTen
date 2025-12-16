@@ -16,6 +16,7 @@ using System.Linq;
 using SoundSystem;
 
 
+
 #if UNITY_EDITORR
 using static UnityEditor.PlayerSettings;
 using Mono.Cecil;
@@ -44,6 +45,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 是否可进行操作
     private bool bCanContinue = true;
+    public bool GetCanContinue() { return bCanContinue; }
 
     // 是否是当前玩家的回合
     private bool isMyTurn = false;
