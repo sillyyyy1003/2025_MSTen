@@ -4157,7 +4157,7 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log("[ExecuteCharm] 魅惑失败");
 			OperationBroadcastManager.Instance.ShowMessage("洗脳失敗しました。");
 
-            EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
+            //EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
 			
             //更新传教士AP
 			UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID, PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
@@ -4235,7 +4235,7 @@ public class PlayerOperationManager : MonoBehaviour
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
 
             // 魅惑持续
-            EffectManager.Instance.PlayCharmEffect(targetUnit.transform, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
+            EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
 
 
 
