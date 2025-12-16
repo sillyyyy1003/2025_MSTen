@@ -71,7 +71,7 @@ public class MilitaryUnit : Piece
             return false;
 
         //25.12.15 RI add check ap 
-        //Debug.Log("Soilder atk ap cost is "+ militaryData.attackAPCost+" and  current ap is "+currentAP);
+        Debug.Log("Soilder name "+ militaryData.name+"Soilder atk ap cost is " + militaryData.attackAPCost+" and  current ap is "+currentAP);
 
         PerformAttack(target);
         //lastAttackTime = Time.time;
