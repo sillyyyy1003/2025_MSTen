@@ -4168,7 +4168,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
         syncPieceData convertResult = targetData.Value.PlayerUnitDataSO;
         convertResult.hasBeenCharmed = true;
-        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
+        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype+"piece hp is "+convertResult.currentHP);
 
         // 获取目标GameObject（需要转移到本地玩家）
         GameObject targetUnit = null;
@@ -4229,8 +4229,8 @@ public class PlayerOperationManager : MonoBehaviour
             UnitStatusUIManager.Instance.RemoveStatusUI(targetPieceID);
 
             UnitStatusUIManager.Instance.CreateStatusUI(targetPieceID,
-                (int)PieceManager.Instance.GetPieceHP(targetPieceID),
-                 PieceManager.Instance.GetPieceAP(targetPieceID),
+                 convertResult.currentHP,
+                 PieceManager.Instance.GetPieceAllAP(convertResult.currentAPLevel),
                   targetUnit.transform,
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
 
