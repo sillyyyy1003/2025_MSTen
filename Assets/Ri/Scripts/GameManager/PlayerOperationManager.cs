@@ -4166,7 +4166,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             return;
         }
-        syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
+        syncPieceData convertResult = targetData.Value.PlayerUnitDataSO;
         convertResult.hasBeenCharmed = true;
         Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
 
