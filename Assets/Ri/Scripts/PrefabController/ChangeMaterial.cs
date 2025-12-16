@@ -38,7 +38,7 @@ public class ChangeMaterial : MonoBehaviour
             outlineMaterials[i] = originalMaterials[i];
         }
         outlineMaterials[originalMaterials.Length] = OutlineMat;
-        Debug.Log("material init");
+        //Debug.Log("material init");
     }
     public void Outline()
     {
@@ -46,7 +46,7 @@ public class ChangeMaterial : MonoBehaviour
         {
             return;
         }
-        Debug.Log("Show outline");
+        //Debug.Log("Show outline");
         bIsChanged = true;
         thisRender.materials = outlineMaterials;
     }

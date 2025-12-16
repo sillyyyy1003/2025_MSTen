@@ -40,9 +40,10 @@ public struct PlayerUnitData
     public bool bIsCharmed;              // 是否被魅惑
     public int charmedRemainingTurns;    // 魅惑剩余回合数（每个回合结束时-1）
     public int originalOwnerID;          // 原始所有者ID（用于归还控制权）
+    public bool hasBeenCharmed;          // 是否被魅惑过
 
 
-    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1, syncBuildingData? buildingData = null)
+    public PlayerUnitData(int unitId, CardType type, int2 pos, syncPieceData unitData, bool isActivated = true, bool canDo = true, bool isCharmed = false, int charmedTurns = 0, int originalOwner = -1, syncBuildingData? buildingData = null, bool hasCharmed= false)
     {
         UnitID = unitId;
         UnitType = type;
@@ -54,6 +55,7 @@ public struct PlayerUnitData
         charmedRemainingTurns = charmedTurns;
         originalOwnerID = originalOwner;
         BuildingData = buildingData;
+        hasBeenCharmed = hasCharmed;
     }
     public void SetUnitDataSO(syncPieceData unitData)
     {
@@ -66,6 +68,10 @@ public struct PlayerUnitData
     public void SetCanDoAction(bool canDo)
     {
         bCanDoAction = canDo;
+    }
+    public void SetHasBeenCharmed(bool canDo)
+    {
+        hasBeenCharmed = canDo;
     }
 
     // 判断是否为建筑单位
@@ -404,14 +410,14 @@ public class PlayerDataManager : MonoBehaviour
             allPlayersData[playerId] = new PlayerData(playerId);
          
             //allPlayersData[playerId].SetReligion();
-            Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }
         else
         {
             Debug.LogWarning($"PlayerDataManager: 玩家 {playerId} 已存在");
         }
         PieceManager.Instance.SetPieceRligion(allPlayersData[playerId].PlayerReligion);
-    
+        Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
+
     }
     // 设置人口 放置在Create之后
     public void SetPlayerPopulationCost()
@@ -450,7 +456,7 @@ public class PlayerDataManager : MonoBehaviour
             return allPlayersData[playerId];
         }
 
-        Debug.LogWarning($"PlayerDataManager: 找不到玩家 {playerId}");
+        //Debug.LogWarning($"PlayerDataManager: 找不到玩家 {playerId}");
         return default;
     }
 
@@ -459,7 +465,7 @@ public class PlayerDataManager : MonoBehaviour
     {
         allPlayersData[playerId] = data;
         OnPlayerDataChanged?.Invoke(playerId, data);
-
+      
         Debug.Log($"PlayerDataManager: 更新玩家 {playerId} 数据");
     }
 
@@ -1240,32 +1246,34 @@ public class PlayerDataManager : MonoBehaviour
     /// <summary>
     /// 设置单位为被魅惑状态
     /// </summary>
-    public bool SetUnitCharmed(int playerId, int2 pos, int originalOwnerId, int turns = 3)
-    {
-        if (allPlayersData.ContainsKey(playerId))
-        {
-            PlayerData data = allPlayersData[playerId];
+    //public bool SetUnitCharmed(int playerId, int2 pos, int originalOwnerId, int turns = 3)
+    //{
+    //    if (allPlayersData.ContainsKey(playerId))
+    //    {
+    //        PlayerData data = allPlayersData[playerId];
 
-            for (int i = 0; i < data.PlayerUnits.Count; i++)
-            {
-                if (data.PlayerUnits[i].Position.Equals(pos))
-                {
-                    PlayerUnitData updatedUnit = data.PlayerUnits[i];
-                    updatedUnit.bIsCharmed = true;
-                    updatedUnit.charmedRemainingTurns = turns;
-                    updatedUnit.originalOwnerID = originalOwnerId;
-                    data.PlayerUnits[i] = updatedUnit;
+    //        for (int i = 0; i < data.PlayerUnits.Count; i++)
+    //        {
+    //            if (data.PlayerUnits[i].Position.Equals(pos))
+    //            {
+    //                PlayerUnitData updatedUnit = data.PlayerUnits[i];
+    //                updatedUnit.bIsCharmed = true;
+    //                updatedUnit.charmedRemainingTurns = turns;
+    //                updatedUnit.originalOwnerID = originalOwnerId;
 
-                    allPlayersData[playerId] = data;
-                    OnPlayerDataChanged?.Invoke(playerId, data);
+    //                updatedUnit.SetHasBeenCharmed(true);
+    //                data.PlayerUnits[i] = updatedUnit;
 
-                    Debug.Log($"单位在 ({pos.x},{pos.y}) 被魅惑，原始所有者: {originalOwnerId}, 剩余回合: {turns}");
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+    //                allPlayersData[playerId] = data;
+    //                OnPlayerDataChanged?.Invoke(playerId, data);
+
+    //                Debug.Log($"单位在 ({pos.x},{pos.y}) 被魅惑，原始所有者: {originalOwnerId}, 剩余回合: {turns}");
+    //                return true;
+    //            }
+    //        }
+    //    }
+    //    return false;
+    //}
 
     /// <summary>
     /// 转移单位所有权（用于魅惑功能）
@@ -1337,14 +1345,16 @@ public class PlayerDataManager : MonoBehaviour
             transferredUnit.bIsCharmed = true;
             transferredUnit.charmedRemainingTurns = charmedTurns;
             transferredUnit.originalOwnerID = fromPlayerId;
-            Debug.Log($"[TransferUnitOwnership] 设置魅惑状态 - 剩余回合:{charmedTurns}, 原所有者:{fromPlayerId}");
+
+            transferredUnit.SetHasBeenCharmed(true);
+            Debug.Log($"[TransferUnitOwnership] 设置魅惑状态 - 剩余回合:{charmedTurns}, 原所有者:{fromPlayerId}是否被魅惑:{transferredUnit.hasBeenCharmed}");
         }
         else
         {
             // 解除魅惑（归还控制权）
             transferredUnit.bIsCharmed = false;
             transferredUnit.charmedRemainingTurns = 0;
-            transferredUnit.originalOwnerID = -1;
+            transferredUnit.SetHasBeenCharmed(true);
             Debug.Log($"[TransferUnitOwnership] 解除魅惑状态");
         }
 
@@ -1372,33 +1382,7 @@ public class PlayerDataManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// 批量转移单位所有权（用于一次性转移多个单位）
-    /// </summary>
-    public bool TransferMultipleUnits(int fromPlayerId, int toPlayerId, List<int2> positions, List<syncPieceData> updatedSyncDataList, int charmedTurns = 0)
-    {
-        if (positions.Count != updatedSyncDataList.Count)
-        {
-            Debug.LogError("[TransferMultipleUnits] 位置列表和同步数据列表长度不匹配");
-            return false;
-        }
-
-        bool allSuccess = true;
-        for (int i = 0; i < positions.Count; i++)
-        {
-            bool success = TransferUnitOwnership(fromPlayerId, toPlayerId, positions[i], updatedSyncDataList[i], charmedTurns);
-            if (!success)
-            {
-                Debug.LogWarning($"[TransferMultipleUnits] 转移单位失败 at ({positions[i].x},{positions[i].y})");
-                allSuccess = false;
-            }
-        }
-
-        return allSuccess;
-    }
-
-
-
+   
     /// <summary>
     /// 减少被魅惑单位的剩余回合数，并检查是否需要归还控制权
     /// 在回合结束时调用
@@ -1420,6 +1404,7 @@ public class PlayerDataManager : MonoBehaviour
 
                     if (unit.charmedRemainingTurns <= 0)
                     {
+                        //Debug.Log("charm turn is "+unit.charmedRemainingTurns);
                         // 魅惑效果已过期，需要归还控制权
                         expiredUnits.Add(new CharmExpireInfo
                         {
@@ -1464,7 +1449,7 @@ public class PlayerDataManager : MonoBehaviour
         PlayerUnitData returnedUnit = unitData;
         returnedUnit.bIsCharmed = false;
         returnedUnit.charmedRemainingTurns = 0;
-        returnedUnit.originalOwnerID = -1;
+        returnedUnit.SetHasBeenCharmed(true);
 
         // 更新同步数据中的playerID
         syncPieceData updatedSyncData = returnedUnit.PlayerUnitDataSO;
@@ -1481,7 +1466,7 @@ public class PlayerDataManager : MonoBehaviour
         OnUnitAdded?.Invoke(originalOwnerId, returnedUnit);
         OnPlayerDataChanged?.Invoke(originalOwnerId, data);
 
-        Debug.Log($"单位 {returnedUnit.UnitID} 在 ({returnedUnit.Position.x},{returnedUnit.Position.y}) 归还给原始所有者 {originalOwnerId}");
+        Debug.Log($"单位 {returnedUnit.UnitID} 在 ({returnedUnit.Position.x},{returnedUnit.Position.y}) 归还给原始所有者 {originalOwnerId}是否被魅惑 {returnedUnit.hasBeenCharmed}");
         return true;
     }
 

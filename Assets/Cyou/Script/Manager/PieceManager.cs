@@ -73,6 +73,8 @@ public struct syncPieceData
     public int sacrificeLevel;//農民の自己犠牲スキルレベル
     public int attackPowerLevel;//軍隊の攻撃力レベル
     public int charmedTurnsRemaining; // 魅惑された駒の魅惑状態残りターン数（ネットワーク同期用）
+    //25.12.15 RI add hasBeenCharmed
+    public bool hasBeenCharmed ; // 魅惑された駒の魅惑状態残りターン数（ネットワーク同期用）
 
     // ヘルパープロパティ：pieceIDから元の所有者を計算
     public int OriginalPlayerID => pieceID / 10000;
@@ -112,7 +114,8 @@ public struct syncPieceData
             convertEnemyLevel = (piece is Missionary missionary2) ? missionary2.ConvertEnemyLevel : 0,
             sacrificeLevel = (piece is Farmer farmer) ? farmer.SacrificeLevel : 0,
             attackPowerLevel = (piece is MilitaryUnit military) ? military.AttackPowerLevel : 0,
-            charmedTurnsRemaining = piece.CharmedTurnsRemaining
+            charmedTurnsRemaining = piece.CharmedTurnsRemaining,
+            hasBeenCharmed=false,
         };
     }
 }
@@ -1115,9 +1118,23 @@ public class PieceManager : MonoBehaviour
             Debug.LogError($"駒が見つかりません: ID={pieceID}");
             return -1;
         }
+
         return piece.CurrentAP;
     }
 
+    /// <summary>
+    /// 駒の現在MAX APを取得
+    /// </summary>
+    public int GetPieceAllAP(int pieceID)
+    {
+        if (!allPieces.TryGetValue(pieceID, out Piece piece))
+        {
+            Debug.LogError($"駒が見つかりません: ID={pieceID}");
+            return -1;
+        }
+
+        return piece.CurrentMaxAP;
+    }
     /// <summary>
     /// 駒の現在プレイヤーIDを取得
     /// </summary>
@@ -1806,7 +1823,18 @@ public class PieceManager : MonoBehaviour
         return syncPieceData.CreateFromPiece(piece);
     }
 
+    // 25.12.16 RI Enemy同期処理
+    public bool UpdateEnemySyncData(int id, syncPieceData data)
+    {
+        if (!allPieces.TryGetValue(id, out Piece piece))
+        {
+            Debug.LogError($"[ UpdateEnemySyncData]駒が見つかりません: ID={id}");
+            return false;
+        }
+        return allPieces[id].UpdateDataBySyncData(data);
+    }
 
+  
     // 25.11.17 RI HP同期処理
     public void SyncPieceHP(syncPieceData data)
     {
@@ -1906,22 +1934,22 @@ public class PieceManager : MonoBehaviour
         {
             if (allPieces.TryGetValue(pieceID, out Piece piece))
             {
-                //25.11.9  RI 追加debugテスト
-                //Debug.Log($"駒ID={pieceID} ");
 
                 // AP回復
                 piece.RecoverAP(piece.Data.aPRecoveryRate);
+                //25.11.9  RI 追加debugテスト
+                Debug.Log($"駒ID={pieceID} 駒AP={piece.CurrentAP}");
 
                 // 魅惑カウンター処理（ProcessCharmedTurn内でcurrentPIDが元に戻される）
-                if (piece.ProcessCharmedTurn())
-                {
-                    // 魅惑解除された（currentPIDが元のOriginalPIDに戻された）
-                    charmedPiecesCount++;
-                    Debug.Log($"駒ID={pieceID}が魅惑解除により元の所有者（PID={piece.CurrentPID}）に戻りました");
+                //if (piece.ProcessCharmedTurn())
+                //{
+                //    // 魅惑解除された（currentPIDが元のOriginalPIDに戻された）
+                //    charmedPiecesCount++;
+                //    Debug.Log($"駒ID={pieceID}が魅惑解除により元の所有者（PID={piece.CurrentPID}）に戻りました");
 
-                    // GameManagerに通知（必要なら）
-                    // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
-                }
+                //    // GameManagerに通知（必要なら）
+                //    // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
+                //}
 
                 if(piece is Pope && piece.ProcessPopeSwapCD())
                 {
@@ -1933,6 +1961,30 @@ public class PieceManager : MonoBehaviour
         //Debug.Log($"プレイヤー{playerID}のターン開始処理を実行しました（駒数: {playerPieces.Count}、魅惑解除: {charmedPiecesCount}）");
     }
 
+    /// <summary>
+    /// 指定プレイヤーのターン開始処理（AP回復、魅惑カウンター処理など）
+    /// </summary>
+    public void ProcessTurnEnd(int playerID)
+    {
+        var playerPieces = GetPlayerPieces(playerID);
+
+        foreach (int pieceID in playerPieces)
+        {
+            if (allPieces.TryGetValue(pieceID, out Piece piece))
+            {
+
+                if (piece.ProcessCharmedTurn())
+                {
+                    // 魅惑解除された（currentPIDが元のOriginalPIDに戻された）
+                    Debug.Log($"駒ID={pieceID}が魅惑解除により元の所有者（PID={piece.CurrentPID}）に戻りました");
+
+                    // GameManagerに通知（必要なら）
+                    // OnCharmExpired?.Invoke(pieceID, piece.CurrentPID);
+                }
+
+            }
+        }
+    }
     #endregion
 }
 

@@ -640,7 +640,7 @@ public class GameUIManager : MonoBehaviour
                 //25.12.14 ri change unitData
                 //Piece unitData = PlayerUnitDataInterface.Instance.GetUnitData(id);
                 PlayerUnitData unitData = (PlayerUnitData)PlayerDataManager.Instance.GetUnitDataById(id);
-                Debug.Log($"[unitData]  - unitID:{id} unitType{type} unitHp {unitData.PlayerUnitDataSO.currentHP}");
+                //Debug.Log($"[unitData]  - unitID:{id} unitType{type} unitHp {unitData.PlayerUnitDataSO.currentHP}");
                 uiList.Add(new UIUnitData
                 {
                     UnitId = id,
@@ -1041,7 +1041,12 @@ public class GameUIManager : MonoBehaviour
 
     private void HandleEndTurnButtonPressed()
     {
-        OnEndTurnButtonPressed?.Invoke();
+        //25.12.16 ri return while operation is doing
+        if (!GameManage.Instance._PlayerOperation.GetCanContinue())
+        {
+            return;
+        }
+            OnEndTurnButtonPressed?.Invoke();
     }
 
     private void HandleCardSkillUsed(CardType card,CardSkill cardSkill)

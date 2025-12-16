@@ -114,6 +114,15 @@ namespace Buildings
             SetupComponents();
         }
 
+
+        //25.12.16 ri add update data when upgrade
+        public bool UpdateDataBySyncData(int hp)
+        {
+            currentHp = hp;
+
+            return true;
+        }
+
         protected virtual void SetupComponents()
         {
             // Prefabの外見をそのまま使用するため、動的な適用は不要

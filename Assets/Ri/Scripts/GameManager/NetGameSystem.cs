@@ -634,7 +634,7 @@ public class NetGameSystem : MonoBehaviour
                 { NetworkMessageType.UNIT_REMOVE, HandleUnitRemove },
                 { NetworkMessageType.UNIT_ATTACK, HandleUnitAttack },
                 { NetworkMessageType.BUILDING_ATTACK, HandleBuildingAttack },
-                          { NetworkMessageType.BUILDING_DESTRUCTION, HandleBuildingDestruction }, // 新增建筑摧毁
+                { NetworkMessageType.BUILDING_DESTRUCTION, HandleBuildingDestruction }, // 新增建筑摧毁
                 { NetworkMessageType.UNIT_CHARM, HandleUnitCharm },
                 { NetworkMessageType.CHARM_EXPIRE, HandleCharmExpire },
 
@@ -690,7 +690,7 @@ public class NetGameSystem : MonoBehaviour
             networkThread = new Thread(ServerLoop) { IsBackground = true };
             networkThread.Start();
 
-            Debug.Log($"[服务器] 启动成功 - 端口: {port}");
+            //Debug.Log($"[服务器] 启动成功 - 端口: {port}");
 
             // 启动服务器广播
             StartServerBroadcast();
@@ -1270,7 +1270,7 @@ public class NetGameSystem : MonoBehaviour
     // 检查所有玩家是否准备完毕
     private void CheckAllPlayersReady()
     {
-        Debug.Log("CheckAllPlayersReady");
+        //Debug.Log("CheckAllPlayersReady");
         if (roomPlayers.Count < 2) // 至少需要2个玩家
         {
             OnAllPlayersReady?.Invoke(false);

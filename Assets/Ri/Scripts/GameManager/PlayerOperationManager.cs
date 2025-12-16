@@ -16,6 +16,7 @@ using System.Linq;
 using SoundSystem;
 
 
+
 #if UNITY_EDITORR
 using static UnityEditor.PlayerSettings;
 using Mono.Cecil;
@@ -44,6 +45,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 是否可进行操作
     private bool bCanContinue = true;
+    public bool GetCanContinue() { return bCanContinue; }
 
     // 是否是当前玩家的回合
     private bool isMyTurn = false;
@@ -626,7 +628,7 @@ public class PlayerOperationManager : MonoBehaviour
 					if (IsAdjacentPosition(currentPos, targetPos))
 					{
 						// 在攻击范围内，直接攻击
-						Debug.Log("[攻击] 目标在攻击范围内，执行攻击");
+						//Debug.Log("[攻击] 目标在攻击范围内，执行攻击");
 
 						// 检查AP（攻击需要消耗1点AP）
 						if (!CheckUnitHasEnoughAP(currentPos, 1))
@@ -761,18 +763,18 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 // 选择新单位
                 SelectingUnit = localPlayerUnits[clickPos];
-                foreach (Transform child in SelectingUnit.transform)
-                {
-                    // 运行时动态添加组件
-                    if (child.gameObject.GetComponent<ChangeMaterial>() == null)
-                    {
-                        child.gameObject.AddComponent<ChangeMaterial>();
-                        child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
-                        child.gameObject.GetComponent<ChangeMaterial>().InitMat();
-                    }
-                    else
-                        break;
-                }
+                //foreach (Transform child in SelectingUnit.transform)
+                //{
+                //    // 运行时动态添加组件
+                //    if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+                //    {
+                //        child.gameObject.AddComponent<ChangeMaterial>();
+                //        child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                //        child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+                //    }
+                //    else
+                //        break;
+                //}
             
                 //SelectingUnit.GetComponent<ChangeMaterial>().Outline();
                 LastSelectingCellID = ClickCellid;
@@ -782,19 +784,22 @@ public class PlayerOperationManager : MonoBehaviour
                 PlayerDataManager.Instance.nowChooseUnitType = PlayerDataManager.Instance.GetUnitTypeIDBy2DPos(clickPos);
 
                 OnUnitChoosed?.Invoke(PlayerDataManager.Instance.nowChooseUnitID, PlayerDataManager.Instance.nowChooseUnitType);
-
-                foreach (Transform child in SelectingUnit.transform)
+                if (PlayerDataManager.Instance.nowChooseUnitType!=CardType.Building)
                 {
-                    if (child.GetComponent<ChangeMaterial>())
-                        child.GetComponent<ChangeMaterial>().Outline();
-                    else
+                    foreach (Transform child in SelectingUnit.transform)
                     {
-                        Debug.LogWarning("this transform now have ChangeMaterial");
-                        break;
+                        if (child.GetComponent<ChangeMaterial>())
+                            child.GetComponent<ChangeMaterial>().Outline();
+                        else
+                        {
+                            Debug.LogWarning("this transform not have ChangeMaterial "+transform.name);
+                            continue;
+                        }
+                        //Debug.Log("add outline");
                     }
-                    //Debug.Log("add outline");
+                    Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
                 }
-                Debug.Log($"选择了单位 ID: {PlayerDataManager.Instance.nowChooseUnitID},{PlayerDataManager.Instance.nowChooseUnitType}");
+               
             }
 
             else if (otherPlayersUnits.Count >= 1 && otherPlayersUnits[localPlayerId == 0 ? 1 : 0].ContainsKey(clickPos))
@@ -1121,7 +1126,7 @@ public class PlayerOperationManager : MonoBehaviour
         PieceManager.Instance.ProcessTurnStart(localPlayerId);
 
         // 移动摄像机到我方教皇
-        GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
+        //GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
         // 回合开始计算疯狂科学家教被动
         if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
         {
@@ -1190,11 +1195,11 @@ public class PlayerOperationManager : MonoBehaviour
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction + " Resource is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
+            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction);
 
             // 更新AP
             if(unit.UnitType!=CardType.Building)
-                UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID));
+                UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID), PieceManager.Instance.GetPieceAllAP(unit.UnitID));
 
             else
             {
@@ -1311,13 +1316,13 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.LogWarning($"更新玩家 {playerId} 的显示");
 
-        // 如果没有这个玩家的字典,创建一个
-        if (!otherPlayersUnits.ContainsKey(playerId))
-        {
-            otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
-        }
+        //// 如果没有这个玩家的字典,创建一个
+        //if (!otherPlayersUnits.ContainsKey(playerId))
+        //{
+        //    otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
+        //}
 
-        // ===== 修复1：更新领地显示 =====
+        // ===== 更新领地显示 =====
         if (data.PlayerOwnedCells != null && data.PlayerOwnedCells.Count > 0)
         {
             Debug.Log($"[显示更新] 玩家 {playerId} 拥有 {data.PlayerOwnedCells.Count} 个格子");
@@ -1331,41 +1336,7 @@ public class PlayerOperationManager : MonoBehaviour
             }
         }
 
-        // ===== 修复2：清理不存在的单位 =====
-        // 创建一个包含所有当前应该存在的位置的集合
-        HashSet<int2> currentPositions = new HashSet<int2>();
-        foreach (var unit in data.PlayerUnits)
-        {
-            currentPositions.Add(unit.Position);
-        }
-
-        // 找出并删除不应该存在的GameObject
-        List<int2> positionsToRemove = new List<int2>();
-        foreach (var kvp in otherPlayersUnits[playerId])
-        {
-            int2 pos = kvp.Key;
-            if (!currentPositions.Contains(pos))
-            {
-                // 这个位置的单位不应该存在，标记删除
-                positionsToRemove.Add(pos);
-                Debug.Log($"[显示更新] 标记删除过时的单位: ({pos.x},{pos.y})");
-            }
-        }
-
-        // 执行删除
-        foreach (int2 pos in positionsToRemove)
-        {
-            GameObject oldUnit = otherPlayersUnits[playerId][pos];
-            if (oldUnit != null)
-            {
-                Destroy(oldUnit);
-                Debug.Log($"[显示更新] 销毁过时的GameObject at ({pos.x},{pos.y})");
-            }
-            otherPlayersUnits[playerId].Remove(pos);
-            GameManage.Instance.SetCellObject(pos, null);
-        }
-
-        // ===== 修复3：更新或创建单位 =====
+        // ===== 更新单位 =====
         for (int i = 0; i < data.PlayerUnits.Count; i++)
         {
             PlayerUnitData unit = data.PlayerUnits[i];
@@ -1377,18 +1348,35 @@ public class PlayerOperationManager : MonoBehaviour
                 GameObject existingUnit = otherPlayersUnits[playerId][unit.Position];
 
                 // 更新HP
-                UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID,unit.PlayerUnitDataSO.currentHPLevel));
-                Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.PlayerUnitDataSO.piecetype} unitHp {unit.PlayerUnitDataSO.currentHP}");
+                if(unit.UnitType!=CardType.Building)
+                {
+                    UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHPLevel));
+                    PieceManager.Instance.UpdateEnemySyncData(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO);
+                    Debug.Log("enemy piece hp is "+PieceManager.Instance.GetPiece(unit.PlayerUnitDataSO.pieceID).CurrentHP);
+                }
+                else
+                {
+                    if(unit.BuildingData!=null)
+                    {
+                        GameManage.Instance._BuildingManager.UpdateEnemyBuildingSyncData(unit.PlayerUnitDataSO.pieceID, unit.BuildingData.Value.currentHP);
+                        UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.BuildingData.Value.currentHP);
+                        Debug.Log("enemy building hp is " + GameManage.Instance._BuildingManager.GetEnemyBuilding(unit.PlayerUnitDataSO.pieceID).CurrentHP);
+
+                    }
+
+                }
+              
+                Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.UnitType} unitHp {unit.PlayerUnitDataSO.currentHP}");
                 // 可以通过名称或其他方式验证是否是同一个单位
                 // 这里简单处理：如果位置已有单位，就跳过
-                Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
-                continue;
+                //Debug.Log($"[显示更新] 单位已存在于 ({unit.Position.x},{unit.Position.y})，跳过创建");
+                //continue;
             }
 
-            // 位置上没有GameObject，创建新的
-            Debug.LogWarning($"[显示更新] 创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}) player ID:{unit.PlayerUnitDataSO.currentPID} unit ID:{unit.PlayerUnitDataSO.pieceID}");
+            //// 位置上没有GameObject，创建新的
+            //Debug.LogWarning($"[显示更新] 创建敌方单位: {unit.PlayerUnitDataSO.piecetype} at ({unit.Position.x},{unit.Position.y}) player ID:{unit.PlayerUnitDataSO.currentPID} unit ID:{unit.PlayerUnitDataSO.pieceID}");
 
-            CreateEnemyUnit(playerId, unit);
+            //CreateEnemyUnit(playerId, unit);
 
 		
 		}
@@ -1421,7 +1409,23 @@ public class PlayerOperationManager : MonoBehaviour
 		}
 
 	}
+    private void GetStartWallEnemy(int cellID)
+    {
+        // 设定初始范围为1
+        List<int> cellIDs = _HexGrid.GetAllCellsWithinRange(1, cellID);
 
+        foreach (var c in cellIDs)
+        {
+            // 森林无法占领
+            if (_HexGrid.GetIsForest(c)) continue;
+            // 高于2级地形无法占领
+            if (_HexGrid.GetCell(c).Elevation > 2 || _HexGrid.GetCell(c).Elevation <= 0) continue;
+
+            _HexGrid.GetCell(c).Walled = true;
+            _HexGrid.GetCell(c).WallType = HexCell.Walls.WallEnemy;
+        }
+
+    }
     // 在指定的格子创建单位实例
     private void CreateUnitAtPosition(CardType unitType, int cellId)
     {
@@ -1489,6 +1493,18 @@ public class PlayerOperationManager : MonoBehaviour
 
         GameObject pieceObj = PieceManager.Instance.GetPieceGameObject();
 
+        foreach (Transform child in pieceObj.transform)
+        {
+            // 添加描边组件
+            if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+            {
+                child.gameObject.AddComponent<ChangeMaterial>();
+                child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+            }
+            else
+                continue;
+        }
         // 添加描边效果
         //pieceObj.AddComponent<ChangeMaterial>();
 
@@ -1516,7 +1532,7 @@ public class PlayerOperationManager : MonoBehaviour
         localPlayerUnits[position] = pieceObj;
         GameManage.Instance.SetCellObject(position, pieceObj);
 
-        Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
+        //Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
 
 
         // 发送网络消息
@@ -1619,98 +1635,110 @@ public class PlayerOperationManager : MonoBehaviour
 
 
 	// 创建敌方单位
-	private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
-    {
-        if (!PlayerBoardInforDict.ContainsKey(0))
-        {
-            Debug.LogWarning("棋盘信息未初始化");
-            return;
-        }
+	//private void CreateEnemyUnit(int playerId, PlayerUnitData unitData)
+ //   {
+ //       if (!PlayerBoardInforDict.ContainsKey(0))
+ //       {
+ //           Debug.LogWarning("棋盘信息未初始化");
+ //           return;
+ //       }
 
-        // 找到对应位置的世界坐标
-        Vector3 worldPos = Vector3.zero;
-        foreach (var board in PlayerBoardInforDict.Values)
-        {
-            if (board.Cells2DPos.Equals(unitData.Position))
-            {
-                worldPos = board.Cells3DPos;
-                break;
-            }
-        }
+ //       // 找到对应位置的世界坐标
+ //       Vector3 worldPos = Vector3.zero;
+ //       foreach (var board in PlayerBoardInforDict.Values)
+ //       {
+ //           if (board.Cells2DPos.Equals(unitData.Position))
+ //           {
+ //               worldPos = board.Cells3DPos;
+ //               break;
+ //           }
+ //       }
 
-        GameObject unit = null;
+ //       GameObject unit = null;
 
-        // 检查是否为建筑单位
-        if (unitData.IsBuilding() && unitData.BuildingData.HasValue)
-        {
-            // 这是建筑单位
-            syncBuildingData buildingData = unitData.BuildingData.Value;
-            Debug.Log($"创建敌方建筑: 玩家{playerId}, 建筑ID={buildingData.buildingID}, Name={buildingData.buildingName}");
+ //       // 检查是否为建筑单位
+ //       if (unitData.IsBuilding() && unitData.BuildingData.HasValue)
+ //       {
+ //           // 这是建筑单位
+ //           syncBuildingData buildingData = unitData.BuildingData.Value;
+ //           Debug.Log($"创建敌方建筑: 玩家{playerId}, 建筑ID={buildingData.buildingID}, Name={buildingData.buildingName}");
 
-            // 使用BuildingManager创建敌方建筑
-            bool success = GameManage.Instance._BuildingManager.CreateEnemyBuilding(buildingData);
-            if (success)
-            {
-                // 获取建筑GameObject（需要BuildingManager提供获取方法）
-                // 如果BuildingManager没有提供，可以通过位置查找
-                unit = GameManage.Instance._BuildingManager.GetBuildingGameObject();
-                if (GameManage.Instance._BuildingManager.GetBuildingGameObject() == null)
-                {
-                    Debug.LogWarning($"无法获取建筑GameObject: BuildingID={buildingData.buildingID}");
-                    // 创建一个占位符
-                    unit = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    unit.transform.position = worldPos;
-                }
-                // 创建UI
-                UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType,true);
-				Debug.Log($"敌方建筑创建成功");
-            }
-            else
-            {
-                Debug.LogError("创建敌方建筑失败！");
-                return;
-            }
-        }
-        else
-        {
+ //           // 使用BuildingManager创建敌方建筑
+ //           bool success = GameManage.Instance._BuildingManager.CreateEnemyBuilding(buildingData);
+ //           if (success)
+ //           {
+ //               // 获取建筑GameObject（需要BuildingManager提供获取方法）
+ //               // 如果BuildingManager没有提供，可以通过位置查找
+ //               unit = GameManage.Instance._BuildingManager.GetBuildingGameObject();
+ //               if (GameManage.Instance._BuildingManager.GetBuildingGameObject() == null)
+ //               {
+ //                   Debug.LogWarning($"无法获取建筑GameObject: BuildingID={buildingData.buildingID}");
+ //                   // 创建一个占位符
+ //                   unit = GameObject.CreatePrimitive(PrimitiveType.Cube);
+ //                   unit.transform.position = worldPos;
+ //               }
+ //               // 创建UI
+ //               UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType,true);
+	//			Debug.Log($"敌方建筑创建成功");
+ //           }
+ //           else
+ //           {
+ //               Debug.LogError("创建敌方建筑失败！");
+ //               return;
+ //           }
+ //       }
+ //       else
+ //       {
 
-            if (unitData.PlayerUnitDataSO.pieceID == 0)
-            {
-                Debug.Log("创建失败！ syncPieceData为空！");
-            }
-            Debug.Log("创建敌方单位 :玩家 " + playerId + " 单位: " + unitData.PlayerUnitDataSO.piecetype);
-            // 选择预制体
-            PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
+ //           if (unitData.PlayerUnitDataSO.pieceID == 0)
+ //           {
+ //               Debug.Log("创建失败！ syncPieceData为空！");
+ //           }
+ //           Debug.Log("创建敌方单位 :玩家 " + playerId + " 单位: " + unitData.PlayerUnitDataSO.piecetype);
+ //           // 选择预制体
+ //           PieceManager.Instance.CreateEnemyPiece(unitData.PlayerUnitDataSO);
 
-            GameObject prefab = PieceManager.Instance.GetPieceGameObject();
-            if (prefab == null)
-                prefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+ //           GameObject prefab = PieceManager.Instance.GetPieceGameObject();
+ //           if (prefab == null)
+ //               prefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
-            unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
-            unit.transform.position = new Vector3(
-                unit.transform.position.x,
-                unit.transform.position.y ,
-                unit.transform.position.z
-            );
+ //           unit = Instantiate(prefab, worldPos, prefab.transform.rotation);
+ //           unit.transform.position = new Vector3(
+ //               unit.transform.position.x,
+ //               unit.transform.position.y ,
+ //               unit.transform.position.z
+ //           );
+
+ //           foreach (Transform child in unit.transform)
+ //           {
+ //               // 添加描边组件
+ //               if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+ //               {
+ //                   child.gameObject.AddComponent<ChangeMaterial>();
+ //                   child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+ //                   child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+ //               }
+ //               else
+ //                   continue;
+ //           }
 
 
+ //           // 保存引用
+ //           if (!otherPlayersUnits.ContainsKey(playerId))
+ //           {
+ //               otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
+ //           }
+ //           otherPlayersUnits[playerId][unitData.Position] = unit;
+ //           GameManage.Instance.SetCellObject(unitData.Position, unit);
 
-            // 保存引用
-            if (!otherPlayersUnits.ContainsKey(playerId))
-            {
-                otherPlayersUnits[playerId] = new Dictionary<int2, GameObject>();
-            }
-            otherPlayersUnits[playerId][unitData.Position] = unit;
-            GameManage.Instance.SetCellObject(unitData.Position, unit);
+	//		//Debug.Log("开始查询敌方单位位置");
+	//		//PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
+	//		// 创建UI
+	//		UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType,true);
+ //           UnitStatusUIManager.Instance.UpdateHPByID(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP);
 
-			//Debug.Log("开始查询敌方单位位置");
-			//PlayerDataManager.Instance.GetUnitPos(unitData.UnitID);
-			// 创建UI
-			UnitStatusUIManager.Instance.CreateStatusUI(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP, 0, transform, unitData.UnitType,true);
-            UnitStatusUIManager.Instance.UpdateHPByID(unitData.PlayerUnitDataSO.pieceID, unitData.PlayerUnitDataSO.currentHP);
-
-        }
-    }
+ //       }
+ //   }
 
     #endregion
 
@@ -2090,20 +2118,27 @@ public class PlayerOperationManager : MonoBehaviour
     // 取消选择单位的描边
     private void ReturnToDefault()
     {
-        if (SelectingUnit != null)
+        if (SelectingUnit != null && PlayerDataManager.Instance.nowChooseUnitType != CardType.Building)
         {
-            Debug.Log("bow selecting unit is " + SelectingUnit == null ? 0 : SelectingUnit.name);
+            //Debug.Log("bow selecting unit is " + SelectingUnit == null ? 0 : SelectingUnit.name);
             foreach (Transform child in SelectingUnit.transform)
             {
 
                 child.GetComponent<ChangeMaterial>().Default();
-                SelectingUnit = null;
             }
+            SelectingUnit = null;
             PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
             PlayerDataManager.Instance.nowChooseUnitID = -1;
             bCanContinue = true;
 
-          
+
+        }
+        else
+        {
+            SelectingUnit = null;
+            PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
+            PlayerDataManager.Instance.nowChooseUnitID = -1;
+            bCanContinue = true;
         }
     }
     private void ChooseEmptyCell(int cell)
@@ -2385,7 +2420,7 @@ public class PlayerOperationManager : MonoBehaviour
                 Debug.Log("复活成功！当前建筑HP:"+ buildData.currentHP);
             }
               
-            Debug.Log($"建筑创建成功: ID={buildData.buildingID}, Name={buildData.buildingName}, PlayerID={buildData.playerID}");
+            //Debug.Log($"建筑创建成功: ID={buildData.buildingID}, Name={buildData.buildingName}, PlayerID={buildData.playerID}");
            
             // 判断是否在金矿上
             if(_HexGrid.GetCellIsGoldenMine(cellID))
@@ -2425,12 +2460,14 @@ public class PlayerOperationManager : MonoBehaviour
             if (GameManage.Instance._BuildingManager.GetBuildingGameObject() != null)
             {
                 localPlayerUnits[buildingPos2D] = GameManage.Instance._BuildingManager.GetBuildingGameObject();
-                Debug.Log($"建筑GameObject已添加到localPlayerUnits");
+                //Debug.Log($"建筑GameObject已添加到localPlayerUnits");
             }
             // 添加PlayerDataManager中的位置映射
             PlayerDataManager.Instance.AddBuildingUnit(localPlayerId, buildData.buildingID);
             // 添加描边效果
-            GameManage.Instance._BuildingManager.GetBuildingGameObject().AddComponent<ChangeMaterial>();
+            //GameManage.Instance._BuildingManager.GetBuildingGameObject().AddComponent<ChangeMaterial>();
+            RecursiveFindBuildingTransform(GameManage.Instance._BuildingManager.GetBuildingGameObject().transform);
+
 
             GameManage.Instance.SetCellObject(buildingPos2D, GameManage.Instance._BuildingManager.GetBuildingGameObject());
             Debug.Log($"建筑已作为Unit添加到PlayerData.PlayerUnits: BuildingID={buildData.buildingID}");
@@ -2474,6 +2511,28 @@ public class PlayerOperationManager : MonoBehaviour
         }
     }
 
+    private void  RecursiveFindBuildingTransform(Transform parent)
+    {
+        // 遍历当前父物体的直接子物体
+        foreach (Transform child in parent)
+        {
+            //Debug.Log("遍历到: " + child.name);
+
+            //在这里处理你的逻辑...
+            // 添加描边组件
+            if (child.gameObject.GetComponent<ChangeMaterial>() == null && child.gameObject.GetComponent<MeshRenderer>() != null)
+            {
+                child.gameObject.AddComponent<ChangeMaterial>();
+                child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+            }
+            // 关键点：如果这个子物体还有子物体，继续向下深入
+            if (child.childCount > 0)
+            {
+                RecursiveFindBuildingTransform(child);
+            }
+        }
+    }
     // 检查指定位置的单位是否有足够的AP执行动作
     private bool CheckUnitHasEnoughAP(int2 position, int requiredAP = 1)
     {
@@ -3041,7 +3100,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             if (updateSuccess)
             {
-                Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
+                //Debug.Log($"[ExecuteAttack] ✓ 已同步目标HP到PlayerDataManager: {targetSyncData.Value.currentHP}");
             }
             else
             {
@@ -3053,7 +3112,7 @@ public class PlayerOperationManager : MonoBehaviour
             bool targetDied = targetSyncData.Value.currentHP <= 0;
             Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
           
-                if (targetDied)
+            if (targetDied)
             {
                 // 目标死亡，攻击者前进到目标位置
                 Debug.Log("[ExecuteAttack] 目标死亡，攻击者前进到目标位置");
@@ -3164,6 +3223,7 @@ public class PlayerOperationManager : MonoBehaviour
             }
         }
         // 更新AP
+        Debug.Log("attack after ap is "+ PieceManager.Instance.GetPieceAP(attackerPieceID));
         UnitStatusUIManager.Instance.UpdateAPByID(attackerPieceID,PieceManager.Instance.GetPieceAP(attackerPieceID));
     }
 
@@ -3410,6 +3470,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             destroySequence.OnComplete(() =>
             {
+                //移除UI
+                UnitStatusUIManager.Instance.RemoveStatusUI(msg.BuildingID);
+
                 // 1. 销毁建筑GameObject
                 Destroy(buildingObj);
                 Debug.Log($"[网络建筑攻击] 建筑GameObject已销毁");
@@ -3433,7 +3496,7 @@ public class PlayerOperationManager : MonoBehaviour
                 }
                 BuildingRuins[localPlayerId][RuinID] = ruin;
                 RuinID++;
-             
+
                 // 获取当前cell的ID
                 int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
 
@@ -4067,8 +4130,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
         else
         {
-
-            Debug.Log("已找到对方数据: " + targetData.Value.PlayerUnitDataSO.piecetype);
+            Debug.Log("玩家ID: " + targetOwnerId + "已找到对方数据: " + targetData.Value.PlayerUnitDataSO.piecetype);
         }
         // 获取双方的 PieceID
         int missionaryPieceID = missionaryData.Value.PlayerUnitDataSO.pieceID;
@@ -4090,13 +4152,20 @@ public class PlayerOperationManager : MonoBehaviour
 			ReturnToDefault();
             return;
         }
+        if (targetData.Value.PlayerUnitDataSO.hasBeenCharmed)
+        {
+            Debug.Log("不能魅惑已被魅惑过的单位！");
+            OperationBroadcastManager.Instance.ShowMessage("すでに洗脳状態のユニットには使用できません。");
+            ReturnToDefault();
+            return;
+        }
         // 调用PieceManager的ConvertEnemy方法
-        if(PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID)==null)
+        if (PieceManager.Instance.ConvertEnemy(missionaryPieceID, targetPieceID)==null)
         {
             Debug.Log("[ExecuteCharm] 魅惑失败");
 			OperationBroadcastManager.Instance.ShowMessage("洗脳失敗しました。");
 
-            EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
+            //EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
 			
             //更新传教士AP
 			UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID, PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
@@ -4105,9 +4174,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             return;
         }
-        syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
-
-        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
+        syncPieceData convertResult = targetData.Value.PlayerUnitDataSO;
+        convertResult.hasBeenCharmed = true;
+        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype+"piece hp is "+convertResult.currentHP);
 
         // 获取目标GameObject（需要转移到本地玩家）
         GameObject targetUnit = null;
@@ -4154,9 +4223,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
 
-            // 魅惑持续
-			EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
-
+        
 			// 2025.11.14 Guoning 添加魅惑音效
 			SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
 
@@ -4170,10 +4237,13 @@ public class PlayerOperationManager : MonoBehaviour
             UnitStatusUIManager.Instance.RemoveStatusUI(targetPieceID);
 
             UnitStatusUIManager.Instance.CreateStatusUI(targetPieceID,
-                (int)PieceManager.Instance.GetPieceHP(targetPieceID),
-                 PieceManager.Instance.GetPieceAP(targetPieceID),
+                 convertResult.currentHP,
+                 convertResult.currentAP,
                   targetUnit.transform,
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
+
+            // 魅惑持续
+            EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
 
 
 
@@ -4296,7 +4366,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
-            EffectManager.Instance.PlayCharmEffect(targetUnit.transform,Vector3.zero, Quaternion.identity, true);
+            EffectManager.Instance.PlayCharmEffect(null,Vector3.zero, Quaternion.identity, true);
 
 			// 移除本地HP显示
 			UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
@@ -4438,7 +4508,6 @@ public class PlayerOperationManager : MonoBehaviour
 
             Debug.Log($"[网络魅惑过期] 单位GameObject已归还 - 从玩家{msg.CurrentOwnerId}到玩家{msg.OriginalOwnerId}");
 
-            // 创建显示敌人的UI
             // 更新UI    
             UnitStatusUIManager.Instance.RemoveStatusUI(msg.UnitID);
               // 添加本地HP显示
@@ -4446,7 +4515,7 @@ public class PlayerOperationManager : MonoBehaviour
                 (int) PieceManager.Instance.GetPieceHP(msg.UnitID),
                   PieceManager.Instance.GetPieceAP(msg.UnitID),
                    unitObj.transform,
-                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype),true);
+                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype),false);
             // 添加本地HP显示
             UnitStatusUIManager.Instance.UpdateHPByID(msg.UnitID, (int)PieceManager.Instance.GetPieceHP(msg.UnitID)); 
 
@@ -4512,11 +4581,11 @@ public class PlayerOperationManager : MonoBehaviour
             //// 创建显示敌人的UI
             // 更新UI    
             UnitStatusUIManager.Instance.CreateStatusUI(expireInfo.UnitID,
-                PieceManager.Instance.GetPieceAllHP(expireInfo.UnitID),
+                expireInfo.UnitData.PlayerUnitDataSO.currentHP,
                   0,
                   unitObj.transform,
                     expireInfo.UnitData.UnitType,true);
-            UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID, (int)PieceManager.Instance.GetPieceHP(expireInfo.UnitID));
+            UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID, expireInfo.UnitData.PlayerUnitDataSO.currentHP);
 
         }
         else
@@ -4662,6 +4731,8 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[网络创建] 玩家 {msg.PlayerId} 创建单位: {unitType} at ({pos.x},{pos.y})");
 
+       
+
         if (unitType == CardType.Building)
         {
             bool success = GameManage.Instance._BuildingManager.CreateEnemyBuilding((syncBuildingData)msg.BuildingData);
@@ -4688,18 +4759,18 @@ public class PlayerOperationManager : MonoBehaviour
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方建筑 ID:{msg.NewUnitSyncData.pieceID}");
                   
                     // 添加HP
-                    if(msg.UnitType!=(int)CardType.Building)
-                    {
-                        UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, CardType.Building, true);
-                        UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
+                    //if(msg.UnitType!=(int)CardType.Building)
+                    //{
+                    //    UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, CardType.Building, true);
+                    //    UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
 
-                    }
-                    else
-                    {
+                    //}
+                    //else
+                    //{
                         UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.BuildingData.Value.currentHP, 0, unitObj.transform, CardType.Building, true);
                         UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.BuildingData.Value.currentHP);
 
-                    }
+                    //}
 
 
                 }
@@ -4730,6 +4801,18 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         otherPlayersUnits[msg.PlayerId] = new Dictionary<int2, GameObject>();
                     }
+                    foreach (Transform child in unitObj.transform)
+                    {
+                        // 添加描边组件
+                        if (child.gameObject.GetComponent<ChangeMaterial>() == null)
+                        {
+                            child.gameObject.AddComponent<ChangeMaterial>();
+                            child.gameObject.GetComponent<ChangeMaterial>().OutlineMat = Resources.Load<Material>("RI/OutLineMat");
+                            child.gameObject.GetComponent<ChangeMaterial>().InitMat();
+                        }
+                        else
+                            continue;
+                    }
 
                     // 保存到其他玩家单位字典
                     otherPlayersUnits[msg.PlayerId][pos] = unitObj;
@@ -4738,7 +4821,11 @@ public class PlayerOperationManager : MonoBehaviour
                     GameManage.Instance.SetCellObject(pos, unitObj);
 
                     Debug.Log($"[HandleNetworkAddUnit] 成功创建敌方单位 ID:{msg.NewUnitSyncData.pieceID}");
-
+                    if (msg.UnitType ==(int) CardType.Pope)
+                    {
+                        int id=_HexGrid.GetCell(pos.x, pos.y).Index;
+                        GetStartWallEnemy(id);
+                    }
                     // 添加HP
                     UnitStatusUIManager.Instance.CreateStatusUI(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP, 0, unitObj.transform, PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.NewUnitSyncData.piecetype), true);
                     UnitStatusUIManager.Instance.UpdateHPByID(msg.NewUnitSyncData.pieceID, msg.NewUnitSyncData.currentHP);
@@ -4969,7 +5056,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[SyncBuildingDestruction] 已发送建筑摧毁同步消息");
     }
-
+ 
     /// <summary>
     /// 本地玩家攻击后调用此方法进行网络同步
     /// 在攻击完成后调用

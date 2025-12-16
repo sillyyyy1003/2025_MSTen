@@ -551,7 +551,7 @@ public class GameManage : MonoBehaviour
         }
 
         //Debug.Log($"玩家 {LocalPlayerID} 结束回合");
-
+        PieceManager.Instance.ProcessTurnEnd(LocalPlayerID);
         // 处理被魅惑单位的倒计时和归还
         List<CharmExpireInfo> expiredUnits = _PlayerDataManager.UpdateCharmedUnits(LocalPlayerID);
 
@@ -569,7 +569,7 @@ public class GameManage : MonoBehaviour
 
         // 获取本地玩家数据
         PlayerData localData = _PlayerDataManager.GetPlayerData(LocalPlayerID);
-
+      
         // 创建回合结束消息
         TurnEndMessage turnEndMsg = new TurnEndMessage
         {
@@ -577,7 +577,7 @@ public class GameManage : MonoBehaviour
 
             PlayerDataJson = SerializablePlayerData.FromPlayerData(localData)
         };
-        Debug.Log("other player id is "+ OtherPlayerID);
+        //Debug.Log("other player id is "+ OtherPlayerID);
         _GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(OtherPlayerID));
         // 发送到网络
         if (NetGameSystem.Instance != null)
@@ -615,7 +615,7 @@ public class GameManage : MonoBehaviour
             };
 
             NetGameSystem.Instance.SendMessage(NetworkMessageType.TURN_START, turnStartData);
-            Debug.Log($"[服务器] 已广播 TURN_START 消息");
+            //Debug.Log($"[服务器] 已广播 TURN_START 消息");
         }
 
         StartTurn(nextPlayerId);
