@@ -792,8 +792,8 @@ public class PlayerOperationManager : MonoBehaviour
                             child.GetComponent<ChangeMaterial>().Outline();
                         else
                         {
-                            Debug.LogWarning("this transform now have ChangeMaterial");
-                            break;
+                            Debug.LogWarning("this transform not have ChangeMaterial "+transform.name);
+                            continue;
                         }
                         //Debug.Log("add outline");
                     }
