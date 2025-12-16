@@ -3226,8 +3226,8 @@ public class PlayerOperationManager : MonoBehaviour
             }
         }
         // 更新AP
-        Debug.Log("attack after ap is "+ PieceManager.Instance.GetPieceAP(attackerPieceID));
-        UnitStatusUIManager.Instance.UpdateAPByID(attackerPieceID,PieceManager.Instance.GetPieceAP(attackerPieceID));
+        UnitStatusUIManager.Instance.UpdateAPByID(attackerPieceID, PieceManager.Instance.GetPieceAP(attackerPieceID));
+        Debug.Log("attack after ap is " + PieceManager.Instance.GetPieceAP(attackerPieceID));
     }
 
 
@@ -3955,7 +3955,13 @@ public class PlayerOperationManager : MonoBehaviour
                         GameManage.Instance.SetCellObject(attackerCurrentPos, null);
                         GameManage.Instance.SetCellObject(targetPos, attackerObj);
 
-
+                        // 从PieceManager中移除被击杀的目标
+                        PlayerUnitData? deadTargetData = PlayerDataManager.Instance.FindUnit(targetPlayerId, targetPos);
+                        if (deadTargetData.HasValue)
+                        {
+                            PieceManager.Instance.RemovePiece(deadTargetData.Value.UnitID);
+                            Debug.Log($"[HandleTargetDestroyedAfterAttack] 已从PieceManager移除被击杀单位 ID:{deadTargetData.Value.UnitID}");
+                        }
 
                         // 播放前进动画
                         attackerObj.transform.DOMove(targetWorldPos, MoveSpeed * 0.5f).OnComplete(() =>
@@ -3965,13 +3971,7 @@ public class PlayerOperationManager : MonoBehaviour
                             Destroy(targetObj);
                         });
 
-                        // 从PieceManager中移除被击杀的目标
-                        PlayerUnitData? deadTargetData = PlayerDataManager.Instance.FindUnit(targetPlayerId, targetPos);
-                        if (deadTargetData.HasValue && PieceManager.Instance != null)
-                        {
-                            PieceManager.Instance.RemovePiece(deadTargetData.Value.UnitID);
-                            Debug.Log($"[HandleTargetDestroyedAfterAttack] 已从PieceManager移除被击杀单位 ID:{deadTargetData.Value.UnitID}");
-                        }
+                       
                     });
 
              
