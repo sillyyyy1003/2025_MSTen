@@ -1404,6 +1404,7 @@ public class PlayerDataManager : MonoBehaviour
 
                     if (unit.charmedRemainingTurns <= 0)
                     {
+                        //Debug.Log("charm turn is "+unit.charmedRemainingTurns);
                         // 魅惑效果已过期，需要归还控制权
                         expiredUnits.Add(new CharmExpireInfo
                         {

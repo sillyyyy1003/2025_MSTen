@@ -36,7 +36,7 @@ MonoBehaviour:
     type: 3}
   occupyAPCost: 2
   convertAPCost: 3
-  conversionTurnDuration: 02000000030000000400000005000000
+  conversionTurnDuration: 03000000030000000300000003000000
   baseConversionDefenseChance: 0.2
   occupyEmptySuccessRateByLevel:
   - 0.8
