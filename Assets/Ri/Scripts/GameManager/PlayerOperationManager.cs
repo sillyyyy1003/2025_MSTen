@@ -4233,7 +4233,7 @@ public class PlayerOperationManager : MonoBehaviour
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
 
             // 魅惑持续
-            EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
+            EffectManager.Instance.PlayCharmEffect(targetUnit.transform, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
 
 
 
@@ -4506,7 +4506,7 @@ public class PlayerOperationManager : MonoBehaviour
                 (int) PieceManager.Instance.GetPieceHP(msg.UnitID),
                   PieceManager.Instance.GetPieceAP(msg.UnitID),
                    unitObj.transform,
-                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype),true);
+                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype),false);
             // 添加本地HP显示
             UnitStatusUIManager.Instance.UpdateHPByID(msg.UnitID, (int)PieceManager.Instance.GetPieceHP(msg.UnitID)); 
 
