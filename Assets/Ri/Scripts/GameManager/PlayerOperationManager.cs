@@ -1532,7 +1532,7 @@ public class PlayerOperationManager : MonoBehaviour
         localPlayerUnits[position] = pieceObj;
         GameManage.Instance.SetCellObject(position, pieceObj);
 
-        Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
+        //Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
 
 
         // 发送网络消息
@@ -2420,7 +2420,7 @@ public class PlayerOperationManager : MonoBehaviour
                 Debug.Log("复活成功！当前建筑HP:"+ buildData.currentHP);
             }
               
-            Debug.Log($"建筑创建成功: ID={buildData.buildingID}, Name={buildData.buildingName}, PlayerID={buildData.playerID}");
+            //Debug.Log($"建筑创建成功: ID={buildData.buildingID}, Name={buildData.buildingName}, PlayerID={buildData.playerID}");
            
             // 判断是否在金矿上
             if(_HexGrid.GetCellIsGoldenMine(cellID))
@@ -2460,7 +2460,7 @@ public class PlayerOperationManager : MonoBehaviour
             if (GameManage.Instance._BuildingManager.GetBuildingGameObject() != null)
             {
                 localPlayerUnits[buildingPos2D] = GameManage.Instance._BuildingManager.GetBuildingGameObject();
-                Debug.Log($"建筑GameObject已添加到localPlayerUnits");
+                //Debug.Log($"建筑GameObject已添加到localPlayerUnits");
             }
             // 添加PlayerDataManager中的位置映射
             PlayerDataManager.Instance.AddBuildingUnit(localPlayerId, buildData.buildingID);

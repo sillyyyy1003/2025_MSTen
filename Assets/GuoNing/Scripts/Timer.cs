@@ -61,7 +61,7 @@ public class Timer : MonoBehaviour
                 currentTurnTime = 0;
                 isUsingTimePool = true;
                 OnTimePoolStarted?.Invoke();
-                Debug.Log("Timer: 开始使用倒计时池");
+                //Debug.Log("Timer: 开始使用倒计时池");
             }
         }
         else

@@ -308,7 +308,7 @@ public class BuildingManager : MonoBehaviour
             if (allBuildingTypes[i].buildingName == sbd.buildingName)
             {
                 buildingData = allBuildingTypes[i];
-                Debug.Log("can find building data!!!!!");
+                //Debug.Log("can find building data!!!!!");
 
             }
         }
