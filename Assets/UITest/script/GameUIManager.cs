@@ -1042,7 +1042,7 @@ public class GameUIManager : MonoBehaviour
     private void HandleEndTurnButtonPressed()
     {
         //25.12.16 ri return while operation is doing
-        if (GameManage.Instance._PlayerOperation.GetCanContinue())
+        if (!GameManage.Instance._PlayerOperation.GetCanContinue())
         {
             return;
         }
