@@ -2573,16 +2573,16 @@ public class NetGameSystem : MonoBehaviour
             if (data.TargetDestroyed)
             {
                 // 目标被摧毁，从 PlayerDataManager 移除
-                bool targetRemoved = playerDataManager.RemoveUnit(data.TargetPlayerId, targetPos);
+                //bool targetRemoved = playerDataManager.RemoveUnit(data.TargetPlayerId, targetPos);
 
-                if (targetRemoved)
-                {
-                    Debug.Log($"[网络] 目标单位已从PlayerDataManager移除");
-                }
-                else
-                {
-                    Debug.LogWarning($"[网络] ✗ 从PlayerDataManager移除目标失败");
-                }
+                //if (targetRemoved)
+                //{
+                //    Debug.Log($"[网络] 目标单位已从PlayerDataManager移除");
+                //}
+                //else
+                //{
+                //    Debug.LogWarning($"[网络] ✗ 从PlayerDataManager移除目标失败");
+                //}
             }
             else if (data.TargetSyncData.HasValue)
             {

@@ -87,6 +87,8 @@ public class UnitStatusUIManager : MonoBehaviour
 	/// <returns></returns>
 	public bool UpdateAPByID(int id, int ap)
 	{
+		//25,12,16 ri add debug
+		Debug.Log($"  ID {id} ap is  {ap}.");
 		if (units.TryGetValue(id, out var ui))
 		{
 			ui.SetAP(ap);

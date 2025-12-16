@@ -3963,6 +3963,10 @@ public class PlayerOperationManager : MonoBehaviour
                             Debug.Log($"[HandleTargetDestroyedAfterAttack] 已从PieceManager移除被击杀单位 ID:{deadTargetData.Value.UnitID}");
                         }
 
+                        // 从PlayerData中移除被击杀的目标
+                        PlayerDataManager.Instance.RemoveUnit(targetPlayerId, targetPos);
+
+
                         // 播放前进动画
                         attackerObj.transform.DOMove(targetWorldPos, MoveSpeed * 0.5f).OnComplete(() =>
                         {
