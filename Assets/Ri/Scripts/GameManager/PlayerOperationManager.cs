@@ -2341,6 +2341,9 @@ public class PlayerOperationManager : MonoBehaviour
 
 				// 2025.11.14 Guoning 音声再生
 				SoundManager.Instance.PlaySE(TYPE_SE.HEAL);
+
+                //更新UI  
+                UnitStatusUIManager.Instance.UpdateHPByID(data.Value.UnitID, targetSyncData.Value.currentHP);
 			}
         }
 

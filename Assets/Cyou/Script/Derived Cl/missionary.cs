@@ -276,35 +276,36 @@ public class Missionary : Piece
     /// </summary>
     public override void TakeDamage(int damage, Piece attacker = null)
     {
-        if (HasAntiConversionSkill() && attacker is Missionary)
-        {
-            Debug.Log("魅惑敵性スキル発動：敵の変換を無効化しました");
-            base.TakeDamage(damage, attacker);
-            return;
-        }
+        // 25.12.16 ri delete this
+        //if (HasAntiConversionSkill() && attacker is Missionary)
+        //{
+        //    Debug.Log("魅惑敵性スキル発動：敵の変換を無効化しました");
+        //    base.TakeDamage(damage, attacker);
+        //    return;
+        //}
 
-        // 特殊防御判定（攻撃者の種類に応じた成功率）
-        if (attacker != null && attacker.CurrentPID != currentPID)
-        {
-            float defenseChance = GetConversionChanceByPieceType(attacker);
-            if (UnityEngine.Random.value < defenseChance)
-            {
-                // 升級1以上の宣教師・十字軍に対しては即死
-                bool shouldInstantKill = attacker.UpgradeLevel >= 1 && (attacker is Missionary || attacker is MilitaryUnit);
+        //// 特殊防御判定（攻撃者の種類に応じた成功率）
+        //if (attacker != null && attacker.CurrentPID != currentPID)
+        //{
+        //    float defenseChance = GetConversionChanceByPieceType(attacker);
+        //    if (UnityEngine.Random.value < defenseChance)
+        //    {
+        //        // 升級1以上の宣教師・十字軍に対しては即死
+        //        bool shouldInstantKill = attacker.UpgradeLevel >= 1 && (attacker is Missionary || attacker is MilitaryUnit);
 
-                if (shouldInstantKill)
-                {
-                    Debug.Log($"防御時魅惑成功！{attacker.Data.pieceName}（升級{attacker.UpgradeLevel}）は即死しました！（成功率: {defenseChance * 100:F0}%）");
-                    attacker.TakeDamage(attacker.CurrentHP, this); // 即死ダメージ
-                }
-                else
-                {
-                    ConvertEnemy(attacker);
-                    Debug.Log($"防御時に{attacker.Data.pieceName}を自軍に変換しました！（成功率: {defenseChance * 100:F0}%）");
-                }
-                return;
-            }
-        }
+        //        if (shouldInstantKill)
+        //        {
+        //            Debug.Log($"防御時魅惑成功！{attacker.Data.pieceName}（升級{attacker.UpgradeLevel}）は即死しました！（成功率: {defenseChance * 100:F0}%）");
+        //            attacker.TakeDamage(attacker.CurrentHP, this); // 即死ダメージ
+        //        }
+        //        else
+        //        {
+        //            ConvertEnemy(attacker);
+        //            Debug.Log($"防御時に{attacker.Data.pieceName}を自軍に変換しました！（成功率: {defenseChance * 100:F0}%）");
+        //        }
+        //        return;
+        //    }
+        //}
 
         base.TakeDamage(damage, attacker);
     }
