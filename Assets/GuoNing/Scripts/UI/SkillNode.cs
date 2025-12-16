@@ -167,7 +167,11 @@ public class SkillNode : MonoBehaviour
 		UpgradePieces(techTree, pieceType);
 
         // 消耗资源
-        int cost = GetUpgradeCostByTechType(skillIndex);
+        //25.12.16 ri change skillindex
+        int cost = GetUpgradeCostByTechType(skillIndex-1);
+		//Debug.Log("upgrade cost is "+cost);
+
+        //int cost = GetUpgradeCostByTechType(skillIndex);
 		int playerId = GameManage.Instance.LocalPlayerID;
 		int res = PlayerDataManager.Instance.GetPlayerData(playerId).Resources;
 		res -= cost;

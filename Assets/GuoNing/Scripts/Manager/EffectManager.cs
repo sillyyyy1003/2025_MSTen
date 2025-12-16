@@ -307,7 +307,8 @@ public class EffectManager : MonoBehaviour
 			effectType,
 			position,
 			rotation,
-			isLoop: false,
+			//25,12,16 RI change loop to true
+			isLoop: true,
 			parent: target
 		);
 

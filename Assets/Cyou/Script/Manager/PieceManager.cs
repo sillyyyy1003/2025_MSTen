@@ -1823,7 +1823,18 @@ public class PieceManager : MonoBehaviour
         return syncPieceData.CreateFromPiece(piece);
     }
 
+    // 25.12.16 RI Enemy同期処理
+    public bool UpdateEnemySyncData(int id, syncPieceData data)
+    {
+        if (!allPieces.TryGetValue(id, out Piece piece))
+        {
+            Debug.LogError($"[ UpdateEnemySyncData]駒が見つかりません: ID={id}");
+            return false;
+        }
+        return allPieces[id].UpdateDataBySyncData(data);
+    }
 
+  
     // 25.11.17 RI HP同期処理
     public void SyncPieceHP(syncPieceData data)
     {

@@ -410,14 +410,14 @@ public class PlayerDataManager : MonoBehaviour
             allPlayersData[playerId] = new PlayerData(playerId);
          
             //allPlayersData[playerId].SetReligion();
-            Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
         }
         else
         {
             Debug.LogWarning($"PlayerDataManager: 玩家 {playerId} 已存在");
         }
         PieceManager.Instance.SetPieceRligion(allPlayersData[playerId].PlayerReligion);
-    
+        Debug.Log($"PlayerDataManager: 创建玩家 {playerId} 宗教{allPlayersData[playerId].PlayerReligion}");
+
     }
     // 设置人口 放置在Create之后
     public void SetPlayerPopulationCost()
@@ -456,7 +456,7 @@ public class PlayerDataManager : MonoBehaviour
             return allPlayersData[playerId];
         }
 
-        Debug.LogWarning($"PlayerDataManager: 找不到玩家 {playerId}");
+        //Debug.LogWarning($"PlayerDataManager: 找不到玩家 {playerId}");
         return default;
     }
 
@@ -1404,6 +1404,7 @@ public class PlayerDataManager : MonoBehaviour
 
                     if (unit.charmedRemainingTurns <= 0)
                     {
+                        //Debug.Log("charm turn is "+unit.charmedRemainingTurns);
                         // 魅惑效果已过期，需要归还控制权
                         expiredUnits.Add(new CharmExpireInfo
                         {

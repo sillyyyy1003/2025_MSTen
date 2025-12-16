@@ -16,6 +16,7 @@ using System.Linq;
 using SoundSystem;
 
 
+
 #if UNITY_EDITORR
 using static UnityEditor.PlayerSettings;
 using Mono.Cecil;
@@ -44,6 +45,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 是否可进行操作
     private bool bCanContinue = true;
+    public bool GetCanContinue() { return bCanContinue; }
 
     // 是否是当前玩家的回合
     private bool isMyTurn = false;
@@ -790,8 +792,8 @@ public class PlayerOperationManager : MonoBehaviour
                             child.GetComponent<ChangeMaterial>().Outline();
                         else
                         {
-                            Debug.LogWarning("this transform now have ChangeMaterial");
-                            break;
+                            Debug.LogWarning("this transform not have ChangeMaterial "+transform.name);
+                            continue;
                         }
                         //Debug.Log("add outline");
                     }
@@ -1349,11 +1351,19 @@ public class PlayerOperationManager : MonoBehaviour
                 if(unit.UnitType!=CardType.Building)
                 {
                     UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHPLevel));
+                    PieceManager.Instance.UpdateEnemySyncData(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO);
+                    Debug.Log("enemy piece hp is "+PieceManager.Instance.GetPiece(unit.PlayerUnitDataSO.pieceID).CurrentHP);
                 }
                 else
                 {
                     if(unit.BuildingData!=null)
-                        UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID,GameManage.Instance._BuildingManager.GetEnemyBuilding(unit.PlayerUnitDataSO.pieceID).CurrentHP);
+                    {
+                        GameManage.Instance._BuildingManager.UpdateEnemyBuildingSyncData(unit.PlayerUnitDataSO.pieceID, unit.BuildingData.Value.currentHP);
+                        UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.BuildingData.Value.currentHP);
+                        Debug.Log("enemy building hp is " + GameManage.Instance._BuildingManager.GetEnemyBuilding(unit.PlayerUnitDataSO.pieceID).CurrentHP);
+
+                    }
+
                 }
               
                 Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.UnitType} unitHp {unit.PlayerUnitDataSO.currentHP}");
@@ -1522,7 +1532,7 @@ public class PlayerOperationManager : MonoBehaviour
         localPlayerUnits[position] = pieceObj;
         GameManage.Instance.SetCellObject(position, pieceObj);
 
-        Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
+        //Debug.Log($"在ID:  ({cellId}) 创建了 {unitType}");
 
 
         // 发送网络消息
@@ -2410,7 +2420,7 @@ public class PlayerOperationManager : MonoBehaviour
                 Debug.Log("复活成功！当前建筑HP:"+ buildData.currentHP);
             }
               
-            Debug.Log($"建筑创建成功: ID={buildData.buildingID}, Name={buildData.buildingName}, PlayerID={buildData.playerID}");
+            //Debug.Log($"建筑创建成功: ID={buildData.buildingID}, Name={buildData.buildingName}, PlayerID={buildData.playerID}");
            
             // 判断是否在金矿上
             if(_HexGrid.GetCellIsGoldenMine(cellID))
@@ -2450,7 +2460,7 @@ public class PlayerOperationManager : MonoBehaviour
             if (GameManage.Instance._BuildingManager.GetBuildingGameObject() != null)
             {
                 localPlayerUnits[buildingPos2D] = GameManage.Instance._BuildingManager.GetBuildingGameObject();
-                Debug.Log($"建筑GameObject已添加到localPlayerUnits");
+                //Debug.Log($"建筑GameObject已添加到localPlayerUnits");
             }
             // 添加PlayerDataManager中的位置映射
             PlayerDataManager.Instance.AddBuildingUnit(localPlayerId, buildData.buildingID);
@@ -4155,7 +4165,7 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log("[ExecuteCharm] 魅惑失败");
 			OperationBroadcastManager.Instance.ShowMessage("洗脳失敗しました。");
 
-            EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
+            //EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
 			
             //更新传教士AP
 			UnitStatusUIManager.Instance.UpdateAPByID(missionaryData.Value.UnitID, PieceManager.Instance.GetPieceAP(missionaryData.Value.UnitID));
@@ -4164,9 +4174,9 @@ public class PlayerOperationManager : MonoBehaviour
 
             return;
         }
-        syncPieceData convertResult = PieceManager.Instance.GetPieceSyncPieceData(targetPieceID);
+        syncPieceData convertResult = targetData.Value.PlayerUnitDataSO;
         convertResult.hasBeenCharmed = true;
-        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype);
+        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype+"piece hp is "+convertResult.currentHP);
 
         // 获取目标GameObject（需要转移到本地玩家）
         GameObject targetUnit = null;
@@ -4227,8 +4237,8 @@ public class PlayerOperationManager : MonoBehaviour
             UnitStatusUIManager.Instance.RemoveStatusUI(targetPieceID);
 
             UnitStatusUIManager.Instance.CreateStatusUI(targetPieceID,
-                (int)PieceManager.Instance.GetPieceHP(targetPieceID),
-                 PieceManager.Instance.GetPieceAP(targetPieceID),
+                 convertResult.currentHP,
+                 convertResult.currentAP,
                   targetUnit.transform,
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
 
@@ -4356,7 +4366,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 播放魅惑特效
             targetUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 5);
-            EffectManager.Instance.PlayCharmEffect(targetUnit.transform,Vector3.zero, Quaternion.identity, true);
+            EffectManager.Instance.PlayCharmEffect(null,Vector3.zero, Quaternion.identity, true);
 
 			// 移除本地HP显示
 			UnitStatusUIManager.Instance.RemoveStatusUI(msg.TargetID);
@@ -4498,7 +4508,6 @@ public class PlayerOperationManager : MonoBehaviour
 
             Debug.Log($"[网络魅惑过期] 单位GameObject已归还 - 从玩家{msg.CurrentOwnerId}到玩家{msg.OriginalOwnerId}");
 
-            // 创建显示敌人的UI
             // 更新UI    
             UnitStatusUIManager.Instance.RemoveStatusUI(msg.UnitID);
               // 添加本地HP显示
@@ -4506,7 +4515,7 @@ public class PlayerOperationManager : MonoBehaviour
                 (int) PieceManager.Instance.GetPieceHP(msg.UnitID),
                   PieceManager.Instance.GetPieceAP(msg.UnitID),
                    unitObj.transform,
-                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype),true);
+                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(msg.UnitSyncData.piecetype),false);
             // 添加本地HP显示
             UnitStatusUIManager.Instance.UpdateHPByID(msg.UnitID, (int)PieceManager.Instance.GetPieceHP(msg.UnitID)); 
 
@@ -4572,11 +4581,11 @@ public class PlayerOperationManager : MonoBehaviour
             //// 创建显示敌人的UI
             // 更新UI    
             UnitStatusUIManager.Instance.CreateStatusUI(expireInfo.UnitID,
-                PieceManager.Instance.GetPieceAllHP(expireInfo.UnitID),
+                expireInfo.UnitData.PlayerUnitDataSO.currentHP,
                   0,
                   unitObj.transform,
                     expireInfo.UnitData.UnitType,true);
-            UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID, (int)PieceManager.Instance.GetPieceHP(expireInfo.UnitID));
+            UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID, expireInfo.UnitData.PlayerUnitDataSO.currentHP);
 
         }
         else
@@ -5047,7 +5056,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[SyncBuildingDestruction] 已发送建筑摧毁同步消息");
     }
-
+ 
     /// <summary>
     /// 本地玩家攻击后调用此方法进行网络同步
     /// 在攻击完成后调用

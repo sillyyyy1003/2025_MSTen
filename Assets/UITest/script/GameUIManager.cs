@@ -1041,7 +1041,12 @@ public class GameUIManager : MonoBehaviour
 
     private void HandleEndTurnButtonPressed()
     {
-        OnEndTurnButtonPressed?.Invoke();
+        //25.12.16 ri return while operation is doing
+        if (!GameManage.Instance._PlayerOperation.GetCanContinue())
+        {
+            return;
+        }
+            OnEndTurnButtonPressed?.Invoke();
     }
 
     private void HandleCardSkillUsed(CardType card,CardSkill cardSkill)

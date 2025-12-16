@@ -272,15 +272,43 @@ public class BuildingManager : MonoBehaviour
     /// <returns>生成成功したらtrue</returns>
     public bool CreateEnemyBuilding(syncBuildingData sbd)
     {
+
+        string buildingName = "";
+        switch (PlayerDataManager.Instance.GetPlayerData(sbd.playerID).PlayerReligion)
+        {
+            case Religion.RedMoonReligion:
+                buildingName = "紅月教_特殊建築";
+                break;
+            case Religion.SilkReligion:
+                buildingName = "絲織教_特殊建築";
+                break;
+            case Religion.MadScientistReligion:
+                buildingName = "瘋狂科學家教_特殊建築";
+                break;
+            case Religion.MayaReligion:
+                buildingName = "瑪雅外星人文明教_特殊建築";
+                break;
+
+            default:
+                Debug.Log("can find building data!!!!!"); 
+                return false;
+        }
         // 25.11.11 RI 修改创建逻辑
-        BuildingDataSO buildingData= buildableBuildingTypes?.Find(b => b.buildingName == sbd.buildingName);
+        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
+
+        if (buildingData == null)
+        {
+            Debug.LogError($"建設可能な建物データが見つかりません: {buildingName}");
+            return false;
+        }
+
         // 建物データを検索（全建物から：自分 + 相手）
         for (int i=0;i< allBuildingTypes.Count;i++)
         {
             if (allBuildingTypes[i].buildingName == sbd.buildingName)
             {
                 buildingData = allBuildingTypes[i];
-                Debug.Log("can find building data!!!!!");
+                //Debug.Log("can find building data!!!!!");
 
             }
         }
@@ -790,6 +818,16 @@ public class BuildingManager : MonoBehaviour
     #endregion
 
     #region 建物の情報取得
+    public bool UpdateEnemyBuildingSyncData(int id, int  hp)
+    {
+        if (!enemyBuildings.TryGetValue(id, out Building piece))
+        {
+            Debug.LogError($"[ UpdateEnemySyncData]駒が見つかりません: ID={id}");
+            return false;
+        }
+        return enemyBuildings[id].UpdateDataBySyncData(hp);
+    }
+
 
     /// <summary>
     /// 25.11.26 RI Add 建物のAllHPを取得
