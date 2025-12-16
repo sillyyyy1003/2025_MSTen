@@ -1068,7 +1068,7 @@ public class GameUIManager : MonoBehaviour
 
     private void HandlePlayerDataChanged(int id,PlayerData player)
     {
-        Debug.Log($"玩家数据更新: 玩家 {id}");
+        //Debug.Log($"玩家数据更新: 玩家 {id}");
 		UpdatePlayerIconsData();
         UpdateResourcesData();  // 更新资源显示
         UpdatePopulationData(); // 更新人口显示
