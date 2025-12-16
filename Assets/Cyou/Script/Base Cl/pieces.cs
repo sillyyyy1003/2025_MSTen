@@ -137,12 +137,20 @@ namespace GamePieces
         }
 
 
-        /// <summary>
-        /// 魅惑状態にする（PieceManagerから呼び出し）
-        /// </summary>
-        /// <param name="turns">魅惑ターン数</param>
-        /// <param name="newPlayerID">魅惑したプレイヤーのID</param>
-        public void SetCharmed(int turns, int newPlayerID)
+        //25.12.16 ri add update data when upgrade
+        public  bool UpdateDataBySyncData(syncPieceData data)
+        {
+            currentHP = data.currentHP;
+            currentAP = data.currentAP;
+            
+            return true;
+        }
+            /// <summary>
+            /// 魅惑状態にする（PieceManagerから呼び出し）
+            /// </summary>
+            /// <param name="turns">魅惑ターン数</param>
+            /// <param name="newPlayerID">魅惑したプレイヤーのID</param>
+            public void SetCharmed(int turns, int newPlayerID)
         {
             charmedTurnsRemaining = turns;
             currentPID = newPlayerID;

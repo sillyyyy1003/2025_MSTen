@@ -1351,11 +1351,19 @@ public class PlayerOperationManager : MonoBehaviour
                 if(unit.UnitType!=CardType.Building)
                 {
                     UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHPLevel));
+                    PieceManager.Instance.UpdateEnemySyncData(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO);
+                    Debug.Log("enemy piece hp is "+PieceManager.Instance.GetPiece(unit.PlayerUnitDataSO.pieceID).CurrentHP);
                 }
                 else
                 {
                     if(unit.BuildingData!=null)
-                        UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID,GameManage.Instance._BuildingManager.GetEnemyBuilding(unit.PlayerUnitDataSO.pieceID).CurrentHP);
+                    {
+                        GameManage.Instance._BuildingManager.UpdateEnemyBuildingSyncData(unit.PlayerUnitDataSO.pieceID, unit.BuildingData.Value.currentHP);
+                        UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.BuildingData.Value.currentHP);
+                        Debug.Log("enemy building hp is " + GameManage.Instance._BuildingManager.GetEnemyBuilding(unit.PlayerUnitDataSO.pieceID).CurrentHP);
+
+                    }
+
                 }
               
                 Debug.Log($"[unitData]  - unitID:{unit.PlayerUnitDataSO.pieceID} unitType{unit.UnitType} unitHp {unit.PlayerUnitDataSO.currentHP}");
@@ -5048,7 +5056,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         Debug.Log($"[SyncBuildingDestruction] 已发送建筑摧毁同步消息");
     }
-
+ 
     /// <summary>
     /// 本地玩家攻击后调用此方法进行网络同步
     /// 在攻击完成后调用

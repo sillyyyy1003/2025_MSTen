@@ -790,6 +790,16 @@ public class BuildingManager : MonoBehaviour
     #endregion
 
     #region 建物の情報取得
+    public bool UpdateEnemyBuildingSyncData(int id, int  hp)
+    {
+        if (!enemyBuildings.TryGetValue(id, out Building piece))
+        {
+            Debug.LogError($"[ UpdateEnemySyncData]駒が見つかりません: ID={id}");
+            return false;
+        }
+        return enemyBuildings[id].UpdateDataBySyncData(hp);
+    }
+
 
     /// <summary>
     /// 25.11.26 RI Add 建物のAllHPを取得
