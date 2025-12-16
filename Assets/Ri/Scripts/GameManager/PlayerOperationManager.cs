@@ -4230,7 +4230,7 @@ public class PlayerOperationManager : MonoBehaviour
 
             UnitStatusUIManager.Instance.CreateStatusUI(targetPieceID,
                  convertResult.currentHP,
-                 PieceManager.Instance.GetPieceAllAP(convertResult.currentAPLevel),
+                 convertResult.currentAP,
                   targetUnit.transform,
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
 
@@ -4500,7 +4500,6 @@ public class PlayerOperationManager : MonoBehaviour
 
             Debug.Log($"[网络魅惑过期] 单位GameObject已归还 - 从玩家{msg.CurrentOwnerId}到玩家{msg.OriginalOwnerId}");
 
-            // 创建显示敌人的UI
             // 更新UI    
             UnitStatusUIManager.Instance.RemoveStatusUI(msg.UnitID);
               // 添加本地HP显示
@@ -4574,11 +4573,11 @@ public class PlayerOperationManager : MonoBehaviour
             //// 创建显示敌人的UI
             // 更新UI    
             UnitStatusUIManager.Instance.CreateStatusUI(expireInfo.UnitID,
-                PieceManager.Instance.GetPieceAllHP(expireInfo.UnitID),
+                expireInfo.UnitData.PlayerUnitDataSO.currentHP,
                   0,
                   unitObj.transform,
                     expireInfo.UnitData.UnitType,true);
-            UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID, (int)PieceManager.Instance.GetPieceHP(expireInfo.UnitID));
+            UnitStatusUIManager.Instance.UpdateHPByID(expireInfo.UnitID, expireInfo.UnitData.PlayerUnitDataSO.currentHP);
 
         }
         else
