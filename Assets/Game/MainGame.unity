@@ -46314,7 +46314,7 @@ PrefabInstance:
     - target: {fileID: 8438748842625543488, guid: db90e5573447d3c4d80d60cf64f7ff6a,
         type: 3}
       propertyPath: effects.Array.size
-      value: 25
+      value: 27
       objectReference: {fileID: 0}
     - target: {fileID: 8438748842625543488, guid: db90e5573447d3c4d80d60cf64f7ff6a,
         type: 3}
@@ -46440,6 +46440,16 @@ PrefabInstance:
         type: 3}
       propertyPath: effects.Array.data[24].type
       value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8438748842625543488, guid: db90e5573447d3c4d80d60cf64f7ff6a,
+        type: 3}
+      propertyPath: effects.Array.data[25].type
+      value: 26
+      objectReference: {fileID: 0}
+    - target: {fileID: 8438748842625543488, guid: db90e5573447d3c4d80d60cf64f7ff6a,
+        type: 3}
+      propertyPath: effects.Array.data[26].type
+      value: 27
       objectReference: {fileID: 0}
     - target: {fileID: 8438748842625543488, guid: db90e5573447d3c4d80d60cf64f7ff6a,
         type: 3}
@@ -46590,6 +46600,18 @@ PrefabInstance:
       propertyPath: effects.Array.data[24].prefab
       value: 
       objectReference: {fileID: 2265061563205356824, guid: e92bcc1b6e623c441b9f032d31d5109a,
+        type: 3}
+    - target: {fileID: 8438748842625543488, guid: db90e5573447d3c4d80d60cf64f7ff6a,
+        type: 3}
+      propertyPath: effects.Array.data[25].prefab
+      value: 
+      objectReference: {fileID: 5484644431481706695, guid: 83bb0f42e04db3b41b809a683c94033e,
+        type: 3}
+    - target: {fileID: 8438748842625543488, guid: db90e5573447d3c4d80d60cf64f7ff6a,
+        type: 3}
+      propertyPath: effects.Array.data[26].prefab
+      value: 
+      objectReference: {fileID: 6886881817419016237, guid: 67b4b0792eb3de44ebd114bd6be90ff2,
         type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
