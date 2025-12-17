@@ -4,7 +4,7 @@ using GamePieces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Mono.Cecil;
+//using Mono.Cecil;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
 
@@ -295,7 +295,7 @@ public class BuildingManager : MonoBehaviour
                 return false;
         }
         // 25.11.11 RI 修改创建逻辑
-        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
+        BuildingDataSO buildingData = allBuildingTypes?.Find(b => b.buildingName == buildingName);
 
         if (buildingData == null)
         {
