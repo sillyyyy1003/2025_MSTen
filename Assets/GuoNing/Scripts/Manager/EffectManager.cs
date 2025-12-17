@@ -40,6 +40,8 @@ public enum EffectType
 	LevelUp_Occupy,
 	LevelUp_Charm,
 	LevelUp_Cure,
+	LevelUp_Building_HP,
+	LevelUp_Building_Slot,
 	
 }
 
