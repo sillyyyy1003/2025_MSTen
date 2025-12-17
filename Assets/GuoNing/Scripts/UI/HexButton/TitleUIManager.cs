@@ -33,23 +33,6 @@ public class TitleUIManager : MonoBehaviour
 	public RectTransform RightDetailMenu;
 	public HexButton Button_CloseRightPanel;
 
-	[Header("Extra Contents")]
-	public RectTransform ExtraContentsMenu;
-	public HexButton Button_CloseExtraContents;
-
-	[Header("Tribe Buttons")]
-	public Button Button_Silk;
-	public Button Button_RedMoon;
-	public Button Button_NGC1300;
-	public Button Button_Researcher;
-
-	[Header("Tribe Detail Panels")]
-	public RectTransform Panel_Silk;
-	public RectTransform Panel_RedMoon;
-	public RectTransform Panel_NGC1300;
-	public RectTransform Panel_Researcher;
-	public HexButton Button_BackToTribeList;
-
 	// Screen UI
 	[Header("OnlineButton")]
 	public HexButton Button_CreateGame;
@@ -77,7 +60,6 @@ public class TitleUIManager : MonoBehaviour
 	// メソッド
 	//--------------------------------------------------------------------------------
 	
-
 
 
 	void Update()
@@ -108,32 +90,18 @@ public class TitleUIManager : MonoBehaviour
 		Button_OnlineGame.onClick.AddListener(() => OnClickOnlineGame());
 		Button_Setting.onClick.AddListener(() => OnClickSetting());
 		Button_MapEditor.onClick.AddListener(() => OnClickMapEditor());
-		Button_ExtraContents.onClick.AddListener(() => OnClickExtraContents());//追加内容12/12
+		Button_ExtraContents.onClick.AddListener(() => OnClickExtraContents());
+		//↑现在是个空壳
 
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
 
 		Button_CloseRightPanel.onClick.AddListener(() => CloseRightPanel());
-		Button_CloseExtraContents.onClick.AddListener(() => CloseExtraContents());
-
-		// 部族ボタンのイベント登録
-		Button_Silk.onClick.AddListener(() => ShowTribeDetail(Panel_Silk));
-		Button_RedMoon.onClick.AddListener(() => ShowTribeDetail(Panel_RedMoon));
-		Button_NGC1300.onClick.AddListener(() => ShowTribeDetail(Panel_NGC1300));
-		Button_Researcher.onClick.AddListener(() => ShowTribeDetail(Panel_Researcher));
-		Button_BackToTribeList.onClick.AddListener(() => BackToTribeList());
 	
 		//  Close all option menu& online menu for next usage
 		OptionMenu.gameObject.SetActive(false);
 		OnlineMenu.gameObject.SetActive(false);
-		ExtraContentsMenu.gameObject.SetActive(false);
 		UpdateBackground(false);
-
-		// 部族詳細パネルを初期化時に非表示
-		Panel_Silk.gameObject.SetActive(false);
-		Panel_RedMoon.gameObject.SetActive(false);
-		Panel_NGC1300.gameObject.SetActive(false);
-		Panel_Researcher.gameObject.SetActive(false);
 
 		// Reset button state
 		Button_Setting.ResetHexButton();
@@ -218,8 +186,6 @@ public class TitleUIManager : MonoBehaviour
 		}
 	}
 
-
-
 	private void CloseRightPanel()
 	{
 		RightMenu.gameObject.SetActive(false);
@@ -237,7 +203,6 @@ public class TitleUIManager : MonoBehaviour
 		Button_Setting.ResetHexButton();
 		Button_OnlineGame.ResetHexButton();
 	}
-
 
 
 	private void OnClickMapEditor()
@@ -328,68 +293,20 @@ public class TitleUIManager : MonoBehaviour
 
 	///<summary>
 	///Extra Contents ボタンイベント 12/12 張
+	///今は空っぽ↓
 	///</summary>
 	private void OnClickExtraContents()
 	{
-		// 全画面でExtraContentsメニューを表示
-		ExtraContentsMenu.gameObject.SetActive(true);
-
-		//ギャラリーを閉じるボタンを有効化
-		Button_CloseExtraContents.gameObject.SetActive(true);
-
-		// 背景のブラー効果を有効化
-		UpdateBackground(true);
-
-        UserID.gameObject.SetActive(false);
-    }
-
-	///<summary>
-	///Extra Contents を閉じる
-	///</summary>
-	private void CloseExtraContents()
-	{
-		ExtraContentsMenu.gameObject.SetActive(false);
-
-		// 背景のブラー効果を無効化
-		UpdateBackground(false);
-
-        UserID.gameObject.SetActive(true);
-    }
-
-	///<summary>
-	///部族詳細画面を表示
-	///</summary>
-	private void ShowTribeDetail(RectTransform tribePanel)
-	{
-		Button_CloseExtraContents.gameObject.SetActive(false);
-
-		// すべての部族パネルを非表示
-		Panel_Silk.gameObject.SetActive(false);
-		Panel_RedMoon.gameObject.SetActive(false);
-		Panel_NGC1300.gameObject.SetActive(false);
-		Panel_Researcher.gameObject.SetActive(false);
-
-		// 指定された部族パネルのみ表示
-		tribePanel.gameObject.SetActive(true);
-
-		Button_BackToTribeList.gameObject.SetActive(true);
+		//ExtraContentsManager extraContentsManager = FindObjectOfType<ExtraContentsManager>();
+		//if (extraContentsManager != null)
+		//{
+		//	extraContentsManager.OpenExtraContents();
+		//}
+		//else
+		//{
+		//	Debug.LogError("ExtraContentsManager not found in scene!");
+		//}
 	}
-
-	///<summary>
-	///部族一覧に戻る
-	///</summary>
-	private void BackToTribeList()
-	{
-		// すべての部族詳細パネルを非表示
-		Panel_Silk.gameObject.SetActive(false);
-		Panel_RedMoon.gameObject.SetActive(false);
-		Panel_NGC1300.gameObject.SetActive(false);
-		Panel_Researcher.gameObject.SetActive(false);
-
-        Button_BackToTribeList.gameObject.SetActive(false);
-        Button_CloseExtraContents.gameObject.SetActive(true);
-
-    }
 
 
     /// <summary>
@@ -431,5 +348,3 @@ public class TitleUIManager : MonoBehaviour
 	}
 
 }
-
-
