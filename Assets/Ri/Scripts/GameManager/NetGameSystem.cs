@@ -2192,7 +2192,7 @@ public class NetGameSystem : MonoBehaviour
         {
             // 调用 PlayerOperationManager 更新其他玩家显示
             gameManage.UpdateOtherPlayerShow(data.PlayerId, playerData);
-            Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
+            //Debug.Log($"已通知更新玩家 {data.PlayerId} 的显示");
         }
 
 
@@ -2222,7 +2222,7 @@ public class NetGameSystem : MonoBehaviour
             int currentIndex = -1;
             for (int i = 0; i < connectedPlayers.Count; i++)
             {
-                Debug.Log($"[服务器] 检查 connectedPlayers[{i}] = {connectedPlayers[i]}");
+                //Debug.Log($"[服务器] 检查 connectedPlayers[{i}] = {connectedPlayers[i]}");
                 if ((int)connectedPlayers[i] == currentPlayerId)
                 {
                     currentIndex = i;
@@ -2260,12 +2260,12 @@ public class NetGameSystem : MonoBehaviour
 
             //Debug.Log($"[服务器] 已创建 TURN_START 消息");
             //Debug.Log($"[服务器] 消息内容: {turnStartMsg.JsonData}");
-            Debug.Log($"[服务器] clients 字典状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
+            //Debug.Log($"[服务器] clients 字典状态: {(clients == null ? "null" : $"Count={clients.Count}")}");
 
             // 广播给所有客户端
             if (clients != null && clients.Count > 0)
             {
-                Debug.Log($"[服务器] 准备广播消息给 {clients.Count} 个客户端");
+                //Debug.Log($"[服务器] 准备广播消息给 {clients.Count} 个客户端");
 
                 // 列出所有客户端
                 foreach (var client in clients)
