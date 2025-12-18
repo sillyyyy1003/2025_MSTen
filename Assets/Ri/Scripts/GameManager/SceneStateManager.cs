@@ -181,13 +181,19 @@ public class SceneStateManager : MonoBehaviour
     private void ChooseRandomMap()
     {
 		// map 1001~1010
-		mapSerialNumber = Random.Range(1001, 1010);
+		mapSerialNumber = Random.Range(1001, 1011);
 	}
 
     public void StartSingleGameWithRandomMapAndReligion()
     {
-        //ChooseRandomReligion();
-        ChooseRandomMap();
+        ChooseRandomReligion();
+        ChooseRandomTutorialMap();
+	}
+
+    private void ChooseRandomTutorialMap()
+    {
+        // tutorial map 2001~2003
+        mapSerialNumber = Random.Range(2001, 2004);
 	}
 
 }

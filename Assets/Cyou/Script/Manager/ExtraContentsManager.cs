@@ -135,26 +135,27 @@ public class ExtraContentsManager : MonoBehaviour
 	///</summary>
 	private void CloseExtraContents()
 	{
-		if (scrollRect != null)
-		{
-			scrollRect.verticalNormalizedPosition = 1.0f;
-		}
+		//if (scrollRect != null)
+		//{
+		//	scrollRect.verticalNormalizedPosition = 1.0f;
+		//}
 
-		ExtraContentsMenu.gameObject.SetActive(false);
+		//ExtraContentsMenu.gameObject.SetActive(false);
 
-		// タブボタン無効化
-		DeactivateTabButtons();
+		//// タブボタン無効化
+		//DeactivateTabButtons();
 
-		// 全タブパネル非表示
-		HideAllTribeTabPanels();
+		//// 全タブパネル非表示
+		//HideAllTribeTabPanels();
 
-		// 現在の部族パネルをクリア
-		currentTribePanel = null;
+		//// 現在の部族パネルをクリア
+		//currentTribePanel = null;
 
-		// 取得したScrollRectもクリア
-		scrollRect = null;
+		//// 取得したScrollRectもクリア
+		//scrollRect = null;
 
-		Button_BackToTribeList.gameObject.SetActive(false);
+		//Button_BackToTribeList.gameObject.SetActive(false);
+		SceneController.Instance.SwitchToTitleScene();
 	}
 
 	///<summary>
