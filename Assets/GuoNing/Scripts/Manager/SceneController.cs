@@ -153,4 +153,9 @@ public class SceneController : MonoBehaviour
 	{
 		SwitchScene("SelectScene", null);
 	}
+
+	public void SwitchToExtraContentScene()
+	{
+		SwitchScene("ExtraContents", null);
+	}
 }

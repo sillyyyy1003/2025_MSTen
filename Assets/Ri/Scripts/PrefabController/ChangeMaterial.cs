@@ -18,7 +18,7 @@ public class ChangeMaterial : MonoBehaviour
 
     void Start()
     {
-      
+
 
     }
     public void InitMat()
@@ -60,9 +60,11 @@ public class ChangeMaterial : MonoBehaviour
     }
     public void UnitDead(System.Action onFinished)
     {
-        Debug.Log("执行单位新死亡特效 "+DefaultMat.name);
         if (thisRender == null)
+        {
             thisRender = GetComponent<Renderer>();
+            DefaultMat = thisRender.material;
+        }
 
         if (thisRender == null)
         {
@@ -70,6 +72,7 @@ public class ChangeMaterial : MonoBehaviour
             onFinished?.Invoke();
             return;
         }
+        Debug.Log("执行单位新死亡特效 " + DefaultMat.name);
 
         // 取当前材质
         // 确保初始值设置
