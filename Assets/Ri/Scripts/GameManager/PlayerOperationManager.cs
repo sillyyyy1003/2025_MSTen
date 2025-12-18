@@ -2348,7 +2348,7 @@ public class PlayerOperationManager : MonoBehaviour
         {
             PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
 
-        
+
             if (data != null && data.Value.UnitType != CardType.Building&&i != LastSelectingCellID)
             {
                 Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType + " unit pos is " + PlayerBoardInforDict[i].Cells2DPos);
@@ -2383,43 +2383,46 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 Debug.Log($"[农民献祭] 已从PlayerDataManager移除农民");
             }
-            GameObject farmerObj = SelectingUnit;
+            GameObject farmerObj = localPlayerUnits[farmerPos];
+
+            // 重置选择状态
+            ReturnToDefault();
             // 2. 销毁农民GameObject（不影响建筑）
             if (farmerObj != null)
             {
                 // 播放消失动画（淡出效果）
                 farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
                 {
-                    Destroy(farmerObj);
                     Debug.Log($"[农民献祭] 农民GameObject已销毁");
+
+                    // 从本地单位字典中移除农民（使用原始位置）
+                    if (localPlayerUnits.ContainsKey(farmerPos))
+                    {
+                        localPlayerUnits.Remove(farmerPos);
+                    }  
+                    Destroy(farmerObj);
+
+                    // 3. 从PieceManager移除
+                    PieceManager.Instance.RemovePiece(farmerID);
+
+                    // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
+                    GameManage.Instance.SetCellObject(farmerPos, null);
+
+                    // 5. 网络同步农民消失（使用农民的原始位置）
+                    SyncFarmerEnterBuilding(farmerID, farmerPos);
+
+                    //Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已献祭并消失");
+
+                    UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
+
+                  
                 });
-
-                // 从本地单位字典中移除农民（使用原始位置）
-                if (localPlayerUnits.ContainsKey(farmerPos))
-                {
-                    localPlayerUnits.Remove(farmerPos);
-                }
             }
-
-            // 3. 从PieceManager移除
-            PieceManager.Instance.RemovePiece(farmerID);
-
-            // 4. 更新GameManage的格子对象（将农民从原位置移除，不影响建筑位置）
-            GameManage.Instance.SetCellObject(farmerPos, null);
-
-            // 5. 网络同步农民消失（使用农民的原始位置）
-            SyncFarmerEnterBuilding(farmerID, farmerPos);
-
-            //Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已献祭并消失");
-
-            UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
-            // 重置选择状态
-            ReturnToDefault();
             //PlayerDataManager.Instance.nowChooseUnitID = -1;
             //PlayerDataManager.Instance.nowChooseUnitType = CardType.None;
 
-            //SelectingUnit = null;
-            //bCanContinue = true;
+                //SelectingUnit = null;
+                //bCanContinue = true;
         }
 
     }

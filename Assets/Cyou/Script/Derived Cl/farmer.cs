@@ -56,24 +56,24 @@ public class Farmer : Piece
     /// </summary>
     public bool Sacrifice(Piece target)
     {
-        if (currentState != PieceState.Idle)
-        {
-            Debug.LogWarning("農民がIdle状態ではありません");
-            return false;
-        }
+        //if (currentState != PieceState.Idle)
+        //{
+        //    Debug.LogWarning("農民がIdle状態ではありません");
+        //    return false;
+        //}
 
-        if (!target.IsAlive)
-        {
-            Debug.LogWarning("ターゲットが生存していません");
-            return false;
-        }
+        //if (!target.IsAlive)
+        //{
+        //    Debug.LogWarning("ターゲットが生存していません");
+        //    return false;
+        //}
 
-        // AP不足チェック
-        if (currentAP < farmerData.devotionAPCost)
-        {
-            Debug.LogWarning($"農民の行動力が不足しています (必要: {farmerData.devotionAPCost}, 現在: {currentAP})");
-            return false;
-        }
+        //// AP不足チェック
+        //if (currentAP < farmerData.devotionAPCost)
+        //{
+        //    Debug.LogWarning($"農民の行動力が不足しています (必要: {farmerData.devotionAPCost}, 現在: {currentAP})");
+        //    return false;
+        //}
 
         // 回復量を取得（配列範囲外アクセス防止）
         int healAmount = farmerData.maxSacrificeLevel[Mathf.Clamp(sacrificeLevel, 0, farmerData.maxSacrificeLevel.Length - 1)];
