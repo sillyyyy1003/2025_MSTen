@@ -2324,7 +2324,7 @@ public class PlayerOperationManager : MonoBehaviour
     // 献祭
     public void FarmerSacrifice()
     {
-        List<int> pos = _HexGrid.GetAllCellsWithinRange(1, selectCellID);
+        List<int> pos = _HexGrid.GetAllCellsWithinRange(1, LastSelectingCellID);
 
         int farmerID = PlayerDataManager.Instance.nowChooseUnitID;
         int2 farmerPos = PlayerDataManager.Instance.GetUnitDataById(farmerID).Value.Position;
@@ -2332,10 +2332,11 @@ public class PlayerOperationManager : MonoBehaviour
         {
             PlayerUnitData? data = PlayerDataManager.Instance.GetPlayerData(localPlayerId).FindUnitAt(GameManage.Instance.FindCell(i).Cells2DPos);
 
-            Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType + " unit pos is " + PlayerBoardInforDict[i].Cells2DPos);
+        
+            if (data != null && data.Value.UnitType != CardType.Building&&i != LastSelectingCellID)
+            {
+                Debug.Log("unit is " + data.Value.UnitID + " unit name is " + data.Value.UnitType + " unit pos is " + PlayerBoardInforDict[i].Cells2DPos);
 
-            if (data != null && data.Value.UnitType != CardType.Building&&i!= selectCellID)
-            { 
                 syncPieceData? targetSyncData = PieceManager.Instance.SacrificeToPiece(farmerID, data.Value.UnitID);
                
                 //更新同步数据
