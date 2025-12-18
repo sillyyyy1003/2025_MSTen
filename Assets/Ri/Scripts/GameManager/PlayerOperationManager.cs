@@ -1133,55 +1133,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 移动摄像机到我方教皇
         //GameManage.Instance._GameCamera.GetPlayerPosition(PlayerDataManager.Instance.GetPlayerPopePosition(localPlayerId));
         // 回合开始计算疯狂科学家教被动
-        if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
-        {
-            if (PlayerDataManager.Instance.CrazyTurnCooldown >= 10)
-            {
-                PlayerDataManager.Instance.CrazyTurnCooldown = 0;
-                Debug.Log("mad start!");
-                List<int> ruinCell = PlayerDataManager.Instance.GetPlayerRuinCells();
-                for (int i = 0; i < ruinCell.Count; i++)
-                {
-                    int id = ruinCell[i];
-                    if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
-                    {
-                        Debug.Log("此格子上有单位，跳过 "+id);
-                        // 当前格子有单位，先记录id，下回合再依次复活
-                        PlayerDataManager.Instance.NextTurnReBuildCellID.Add(id);
-                        // 从当前废墟cellList中移除
-                        PlayerDataManager.Instance.RemovePlayerRuinCell(id);
-                    }
-                    else
-                    {
-                        // 当前格子没有单位，立刻复活
-                        CreateBuilding(id, true);
-                        PlayerDataManager.Instance.RemovePlayerRuinCell(id);
-                        break;
-                    }
-                }
-            }
-            // 第二次遍历记录的需要被复活的建筑
-            if(PlayerDataManager.Instance.NextTurnReBuildCellID.Count!=0)
-            {
-                for (int i=0;i<PlayerDataManager.Instance.NextTurnReBuildCellID.Count;i++)
-                {
-                    int id = PlayerDataManager.Instance.NextTurnReBuildCellID[i];
-                    if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
-                    {
-                        // 依旧有单位存在，跳过
-                        Debug.Log("此格子上依旧有单位，跳过");
-                    }
-                    else
-                    {
-                        // 当前格子没有单位，立刻复活
-                        CreateBuilding(id, true);
-             
-                        PlayerDataManager.Instance.RemovePlayerRebuildCell(id);
-                        break;
-                    }
-                }
-            }
-        }
+       
         // 获取建筑资源
         
         int res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
@@ -1196,6 +1148,9 @@ public class PlayerOperationManager : MonoBehaviour
         //Debug.Log("你的回合开始!获取资源行动 " + res+" 目前资源: " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources);
 
         List<PlayerUnitData> buildingsToDestroy = new List<PlayerUnitData>();
+
+
+
 
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
@@ -1237,7 +1192,56 @@ public class PlayerOperationManager : MonoBehaviour
             DestroyInactivatedBuilding(building);     
         }
 
-       
+        if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
+        {
+            if (PlayerDataManager.Instance.CrazyTurnCooldown >= 10)
+            {
+                PlayerDataManager.Instance.CrazyTurnCooldown = 0;
+                Debug.Log("mad start!");
+                List<int> ruinCell = PlayerDataManager.Instance.GetPlayerRuinCells();
+                for (int i = 0; i < ruinCell.Count; i++)
+                {
+                    Debug.Log("ruinCell.Count is " + ruinCell.Count);
+                    int id = ruinCell[i];
+                    if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
+                    {
+                        Debug.Log("此格子上有单位，跳过 " + id);
+                        // 当前格子有单位，先记录id，下回合再依次复活
+                        PlayerDataManager.Instance.NextTurnReBuildCellID.Add(id);
+                        // 从当前废墟cellList中移除
+                        PlayerDataManager.Instance.RemovePlayerRuinCell(id);
+                    }
+                    else
+                    {
+                        // 当前格子没有单位，立刻复活
+                        CreateBuilding(id, true);
+                        PlayerDataManager.Instance.RemovePlayerRuinCell(id);
+                        break;
+                    }
+                }
+            }
+            // 第二次遍历记录的需要被复活的建筑
+            if (PlayerDataManager.Instance.NextTurnReBuildCellID.Count != 0)
+            {
+                for (int i = 0; i < PlayerDataManager.Instance.NextTurnReBuildCellID.Count; i++)
+                {
+                    int id = PlayerDataManager.Instance.NextTurnReBuildCellID[i];
+                    if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
+                    {
+                        // 依旧有单位存在，跳过
+                        Debug.Log("此格子上依旧有单位，跳过");
+                    }
+                    else
+                    {
+                        // 当前格子没有单位，立刻复活
+                        CreateBuilding(id, true);
+
+                        PlayerDataManager.Instance.RemovePlayerRebuildCell(id);
+                        break;
+                    }
+                }
+            }
+        }
 
         // 回合开始计算红月教被动
         if (SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion
