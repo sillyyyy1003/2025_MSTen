@@ -87,10 +87,10 @@ public class SceneStateManager : MonoBehaviour
         // 2025.11.17 Guoning 随机选择宗教
         // 2025.11.17 RI 现有宗教单位数不足以随机，暂时注释
         ChooseRandomReligion();
-        if (isServer)
-        {
-            PlayerReligion = Religion.MadScientistReligion;
-        }
+        //if (isServer)
+        //{
+        //    PlayerReligion = Religion.MadScientistReligion;
+        //}
     }
 
 	public bool GetIsServer()
