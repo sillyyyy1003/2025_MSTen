@@ -808,9 +808,17 @@ public class GameManage : MonoBehaviour
         return GameBoardInforDict2D[0];
     }
 
+    public bool FindCellObject(int2 pos)
+    {
+        if(CellObjects.ContainsKey(pos))
+        {
+            return true;
+        }
+        return false;
+    }
 
-    // 设置格子上的GameObject
-    public void SetCellObject(int2 pos, GameObject obj)
+        // 设置格子上的GameObject
+        public void SetCellObject(int2 pos, GameObject obj)
     {
         if (obj == null)
         {

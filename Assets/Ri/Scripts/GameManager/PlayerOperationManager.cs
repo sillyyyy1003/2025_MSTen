@@ -1134,16 +1134,17 @@ public class PlayerOperationManager : MonoBehaviour
             {
                 PlayerDataManager.Instance.CrazyTurnCooldown = 0;
                 Debug.Log("mad start!");
-                for (int i = 0; i < PlayerDataManager.Instance.GetPlayerRuinCells().Count; i++)
+                List<int> ruinCell = PlayerDataManager.Instance.GetPlayerRuinCells();
+                for (int i = 0; i < ruinCell.Count; i++)
                 {
-                    int id = PlayerDataManager.Instance.GetPlayerRuinCells()[i];
-                    if (PlayerDataManager.Instance.FindCellHasUnit(PlayerBoardInforDict[id].Cells2DPos))
+                    int id = ruinCell[i];
+                    if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
                     {
                         Debug.Log("此格子上有单位，跳过");
                         // 当前格子有单位，先记录id，下回合再依次复活
-                        PlayerDataManager.Instance.NextTurnReBuildCellID.Add(id);
+                        PlayerDataManager.Instance.NextTurnReBuildCellID.Add(ruinCell[i]);
                         // 从当前废墟cellList中移除
-                        PlayerDataManager.Instance.RemovePlayerRuinCell(id);
+                        PlayerDataManager.Instance.RemovePlayerRuinCell(ruinCell[i]);
                     }
                     else
                     {
@@ -1157,14 +1158,13 @@ public class PlayerOperationManager : MonoBehaviour
             // 第二次遍历上回合记录的需要被复活的建筑
             if(PlayerDataManager.Instance.NextTurnReBuildCellID.Count!=0)
             {
-                for(int i=0;i<PlayerDataManager.Instance.NextTurnReBuildCellID.Count;i++)
+                for (int i=0;i<PlayerDataManager.Instance.NextTurnReBuildCellID.Count;i++)
                 {
                     int id = PlayerDataManager.Instance.NextTurnReBuildCellID[i];
-                    if (!PlayerDataManager.Instance.FindCellHasUnit(PlayerBoardInforDict[id].Cells2DPos))
+                    if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
                     {
                         // 依旧有单位存在，跳过
                         Debug.Log("此格子上依旧有单位，跳过");
-                        continue;
                     }
                     else
                     {
