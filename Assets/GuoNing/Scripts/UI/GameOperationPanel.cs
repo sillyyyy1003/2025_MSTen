@@ -297,7 +297,7 @@ public class GameOperationPanel : MonoBehaviour
 			{
 				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
 				int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Cure);
-				ShowButtonPanel("治療");
+				ShowButtonPanel("奉仕");
 
 				UpdatePanelPos(cell,true);
 			}
