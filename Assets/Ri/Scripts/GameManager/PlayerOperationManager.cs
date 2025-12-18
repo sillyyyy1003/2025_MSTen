@@ -1199,10 +1199,10 @@ public class PlayerOperationManager : MonoBehaviour
                 PlayerDataManager.Instance.CrazyTurnCooldown = 0;
                 Debug.Log("mad start!");
                 List<int> ruinCell = PlayerDataManager.Instance.GetPlayerRuinCells();
-                for (int i = 0; i < ruinCell.Count; i++)
+                while(ruinCell.Count!=0)
                 {
                     Debug.Log("ruinCell.Count is " + ruinCell.Count);
-                    int id = ruinCell[i];
+                    int id = ruinCell[0];
                     if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
                     {
                         Debug.Log("此格子上有单位，跳过 " + id);
