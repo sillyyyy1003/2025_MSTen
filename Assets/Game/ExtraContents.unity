@@ -6919,8 +6919,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2012424497}
   m_HandleRect: {fileID: 2012424496}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 0.12203264
+  m_Value: 1.0000002
+  m_Size: 0.12590063
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7705,25 +7705,25 @@ MonoBehaviour:
   TheBorderSanctuary: {fileID: 61393795}
   HeartOfTheEmeraldGrove: {fileID: 1452826562}
   PlainsOfTheTwinLakes: {fileID: 1900252805}
-  Sprite_FertileFieldOfTheFanLake: {fileID: 21300000, guid: 821c9374c0239e74384bfb5df05d255d,
+  Sprite_FertileFieldOfTheFanLake: {fileID: 21300000, guid: 70a148f17abfc9b4395717f28acd46d0,
     type: 3}
   Sprite_WildFieldsOfDividingRivers: {fileID: 21300000, guid: d3fa15b7c42e74f44b16f6e2328b3d79,
     type: 3}
-  Sprite_TheWhiteTundraCitadel: {fileID: 21300000, guid: 38fe51c39905c974081d4bed6b0c42fe,
+  Sprite_TheWhiteTundraCitadel: {fileID: 21300000, guid: 7d9d99fe9cfab7749a65a66cbfab722f,
     type: 3}
   Sprite_BasinOfCalamity: {fileID: 21300000, guid: 64828e7d99c64124997e7d6970f1321a,
     type: 3}
-  Sprite_PrimitivePlains: {fileID: 21300000, guid: 9ed4dba14887b7c4a91e040304a6a87d,
+  Sprite_PrimitivePlains: {fileID: 21300000, guid: 4a794889c585e7e4683d2af7adf6c27a,
     type: 3}
   Sprite_TheGoldenCorridor: {fileID: 21300000, guid: cdb6e78e2925c2e458b511ec4e9c61c8,
     type: 3}
-  Sprite_TheFertileCore: {fileID: 21300000, guid: 70a148f17abfc9b4395717f28acd46d0,
+  Sprite_TheFertileCore: {fileID: 21300000, guid: 50f6fdf638ab67d48958432f7a76c6ce,
     type: 3}
-  Sprite_TheBorderSanctuary: {fileID: 21300000, guid: 7d9d99fe9cfab7749a65a66cbfab722f,
+  Sprite_TheBorderSanctuary: {fileID: 21300000, guid: 38fe51c39905c974081d4bed6b0c42fe,
     type: 3}
-  Sprite_HeartOfTheEmeraldGrove: {fileID: 21300000, guid: 4a794889c585e7e4683d2af7adf6c27a,
+  Sprite_HeartOfTheEmeraldGrove: {fileID: 21300000, guid: d3fa15b7c42e74f44b16f6e2328b3d79,
     type: 3}
-  Sprite_PlainsOfTheTwinLakes: {fileID: 21300000, guid: 50f6fdf638ab67d48958432f7a76c6ce,
+  Sprite_PlainsOfTheTwinLakes: {fileID: 21300000, guid: 821c9374c0239e74384bfb5df05d255d,
     type: 3}
 --- !u!4 &1107518284
 Transform:
@@ -8360,7 +8360,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -590, y: 333.50476}
+  m_AnchoredPosition: {x: -590, y: 333.50375}
   m_SizeDelta: {x: 1493, y: 5297}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &1208050223
