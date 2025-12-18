@@ -193,7 +193,7 @@ public class SceneStateManager : MonoBehaviour
     private void ChooseRandomTutorialMap()
     {
         // tutorial map 2001~2003
-        mapSerialNumber = Random.Range(2001, 2004);
+        mapSerialNumber = Random.Range(2001, 2003);
 	}
 
 }
