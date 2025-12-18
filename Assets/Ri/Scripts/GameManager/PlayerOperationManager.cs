@@ -636,7 +636,7 @@ public class PlayerOperationManager : MonoBehaviour
 							Debug.Log("[攻击] AP不足，无法攻击");
 							return;
 						}
-
+                        bCanContinue = false;
 						ExecuteAttack(targetPos, ClickCellid);
 				        
                         // 更新UI Status
@@ -3050,6 +3050,7 @@ public class PlayerOperationManager : MonoBehaviour
     /// <param name="targetCellId">目标格子ID</param>
     private void ExecuteAttack(int2 targetPos, int targetCellId)
     {
+
         if (SelectingUnit == null) return;
 
         // 获取攻击者位置
@@ -3061,6 +3062,7 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.LogError("[ExecuteAttack] 错误：目标不在攻击范围内！");
 
             ReturnToDefault();
+
             //bCanContinue = true;
             return;
         }
@@ -3139,7 +3141,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 判断目标是否死亡
             bool targetDied = targetSyncData.Value.currentHP <= 0;
             Debug.Log($"[ExecuteAttack] 攻击完成 - 目标剩余HP: {targetSyncData.Value.currentHP}, 是否死亡: {targetDied} ,单位剩余行动力: {PieceManager.Instance.GetPieceAP(attackerPieceID)}");
-          
+
             if (targetDied)
             {
                 // 目标死亡，攻击者前进到目标位置
@@ -3161,23 +3163,32 @@ public class PlayerOperationManager : MonoBehaviour
                 if (targetUnit != null)
                 {
                     // 震动效果
-                    targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
+                    targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5).OnComplete(() =>
+                    {
 
-                    // 可选：显示伤害数字
-                    // ShowDamageNumber(targetUnit.transform.position, damage);
+                        // 可选：显示伤害数字
+                        // ShowDamageNumber(targetUnit.transform.position, damage);
 
-                    // 2025.12.02 播放攻击特效
-                    Vector3 hitPos = targetUnit.transform.position;
-                    hitPos.y += 5.0f;
-                    EffectManager.Instance.PlayEffect(EffectType.Piece_Hit, hitPos, targetUnit.transform.rotation);
-                }
+                        // 2025.12.02 播放攻击特效
+                        Vector3 hitPos = targetUnit.transform.position;
+                        hitPos.y += 5.0f;
+                        EffectManager.Instance.PlayEffect(EffectType.Piece_Hit, hitPos, targetUnit.transform.rotation);
 
-                // 网络同步攻击
-                SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, false);
+                        // 网络同步攻击
+                        SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, false);
 
-                // 更新本地HP显示
-                UnitStatusUIManager.Instance.UpdateHPByID(targetSyncData.Value.pieceID, targetSyncData.Value.currentHP);
-                bCanContinue = true;
+                        // 更新本地HP显示
+                        UnitStatusUIManager.Instance.UpdateHPByID(targetSyncData.Value.pieceID, targetSyncData.Value.currentHP);
+                        bCanContinue = true;
+                    });
+
+
+
+
+
+                };
+
+
             }
         }
         // 攻击的是建筑
@@ -3214,51 +3225,53 @@ public class PlayerOperationManager : MonoBehaviour
             // 播放建筑受击动画
             if (targetUnit != null)
             {
-                targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5);
-
-				// 2025.12.02 播放攻击特效
-                EffectManager.Instance.PlayEffect(EffectType.Piece_Hit, targetUnit.transform.position, targetUnit.transform.rotation);
-			}
-
-            if (buildingDestroyed)
-            {
-                // 建筑被摧毁，攻击者前进到建筑位置
-                ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
-                GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[targetOwnerId].PlayerReligion, GameManage.Instance.FindCell(targetCellId).Cells2DPos);
-
-
-                // 6. 清空本地cellObject
-                GameManage.Instance.SetCellObject(targetPos, null);
-
-                // 保存废墟引用
-                if (!BuildingRuins.ContainsKey(targetOwnerId))
+                targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5).OnComplete(() =>
                 {
-                    BuildingRuins[targetOwnerId] = new Dictionary<int, GameObject>();
-                }
-                BuildingRuins[targetOwnerId][RuinID] = ruin;
-                RuinID++;
+                    if (buildingDestroyed)
+                    {
+                        // 建筑被摧毁，攻击者前进到建筑位置
+                        ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
+                        GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[targetOwnerId].PlayerReligion, GameManage.Instance.FindCell(targetCellId).Cells2DPos);
 
-                // 添加结局数据
-                PlayerDataManager.Instance.Result_BuildingDestroyedNumber += 1;
 
-                UnitStatusUIManager.Instance.RemoveStatusUI(targetBuilding.BuildingID);
+                        // 6. 清空本地cellObject
+                        GameManage.Instance.SetCellObject(targetPos, null);
+
+                        // 保存废墟引用
+                        if (!BuildingRuins.ContainsKey(targetOwnerId))
+                        {
+                            BuildingRuins[targetOwnerId] = new Dictionary<int, GameObject>();
+                        }
+                        BuildingRuins[targetOwnerId][RuinID] = ruin;
+                        RuinID++;
+
+                        // 添加结局数据
+                        PlayerDataManager.Instance.Result_BuildingDestroyedNumber += 1;
+
+                        UnitStatusUIManager.Instance.RemoveStatusUI(targetBuilding.BuildingID);
+                    }
+                    else
+                    {
+                        // 建筑存活，同步攻击建筑消息
+                        SyncLocalBuildingAttack(attackerPos, targetPos, targetOwnerId, targetPieceID, targetBuilding.CurrentHP, false);
+                        bCanContinue = true;
+
+                        // 更新本地HP显示
+                        UnitStatusUIManager.Instance.UpdateHPByID(targetBuilding.BuildingID, targetBuilding.CurrentHP);
+
+                    }
+
+                });
+
+                // 2025.12.02 播放攻击特效
+                EffectManager.Instance.PlayEffect(EffectType.Piece_Hit, targetUnit.transform.position, targetUnit.transform.rotation);
             }
-            else
-            {
-                // 建筑存活，同步攻击建筑消息
-                SyncLocalBuildingAttack(attackerPos, targetPos, targetOwnerId, targetPieceID, targetBuilding.CurrentHP, false);
-                bCanContinue = true;
 
-                // 更新本地HP显示
-                UnitStatusUIManager.Instance.UpdateHPByID(targetBuilding.BuildingID, targetBuilding.CurrentHP);
-
-            }
+            // 更新AP
+            UnitStatusUIManager.Instance.UpdateAPByID(attackerPieceID, PieceManager.Instance.GetPieceAP(attackerPieceID));
+            Debug.Log("attack after ap is " + PieceManager.Instance.GetPieceAP(attackerPieceID));
         }
-        // 更新AP
-        UnitStatusUIManager.Instance.UpdateAPByID(attackerPieceID, PieceManager.Instance.GetPieceAP(attackerPieceID));
-        Debug.Log("attack after ap is " + PieceManager.Instance.GetPieceAP(attackerPieceID));
     }
-
 
     // ============================================
     // 新增方法5：ExecuteMoveToDeadTargetPosition
