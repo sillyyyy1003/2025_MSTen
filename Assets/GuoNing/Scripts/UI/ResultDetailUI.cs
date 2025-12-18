@@ -73,6 +73,7 @@ public class ResultDetailUI : MonoBehaviour
 		// 设定玩家宗教Icon
 	    int spriteSerial = (int)religion - 1;
 	    ReligionIcon.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.IconList_Religion, spriteSerial);
+
 	    UserIdTxt.text = data.PlayerId;
 		// 处理所有数据
 		CellNumberTxt.text = data.CellNumber.ToString();

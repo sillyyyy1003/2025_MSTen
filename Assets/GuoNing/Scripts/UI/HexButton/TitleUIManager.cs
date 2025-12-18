@@ -297,15 +297,7 @@ public class TitleUIManager : MonoBehaviour
 	///</summary>
 	private void OnClickExtraContents()
 	{
-		//ExtraContentsManager extraContentsManager = FindObjectOfType<ExtraContentsManager>();
-		//if (extraContentsManager != null)
-		//{
-		//	extraContentsManager.OpenExtraContents();
-		//}
-		//else
-		//{
-		//	Debug.LogError("ExtraContentsManager not found in scene!");
-		//}
+		SceneController.Instance.SwitchToExtraContentScene();
 	}
 
 

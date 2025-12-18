@@ -18,6 +18,7 @@ public class GameOption : MonoBehaviour
 	public Button SettingButton;
 	public Button SurrenderButton;
 	public Button BackToFirstLayerButton;
+	public Button BackToGameButton;
 	public Button BackToSelectSceneButton;
 	
 	public Toggle ResolutionButton;
@@ -93,6 +94,7 @@ public class GameOption : MonoBehaviour
 		// 绑定按钮
 		SettingButton.onClick.AddListener(OpenSettingMenu);
 		SurrenderButton.onClick.AddListener(OpenSurrenderMenu);
+		BackToGameButton.onClick.AddListener(CloseMenu);
 		BackToFirstLayerButton.onClick.AddListener(CloseSecondLayer);
 		BackToSelectSceneButton.onClick.AddListener(OpenBackToMainSceneMenu);
 
@@ -157,6 +159,8 @@ public class GameOption : MonoBehaviour
 		FirstLayer.gameObject.SetActive(true);
 		SecondLayer.gameObject.SetActive(false);
 	}
+
+	
 
 	private void OnResolutionToggleValueChanged(bool isOn)
 	{

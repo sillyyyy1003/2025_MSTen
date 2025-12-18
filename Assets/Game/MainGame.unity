@@ -2834,6 +2834,7 @@ MonoBehaviour:
   BuildingFarmerCount: 0
   TurnCount: 0
   CrazyTurnCooldown: 0
+  CrazyRebuild: 0
   MirrorSkillCount: 0
   Result_CellNumber: 0
   Result_PieceNumber: 0
@@ -19208,7 +19209,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &863044223
 RectTransform:
   m_ObjectHideFlags: 0
@@ -21489,7 +21490,7 @@ GameObject:
   - component: {fileID: 966037595}
   - component: {fileID: 966037594}
   m_Layer: 0
-  m_Name: BackToGame
+  m_Name: BackToFirstLayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44972,7 +44973,8 @@ MonoBehaviour:
   SecondLayer: {fileID: 810998338}
   SettingButton: {fileID: 1749960371}
   SurrenderButton: {fileID: 1396530095}
-  BackToFirstLayerButton: {fileID: 1286098535}
+  BackToFirstLayerButton: {fileID: 966037594}
+  BackToGameButton: {fileID: 1286098535}
   BackToSelectSceneButton: {fileID: 2043560183}
   ResolutionButton: {fileID: 301067778}
   SoundButton: {fileID: 2143469503}
