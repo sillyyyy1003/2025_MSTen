@@ -2290,6 +2290,7 @@ public class PlayerOperationManager : MonoBehaviour
                         FromY = fromPos.y,
                         ToX = toPos.x,
                         ToY = toPos.y,
+                        MovedUnitSyncData=unitData.Value.PlayerUnitDataSO,
                     };
                     NetGameSystem.Instance.SendMessage(NetworkMessageType.UNIT_MOVE, moveMsg);
                     Debug.Log($"[本地] 已发送移动消息到网络: ({fromPos.x},{fromPos.y}) -> ({toPos.x},{toPos.y})");
