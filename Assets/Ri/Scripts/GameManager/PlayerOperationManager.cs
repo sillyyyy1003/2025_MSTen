@@ -1215,12 +1215,24 @@ public class PlayerOperationManager : MonoBehaviour
                     {
                         // 当前格子没有单位，立刻复活
                         CreateBuilding(id, true);
+                        PlayerDataManager.Instance.CrazyRebuild = true;
                         PlayerDataManager.Instance.RemovePlayerRuinCell(id);
                         break;
                     }
                 }
             }
-            // 第二次遍历记录的需要被复活的建筑
+            // 若已经重建过，则将暂存的废墟id重新赋予废墟list并清空暂存
+            if(PlayerDataManager.Instance.CrazyRebuild&& PlayerDataManager.Instance.NextTurnReBuildCellID.Count != 0)
+            {
+                PlayerDataManager.Instance.CrazyRebuild = false;
+                for (int i = 0; i < PlayerDataManager.Instance.NextTurnReBuildCellID.Count; i++)
+                {
+                    PlayerDataManager.Instance.PlayerRuinCells.Add(PlayerDataManager.Instance.NextTurnReBuildCellID[i]);
+                }
+            }
+            PlayerDataManager.Instance.NextTurnReBuildCellID.Clear();
+
+            // 第二次遍历暂存的需要被复活的建筑
             if (PlayerDataManager.Instance.NextTurnReBuildCellID.Count != 0)
             {
                 for (int i = 0; i < PlayerDataManager.Instance.NextTurnReBuildCellID.Count; i++)
