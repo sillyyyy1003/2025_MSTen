@@ -4,6 +4,7 @@ using GamePieces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+//using Mono.Cecil;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
 
@@ -294,7 +295,7 @@ public class BuildingManager : MonoBehaviour
                 return false;
         }
         // 25.11.11 RI 修改创建逻辑
-        BuildingDataSO buildingData = buildableBuildingTypes?.Find(b => b.buildingName == buildingName);
+        BuildingDataSO buildingData = allBuildingTypes?.Find(b => b.buildingName == buildingName);
 
         if (buildingData == null)
         {
@@ -673,26 +674,55 @@ public class BuildingManager : MonoBehaviour
 				anySuccess = true;
 				syncBuildingData newBuildingData = new syncBuildingData();
 				newBuildingData = (syncBuildingData)CreateCompleteSyncData(targetBuilding.BuildingID);
-				
-                int playerID = GameManage.Instance.LocalPlayerID;
+
+				int playerID = GameManage.Instance.LocalPlayerID;
 				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetBuilding.BuildingID);
 				if (index >= 0)
 				{
-					var unit = playerData.PlayerUnits[index];  // コピー
-					unit.BuildingData = newBuildingData;          // コピー変更
+					var unit = playerData.PlayerUnits[index]; // コピー
+					unit.BuildingData = newBuildingData; // コピー変更
 					unit.PlayerUnitDataSO.pieceID = targetBuilding.BuildingID;
-					playerData.PlayerUnits[index] = unit;      //List書き戻し（重要）
-				}
-				Debug.Log($"建物ID={kvp.Key}の{upgradeType}をアップグレードしました");
-			}
-		}
+					playerData.PlayerUnits[index] = unit; //List書き戻し（重要）
 
-		if (anySuccess)
-		{
-			if (!buildingUpgradeData.ContainsKey(upgradeType)) buildingUpgradeData[upgradeType] = 0;
-			buildingUpgradeData[upgradeType]++;
-			isUpgraded = true;
+
+
+					// 加入特效
+					switch (upgradeType)
+					{
+						case BuildingUpgradeType.BuildingHP:
+							EffectManager.Instance.PlayEffect(
+								EffectType.LevelUp_Building_HP,
+								kvp.Value.transform.position,
+								Quaternion.identity);
+							// 更新HP
+							UnitStatusUIManager.Instance.UpdateHPByID(index, unit.BuildingData.Value.currentHP,
+								targetBuilding.Data.maxHpByLevel[unit.BuildingData.Value.hpLevel]);
+							break;
+
+						case BuildingUpgradeType.slotsLevel:
+							EffectManager.Instance.PlayEffect(
+								EffectType.LevelUp_Building_Slot,
+								kvp.Value.transform.position,
+								Quaternion.identity);
+							// 更新Slot
+							UnitStatusUIManager.Instance.AddSlotToUnit(index, 1);
+							break;
+
+					}
+
+
+					Debug.Log($"建物ID={kvp.Key}の{upgradeType}をアップグレードしました");
+				}
+
+
+				if (anySuccess)
+				{
+					if (!buildingUpgradeData.ContainsKey(upgradeType)) buildingUpgradeData[upgradeType] = 0;
+					buildingUpgradeData[upgradeType]++;
+					isUpgraded = true;
+				}
+			}
 		}
 		return anySuccess;
 	}

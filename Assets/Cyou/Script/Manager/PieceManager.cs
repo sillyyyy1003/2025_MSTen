@@ -1938,7 +1938,7 @@ public class PieceManager : MonoBehaviour
                 // AP回復
                 piece.RecoverAP(piece.Data.aPRecoveryRate);
                 //25.11.9  RI 追加debugテスト
-                Debug.Log($"駒ID={pieceID} 駒AP={piece.CurrentAP}");
+                //Debug.Log($"駒ID={pieceID} 駒AP={piece.CurrentAP}");
 
                 // 魅惑カウンター処理（ProcessCharmedTurn内でcurrentPIDが元に戻される）
                 //if (piece.ProcessCharmedTurn())
