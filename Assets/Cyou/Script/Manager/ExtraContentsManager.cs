@@ -1,9 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Numerics;
 using DG.Tweening;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
+using UnityEngine.UIElements.Experimental;
 
 public class ExtraContentsManager : MonoBehaviour
 {
@@ -14,8 +18,18 @@ public class ExtraContentsManager : MonoBehaviour
 	public RectTransform ExtraContentsMenu;
 	public Button Button_CloseExtraContents;
 	public RectTransform Panel_TribeList;
+    public RectTransform Panel_MapSummary;
 
-	[Header("Tribe Buttons")]
+    [Header("Map Detail Display")]
+    public RectTransform Panel_BlackOverlay;
+    public Image Image_MapDetail;
+    public Button Button_CloseMapDetail;
+
+    [Header("Tab Buttons")]
+	public Button Button_TribeTab;
+    public Button Button_MapTab;
+
+    [Header("Tribe Buttons")]
 	public Button Button_Silk;
 	public Button Button_RedMoon;
 	public Button Button_NGC1300;
@@ -61,7 +75,7 @@ public class ExtraContentsManager : MonoBehaviour
 	// 現在表示中の部族を追跡
 	private RectTransform currentTribePanel;
 
-	// 現在表示中の部族パネルのScrollRect
+	// 現在表示中の部族/マップパネルのScrollRect
 	private ScrollRect scrollRect;
 
 	// タブの種類を定義
@@ -73,14 +87,47 @@ public class ExtraContentsManager : MonoBehaviour
 		Culture
 	}
 
-	//--------------------------------------------------------------------------------
-	// メソッド
-	//--------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------
+    // Map Tab System
+    //--------------------------------------------------------------------------------
+    [Header("Map Buttons")]
+    public Button FertileFieldOfTheFanLake; // 扇湖の沃野
+    public Button WildFieldsOfDividingRivers; // 分流する沃野
+    public Button TheWhiteTundraCitadel; // 白原の孤城
+    public Button BasinOfCalamity; // 災厄の盆地
+    public Button PrimitivePlains; // 原始の平原
+    public Button TheGoldenCorridor; // 黄金の回廊
+    public Button TheFertileCore; // 豊穣の中核
+    public Button TheBorderSanctuary; // 境地の聖域
+    public Button HeartOfTheEmeraldGrove; // 翠林の心臓
+    public Button PlainsOfTheTwinLakes; // 双湖の平原
 
-	void Start()
+    [Header("Map Detail Images")]
+    public Sprite Sprite_FertileFieldOfTheFanLake; // 扇湖の沃野
+    public Sprite Sprite_WildFieldsOfDividingRivers; // 分流する沃野
+    public Sprite Sprite_TheWhiteTundraCitadel; // 白原の孤城
+    public Sprite Sprite_BasinOfCalamity; // 災厄の盆地
+    public Sprite Sprite_PrimitivePlains; // 原始の平原
+    public Sprite Sprite_TheGoldenCorridor; // 黄金の回廊
+    public Sprite Sprite_TheFertileCore; // 豊穣の中核
+    public Sprite Sprite_TheBorderSanctuary; // 境地の聖域
+    public Sprite Sprite_HeartOfTheEmeraldGrove; // 翠林の心臓
+    public Sprite Sprite_PlainsOfTheTwinLakes; // 双湖の平原
+
+	private RectTransform currentMapTab;
+
+    //--------------------------------------------------------------------------------
+    // メソッド
+    //--------------------------------------------------------------------------------
+
+    void Start()
 	{
 		// イベント登録
 		Button_CloseExtraContents.onClick.AddListener(() => CloseExtraContents());
+
+		//部族/マップのタブボタン登録
+		Button_TribeTab.onClick.AddListener(() => OnClickTribeTab());
+		Button_MapTab.onClick.AddListener(() => OnClickMapSummary());
 
 		// 部族ボタンのイベント登録
 		Button_Silk.onClick.AddListener(() => ShowTribeDetail(Panel_Silk_History));
@@ -97,8 +144,35 @@ public class ExtraContentsManager : MonoBehaviour
 		Button_Tab_Society.onClick.AddListener(() => SwitchTribeTab(TribeTabType.Society));
 		Button_Tab_Culture.onClick.AddListener(() => SwitchTribeTab(TribeTabType.Culture));
 
+		// 各マップボタンのイベント登録
+		FertileFieldOfTheFanLake.onClick.AddListener(() => ShowMapDetail(Sprite_FertileFieldOfTheFanLake));
+		WildFieldsOfDividingRivers.onClick.AddListener(() => ShowMapDetail(Sprite_WildFieldsOfDividingRivers));
+		TheWhiteTundraCitadel.onClick.AddListener(() => ShowMapDetail(Sprite_TheWhiteTundraCitadel));
+		BasinOfCalamity.onClick.AddListener(() => ShowMapDetail(Sprite_BasinOfCalamity));
+		PrimitivePlains.onClick.AddListener(() => ShowMapDetail(Sprite_PrimitivePlains));
+		TheGoldenCorridor.onClick.AddListener(() => ShowMapDetail(Sprite_TheGoldenCorridor));
+		TheFertileCore.onClick.AddListener(() => ShowMapDetail(Sprite_TheFertileCore));
+		TheBorderSanctuary.onClick.AddListener(() => ShowMapDetail(Sprite_TheBorderSanctuary));
+		HeartOfTheEmeraldGrove.onClick.AddListener(() => ShowMapDetail(Sprite_HeartOfTheEmeraldGrove));
+		PlainsOfTheTwinLakes.onClick.AddListener(() => ShowMapDetail(Sprite_PlainsOfTheTwinLakes));
+
+		// マップ拡大表示の×ボタンのイベント登録
+		Button_CloseMapDetail.onClick.AddListener(() => CloseMapDetail());
+
         // 初期化
         //ExtraContentsMenu.gameObject.SetActive(false);
+
+		// デフォルトで部族タブを表示、マップタブは非表示
+		Panel_TribeList.gameObject.SetActive(true);
+		Panel_MapSummary.gameObject.SetActive(false);
+
+		// 閉じるボタンは常にアクティブ
+		Button_CloseExtraContents.gameObject.SetActive(true);
+
+		// マップ詳細表示UI要素を初期化時に非表示
+		Panel_BlackOverlay.gameObject.SetActive(false);
+		Image_MapDetail.gameObject.SetActive(false);
+		Button_CloseMapDetail.gameObject.SetActive(false);
 
         // 全タブパネルを初期化時に非表示
         HideAllTribeTabPanels();
@@ -117,9 +191,6 @@ public class ExtraContentsManager : MonoBehaviour
 
 		// 念の為
 		Panel_TribeList.gameObject.SetActive(true);
-
-		// ギャラリーを閉じるボタンを有効化
-		Button_CloseExtraContents.gameObject.SetActive(true);
 
 		// 各勢力のボタンを有効化
 		ActivateTribeButtons();
@@ -142,8 +213,8 @@ public class ExtraContentsManager : MonoBehaviour
 
 		ExtraContentsMenu.gameObject.SetActive(false);
 
-		// タブボタン無効化
-		DeactivateTabButtons();
+        // タブボタン無効化
+        DeactivateTribeTabButtons();
 
 		// 全タブパネル非表示
 		HideAllTribeTabPanels();
@@ -171,8 +242,8 @@ public class ExtraContentsManager : MonoBehaviour
 		// 現在の部族パネルを記録
 		currentTribePanel = tribePanel;
 
-		// タブボタン有効化
-		ActivateTabButtons();
+        // タブボタン有効化
+        ActivateTribeTabButtons();
 
 		Button_ScrollToTop.gameObject.SetActive(true);
 		scrollRect = currentTribePanel.Find("Scroll View").GetComponent<ScrollRect>();
@@ -350,8 +421,8 @@ public class ExtraContentsManager : MonoBehaviour
 		// 前回閲覧したタブのスクロールバー位置を最先頭にリセットする
 		scrollRect.verticalNormalizedPosition = 1.0f;
 
-		// タブボタン無効化
-		DeactivateTabButtons();
+        // タブボタン無効化
+        DeactivateTribeTabButtons();
 
 		// 全タブパネル非表示
 		HideAllTribeTabPanels();
@@ -363,12 +434,36 @@ public class ExtraContentsManager : MonoBehaviour
 		scrollRect = null;
 
 		Button_BackToTribeList.gameObject.SetActive(false);
-		Button_CloseExtraContents.gameObject.SetActive(true);
 
 		ActivateTribeButtons();
 	}
 
-	private void ActivateTribeButtons()
+	/// <summary>
+	/// 部族タブから直接マップタブに行った際の後片付け
+	/// </summary>
+	private void TribeTabCleanUp()
+	{
+		currentTribePanel = null;
+		if (scrollRect != null)
+		{
+            scrollRect.verticalNormalizedPosition = 1.0f;
+            scrollRect = null;
+        }
+		
+
+        // タブボタン無効化
+        DeactivateTribeTabButtons();
+
+        // 全タブパネル非表示
+        HideAllTribeTabPanels();
+
+		//四つの部族アイコンボタンを無効化
+        DeactivateTribeButtons();
+        
+		Button_BackToTribeList.gameObject.SetActive(false);
+    }
+
+    private void ActivateTribeButtons()
 	{
 		Button_Silk.gameObject.SetActive(true);
 		Button_RedMoon.gameObject.SetActive(true);
@@ -384,7 +479,7 @@ public class ExtraContentsManager : MonoBehaviour
 		Button_Researcher.gameObject.SetActive(false);
 	}
 
-	private void ActivateTabButtons()
+	private void ActivateTribeTabButtons()
 	{
 		Button_Tab_History.gameObject.SetActive(true);
 		Button_Tab_Geography.gameObject.SetActive(true);
@@ -392,11 +487,94 @@ public class ExtraContentsManager : MonoBehaviour
 		Button_Tab_Culture.gameObject.SetActive(true);
 	}
 
-	private void DeactivateTabButtons()
+	private void DeactivateTribeTabButtons()
 	{
 		Button_Tab_History.gameObject.SetActive(false);
 		Button_Tab_Geography.gameObject.SetActive(false);
 		Button_Tab_Society.gameObject.SetActive(false);
 		Button_Tab_Culture.gameObject.SetActive(false);
+	}
+
+	///<summary>
+	///部族タブクリック時の処理
+	///</summary>
+	private void OnClickTribeTab()
+	{
+		Debug.Log("TribeTabButton has been clicked!");
+		// マップ拡大表示が開いている場合は閉じる
+		CloseMapDetail();
+
+		// マップ一覧画面とScrollRectをクリーンアップ
+		if (scrollRect != null)
+		{
+			scrollRect.verticalNormalizedPosition = 1.0f;
+			scrollRect = null;
+		}
+
+		// パネルを切り替え
+		SetPanelActive(Panel_MapSummary, false);
+		SetPanelActive(Panel_TribeList, true);
+
+		// 部族ボタンを有効化
+		ActivateTribeButtons();
+
+		// ScrollToTopボタンは部族リストでは不要なので非表示
+		Button_ScrollToTop.gameObject.SetActive(false);
+
+		// 戻るボタンを非表示
+		Button_BackToTribeList.gameObject.SetActive(false);
+	}
+
+
+	///<summary>
+	///マップタブクリック時の処理
+	///</summary>
+	private void OnClickMapSummary()
+	{
+		TribeTabCleanUp();
+        SetPanelActive(Panel_TribeList, false);
+
+		SetPanelActive(Panel_MapSummary, true);
+        Button_ScrollToTop.gameObject.SetActive(true);//念の為
+
+		scrollRect = Panel_MapSummary.Find("Scroll View").GetComponent<ScrollRect>();
+        Button_ScrollToTop.gameObject.SetActive(true);//ここも念の為
+    }
+
+	///<summary>
+	///マップ画像を拡大表示
+	///</summary>
+	private void ShowMapDetail(Sprite mapSprite)
+	{
+		// 黒幕を表示
+		Panel_BlackOverlay.gameObject.SetActive(true);
+
+		// 拡大画像を表示し、Spriteを設定
+		Image_MapDetail.gameObject.SetActive(true);
+		Image_MapDetail.sprite = mapSprite;
+
+		// ×ボタンを表示
+		Button_CloseMapDetail.gameObject.SetActive(true);
+
+		// ToTopボタンを無効化
+		Button_ScrollToTop.gameObject.SetActive(false);
+	}
+
+	///<summary>
+	///マップ拡大画像を閉じる
+	///</summary>
+	private void CloseMapDetail()
+	{
+		// 黒幕を非表示
+		Panel_BlackOverlay.gameObject.SetActive(false);
+
+		// 拡大画像を非表示
+		Image_MapDetail.gameObject.SetActive(false);
+
+		// ×ボタンを非表示
+		Button_CloseMapDetail.gameObject.SetActive(false);
+
+		// ToTopボタンを有効化
+		Button_ScrollToTop.gameObject.SetActive(true);
 	}
 }
