@@ -2419,8 +2419,6 @@ public class PlayerOperationManager : MonoBehaviour
             syncBuildingData buildData = buildDataNullable.Value;
             if (isReBuild)
             {
-                buildData.currentHP = 10;
-
                 Debug.Log("复活成功！当前建筑HP:"+ buildData.currentHP);
             }
               
@@ -3201,7 +3199,11 @@ public class PlayerOperationManager : MonoBehaviour
                 // 建筑被摧毁，攻击者前进到建筑位置
                 ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
                 GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[targetOwnerId].PlayerReligion, GameManage.Instance.FindCell(targetCellId).Cells2DPos);
-              
+
+
+                // 6. 清空本地cellObject
+                GameManage.Instance.SetCellObject(targetPos, null);
+
                 // 保存废墟引用
                 if (!BuildingRuins.ContainsKey(targetOwnerId))
                 {
@@ -3640,8 +3642,10 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 5. 创建废墟
             GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[msg.BuildingOwnerId].PlayerReligion, buildingPos);
-           
 
+
+            // 6. 清空本地cellObject
+            GameManage.Instance.SetCellObject(buildingPos, null);
             // 保存废墟引用
             if (!BuildingRuins.ContainsKey(msg.BuildingOwnerId))
             {
@@ -4941,7 +4945,7 @@ public class PlayerOperationManager : MonoBehaviour
         int2 buildingPos = buildingUnit.Position;
         int buildingID = buildingUnit.UnitID;
 
-        Debug.Log($"[建筑摧毁] 建筑 ID={buildingID} 在位置 ({buildingPos.x},{buildingPos.y}) 因未激活而被摧毁");
+        Debug.Log($"[建筑摧毁] 建筑 ID={buildingID} 在位置 ({buildingPos.x},{buildingPos.y}) 已自毁");
 
         // 1. 获取建筑GameObject
         GameObject buildingObj = null;
@@ -4960,20 +4964,22 @@ public class PlayerOperationManager : MonoBehaviour
 
             destroySequence.OnComplete(() =>
             {
-                // 3. 销毁建筑GameObject
+                // 销毁建筑GameObject
                 Destroy(buildingObj);
                 Debug.Log($"[建筑摧毁] 建筑GameObject已销毁");
 
-                // 4. 从单位字典中移除建筑
+                // 从单位字典中移除建筑
                 if (localPlayerUnits.ContainsKey(buildingPos))
                 {
                     localPlayerUnits.Remove(buildingPos);
                 }
 
-                // 5. 创建废墟
+                // 创建废墟
                 GameObject ruin =CreateRuin(SceneStateManager.Instance.PlayerReligion, buildingPos);
-             
-                // 6. 保存废墟引用
+
+                // 清空本地cellObject
+                GameManage.Instance.SetCellObject(buildingPos, null);
+                // 保存废墟引用
                 if (!BuildingRuins.ContainsKey(localPlayerId))
                 {
                     BuildingRuins[localPlayerId] = new Dictionary<int, GameObject>();
@@ -4985,7 +4991,7 @@ public class PlayerOperationManager : MonoBehaviour
                 // 保存废墟
                 BuildingRuins[localPlayerId][RuinID] = ruin;
 
-                // 7. 记录cellID到PlayerDataManager (不需要网络同步)
+                // 7记录cellID到PlayerDataManager (不需要网络同步)
                 PlayerDataManager.Instance.AddPlayerRuinCell(cellID);
 
                 RuinID++;
