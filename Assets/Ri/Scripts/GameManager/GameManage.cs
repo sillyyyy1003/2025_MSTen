@@ -823,6 +823,7 @@ public class GameManage : MonoBehaviour
         if (obj == null)
         {
             CellObjects.Remove(pos);
+           
             _PlayerOperation._HexGrid.GetCell(pos.x, pos.y).Unit = false;
             Debug.Log("格子 " + pos + " 移除单位: ");
         }

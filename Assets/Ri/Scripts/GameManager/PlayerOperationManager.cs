@@ -1145,11 +1145,11 @@ public class PlayerOperationManager : MonoBehaviour
                     int id = ruinCell[i];
                     if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
                     {
-                        Debug.Log("此格子上有单位，跳过");
+                        Debug.Log("此格子上有单位，跳过 "+id);
                         // 当前格子有单位，先记录id，下回合再依次复活
-                        PlayerDataManager.Instance.NextTurnReBuildCellID.Add(ruinCell[i]);
+                        PlayerDataManager.Instance.NextTurnReBuildCellID.Add(id);
                         // 从当前废墟cellList中移除
-                        PlayerDataManager.Instance.RemovePlayerRuinCell(ruinCell[i]);
+                        PlayerDataManager.Instance.RemovePlayerRuinCell(id);
                     }
                     else
                     {
@@ -1160,7 +1160,7 @@ public class PlayerOperationManager : MonoBehaviour
                     }
                 }
             }
-            // 第二次遍历上回合记录的需要被复活的建筑
+            // 第二次遍历记录的需要被复活的建筑
             if(PlayerDataManager.Instance.NextTurnReBuildCellID.Count!=0)
             {
                 for (int i=0;i<PlayerDataManager.Instance.NextTurnReBuildCellID.Count;i++)
@@ -1200,7 +1200,7 @@ public class PlayerOperationManager : MonoBehaviour
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            Debug.Log("你的回合开始!重置行动！" + "unit name is " + unit.UnitID + "unit type is " + unit.UnitType + " canDo is " + unit.bCanDoAction);
+            Debug.Log("你的回合开始! " + PlayerDataManager.Instance.TurnCount+" 重置行动！ unit name is " + unit.UnitID + "unit type is " + unit.UnitType );
 
             // 更新AP
             if(unit.UnitType!=CardType.Building)
@@ -1357,7 +1357,7 @@ public class PlayerOperationManager : MonoBehaviour
                 {
                     UnitStatusUIManager.Instance.UpdateHPByID(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHP, PieceManager.Instance.GetPieceMaxHP(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO.currentHPLevel));
                     PieceManager.Instance.UpdateEnemySyncData(unit.PlayerUnitDataSO.pieceID, unit.PlayerUnitDataSO);
-                    Debug.Log("enemy piece hp is "+PieceManager.Instance.GetPiece(unit.PlayerUnitDataSO.pieceID).CurrentHP);
+                    //Debug.Log("enemy piece hp is "+PieceManager.Instance.GetPiece(unit.PlayerUnitDataSO.pieceID).CurrentHP);
                 }
                 else
                 {
@@ -2394,7 +2394,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 5. 网络同步农民消失（使用农民的原始位置）
             SyncFarmerEnterBuilding(farmerID, farmerPos);
 
-            Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已献祭并消失");
+            //Debug.Log($"[农民进建筑] 完成 - 农民ID:{farmerID} 已献祭并消失");
 
             UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
             // 重置选择状态
@@ -4998,7 +4998,7 @@ public class PlayerOperationManager : MonoBehaviour
                 // 保存废墟
                 BuildingRuins[localPlayerId][RuinID] = ruin;
 
-                // 7记录cellID到PlayerDataManager (不需要网络同步)
+                // 记录cellID到PlayerDataManager (不需要网络同步)
                 PlayerDataManager.Instance.AddPlayerRuinCell(cellID);
 
                 RuinID++;
@@ -5264,7 +5264,7 @@ public class PlayerOperationManager : MonoBehaviour
 
         if (playerId == localPlayerId)
         {
-            Debug.Log("[事件] 本地玩家移除单位");
+            //Debug.Log("[事件] 本地玩家移除单位");
             // 本地玩家移除单位（发生在被攻击时）
             if (localPlayerUnits.ContainsKey(position) && !isCharm)
             {
