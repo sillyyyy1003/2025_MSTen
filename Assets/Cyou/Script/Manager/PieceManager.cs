@@ -565,7 +565,7 @@ public class PieceManager : MonoBehaviour
 		foreach (int targetID in sameProfessionPieces)
 		{
 			if (!allPieces.TryGetValue(targetID, out Piece targetPiece)) continue;
-
+            if (targetPiece.IsCharmed) continue;
             //25.12.14 RI add upgrade check
             if (targetPiece.CharmedTurnsRemaining>0)
                 continue;
@@ -592,6 +592,10 @@ public class PieceManager : MonoBehaviour
                 // シンクデータ更新
 				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
+
+                //25.12.18 RI add  check
+                if (index < 0)
+                    continue;
 				var unit = playerData.PlayerUnits[index];  // コピー
 				if (index >= 0)
 				{

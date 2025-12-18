@@ -1155,11 +1155,15 @@ public class PlayerOperationManager : MonoBehaviour
         foreach (var unit in PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits)
         {
             unit.SetCanDoAction(true);
-            Debug.Log("你的回合开始! " + PlayerDataManager.Instance.TurnCount+" 重置行动！ unit name is " + unit.UnitID + "unit type is " + unit.UnitType );
+            Debug.Log("你的回合开始! " + PlayerDataManager.Instance.TurnCount + " 重置行动！ unit name is " + unit.UnitID + "unit type is " + unit.UnitType);
 
-            // 更新AP
-            if(unit.UnitType!=CardType.Building)
+            // 更新AP与HP(被魅惑过的不享受升级AP效果)
+            if (unit.UnitType != CardType.Building)
+            {
                 UnitStatusUIManager.Instance.UpdateAPByID(unit.UnitID, PieceManager.Instance.GetPieceAP(unit.UnitID), PieceManager.Instance.GetPieceAllAP(unit.UnitID));
+                UnitStatusUIManager.Instance.UpdateHPByID(unit.UnitID, (int)PieceManager.Instance.GetPieceHP(unit.UnitID), PieceManager.Instance.GetPieceAllHP(unit.UnitID));
+            }
+             
 
             else
             {

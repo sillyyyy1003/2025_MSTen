@@ -185,7 +185,8 @@ public class SceneStateManager : MonoBehaviour
     {
 		// map 1001~1010
 		mapSerialNumber = Random.Range(1001, 1011);
-	}
+        //mapSerialNumber  = 1009;
+    }
 
     public void StartSingleGameWithRandomMapAndReligion()
     {
