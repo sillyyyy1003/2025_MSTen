@@ -116,7 +116,7 @@ public struct syncPieceData
             sacrificeLevel = (piece is Farmer farmer) ? farmer.SacrificeLevel : 0,
             attackPowerLevel = (piece is MilitaryUnit military) ? military.AttackPowerLevel : 0,
             charmedTurnsRemaining = piece.CharmedTurnsRemaining,
-            hasBeenCharmed=false,
+            hasBeenCharmed= piece.hasBeenCharmed,
         };
     }
 }

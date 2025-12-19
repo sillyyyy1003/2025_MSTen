@@ -4244,7 +4244,10 @@ public class PlayerOperationManager : MonoBehaviour
         }
         syncPieceData convertResult = targetData.Value.PlayerUnitDataSO;
         convertResult.hasBeenCharmed = true;
-        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype+"piece hp is "+convertResult.currentHP);
+        PieceManager.Instance.GetPiece(convertResult.pieceID).hasBeenCharmed = true;
+
+        PlayerDataManager.Instance.GetUnitDataById(targetPieceID).Value.SetHasBeenCharmed(true);
+        Debug.Log("[ExecuteCharm] 魅惑成功！转移单位所有权: " + convertResult.piecetype+"piece hp is "+convertResult.currentHP+"has charmed is " + PlayerDataManager.Instance.GetUnitDataById(targetPieceID).Value.hasBeenCharmed);
 
         // 获取目标GameObject（需要转移到本地玩家）
         GameObject targetUnit = null;
@@ -4350,9 +4353,9 @@ public class PlayerOperationManager : MonoBehaviour
         int2 missionaryPos = new int2(msg.MissionaryPosX, msg.MissionaryPosY);
         int2 targetPos = new int2(msg.TargetPosX, msg.TargetPosY);
 
-        Debug.Log($"[网络魅惑] 玩家 {msg.MissionaryPlayerId} 魅惑单位 at ({targetPos.x},{targetPos.y})");
+        Debug.Log($"[网络魅惑] 玩家 {msg.MissionaryPlayerId} 魅惑单位 at ({targetPos.x},{targetPos.y}");
 
-
+        PieceManager.Instance.GetPiece(msg.TargetID).hasBeenCharmed = true;
         // 1. 在PlayerDataManager中转移单位所有权
         bool transferSuccess = PlayerDataManager.Instance.TransferUnitOwnership(
             msg.TargetPlayerId,         // 从原所有者
