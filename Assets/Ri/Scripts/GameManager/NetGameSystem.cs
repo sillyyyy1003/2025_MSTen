@@ -466,6 +466,11 @@ public class NetGameSystem : MonoBehaviour
     public List<uint> ConnectedPlayers => new List<uint>(connectedPlayers);
     public int PlayerCount => connectedPlayers.Count;
 
+    [Header("服务器超时设置")]
+    [SerializeField] private float serverTimeoutDuration = 30f; // 超时时间（秒）
+    private float lastConnectionTime; // 上次收到连接请求的时间
+    private Coroutine timeoutCheckCoroutine; // 超时检测协程
+    private bool isCheckingTimeout = false; // 是否正在检测超时
 
     // 获取房间玩家信息
     public List<PlayerInfo> RoomPlayers => new List<PlayerInfo>(roomPlayers);
@@ -702,12 +707,103 @@ public class NetGameSystem : MonoBehaviour
 
             });
 
+            // ===== 启动超时检测 =====
+            lastConnectionTime = Time.time;
+            StartTimeoutCheck();
         }
         catch (Exception ex)
         {
             Debug.LogError($"[服务器] 启动失败: {ex.Message}");
             isRunning = false;
         }
+    }
+
+    // ===== 启动超时检测协程 =====
+    private void StartTimeoutCheck()
+    {
+        if (timeoutCheckCoroutine != null)
+        {
+            StopCoroutine(timeoutCheckCoroutine);
+        }
+
+        isCheckingTimeout = true;
+        timeoutCheckCoroutine = StartCoroutine(CheckServerTimeout());
+        Debug.Log($"[服务器] 启动连接超时检测，超时时间: {serverTimeoutDuration}秒");
+    }
+
+    // ===== 新增：停止超时检测 =====
+    private void StopTimeoutCheck()
+    {
+        isCheckingTimeout = false;
+
+        if (timeoutCheckCoroutine != null)
+        {
+            StopCoroutine(timeoutCheckCoroutine);
+            timeoutCheckCoroutine = null;
+        }
+
+        Debug.Log("[服务器] 停止连接超时检测");
+    }
+
+    // ===== 超时检测协程 =====
+    private IEnumerator CheckServerTimeout()
+    {
+        while (isCheckingTimeout && isRunning)
+        {
+            yield return new WaitForSeconds(1f); // 每秒检查一次
+
+            // 如果已有客户端连接，停止超时检测
+            if (clients != null && clients.Count > 0)
+            {
+                Debug.Log("[服务器] 已有客户端连接，停止超时检测");
+                StopTimeoutCheck();
+                yield break;
+            }
+
+            // 检查是否超时
+            float elapsedTime = Time.time - lastConnectionTime;
+
+            if (elapsedTime >= serverTimeoutDuration)
+            {
+                Debug.LogWarning($"[服务器] {serverTimeoutDuration}秒内未收到连接请求，准备返回选择场景");
+                OnServerTimeout();
+                yield break;
+            }
+
+            // 可选：输出剩余时间（用于调试）
+            float remainingTime = serverTimeoutDuration - elapsedTime;
+            if (Mathf.FloorToInt(remainingTime) % 10 == 0) // 每10秒输出一次
+            {
+                Debug.Log($"[服务器] 等待连接中... 剩余 {Mathf.FloorToInt(remainingTime)} 秒");
+            }
+        }
+    }
+
+    // ===== 处理服务器超时 =====
+    private void OnServerTimeout()
+    {
+        Debug.Log("[服务器] 超时，关闭服务器并返回选择场景");
+
+        // 停止超时检测
+        StopTimeoutCheck();
+
+        // 关闭网络连接
+        Shutdown();
+
+        // 返回选择场景
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            if (SceneController.Instance != null)
+            {
+                SceneController.Instance.SwitchScene("SelectScene");
+            }
+            else
+            {
+                Debug.LogError("[服务器] 无法找到 SceneController，无法切换场景");
+                // 备用方案：直接使用Unity的场景管理
+                SceneManager.LoadScene("SelectScene");
+            }
+        });
     }
     // 服务器端: 启动广播
     private void StartServerBroadcast()
@@ -800,6 +896,14 @@ public class NetGameSystem : MonoBehaviour
                     // 如果是新连接请求，记录客户端
                     if (message.MessageType == NetworkMessageType.CONNECT)
                     {
+                        // ===== 新增：收到连接请求，停止超时检测 =====
+                        if (isCheckingTimeout)
+                        {
+                            Debug.Log("[服务器] 收到客户端连接请求，停止超时检测");
+                            StopTimeoutCheck();
+                        }
+
+
                         ConnectMessage connectData = JsonConvert.DeserializeObject<ConnectMessage>(message.JsonData);
                         uint clientId = nextClientId++;
                         clients[clientId] = clientEP;
@@ -1911,6 +2015,8 @@ public class NetGameSystem : MonoBehaviour
 
     private void BroadcastToClients(NetworkMessage message, uint excludeClientId)
     {
+        if (SceneStateManager.Instance.bIsSingle)
+            return;
         //Debug.Log($"=== BroadcastToClients 开始 ===");
         //Debug.Log($"消息类型: {message.MessageType}");
         //Debug.Log($"排除ID: {excludeClientId}");
@@ -2847,6 +2953,14 @@ public class NetGameSystem : MonoBehaviour
 
         isRunning = false;
         isBroadcasting = false;
+        if(GameManage.Instance.GetIsGamingOrNot())
+        {
+            int localId = GameManage.Instance.LocalPlayerID;
+            SendGameOverMessage(GameManage.Instance.OtherPlayerID, localId, GameManage.Instance.GetLocalResultData(), "surrender");
+
+        }
+        // ===== 停止超时检测 =====
+        StopTimeoutCheck();
 
         if (networkThread != null && networkThread.IsAlive)
         {

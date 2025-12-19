@@ -250,8 +250,9 @@ public class TitleUIManager : MonoBehaviour
 	/// Online game button event
 	/// </summary>
 	private void OnClickOnlineGame()
-	{
-		RightMenu.gameObject.SetActive(true);
+    {
+        SceneStateManager.Instance.bIsSingle = false;
+        RightMenu.gameObject.SetActive(true);
 		Button_CloseRightPanel.gameObject.SetActive(true);
 
 		//  Set option menu active

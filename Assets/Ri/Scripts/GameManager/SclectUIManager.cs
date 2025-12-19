@@ -52,6 +52,7 @@ public class SclectUIManager : MonoBehaviour
     }
     private void OnClickOnlineGame()
     {
+        SceneStateManager.Instance.bIsSingle = false;
         Image_OnlineGame.SetActive(true); 
      
     }
