@@ -587,11 +587,18 @@ public class PieceManager : MonoBehaviour
 
 			if (success)
 			{
+
                 // 新たなシンクロデータを作成
                 syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
+                // 12.19 RI add hasBeenCharmed 
+                if (PlayerDataManager.Instance.GetUnitDataById(targetID).Value.PlayerUnitDataSO.hasBeenCharmed)
+                {
+                    Debug.Log("charmed true!");
+                    syncData.hasBeenCharmed = true;
+                }
 
                 // シンクデータ更新
-				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+                var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
 
                 //25.12.18 RI add  check
@@ -711,8 +718,13 @@ public class PieceManager : MonoBehaviour
 				// 新たなシンクロデータ作成
 				syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
 
-				// シンクロデータ更新
-				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+                if (PlayerDataManager.Instance.GetUnitDataById(targetID).Value.PlayerUnitDataSO.hasBeenCharmed)
+                {
+                    Debug.Log("charmed true!");
+                    syncData.hasBeenCharmed = true;
+                }
+                // シンクロデータ更新
+                var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
 				if (index >= 0)
 				{
