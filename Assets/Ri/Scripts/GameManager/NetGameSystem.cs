@@ -2015,6 +2015,8 @@ public class NetGameSystem : MonoBehaviour
 
     private void BroadcastToClients(NetworkMessage message, uint excludeClientId)
     {
+        if (SceneStateManager.Instance.bIsSingle)
+            return;
         //Debug.Log($"=== BroadcastToClients 开始 ===");
         //Debug.Log($"消息类型: {message.MessageType}");
         //Debug.Log($"排除ID: {excludeClientId}");
