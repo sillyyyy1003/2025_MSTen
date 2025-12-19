@@ -300,8 +300,7 @@ public class GameOperationPanel : MonoBehaviour
 			if (GetDistanceFurtherThanValue(1, cell)) return;
 
 			// 创建面板数据 显示面板
-			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
-			ShowPanel("洗脳： " + cost+" 行動力");
+			ShowPanel("洗脳： " + 1 + " 行動力");
 			UpdatePanelPos();
 			return;
 		}
@@ -314,10 +313,9 @@ public class GameOperationPanel : MonoBehaviour
 			int cellOwner = dataManager.GetCellOwner(cell.Index);
 			if (cellOwner != GameManage.Instance.LocalPlayerID)
 			{
-				int occupy = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Occupy);
 				
 				// 如果行动力不足 则按钮无法交互
-				if(PieceManager.Instance.GetPieceAP(dataManager.nowChooseUnitID) < occupy)
+				if(PieceManager.Instance.GetPieceAP(dataManager.nowChooseUnitID) < 2)
 				{
 					ShowButtonPanel("占領: 行動力不足");
 					SpecialButton.interactable = false;
@@ -325,7 +323,7 @@ public class GameOperationPanel : MonoBehaviour
 				}
 				else
 				{
-					ShowButtonPanel("占領: " + occupy + " 行動力");
+					ShowButtonPanel("占領: " + 2 + " 行動力");
 					SpecialButton.interactable = true;
 				}
 
@@ -366,9 +364,7 @@ public class GameOperationPanel : MonoBehaviour
 		{
 			// 如果目标格子距离选中格子的距离大于1则不显示
 			if (GetDistanceFurtherThanValue(1, cell)) return;
-
-			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Attack);
-			ShowPanel("攻撃： " + cost+" 行動力");
+			ShowPanel("攻撃： " + 1 + " 行動力");
 		}
 
 		UpdatePanelPos();

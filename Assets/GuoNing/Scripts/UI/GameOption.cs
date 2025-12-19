@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using SoundSystem;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -140,6 +141,9 @@ public class GameOption : MonoBehaviour
 		Debug.Log(GameManage.Instance!=null);
 		Menu.gameObject.SetActive(false);
 		EndTurnButton.gameObject.SetActive(true);
+
+		// PlaySe
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	public void DoMenu()
@@ -158,6 +162,8 @@ public class GameOption : MonoBehaviour
 	{
 		FirstLayer.gameObject.SetActive(true);
 		SecondLayer.gameObject.SetActive(false);
+		// PlaySe
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	
@@ -167,6 +173,9 @@ public class GameOption : MonoBehaviour
 		ResolutionMenu.gameObject.SetActive(isOn);
 		SoundMenu.gameObject.SetActive(!isOn);
 		OtherMenu.gameObject.SetActive(!isOn);
+
+		// PlaySe
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	private void OnSoundToggleValueChanged(bool isOn)
@@ -174,6 +183,9 @@ public class GameOption : MonoBehaviour
 		ResolutionMenu.gameObject.SetActive(!isOn);
 		SoundMenu.gameObject.SetActive(isOn);
 		OtherMenu.gameObject.SetActive(!isOn);
+
+		// PlaySe
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	private void OnOtherToggleValueChanged(bool isOn)
@@ -181,6 +193,9 @@ public class GameOption : MonoBehaviour
 		ResolutionMenu.gameObject.SetActive(!isOn);
 		SoundMenu.gameObject.SetActive(!isOn);
 		OtherMenu.gameObject.SetActive(isOn);
+
+		// PlaySe
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	public void OpenResolutionMenu()
@@ -189,6 +204,7 @@ public class GameOption : MonoBehaviour
 		ResolutionMenu.gameObject.SetActive(true);
 		SoundMenu.gameObject.SetActive(false);
 		OtherMenu.gameObject.SetActive(false);
+
 	}
 
 	private void OpenSoundMenu()
@@ -211,15 +227,22 @@ public class GameOption : MonoBehaviour
 		SecondLayer.gameObject.SetActive(true);
 
 		OpenResolutionMenu();	// Open default menu
+
+		// PlaySe
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	private void OpenSurrenderMenu()
 	{
 		SurrenderComponent.gameObject.SetActive(true);
+		// PlaySe
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	private void OpenBackToMainSceneMenu()
 	{
 		BackToSelectSceneComponent.gameObject.SetActive(true);
+		// PlaySe
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 }

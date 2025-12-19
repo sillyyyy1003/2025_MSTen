@@ -7,6 +7,7 @@ using GameData;
 using GamePieces;
 using GameData.UI;
 using System;
+using SoundSystem;
 
 [System.Serializable]
 public struct UIUnitData
@@ -1088,6 +1089,9 @@ public class GameUIManager : MonoBehaviour
         // 只有在游戏进程中时才有效
         if(GameManage.Instance.GetIsGamingOrNot())
             ReligionInfoPanel.gameObject.SetActive(true);
+
+        // PlaySe
+        SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 
 	}
 
