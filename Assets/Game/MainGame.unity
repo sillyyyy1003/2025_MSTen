@@ -18002,6 +18002,7 @@ MonoBehaviour:
   broadcastPort: 8889
   maxPlayers: 2
   playerName: Player
+  serverTimeoutDuration: 30
 --- !u!4 &787177570
 Transform:
   m_ObjectHideFlags: 0
@@ -37603,8 +37604,8 @@ MonoBehaviour:
   m_Colors:
     m_NormalColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_HighlightedColor: {r: 1, g: 0.8609398, b: 0.6556604, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.8773585, g: 0.8773585, b: 0.8773585, a: 1}
+    m_SelectedColor: {r: 0.90588236, g: 0.7411765, b: 0.49803922, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1

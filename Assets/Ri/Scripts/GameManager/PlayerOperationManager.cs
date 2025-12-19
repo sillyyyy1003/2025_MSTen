@@ -4111,7 +4111,6 @@ public class PlayerOperationManager : MonoBehaviour
         if (_HexGrid.GetIsForest(LastSelectingCellID))
         {
             Debug.Log("cant Occupy this forest cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
-
             return;
         }
         if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID))
@@ -4122,8 +4121,8 @@ public class PlayerOperationManager : MonoBehaviour
         }
         if (!_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1))
         {
-            Debug.Log("cant Occupy this So Far cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
-
+            OperationBroadcastManager.Instance.ShowMessage("占領範囲外です。\n自分の領地に隣接したマスを選択してください。");
+			Debug.Log("cant Occupy this So Far cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
             return;
         }
         // 传教士占领
