@@ -37,8 +37,8 @@ public class ResolutionManager : MonoBehaviour
 	private ResolutionSetting[] resolutionSettings = new[]
 	{
 		new ResolutionSetting(1920, 1080),	// 1080P
-		new ResolutionSetting(1600, 900),	// 900P
-		new ResolutionSetting(1280, 720),	// 720P
+		//new ResolutionSetting(1600, 900),	// 900P
+		//new ResolutionSetting(1280, 720),	// 720P
 	};
 
 	private int currentResolutionIndex;
@@ -81,7 +81,7 @@ public class ResolutionManager : MonoBehaviour
 	{
 
 
-
+		Screen.SetResolution(1920, 1080, true);
 	}
 
 	public void InitializeResolutionDropDown(TMP_Dropdown dropdown)
@@ -103,8 +103,9 @@ public class ResolutionManager : MonoBehaviour
 	{
 		List<string> fullscreenOptions = new List<string>
 		{
-			"ウィンドウ",       // Windowed
-            "フルスクリーン"  // ExclusiveFullScreen
+			
+            "フルスクリーン",  // ExclusiveFullScreen
+            //"ウィンドウ",       // Windowed
          
         };
 		//   "ボーダーレス"      // FullScreenWindow
@@ -118,50 +119,52 @@ public class ResolutionManager : MonoBehaviour
 
 	public void OnChangeResolution(int index)
 	{
-		currentResolutionIndex = index;
-		ResolutionSetting setting = resolutionSettings[index];
+		//currentResolutionIndex = index;
+		//ResolutionSetting setting = resolutionSettings[index];
 
-		// 保持当前模式不变，仅改变分辨率
-		if(currentFullScrrenIndex == 1)
-		{
-			// 全屏模式
-			Screen.SetResolution(setting.width, setting.height, true);
-		}
-		else
-		{
-			// 窗口模式
-			Screen.SetResolution(setting.width, setting.height, false);
-		}
+		//// 保持当前模式不变，仅改变分辨率
+		//if(currentFullScrrenIndex == 1)
+		//{
+		//	// 全屏模式
+		//	Screen.SetResolution(setting.width, setting.height, true);
+		//}
+		//else
+		//{
+		//	// 窗口模式
+		//	Screen.SetResolution(setting.width, setting.height, false);
+		//}
 
-		// 保存设定
-		SaveLoadManager.Instance.UpdateResolutionIndex(currentResolutionIndex);
+		//// 保存设定
+		//SaveLoadManager.Instance.UpdateResolutionIndex(currentResolutionIndex);
 	}
 
 	public void OnChangeFullScreenMode(int index)
 	{
-		currentFullScrrenIndex = index;
-		ResolutionSetting setting = resolutionSettings[currentResolutionIndex];
+		//currentFullScrrenIndex = index;
+		//ResolutionSetting setting = resolutionSettings[currentResolutionIndex];
 
-		if (index == 1)
-		{
-			// 使用最兼容的全屏模式
-			Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-			// 全屏必须用 true
-			Screen.SetResolution(setting.width, setting.height, true);
-		}
-		else
-		{
-			Screen.fullScreenMode = FullScreenMode.Windowed;
-			Screen.SetResolution(setting.width, setting.height, false);
-		}
-		// 保存设定
-		SaveLoadManager.Instance.UpdateResolutionIndex(currentFullScrrenIndex);
+		//if (index == 1)
+		//{
+		//	// 使用最兼容的全屏模式
+		//	Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
+		//	// 全屏必须用 true
+		//	Screen.SetResolution(setting.width, setting.height, true);
+		//}
+		//else
+		//{
+		//	Screen.fullScreenMode = FullScreenMode.Windowed;
+		//	Screen.SetResolution(setting.width, setting.height, false);
+		//}
+		//// 保存设定
+		//SaveLoadManager.Instance.UpdateResolutionIndex(currentFullScrrenIndex);
 	}
 
 	public void ApplyLoadedSettings(int resIndex, int fullIndex)
 	{
-		currentResolutionIndex = Mathf.Clamp(resIndex, 0, resolutionSettings.Length - 1);
-		currentFullScrrenIndex = Mathf.Clamp(fullIndex, 0, 2);
+		//currentResolutionIndex = Mathf.Clamp(resIndex, 0, resolutionSettings.Length - 1);
+		//currentFullScrrenIndex = Mathf.Clamp(fullIndex, 0, 2);
+		currentResolutionIndex = Mathf.Clamp(0, 0, resolutionSettings.Length - 1);
+		currentFullScrrenIndex = Mathf.Clamp(0, 0, 2);
 
 		// 先应用 fullscreen 模式
 		OnChangeFullScreenMode(currentFullScrrenIndex);
