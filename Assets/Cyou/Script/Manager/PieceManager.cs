@@ -116,7 +116,7 @@ public struct syncPieceData
             sacrificeLevel = (piece is Farmer farmer) ? farmer.SacrificeLevel : 0,
             attackPowerLevel = (piece is MilitaryUnit military) ? military.AttackPowerLevel : 0,
             charmedTurnsRemaining = piece.CharmedTurnsRemaining,
-            hasBeenCharmed=false,
+            hasBeenCharmed= piece.hasBeenCharmed,
         };
     }
 }
@@ -587,11 +587,19 @@ public class PieceManager : MonoBehaviour
 
 			if (success)
 			{
+
                 // 新たなシンクロデータを作成
                 syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
+                // 12.19 RI add hasBeenCharmed 
+                if (PlayerDataManager.Instance.GetUnitDataById(targetID).Value.PlayerUnitDataSO.hasBeenCharmed)
+                {
+                    Debug.Log("charmed true!");
+                    PlayerDataManager.Instance.GetUnitDataById(targetID).Value.SetHasBeenCharmed(true);
+                    syncData.hasBeenCharmed = true;
+                }
 
                 // シンクデータ更新
-				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+                var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
 
                 //25.12.18 RI add  check
@@ -711,8 +719,14 @@ public class PieceManager : MonoBehaviour
 				// 新たなシンクロデータ作成
 				syncPieceData syncData = syncPieceData.CreateFromPiece(targetPiece);
 
-				// シンクロデータ更新
-				var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
+                if (PlayerDataManager.Instance.GetUnitDataById(targetID).Value.PlayerUnitDataSO.hasBeenCharmed)
+                {
+                    Debug.Log("charmed true!");
+                    PlayerDataManager.Instance.GetUnitDataById(targetID).Value.SetHasBeenCharmed(true);
+                    syncData.hasBeenCharmed = true;
+                }
+                // シンクロデータ更新
+                var playerData = PlayerDataManager.Instance.GetPlayerData(playerID);
 				int index = playerData.PlayerUnits.FindIndex(u => u.UnitID == targetID);
 				if (index >= 0)
 				{

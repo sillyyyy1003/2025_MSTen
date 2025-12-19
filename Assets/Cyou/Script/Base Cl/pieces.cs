@@ -38,6 +38,7 @@ namespace GamePieces
         public int PopeSwapPosRemaining => popeSwapPosRemaining;
         public bool canPopeSwapPos => popeSwapPosRemaining <= 0;
 
+        public bool hasBeenCharmed = false;
 
         // ===== イベント =====
 
