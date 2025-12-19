@@ -46,6 +46,7 @@ public class GameOperationPanel : MonoBehaviour
 	public Vector2 screenOffset = new Vector2(0, 30);
 	private int BuyUnitCellID = -1;     // 在哪个格子购买单位
 
+
 	HexCell GetCellUnderCursor() =>
 		hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
 	void Start()
@@ -87,16 +88,20 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 如果不是我的回合 则不处理
 		if (!GameManage.Instance._PlayerOperation.IsMyTurn){
+		
+			ActionPanelTransform.gameObject.SetActive(false);
 			CloseStorePanel();
 			return;
+			
 		}
 
+		// 如果不是游戏中 则关闭面板
 		if (GameManage.Instance.GetIsGamingOrNot() == false)
 		{
-			// 关闭面板
-			StorePanelTransform.gameObject.SetActive(false);
 			ActionPanelTransform.gameObject.SetActive(false);
+			CloseStorePanel();
 			return;
+			
 		}
 
 
@@ -194,6 +199,9 @@ public class GameOperationPanel : MonoBehaviour
 		// 如果格子上有单位 则不显示购买面板
 		if (cell.Unit) return;
 
+		// 如果格子上有废墟 则不显示购买面板
+		if (PlayerDataManager.Instance.IsRuin(cell.Index)) return;
+
 		// 如果格子不是我方领地  则不显示购买面板
 		int localPlayerId = GameManage.Instance.LocalPlayerID;
 		if (PlayerDataManager.Instance.GetCellOwner(cell.Index) != localPlayerId) return;
@@ -236,11 +244,12 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 显示面板
 		StorePanelTransform.gameObject.SetActive(true);
+
+		
 	}
 
 	public void CloseStorePanel()
 	{
-		//ClearRightClickCellHighlightData();
 		StorePanelTransform.gameObject.SetActive(false);
 	}
 
@@ -294,12 +303,8 @@ public class GameOperationPanel : MonoBehaviour
 				if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion) return;
 
 				// 只有周围一圈可以显示
-				if (GameManage.Instance._PlayerOperation.LastSelectingCell.Coordinates.DistanceTo(cell.Coordinates) == 1)
-				{
-
-					ShowButtonPanel("奉仕");
-					UpdatePanelPos(cell, true);
-				}
+				ShowButtonPanel("奉仕");
+				UpdatePanelPos(GameManage.Instance._PlayerOperation.LastSelectingCell, true);
 				
 			}
 		}
