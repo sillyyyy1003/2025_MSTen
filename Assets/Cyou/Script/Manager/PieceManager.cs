@@ -594,6 +594,7 @@ public class PieceManager : MonoBehaviour
                 if (PlayerDataManager.Instance.GetUnitDataById(targetID).Value.PlayerUnitDataSO.hasBeenCharmed)
                 {
                     Debug.Log("charmed true!");
+                    PlayerDataManager.Instance.GetUnitDataById(targetID).Value.SetHasBeenCharmed(true);
                     syncData.hasBeenCharmed = true;
                 }
 
@@ -721,6 +722,7 @@ public class PieceManager : MonoBehaviour
                 if (PlayerDataManager.Instance.GetUnitDataById(targetID).Value.PlayerUnitDataSO.hasBeenCharmed)
                 {
                     Debug.Log("charmed true!");
+                    PlayerDataManager.Instance.GetUnitDataById(targetID).Value.SetHasBeenCharmed(true);
                     syncData.hasBeenCharmed = true;
                 }
                 // シンクロデータ更新
