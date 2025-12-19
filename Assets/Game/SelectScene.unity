@@ -9192,10 +9192,13 @@ MonoBehaviour:
   Button_Setting: {fileID: 514636528}
   Button_MapEditor: {fileID: 1417795581}
   Button_ExtraContents: {fileID: 1142468816}
+  Button_Resolution: {fileID: 844404223}
   OptionMenu: {fileID: 2121299629}
   OnlineMenu: {fileID: 931611999}
   RightDetailMenu: {fileID: 1331801380}
   Button_CloseRightPanel: {fileID: 686839047}
+  ResolutionMenu: {fileID: 2038097433}
+  SoundMenu: {fileID: 1411043280}
   Button_CreateGame: {fileID: 631856370}
   Button_AddGame: {fileID: 64319158}
   UserID: {fileID: 366579152}
@@ -10236,6 +10239,11 @@ PrefabInstance:
       objectReference: {fileID: 2121299630}
     - target: {fileID: 3558602865378666688, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
+      propertyPath: m_Interactable
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3558602865378666688, guid: 4c4fa0190e032844285a43ce5b013f33,
+        type: 3}
       propertyPath: onValueChanged.m_PersistentCalls.m_Calls.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -10475,6 +10483,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &844404223 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2485392027610706473, guid: 4c4fa0190e032844285a43ce5b013f33,
+    type: 3}
+  m_PrefabInstance: {fileID: 844404220}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c631cc20e4db2df42bb3ddb8f61f35fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &845309030
@@ -20026,6 +20046,11 @@ PrefabInstance:
       objectReference: {fileID: 2121299630}
     - target: {fileID: 3558602865378666688, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
+      propertyPath: m_Interactable
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3558602865378666688, guid: 4c4fa0190e032844285a43ce5b013f33,
+        type: 3}
       propertyPath: onValueChanged.m_PersistentCalls.m_Calls.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -23896,6 +23921,11 @@ PrefabInstance:
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 2121299630}
+    - target: {fileID: 3558602865378666688, guid: 4c4fa0190e032844285a43ce5b013f33,
+        type: 3}
+      propertyPath: m_Interactable
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3580448206859316361, guid: 4c4fa0190e032844285a43ce5b013f33,
         type: 3}
       propertyPath: m_Color.a
@@ -26096,5 +26126,5 @@ SceneRoots:
   - {fileID: 1643329843942850776}
   - {fileID: 1206396928899629939}
   - {fileID: 4942495660230690156}
-  - {fileID: 437353467}
   - {fileID: 18971297}
+  - {fileID: 437353467}

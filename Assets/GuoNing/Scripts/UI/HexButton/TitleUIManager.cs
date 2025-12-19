@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using DG.Tweening;
+using SoundSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -26,12 +27,15 @@ public class TitleUIManager : MonoBehaviour
 	public HexButton Button_Setting;
 	public HexButton Button_MapEditor;
 	public HexButton Button_ExtraContents;//Gallery用 12/12 張
+	public HexButton Button_Resolution;
 
 	[Header("Right Menu")]
 	public RectTransform OptionMenu;
 	public RectTransform OnlineMenu;
 	public RectTransform RightDetailMenu;
 	public HexButton Button_CloseRightPanel;
+	public RectTransform ResolutionMenu;
+	public RectTransform SoundMenu;
 
 	// Screen UI
 	[Header("OnlineButton")]
@@ -91,8 +95,7 @@ public class TitleUIManager : MonoBehaviour
 		Button_Setting.onClick.AddListener(() => OnClickSetting());
 		Button_MapEditor.onClick.AddListener(() => OnClickMapEditor());
 		Button_ExtraContents.onClick.AddListener(() => OnClickExtraContents());
-		//↑现在是个空壳
-
+		
 		Button_CreateGame.onClick.AddListener(() => OnClickCreateGame());
 		Button_AddGame.onClick.AddListener(() => OnClickAddGame());
 
@@ -202,6 +205,9 @@ public class TitleUIManager : MonoBehaviour
 
 		Button_Setting.ResetHexButton();
 		Button_OnlineGame.ResetHexButton();
+
+		// 音效
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 
@@ -215,6 +221,9 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickEndGame()
 	{
+		// 音效
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
+
 		SaveLoadManager.Instance.UpdateSaveData();
 		SaveLoadManager.Instance.Save();
 
@@ -233,6 +242,8 @@ public class TitleUIManager : MonoBehaviour
 		SceneStateManager.Instance.bIsSingle = true;
 		SceneStateManager.Instance.StartSingleGameWithRandomMapAndReligion();
 		SceneController.Instance.SwitchScene("MainGame", null);
+		// 音效
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	/// <summary>
@@ -252,6 +263,9 @@ public class TitleUIManager : MonoBehaviour
 
 		// Change material
 		UpdateBackground(true);
+
+		// 音效
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	/// <summary>
@@ -259,7 +273,17 @@ public class TitleUIManager : MonoBehaviour
 	/// </summary>
 	private void OnClickSetting()
 	{
+		// 打开右边的
 		RightMenu.gameObject.SetActive(true);
+
+		ResolutionMenu.gameObject.SetActive(true);
+		SoundMenu.gameObject.SetActive(false);
+
+		//
+		Button_Resolution.GetComponent<Toggle>().isOn = true;
+
+
+
 		//  Set option menu active
 		OptionMenu.gameObject.SetActive(true);
 		OnlineMenu.gameObject.SetActive(false);
@@ -271,6 +295,7 @@ public class TitleUIManager : MonoBehaviour
 
 		// 关闭UserID显示
 		UserID.gameObject.SetActive(false);
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	/// <summary>
@@ -287,8 +312,12 @@ public class TitleUIManager : MonoBehaviour
 			Debug.LogError("SceneStateManager.Instance ﾎｪｿﾕ!");
 		}
 
+		// 音效
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 
 		SceneController.Instance.SwitchScene("MainGame");
+
+
 	}
 
 	///<summary>
@@ -298,6 +327,8 @@ public class TitleUIManager : MonoBehaviour
 	private void OnClickExtraContents()
 	{
 		SceneController.Instance.SwitchToExtraContentScene();
+		// 音效
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 
@@ -316,6 +347,8 @@ public class TitleUIManager : MonoBehaviour
 			Debug.LogError("SceneStateManager.Instance is null!");
 		}
 
+		// 音效
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 		SceneController.Instance.SwitchScene("MainGame");
 
 	}

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using GameData;
 using TMPro;
 using Unity.Mathematics;
 using Unity.VisualScripting;
@@ -289,8 +290,17 @@ public class GameOperationPanel : MonoBehaviour
 			}
 			else
 			{
-				ShowButtonPanel("奉仕");
-				UpdatePanelPos(cell,true);
+				// 如果是科学家则不显示
+				if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion) return;
+
+				// 只有周围一圈可以显示
+				if (GameManage.Instance._PlayerOperation.LastSelectingCell.Coordinates.DistanceTo(cell.Coordinates) == 1)
+				{
+
+					ShowButtonPanel("奉仕");
+					UpdatePanelPos(cell, true);
+				}
+				
 			}
 		}
 	}

@@ -160,12 +160,16 @@ public class ResultUIManager : MonoBehaviour
 
 		seq.Play();
 
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
+
 	}
 
 	private void OnClickGameExitButton()
 	{
 		Debug.Log("Exit to Title Scene");
 		SceneController.Instance.SwitchToTitleScene();
+
+		SoundManager.Instance.PlaySE(TYPE_SE.BUTTONCLICKED);
 	}
 
 	private int GetVictoryPlayerIdBySurrender()

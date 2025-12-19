@@ -14,7 +14,7 @@ using GameData.UI;
 using Buildings;
 using System.Linq;
 using SoundSystem;
-
+using Unity.VisualScripting.Antlr3.Runtime;
 
 
 #if UNITY_EDITORR
@@ -63,6 +63,7 @@ public class PlayerOperationManager : MonoBehaviour
 
     // 上一次选择到的格子的id
     private int LastSelectingCellID;
+    public HexCell LastSelectingCell => _HexGrid.GetCell(LastSelectingCellID);
 
     // 当前选择的空格子ID（用于创建单位）
     private int SelectedEmptyCellID = -1;
@@ -2243,6 +2244,9 @@ public class PlayerOperationManager : MonoBehaviour
                 //Debug.Log("2Dpos is " + PlayerBoardInforDict[i].Cells2DPos+
                 //    "3Dpos is "+ PlayerBoardInforDict[i].Cells3DPos);
             }
+
+            // 移动音效
+            SoundManager.Instance.PlaySE(TYPE_SE.RUN);
             moveSequence.OnComplete(() =>
             {
                 // 动画完成后更新数据
@@ -4222,6 +4226,7 @@ public class PlayerOperationManager : MonoBehaviour
         {
             Debug.Log("[ExecuteCharm] 魅惑失败");
 			OperationBroadcastManager.Instance.ShowMessage("洗脳失敗しました。");
+            SoundManager.Instance.PlaySE(TYPE_SE.CHARM_FAILURE);
 
             //EffectManager.Instance.PlayCharmEffect(null,GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, false);
 			
