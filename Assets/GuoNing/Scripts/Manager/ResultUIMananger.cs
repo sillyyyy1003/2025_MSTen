@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using SoundSystem;
 using UnityEngine;
 using UnityEngine.UI;
 // ReSharper disable All
@@ -63,6 +64,9 @@ public class ResultUIManager : MonoBehaviour
 
 	public void Initialize(int victoryID, List<ResultData> datas)
 	{
+		// 终止音乐
+		SoundManager.Instance.StopBGM();
+
 		// 设定胜利还是失败
 		int victoryPlayerId = victoryID;	
 		int localPlayerId = GameManage.Instance.LocalPlayerID;
@@ -70,10 +74,12 @@ public class ResultUIManager : MonoBehaviour
 		if (victoryPlayerId == localPlayerId)
 		{
 			ReusltBar.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.Result_Bar, "Result_VictoryBar");
+			SoundManager.Instance.PlayBGM(TYPE_BGM.VICOTORY);
 		}
 		else
 		{
 			ReusltBar.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.Result_Bar, "Result_DefeatBar");
+			SoundManager.Instance.PlayBGM(TYPE_BGM.DEFEAT);
 		}
 
 		// 设定宗教Icon

@@ -8,6 +8,7 @@ using DG.Tweening.Core.Easing;
 using UnityEngine.UIElements;
 using DG.Tweening;
 using GameData.UI;
+using SoundSystem;
 using static UnityEngine.GraphicsBuffer;
 
 //25.11.4 RI SerializeableのVector3変数を追加
@@ -613,11 +614,12 @@ public class PieceManager : MonoBehaviour
 
                 // エフェクト再生
                 EffectManager.Instance.PlayEffect(upgradeType, targetPiece.transform.position, Quaternion.identity);
+                
 
 				anySuccess = true;
 			}
 		}
-
+      
 		return anySuccess;
 	}
 

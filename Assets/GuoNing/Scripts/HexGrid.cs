@@ -904,7 +904,6 @@ public class HexGrid : MonoBehaviour
 						.PlayerOwnedCells;
 
 					// 将 ownedCellIDs 转换为 HexCell 列表（一次性转换更快）
-					// ※ 建议把这个缓存起来，不要每帧重复创建（如果需要我可以帮你改成缓存版）
 					List<HexCell> ownedCells = new List<HexCell>(ownedCellIDs.Count);
 					for (int j = 0; j < ownedCellIDs.Count; j++)
 					{

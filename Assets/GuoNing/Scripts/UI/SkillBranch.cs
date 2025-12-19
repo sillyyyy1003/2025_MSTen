@@ -106,7 +106,7 @@ public class SkillBranch : MonoBehaviour
 				return $"攻撃口 \n Lv.{lv}";
 
 			case TechTree.AltarCount:         // 祭壇数
-				return $"開拓者数 \n Lv.{lv}";
+				return $"市民数 \n Lv.{lv}";
 
 			case TechTree.ConstructionCost:   // 建設費用減少
 				return $"建設費用 \n Lv.{lv}";

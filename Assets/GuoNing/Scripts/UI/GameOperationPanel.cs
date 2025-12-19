@@ -148,6 +148,9 @@ public class GameOperationPanel : MonoBehaviour
 			return;
 		}
 
+		// 重置按钮可用
+		SpecialButton.interactable = true;
+
 		// 如果目标格子有单位 则根据单位类型显示对应的面板
 		int ownerId = dataManager.GetUnitOwner(pos);
 		bool isLocalPlayer = (ownerId == GameManage.Instance.LocalPlayerID);

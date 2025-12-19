@@ -1,12 +1,13 @@
 ﻿using GameData;
 using GameData.UI;
+using GamePieces;
+using SoundSystem;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Linq;
-using GamePieces;
 
 public class SkillNode : MonoBehaviour
 {
@@ -203,6 +204,9 @@ public class SkillNode : MonoBehaviour
 		{
 			ID.Add(list[i].UnitID);
 		}
+
+		// 只需要播放一遍
+		SoundManager.Instance.PlaySE(TYPE_SE.UPGRADE);
 
 		// --- 执行 Upgrade ---
 		switch (tech)

@@ -16,7 +16,10 @@ namespace SoundSystem
 		REDMOON_THEME,      // Red Moon Theme
 		SILK_THEME,         // Silk Theme
 		MAYA_THEME,
-		MAD_SCIENTIST_THEME
+		MAD_SCIENTIST_THEME,
+		VICOTORY,           // 游戏结束 成功 
+		DEFEAT,             // 游戏结束 失败
+
 	}
 
 	/// <summary> SEの種類を列挙型で定義 </summary>
@@ -29,7 +32,13 @@ namespace SoundSystem
 		SPREADCARD,			// Open card panel
 		CHARMED,            // ユニットが魅了されたとき
 		HEAL,
+		OCCUPY,				// 占领领地
+		HIT,				// 攻击
+		CHARM_FAILURE,
+		INTO_BUIDING,		// 进入建筑
+		RUN
 	}
+
 
 
 

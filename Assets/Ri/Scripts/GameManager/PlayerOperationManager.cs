@@ -2897,6 +2897,9 @@ public class PlayerOperationManager : MonoBehaviour
                 // 更新血条显示
                 UnitStatusUIManager.Instance.RemoveStatusUI(farmerID);
 
+                // 播放进入建筑的音效
+                SoundManager.Instance.PlaySE(TYPE_SE.INTO_BUIDING);
+
                 // 播放消失动画（淡出效果）
                 farmerObj.transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
                 {
@@ -3177,7 +3180,7 @@ public class PlayerOperationManager : MonoBehaviour
                         Vector3 hitPos = targetUnit.transform.position;
                         hitPos.y += 5.0f;
                         EffectManager.Instance.PlayEffect(EffectType.Piece_Hit, hitPos, targetUnit.transform.rotation);
-
+                        SoundManager.Instance.PlaySE(TYPE_SE.HIT);
                         // 网络同步攻击
                         SyncLocalUnitAttack(attackerPos, targetPos, targetOwnerId, false);
 
@@ -4131,7 +4134,7 @@ public class PlayerOperationManager : MonoBehaviour
             PlayerDataManager.Instance.Result_CellNumber += 1;
 
             EffectManager.Instance.PlayOccupyEffect(_HexGrid.GetCell(LastSelectingCellID).Position, Quaternion.identity, null, true);
-			SoundManager.Instance.PlaySE(TYPE_SE.CHARMED);
+			SoundManager.Instance.PlaySE(TYPE_SE.OCCUPY);
             // 取消选择状态
             ReturnToDefault();
         }
