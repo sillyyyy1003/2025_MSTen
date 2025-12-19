@@ -558,7 +558,7 @@ public class PlayerUnitDataInterface : MonoBehaviour
             case TechTree.ATK: return "攻撃力";
             case TechTree.Sacrifice: return "奉仕";
             case TechTree.AttackPosition: return "攻撃口";
-            case TechTree.AltarCount: return "開拓者数";
+            case TechTree.AltarCount: return "市民数";
             case TechTree.ConstructionCost: return "建設費用";
             case TechTree.MovementCD: return "移動CD";
             case TechTree.Buff: return "周囲バフ";//真理研究所　无Buff
