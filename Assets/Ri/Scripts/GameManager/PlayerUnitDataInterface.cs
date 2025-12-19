@@ -537,11 +537,11 @@ public class PlayerUnitDataInterface : MonoBehaviour
     {
         switch (type)
         {
-            case PieceType.Farmer: return "村人";
+            case PieceType.Farmer: return "市民";
             case PieceType.Military: return "守護者";
-            case PieceType.Missionary: return "長老";
-            case PieceType.Pope: return "象徴";
-            case PieceType.Building: return "特殊建物";
+            case PieceType.Missionary: return "啓蒙者";
+            case PieceType.Pope: return "統率者";
+            case PieceType.Building: return "拠点";
             default:
                 return "?";
         }
