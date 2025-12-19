@@ -414,7 +414,6 @@ public class GameOperationPanel : MonoBehaviour
 			return;
 		}
 
-		MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 		int moveCost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Move);
 		ShowPanel("移動:" + moveCost);
 	}
