@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using SoundSystem;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -38,5 +39,6 @@ public class ToggleGroupCard : MonoBehaviour
             changedItem.SetState(false);
         }
 
+        SoundManager.Instance.PlaySE(TYPE_SE.BUYCARD);
     }
 }

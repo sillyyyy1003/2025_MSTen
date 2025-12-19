@@ -603,4 +603,9 @@ public class SoundManager : MonoBehaviour
         SetSEVolume(se);
         SetMasterVolume(master);
 	}
+
+	public void PlayerCardSpreadSound()
+	{
+        PlaySE(TYPE_SE.SPREADCARD);
+	}
 }
