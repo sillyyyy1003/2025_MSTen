@@ -78,11 +78,12 @@ namespace Buildings
             playerID = ownerPlayerID;
 
             // ローカルプレイヤーの建物の場合、SkillTreeUIManagerからレベルを取得
-            if (ownerPlayerID == PieceManager.Instance.GetLocalPlayerID())
+            if (ownerPlayerID == GameManage.Instance.LocalPlayerID)
             {
                 hpLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.HP);
-                slotsLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.AltarCount);
-            }
+				slotsLevel = SkillTreeUIManager.Instance.GetCurrentLevel(PieceType.Building, TechTree.AltarCount);
+               
+			}
             else
             {
                 // 敵プレイヤーの建物はデフォルトレベル0
@@ -94,10 +95,11 @@ namespace Buildings
             remainingBuildCost = data.buildingResourceCost;
             currentSkillUses = data.GetMaxSlotsByLevel(slotsLevel);
             slots = data.GetMaxSlotsByLevel(slotsLevel);
-            //地面に金鉱があるか否かを判断すべき
+         
+			//地面に金鉱があるか否かを判断すべき
 
-            // 25.11.10 RI 直接生成完了に変更
-            ChangeState(BuildingState.Active);
+			// 25.11.10 RI 直接生成完了に変更
+			ChangeState(BuildingState.Active);
 
             // スロット初期化
             if (data.isSpecialBuilding)

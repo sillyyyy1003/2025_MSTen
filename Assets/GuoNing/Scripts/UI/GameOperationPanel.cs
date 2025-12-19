@@ -44,14 +44,10 @@ public class GameOperationPanel : MonoBehaviour
 	[SerializeField]
 	private HexGrid hexGrid;
 	public Vector2 screenOffset = new Vector2(0, 30);
-
 	private int BuyUnitCellID = -1;     // 在哪个格子购买单位
+
 	HexCell GetCellUnderCursor() =>
 		hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-	static readonly int rightClickHighlightId = Shader.PropertyToID("_RightClickHighlight");
-	static readonly int rightClickHighlightColorId = Shader.PropertyToID("_RightClickColor");
-
-	bool isClosePanel;
 	void Start()
 	{
 		dataManager = PlayerDataManager.Instance;
@@ -84,8 +80,6 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 绑定事件
 		SpecialButton.onClick.AddListener(OnSpecialButtonClick);
-		// 设定右键点击高光
-		Shader.SetGlobalColor(rightClickHighlightColorId, new Color(0f, 0f, 1f, 1f));   // 蓝色 Click
 	}
 
 	void Update()
@@ -93,11 +87,7 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 如果不是我的回合 则不处理
 		if (!GameManage.Instance._PlayerOperation.IsMyTurn){
-			if (!isClosePanel)
-			{
-				CloseStorePanel();
-				isClosePanel = true;
-			}
+			CloseStorePanel();
 			return;
 		}
 
@@ -192,6 +182,9 @@ public class GameOperationPanel : MonoBehaviour
 	/// <param name="cell">格子</param>
 	public void ShowBuyCardInfo(HexCell cell)
 	{
+		// 如果不是我的回合则不显示
+		if (!GameManage.Instance._PlayerOperation.IsMyTurn) return;
+
 		// 如果已经选择了单位 则不显示购买面板
 		if (PlayerDataManager.Instance.nowChooseUnitID != -1) return;
 
@@ -242,7 +235,7 @@ public class GameOperationPanel : MonoBehaviour
 		StorePanelTransform.gameObject.SetActive(true);
 	}
 
-	private void CloseStorePanel()
+	public void CloseStorePanel()
 	{
 		//ClearRightClickCellHighlightData();
 		StorePanelTransform.gameObject.SetActive(false);
