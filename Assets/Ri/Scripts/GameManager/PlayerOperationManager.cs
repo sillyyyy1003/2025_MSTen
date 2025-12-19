@@ -2196,7 +2196,7 @@ public class PlayerOperationManager : MonoBehaviour
         }
         else if (PlayerDataManager.Instance.nowChooseUnitType == CardType.Farmer)
         {
-            _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID));
+            _HexGrid.FindPath(LastSelectingCellID, targetCellId, PieceManager.Instance.GetPieceAP(unitData.Value.UnitID), PieceType.Farmer);
         }
         else
         {
@@ -4296,9 +4296,10 @@ public class PlayerOperationManager : MonoBehaviour
                  convertResult.currentAP,
                   targetUnit.transform,
                  PlayerUnitDataInterface.Instance.ConvertPieceTypeToCardType(newUnitData.piecetype));
+            UnitStatusUIManager.Instance.UpdateHPByID(targetPieceID ,convertResult.currentHP, PieceManager.Instance.GetPieceMaxHP(targetPieceID,convertResult.currentHPLevel));
 
-            // 魅惑持续
-            EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
+          // 魅惑持续
+          EffectManager.Instance.PlayCharmEffect(null, GameManage.Instance.GetCell2D(targetPos).Cells3DPos, Quaternion.identity, true);
 
 
 
