@@ -3244,6 +3244,7 @@ public class PlayerOperationManager : MonoBehaviour
                         ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
                         GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[targetOwnerId].PlayerReligion, GameManage.Instance.FindCell(targetCellId).Cells2DPos);
 
+                        PlayerDataManager.Instance.AllRuinCells[targetOwnerId].Add(targetCellId);
 
                         // 6. 清空本地cellObject
                         GameManage.Instance.SetCellObject(targetPos, null);
@@ -3553,8 +3554,11 @@ public class PlayerOperationManager : MonoBehaviour
                 BuildingRuins[localPlayerId][RuinID] = ruin;
                 RuinID++;
 
+
                 // 获取当前cell的ID
                 int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
+
+                PlayerDataManager.Instance.AllRuinCells[localPlayerId].Add(cellID);
 
                 PlayerDataManager.Instance.AddPlayerRuinCell(cellID);
                 // 4. 攻击者前进到建筑位置
@@ -3693,6 +3697,7 @@ public class PlayerOperationManager : MonoBehaviour
             // 5. 创建废墟
             GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[msg.BuildingOwnerId].PlayerReligion, buildingPos);
 
+            PlayerDataManager.Instance.AllRuinCells[msg.BuildingOwnerId].Add(GameManage.Instance.GetCell2D(buildingPos).id);
 
             // 6. 清空本地cellObject
             GameManage.Instance.SetCellObject(buildingPos, null);
@@ -5039,6 +5044,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 获取当前cell的ID
                 int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
+                PlayerDataManager.Instance.AllRuinCells[localPlayerId].Add(cellID);
 
                 // 保存废墟
                 BuildingRuins[localPlayerId][RuinID] = ruin;
@@ -5102,6 +5108,9 @@ public class PlayerOperationManager : MonoBehaviour
 
         return ruin;
     }
+
+
+
     /// <summary>
     /// 同步建筑摧毁到网络
     /// </summary>

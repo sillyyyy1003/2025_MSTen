@@ -321,6 +321,10 @@ public class PlayerDataManager : MonoBehaviour
     // 记录需要下个回合复活建筑的格子ID
     public List<int> NextTurnReBuildCellID = new List<int>();
 
+
+    // 玩家拥有的废墟所在的cellID (新增,不需要网络同步)
+    public Dictionary<int,List<int>> AllRuinCells = new Dictionary<int, List<int>>();
+
     // 单位死亡数
     public int DeadUnitCount=0;
     public int RedMoonSkillCount;
@@ -745,6 +749,16 @@ public class PlayerDataManager : MonoBehaviour
     public List<int> GetPlayerRuinCells()
     {
         return PlayerRuinCells;
+    }
+
+    public bool IsRuin(int cellID)
+    {
+        foreach(var a in AllRuinCells)
+        {
+            if (a.Value.Contains(cellID))
+                return true;
+        }
+            return false;
     }
 
     /// <summary>
