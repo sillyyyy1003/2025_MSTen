@@ -598,7 +598,7 @@ public class PlayerOperationManager : MonoBehaviour
 					}
 					else
 					{
-						OperationBroadcastManager.Instance.ShowMessage("建物はすでに満員です。");
+						OperationBroadcastManager.Instance.ShowMessage("移動できません。");
 						Debug.LogWarning("[农民进建筑] 格子已满，无法进入!");
 					}
 				}
