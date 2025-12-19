@@ -4219,7 +4219,7 @@ public class PlayerOperationManager : MonoBehaviour
 			ReturnToDefault();
             return;
         }
-        if (targetData.Value.PlayerUnitDataSO.hasBeenCharmed)
+        if (targetData.Value.PlayerUnitDataSO.hasBeenCharmed|| targetData.Value.hasBeenCharmed)
         {
             Debug.Log("不能魅惑已被魅惑过的单位！");
             OperationBroadcastManager.Instance.ShowMessage("すでに洗脳状態のユニットには使用できません。");
