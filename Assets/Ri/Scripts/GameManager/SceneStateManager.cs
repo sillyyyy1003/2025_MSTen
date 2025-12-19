@@ -61,11 +61,11 @@ public class SceneStateManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-   
+
     // 设置是否为服务器启动
     public void SetAsServer(bool isServer)
     {
-        if(isServer)
+        if (isServer)
         {
             // 暂时将设置玩家名放在这
             SavePlayerName(PlayerName);
@@ -87,8 +87,11 @@ public class SceneStateManager : MonoBehaviour
         // 2025.11.17 Guoning 随机选择宗教
         // 2025.11.17 RI 现有宗教单位数不足以随机，暂时注释
         ChooseRandomReligion();
-
-	}
+        //if (isServer)
+        //{
+        //    PlayerReligion = Religion.MadScientistReligion;
+        //}
+    }
 
 	public bool GetIsServer()
     {
@@ -181,13 +184,20 @@ public class SceneStateManager : MonoBehaviour
     private void ChooseRandomMap()
     {
 		// map 1001~1010
-		mapSerialNumber = Random.Range(1001, 1010);
-	}
+		mapSerialNumber = Random.Range(1001, 1011);
+        //mapSerialNumber  = 1009;
+    }
 
     public void StartSingleGameWithRandomMapAndReligion()
     {
-        //ChooseRandomReligion();
-        ChooseRandomMap();
+        ChooseRandomReligion();
+        ChooseRandomTutorialMap();
+	}
+
+    private void ChooseRandomTutorialMap()
+    {
+        // tutorial map 2001~2003
+        mapSerialNumber = Random.Range(2001, 2003);
 	}
 
 }

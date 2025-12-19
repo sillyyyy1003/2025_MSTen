@@ -32,8 +32,7 @@ public class GameOperationPanel : MonoBehaviour
 	[Header("SpeicalButton")]
 	public Button SpecialButton;
 
-	[Header("Images")]
-	public Image MouseImage;
+
 	[Header("Text")]
 	public TMP_Text OperationPanelText;
 	public TMP_Text[] CostText = new TMP_Text[4];
@@ -44,14 +43,10 @@ public class GameOperationPanel : MonoBehaviour
 	[SerializeField]
 	private HexGrid hexGrid;
 	public Vector2 screenOffset = new Vector2(0, 30);
-
 	private int BuyUnitCellID = -1;     // 在哪个格子购买单位
+
 	HexCell GetCellUnderCursor() =>
 		hexGrid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-	static readonly int rightClickHighlightId = Shader.PropertyToID("_RightClickHighlight");
-	static readonly int rightClickHighlightColorId = Shader.PropertyToID("_RightClickColor");
-
-	bool isClosePanel;
 	void Start()
 	{
 		dataManager = PlayerDataManager.Instance;
@@ -84,8 +79,6 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 绑定事件
 		SpecialButton.onClick.AddListener(OnSpecialButtonClick);
-		// 设定右键点击高光
-		Shader.SetGlobalColor(rightClickHighlightColorId, new Color(0f, 0f, 1f, 1f));   // 蓝色 Click
 	}
 
 	void Update()
@@ -93,11 +86,7 @@ public class GameOperationPanel : MonoBehaviour
 
 		// 如果不是我的回合 则不处理
 		if (!GameManage.Instance._PlayerOperation.IsMyTurn){
-			if (!isClosePanel)
-			{
-				CloseStorePanel();
-				isClosePanel = true;
-			}
+			CloseStorePanel();
 			return;
 		}
 
@@ -192,6 +181,9 @@ public class GameOperationPanel : MonoBehaviour
 	/// <param name="cell">格子</param>
 	public void ShowBuyCardInfo(HexCell cell)
 	{
+		// 如果不是我的回合则不显示
+		if (!GameManage.Instance._PlayerOperation.IsMyTurn) return;
+
 		// 如果已经选择了单位 则不显示购买面板
 		if (PlayerDataManager.Instance.nowChooseUnitID != -1) return;
 
@@ -242,7 +234,7 @@ public class GameOperationPanel : MonoBehaviour
 		StorePanelTransform.gameObject.SetActive(true);
 	}
 
-	private void CloseStorePanel()
+	public void CloseStorePanel()
 	{
 		//ClearRightClickCellHighlightData();
 		StorePanelTransform.gameObject.SetActive(false);
@@ -289,16 +281,12 @@ public class GameOperationPanel : MonoBehaviour
 			var target = dataManager.FindUnit(dataManager.GetUnitOwner(pos), pos);
 			if (target.HasValue && target.Value.IsBuilding())
 			{
-				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 				ShowPanel("建物に入る");
 				UpdatePanelPos();
 			}
 			else
 			{
-				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonPress");
-				int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Cure);
-				ShowButtonPanel("治療");
-
+				ShowButtonPanel("奉仕");
 				UpdatePanelPos(cell,true);
 			}
 		}
@@ -306,18 +294,17 @@ public class GameOperationPanel : MonoBehaviour
 
 	private void HandleMissionary(HexCell cell, int2 pos, bool isLocal)
 	{
-		//if (!isLocal)
-		//{
-		//	// 如果目标格子距离选中格子的距离大于1则不显示
-		//	if (GetDistanceFurtherThanValue(1, cell)) return;
+		if (!isLocal)
+		{
+			// 如果目标格子距离选中格子的距离大于1则不显示
+			if (GetDistanceFurtherThanValue(1, cell)) return;
 
-		//	// 创建面板数据 显示面板
-		//	MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
-		//	int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
-		//	ShowPanel("伝教：" + cost);
-		//	UpdatePanelPos();
-		//	return;
-		//}
+			// 创建面板数据 显示面板
+			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Charm);
+			ShowPanel("洗脳： " + cost+" 行動力");
+			UpdatePanelPos();
+			return;
+		}
 
 		// 占领逻辑
 		if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) == cell.Index)
@@ -365,7 +352,6 @@ public class GameOperationPanel : MonoBehaviour
 			// 教皇无法自己交换自己
 			if (dataManager.GetCellIdByUnitId(dataManager.nowChooseUnitID) != cell.Index)
 			{
-				MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 				ShowPanel("位置交換可能");
 				UpdatePanelPos();
 			}
@@ -381,7 +367,6 @@ public class GameOperationPanel : MonoBehaviour
 			// 如果目标格子距离选中格子的距离大于1则不显示
 			if (GetDistanceFurtherThanValue(1, cell)) return;
 
-			MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 			int cost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Attack);
 			ShowPanel("攻撃： " + cost+" 行動力");
 		}
@@ -429,7 +414,6 @@ public class GameOperationPanel : MonoBehaviour
 			return;
 		}
 
-		MouseImage.sprite = UISpriteHelper.Instance.GetSubSprite(UISpriteID.MouseInteraction, "RightButtonClick");
 		int moveCost = unitDataInterface.GetUnitOperationCostByType(GameData.OperationType.Move);
 		ShowPanel("移動:" + moveCost);
 	}

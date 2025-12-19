@@ -14,7 +14,9 @@ namespace SoundSystem
 		TITLE,				// タイトル画面のBGM
 		GAME,				// ゲームプレイ中のBGM
 		REDMOON_THEME,      // Red Moon Theme
-		SILK_THEME          // Silk Theme
+		SILK_THEME,         // Silk Theme
+		MAYA_THEME,
+		MAD_SCIENTIST_THEME
 	}
 
 	/// <summary> SEの種類を列挙型で定義 </summary>

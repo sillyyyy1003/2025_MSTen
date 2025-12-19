@@ -332,6 +332,7 @@ public class PlayerDataManager : MonoBehaviour
     public int TurnCount=0;
     // 疯狂科学家教回合倒计时
     public int CrazyTurnCooldown = 0;
+    public bool CrazyRebuild = false;
 
     // 镜湖教 触发次数
     public int MirrorSkillCount=0;

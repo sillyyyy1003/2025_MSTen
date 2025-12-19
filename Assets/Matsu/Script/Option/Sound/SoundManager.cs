@@ -588,8 +588,9 @@ public class SoundManager : MonoBehaviour
         {
             case Religion.RedMoonReligion: PlayBGM(SoundSystem.TYPE_BGM.REDMOON_THEME); break;
             case Religion.SilkReligion: PlayBGM(SoundSystem.TYPE_BGM.SILK_THEME); break;
-
-            //...等待追加
+            case Religion.MadScientistReligion:PlayBGM(SoundSystem.TYPE_BGM.MAD_SCIENTIST_THEME); break;
+            case Religion.MayaReligion: PlayBGM(SoundSystem.TYPE_BGM.MAYA_THEME); break;
+			//...等待追加
 			default: PlayBGM(SoundSystem.TYPE_BGM.TITLE);break;
 		}
 		

@@ -69,6 +69,27 @@
       "description": "TOfficialMap_10",
       "fileName":"OfficialMap_10.map",
       "officialMap":true
+    },
+    {
+      "serialNumber": 2001,
+      "displayName": "Tutorial_1001",
+      "description": "Tutorial_1001",
+      "fileName":"Tutorial_1001.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 2002,
+      "displayName": "Tutorial_1001",
+      "description": "Tutorial_1001",
+      "fileName":"Tutorial_1002.map",
+      "officialMap":true
+    },
+    {
+      "serialNumber": 2003,
+      "displayName": "Tutorial_1001",
+      "description": "Tutorial_1001",
+      "fileName":"Tutorial_1003.map",
+      "officialMap":true
     }
   ]
 }
