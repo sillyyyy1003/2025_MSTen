@@ -4113,17 +4113,23 @@ public class PlayerOperationManager : MonoBehaviour
             Debug.Log("cant Occupy this forest cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
             return;
         }
-        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID))
-        {
-            Debug.Log("cant Occupy this Owned cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
+       
+            if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerOwnedCells.Contains(LastSelectingCellID))
+            {
+                Debug.Log("cant Occupy this Owned cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
 
-            return;
-        }
+                return;
+            }
+
+
+        if (!SceneStateManager.Instance.bIsSingle)
+        {
         if (PlayerDataManager.Instance.GetPlayerData(GameManage.Instance.OtherPlayerID).PlayerOwnedCells.Contains(LastSelectingCellID))
         {
             Debug.Log("cant Occupy other player Owned cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
 
             return;
+            }
         }
         if (!_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1))
         {
