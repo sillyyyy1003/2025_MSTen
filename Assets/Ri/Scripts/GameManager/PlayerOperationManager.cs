@@ -4119,6 +4119,12 @@ public class PlayerOperationManager : MonoBehaviour
 
             return;
         }
+        if (PlayerDataManager.Instance.GetPlayerData(GameManage.Instance.OtherPlayerID).PlayerOwnedCells.Contains(LastSelectingCellID))
+        {
+            Debug.Log("cant Occupy other player Owned cell " + PlayerBoardInforDict[LastSelectingCellID].Cells2DPos);
+
+            return;
+        }
         if (!_HexGrid.SearchCellRange(HexCellList, _HexGrid.GetCell(LastSelectingCellID), 1))
         {
             OperationBroadcastManager.Instance.ShowMessage("占領範囲外です。\n自分の領地に隣接したマスを選択してください。");
