@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25df94daf9e5c2f43bf2713f6cb916d3, type: 3}
+  m_Name: RI_MirrorLakeReligionBuildingData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  religion: 5
+  buildingName: "\u93E1\u6E56\u6559_\u7279\u6B8A\u5EFA\u7BC9"
+  maxHp: 0
+  buildingResourceCost: 12
+  resourceGenInterval: 1
+  cellType: 0
+  isSpecialBuilding: 1
+  maxUnitCapacity: 0
+  generationType: 5
+  baseProductionAmount: 2
+  goldenProductionAmount: 4
+  productionMultiplier: 1
+  maxHpByLevel: 0600000007000000080000000a000000
+  maxSlotsByLevel: 03000000040000000500000006000000
+  hasCounterAttack: 00010101
+  counterAttackDamage: 00000000010000000200000003000000
+  hpUpgradeCost: 06000000080000000a000000
+  slotsUpgradeCost: 080000000a000000
+  buildingPrefab: {fileID: 0}

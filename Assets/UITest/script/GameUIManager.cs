@@ -935,17 +935,17 @@ public class GameUIManager : MonoBehaviour
                 //ReligionDescribe03.text = "";
                 break;
             case Religion.RedMoonReligion://红月教
-                count=PlayerDataManager.Instance.DeadUnitCount;
+                //count=PlayerDataManager.Instance.DeadUnitCount;
 
-                ReligionDescribe03.text = $"現在累積：{count}/12 死亡数";
+                //ReligionDescribe03.text = $"現在累積：{count}/12 死亡数";
                 break;
 
             case Religion.MayaReligion://星界教团
                 //ReligionDescribe03.text = "";
                 break;
             case Religion.MadScientistReligion://真理研究所
-                count = PlayerDataManager.Instance.CrazyTurnCooldown;
-                ReligionDescribe03.text = "冷卻時間：{count}/10 ターン";
+                //count = PlayerDataManager.Instance.CrazyTurnCooldown;
+                //ReligionDescribe03.text = "冷卻時間：{count}/10 ターン";
                 break;
             default://默认
                

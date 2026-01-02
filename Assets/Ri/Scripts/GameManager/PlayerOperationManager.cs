@@ -1125,7 +1125,7 @@ public class PlayerOperationManager : MonoBehaviour
     public void TurnStart()
     {
         PlayerDataManager.Instance.TurnCount += 1;
-        PlayerDataManager.Instance.CrazyTurnCooldown += 1;
+        //PlayerDataManager.Instance.CrazyTurnCooldown += 1;
         isMyTurn = true;
         bCanContinue = true;
 
@@ -1181,96 +1181,96 @@ public class PlayerOperationManager : MonoBehaviour
         foreach (var building in buildingsToDestroy)
         {
             // 添加宗教被动:建筑自动销毁时获得资源
-            if (SceneStateManager.Instance.PlayerReligion == Religion.SilkReligion)
-            {
-                res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
+            //if (SceneStateManager.Instance.PlayerReligion == Religion.SilkReligion)
+            //{
+            //    res = PlayerDataManager.Instance.GetPlayerData(localPlayerId).Resources;
 
-                Debug.Log("丝织教获取资源: " + GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID) * 2);
-                res += GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID)*2;
-                // 添加结局数据
-                PlayerDataManager.Instance.Result_ResourceGet += GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID) * 2;
+            //    Debug.Log("丝织教获取资源: " + GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID) * 2);
+            //    res += GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID)*2;
+            //    // 添加结局数据
+            //    PlayerDataManager.Instance.Result_ResourceGet += GameManage.Instance._BuildingManager.GetBuildingFarmerCount(building.UnitID) * 2;
              
-                PlayerDataManager.Instance.SetPlayerResourses(res);
+            //    PlayerDataManager.Instance.SetPlayerResourses(res);
 
            
-            }
+            //}
             DestroyInactivatedBuilding(building);     
         }
 
-        if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
-        {
-            if (PlayerDataManager.Instance.CrazyTurnCooldown >= 10)
-            {
-                PlayerDataManager.Instance.CrazyTurnCooldown = 0;
-                Debug.Log("mad start!");
-                List<int> ruinCell = PlayerDataManager.Instance.GetPlayerRuinCells();
-                while(ruinCell.Count!=0)
-                {
-                    Debug.Log("ruinCell.Count is " + ruinCell.Count);
-                    int id = ruinCell[0];
-                    if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
-                    {
-                        Debug.Log("此格子上有单位，跳过 " + id);
-                        // 当前格子有单位，先记录id，下回合再依次复活
-                        PlayerDataManager.Instance.NextTurnReBuildCellID.Add(id);
-                        // 从当前废墟cellList中移除
-                        PlayerDataManager.Instance.RemovePlayerRuinCell(id);
-                    }
-                    else
-                    {
-                        // 当前格子没有单位，立刻复活
-                        CreateBuilding(id, true);
-                        PlayerDataManager.Instance.CrazyRebuild = true;
-                        PlayerDataManager.Instance.RemovePlayerRuinCell(id);
-                        break;
-                    }
-                }
-            }
-            // 若已经重建过，则将暂存的废墟id重新赋予废墟list并清空暂存
-            if(PlayerDataManager.Instance.CrazyRebuild&& PlayerDataManager.Instance.NextTurnReBuildCellID.Count != 0)
-            {
-                PlayerDataManager.Instance.CrazyRebuild = false;
-                for (int i = 0; i < PlayerDataManager.Instance.NextTurnReBuildCellID.Count; i++)
-                {
-                    PlayerDataManager.Instance.PlayerRuinCells.Add(PlayerDataManager.Instance.NextTurnReBuildCellID[i]);
-                }
-            }
-            PlayerDataManager.Instance.NextTurnReBuildCellID.Clear();
+        //if (SceneStateManager.Instance.PlayerReligion == Religion.MadScientistReligion)
+        //{
+        //    if (PlayerDataManager.Instance.CrazyTurnCooldown >= 10)
+        //    {
+        //        PlayerDataManager.Instance.CrazyTurnCooldown = 0;
+        //        Debug.Log("mad start!");
+        //        List<int> ruinCell = PlayerDataManager.Instance.GetPlayerRuinCells();
+        //        while(ruinCell.Count!=0)
+        //        {
+        //            Debug.Log("ruinCell.Count is " + ruinCell.Count);
+        //            int id = ruinCell[0];
+        //            if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
+        //            {
+        //                Debug.Log("此格子上有单位，跳过 " + id);
+        //                // 当前格子有单位，先记录id，下回合再依次复活
+        //                PlayerDataManager.Instance.NextTurnReBuildCellID.Add(id);
+        //                // 从当前废墟cellList中移除
+        //                PlayerDataManager.Instance.RemovePlayerRuinCell(id);
+        //            }
+        //            else
+        //            {
+        //                // 当前格子没有单位，立刻复活
+        //                CreateBuilding(id, true);
+        //                PlayerDataManager.Instance.CrazyRebuild = true;
+        //                PlayerDataManager.Instance.RemovePlayerRuinCell(id);
+        //                break;
+        //            }
+        //        }
+        //    }
+        //    // 若已经重建过，则将暂存的废墟id重新赋予废墟list并清空暂存
+        //    if(PlayerDataManager.Instance.CrazyRebuild&& PlayerDataManager.Instance.NextTurnReBuildCellID.Count != 0)
+        //    {
+        //        PlayerDataManager.Instance.CrazyRebuild = false;
+        //        for (int i = 0; i < PlayerDataManager.Instance.NextTurnReBuildCellID.Count; i++)
+        //        {
+        //            PlayerDataManager.Instance.PlayerRuinCells.Add(PlayerDataManager.Instance.NextTurnReBuildCellID[i]);
+        //        }
+        //    }
+        //    PlayerDataManager.Instance.NextTurnReBuildCellID.Clear();
 
-            // 第二次遍历暂存的需要被复活的建筑
-            if (PlayerDataManager.Instance.NextTurnReBuildCellID.Count != 0)
-            {
-                for (int i = 0; i < PlayerDataManager.Instance.NextTurnReBuildCellID.Count; i++)
-                {
-                    int id = PlayerDataManager.Instance.NextTurnReBuildCellID[i];
-                    if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
-                    {
-                        // 依旧有单位存在，跳过
-                        Debug.Log("此格子上依旧有单位，跳过");
-                    }
-                    else
-                    {
-                        // 当前格子没有单位，立刻复活
-                        CreateBuilding(id, true);
+        //    // 第二次遍历暂存的需要被复活的建筑
+        //    if (PlayerDataManager.Instance.NextTurnReBuildCellID.Count != 0)
+        //    {
+        //        for (int i = 0; i < PlayerDataManager.Instance.NextTurnReBuildCellID.Count; i++)
+        //        {
+        //            int id = PlayerDataManager.Instance.NextTurnReBuildCellID[i];
+        //            if (GameManage.Instance.FindCellObject(PlayerBoardInforDict[id].Cells2DPos))
+        //            {
+        //                // 依旧有单位存在，跳过
+        //                Debug.Log("此格子上依旧有单位，跳过");
+        //            }
+        //            else
+        //            {
+        //                // 当前格子没有单位，立刻复活
+        //                CreateBuilding(id, true);
 
-                        PlayerDataManager.Instance.RemovePlayerRebuildCell(id);
-                        break;
-                    }
-                }
-            }
-        }
+        //                PlayerDataManager.Instance.RemovePlayerRebuildCell(id);
+        //                break;
+        //            }
+        //        }
+        //    }
+        //}
 
         // 回合开始计算红月教被动
-        if (SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion
-            &&PlayerDataManager.Instance.bRedMoonSkill)
-        {
-            PlayerDataManager.Instance.RedMoonSkillCount +=1;
-            if (PlayerDataManager.Instance.RedMoonSkillCount >= 3)
-            {
-                PlayerDataManager.Instance.RedMoonSkillCount = 0;
-                PlayerDataManager.Instance.bRedMoonSkill = false;
-            }
-        }
+        //if (SceneStateManager.Instance.PlayerReligion==Religion.RedMoonReligion
+        //    &&PlayerDataManager.Instance.bRedMoonSkill)
+        //{
+        //    PlayerDataManager.Instance.RedMoonSkillCount +=1;
+        //    if (PlayerDataManager.Instance.RedMoonSkillCount >= 3)
+        //    {
+        //        PlayerDataManager.Instance.RedMoonSkillCount = 0;
+        //        PlayerDataManager.Instance.bRedMoonSkill = false;
+        //    }
+        //}
 
     }
 
@@ -3840,34 +3840,34 @@ public class PlayerOperationManager : MonoBehaviour
                 PlayerDataManager.Instance.DeadUnitCount += 1;
 
                 // 触发回血被动
-                if (SceneStateManager.Instance.PlayerReligion == Religion.RedMoonReligion 
-                    && PlayerDataManager.Instance.DeadUnitCount >= 12
-                    &&!PlayerDataManager.Instance.bRedMoonSkill)
-                {
-                    PlayerDataManager.Instance.bRedMoonSkill= true;
+                //if (SceneStateManager.Instance.PlayerReligion == Religion.RedMoonReligion 
+                //    && PlayerDataManager.Instance.DeadUnitCount >= 12
+                //    &&!PlayerDataManager.Instance.bRedMoonSkill)
+                //{
+                //    PlayerDataManager.Instance.bRedMoonSkill= true;
 
-                    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits.Count; i++)
-                    {
-                        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID != msg.TargetSyncData.Value.pieceID)
-                        {
+                //    for (int i = 0; i < PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits.Count; i++)
+                //    {
+                //        if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID != msg.TargetSyncData.Value.pieceID)
+                //        {
                            
-                            syncPieceData newData = new syncPieceData();
-                            if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitType != CardType.Building)
-                            {
-                                int hp = PieceManager.Instance.GetPieceAllHP(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID) / 5;
-                                if (hp == 0)
-                                    hp += 1;
-                                newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
+                //            syncPieceData newData = new syncPieceData();
+                //            if (PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitType != CardType.Building)
+                //            {
+                //                int hp = PieceManager.Instance.GetPieceAllHP(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID) / 5;
+                //                if (hp == 0)
+                //                    hp += 1;
+                //                newData = (syncPieceData)PieceManager.Instance.HealPiece(PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].UnitID, hp);
 
-                                PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
-                                unit.PlayerUnitDataSO = newData;
-                                PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
+                //                PlayerUnitData unit = PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i];
+                //                unit.PlayerUnitDataSO = newData;
+                //                PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i] = unit;
 
-                                Debug.Log("Heal HP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHP);
-                            }
-                        }
-                    }
-                }
+                //                Debug.Log("Heal HP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHP);
+                //            }
+                //        }
+                //    }
+                //}
 
                 // 目标死亡，攻击者前进到目标位置
                 HandleTargetDestroyedAfterAttack(

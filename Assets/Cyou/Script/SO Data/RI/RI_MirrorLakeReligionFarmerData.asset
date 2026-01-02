@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5797c92fb32404b47b80eb9095e00884, type: 3}
+  m_Name: RI_MirrorLakeReligionFarmerData
+  m_EditorClassIdentifier: 
+  piecePrefabResourcePath: 
+  originalPID: 0
+  religion: 0
+  pieceName: "\u93E1\u6E56\u6559_\u8FB2\u6C11"
+  populationCost: 2
+  resourceCost: 2
+  initialLevel: 0
+  aPRecoveryRate: 10
+  moveAPCost: 0
+  moveSpeed: 1
+  canAttack: 0
+  attackPower: 0
+  attackRange: 0
+  attackCooldown: 1
+  attackAPCost: 20
+  maxHPByLevel: 03000000040000000500000005000000
+  maxAPByLevel: 03000000040000000600000006000000
+  attackPowerByLevel: 00000000000000000000000000000000
+  hpUpgradeCost: 030000000400000000000000
+  apUpgradeCost: 050000000400000000000000
+  piecePrefab: {fileID: 0}
+  buildingSpeedModifier: 1
+  productEfficiency: 1
+  devotionAPCost: 2
+  maxSacrificeLevel: 000000000000000000000000
+  maxAPRecoveryLevel: 010000000200000003000000
+  sacrificeUpgradeCost: 0000000000000000
+  apRecoveryUpgradeCost: 0500000006000000
