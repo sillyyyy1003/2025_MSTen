@@ -5118,6 +5118,12 @@ public class PlayerOperationManager : MonoBehaviour
        GameManage.Instance.GetCell2D(pos).Cells3DPos,
        Quaternion.identity);
                 break;
+            case Religion.MirrorLakeReligion:
+                Debug.Log("ruin MayaReligion is " + re);
+                ruin = Instantiate(UnitListTable.Instance.Ruins[4],
+       GameManage.Instance.GetCell2D(pos).Cells3DPos,
+       Quaternion.identity);
+                break;
         }
 
         return ruin;

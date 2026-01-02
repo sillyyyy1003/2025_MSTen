@@ -227,7 +227,9 @@ public class BuildingManager : MonoBehaviour
             case Religion.MayaReligion:
                 buildingName = "瑪雅外星人文明教_特殊建築";
                 break;
-
+            case Religion.MirrorLakeReligion:
+                buildingName = "鏡湖教_特殊建築";
+                break;
             default:return null;
         }
 
@@ -289,7 +291,9 @@ public class BuildingManager : MonoBehaviour
             case Religion.MayaReligion:
                 buildingName = "瑪雅外星人文明教_特殊建築";
                 break;
-
+            case Religion.MirrorLakeReligion:
+                buildingName = "鏡湖教_特殊建築";
+                break;
             default:
                 Debug.Log("can find building data!!!!!"); 
                 return false;

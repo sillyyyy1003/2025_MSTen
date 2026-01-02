@@ -244,14 +244,14 @@ public class Farmer : Piece
 
         // 鏡湖教の場合とそれ以外で異なるコスト配列を使用
         int[] upgradeCostArray;
-        if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
-        {
-            upgradeCostArray = farmerData.apRecoveryUpgradeCost;
-        }
-        else
-        {
+        //if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
+        //{
+        //    upgradeCostArray = farmerData.apRecoveryUpgradeCost;
+        //}
+        //else
+        //{
             upgradeCostArray = farmerData.sacrificeUpgradeCost;
-        }
+        //}
 
         // アップグレードコスト配列の境界チェック
         if (upgradeCostArray == null || sacrificeLevel >= upgradeCostArray.Length)
@@ -273,16 +273,16 @@ public class Farmer : Piece
         sacrificeLevel++;
 
         // 鏡湖教の場合とそれ以外で異なるログを出力
-        if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
-        {
-            int newAPRecoveryAmount = farmerData.maxAPRecoveryLevel[sacrificeLevel];
-            Debug.Log($"{farmerData.pieceName} の獲祭AP回復量がレベル{sacrificeLevel}にアップグレードしました（AP回復量: {newAPRecoveryAmount}）");
-        }
-        else
-        {
+        //if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
+        //{
+        //    int newAPRecoveryAmount = farmerData.maxAPRecoveryLevel[sacrificeLevel];
+        //    Debug.Log($"{farmerData.pieceName} の獲祭AP回復量がレベル{sacrificeLevel}にアップグレードしました（AP回復量: {newAPRecoveryAmount}）");
+        //}
+        //else
+        //{
             int newSacrificeAmount = farmerData.maxSacrificeLevel[sacrificeLevel];
             Debug.Log($"{farmerData.pieceName} の獲祭HP回復量がレベル{sacrificeLevel}にアップグレードしました（HP回復量: {newSacrificeAmount}）");
-        }
+        //}
 
         return true;
     }
@@ -301,14 +301,14 @@ public class Farmer : Piece
 
                 // 鏡湖教の場合とそれ以外で異なるコスト配列を使用
                 int[] upgradeCostArray;
-                if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
-                {
-                    upgradeCostArray = farmerData.apRecoveryUpgradeCost;
-                }
-                else
-                {
+                //if (farmerData.religion == GameData.Religion.MirrorLakeReligion)
+                //{
+                //    upgradeCostArray = farmerData.apRecoveryUpgradeCost;
+                //}
+                //else
+                //{
                     upgradeCostArray = farmerData.sacrificeUpgradeCost;
-                }
+                //}
 
                 if (upgradeCostArray == null || sacrificeLevel >= upgradeCostArray.Length)
                     return -1;

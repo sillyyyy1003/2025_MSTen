@@ -2829,13 +2829,8 @@ MonoBehaviour:
   PlayerRuinCells: 
   NextTurnReBuildCellID: 
   DeadUnitCount: 0
-  RedMoonSkillCount: 0
-  bRedMoonSkill: 0
   BuildingFarmerCount: 0
   TurnCount: 0
-  CrazyTurnCooldown: 0
-  CrazyRebuild: 0
-  MirrorSkillCount: 0
   Result_CellNumber: 0
   Result_PieceNumber: 0
   Result_BuildingNumber: 0
@@ -34519,6 +34514,7 @@ MonoBehaviour:
   - {fileID: 4985360878437811999, guid: 52c574026133b6d4e87760c08edea4bc, type: 3}
   - {fileID: 4631286829819602770, guid: 54596b853cc9c7249869f8305b7167ac, type: 3}
   - {fileID: 3296889079020756951, guid: 6960b0f8109dc5643bb03c0a7ef26064, type: 3}
+  - {fileID: 4033665905760649707, guid: c249190b0ed059f4fbab73129ac2efd4, type: 3}
 --- !u!1 &1621292546
 GameObject:
   m_ObjectHideFlags: 0

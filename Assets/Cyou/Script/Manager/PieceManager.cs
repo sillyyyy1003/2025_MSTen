@@ -1724,16 +1724,16 @@ public class PieceManager : MonoBehaviour
 
         // 農民の所属宗教を確認
         bool success = false;
-        if (farmer.Data.religion == GameData.Religion.MirrorLakeReligion)
-        {
-            // 鏡湖教の場合はAP回復
-            success = farmer.SacrificeAPRecovery(target);
-        }
-        else
-        {
+        //if (farmer.Data.religion == GameData.Religion.MirrorLakeReligion)
+        //{
+        //    // 鏡湖教の場合はAP回復
+        //    success = farmer.SacrificeAPRecovery(target);
+        //}
+        //else
+        //{
             // それ以外の陣営はHP回復
             success = farmer.Sacrifice(target);
-        }
+        //}
 
         if (success)
         {
