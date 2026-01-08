@@ -175,6 +175,7 @@ public class SceneStateManager : MonoBehaviour
         // 生成一个随机值（目前为1~4 之后扩展到1~8）
         int religion = Random.Range(1, 5);
         PlayerReligion = (Religion)religion;
+        //PlayerReligion = Religion.MirrorLakeReligion;
 
     }
 

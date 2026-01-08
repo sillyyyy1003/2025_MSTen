@@ -34509,6 +34509,18 @@ MonoBehaviour:
   - pieceType: 1
     religion: 4
     pieceDataSO: {fileID: 11400000, guid: 38b876209528806419b2aee7cfa281e2, type: 2}
+  - pieceType: 2
+    religion: 5
+    pieceDataSO: {fileID: 11400000, guid: 9ef2aedc26d695b4d8ae1725d861c630, type: 2}
+  - pieceType: 1
+    religion: 5
+    pieceDataSO: {fileID: 11400000, guid: c1dca6ad0a45d8547a441ec3ad4cbca1, type: 2}
+  - pieceType: 3
+    religion: 5
+    pieceDataSO: {fileID: 11400000, guid: 9e9536cb950497a4ca96957eabb0b104, type: 2}
+  - pieceType: 4
+    religion: 5
+    pieceDataSO: {fileID: 11400000, guid: 52dba16d4f16a1c4c8a3c234ea60f13c, type: 2}
   Ruins:
   - {fileID: 4260726415608013866, guid: 20286ce8a2fb0e74da04e89d59cade0a, type: 3}
   - {fileID: 4985360878437811999, guid: 52c574026133b6d4e87760c08edea4bc, type: 3}

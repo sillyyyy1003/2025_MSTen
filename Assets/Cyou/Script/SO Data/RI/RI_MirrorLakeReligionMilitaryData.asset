@@ -32,7 +32,8 @@ MonoBehaviour:
   attackPowerByLevel: 02000000030000000400000004000000
   hpUpgradeCost: 050000000600000007000000
   apUpgradeCost: 050000000600000000000000
-  piecePrefab: {fileID: 0}
+  piecePrefab: {fileID: 1222280963834360998, guid: 2c0b2559b058f554897f9e546746db66,
+    type: 3}
   criticalChance: 0
   damageType: 0
   availableSkills: []

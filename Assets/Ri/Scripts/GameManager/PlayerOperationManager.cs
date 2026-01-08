@@ -5027,11 +5027,15 @@ public class PlayerOperationManager : MonoBehaviour
 
         if (buildingObj != null)
         {
+            //移除UI
+            UnitStatusUIManager.Instance.RemoveStatusUI(buildingID);
+
             // 2. 播放建筑摧毁动画
             Sequence destroySequence = DOTween.Sequence();
             destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
             destroySequence.Join(buildingObj.transform.DORotate(
                 new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+
 
             destroySequence.OnComplete(() =>
             {
@@ -5076,8 +5080,6 @@ public class PlayerOperationManager : MonoBehaviour
         // 9. 从BuildingManager中移除建筑
         GameManage.Instance._BuildingManager.RemoveBuilding(buildingID);
 
-        //移除UI
-        UnitStatusUIManager.Instance.RemoveStatusUI(buildingID);
 
         // 10. 网络同步:发送建筑摧毁消息
         SyncBuildingDestruction(buildingPos, buildingID);
