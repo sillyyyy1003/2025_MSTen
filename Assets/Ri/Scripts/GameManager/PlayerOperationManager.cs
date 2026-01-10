@@ -5034,10 +5034,7 @@ public class PlayerOperationManager : MonoBehaviour
             //destroySequence.Join(buildingObj.transform.DORotate(
             //    new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
 
-            // 10. 网络同步:发送建筑摧毁消息
-            SyncBuildingDestruction(buildingPos, buildingID);
-            //移除UI
-            UnitStatusUIManager.Instance.RemoveStatusUI(buildingID);
+          
 
 			//destroySequence.OnComplete(() =>
    //         {
@@ -5081,10 +5078,13 @@ public class PlayerOperationManager : MonoBehaviour
 
         // 9. 从BuildingManager中移除建筑
         GameManage.Instance._BuildingManager.RemoveBuilding(buildingID);
+            // 10. 网络同步:发送建筑摧毁消息
+            SyncBuildingDestruction(buildingPos, buildingID);
+            //移除UI
+            UnitStatusUIManager.Instance.RemoveStatusUI(buildingID);
 
 
-
-        Debug.Log($"[建筑摧毁] 摧毁逻辑处理完成");
+            Debug.Log($"[建筑摧毁] 摧毁逻辑处理完成");
             //});
         }
     }
