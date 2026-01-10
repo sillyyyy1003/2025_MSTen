@@ -3316,9 +3316,11 @@ public class PlayerOperationManager : MonoBehaviour
 
         moveSequence.Append(SelectingUnit.transform.DOPath(path, MoveSpeed, PathType.CatmullRom)
             .SetEase(Ease.Linear));
+        // 1. 发送攻击建筑消息
+        SyncLocalBuildingAttack(fromPos, toPos, targetOwnerId, targetBuilding.BuildingID, 0, true);
 
-        // 同时播放建筑摧毁动画
-        if (targetUnit != null)
+		// 同时播放建筑摧毁动画
+		if (targetUnit != null)
         {
             moveSequence.Join(targetUnit.transform.DOScale(0f, 0.5f));
             moveSequence.Join(targetUnit.transform.DORotate(
@@ -3328,9 +3330,7 @@ public class PlayerOperationManager : MonoBehaviour
         // 动画完成后的处理
         moveSequence.OnComplete(() =>
         {
-            // 1. 发送攻击建筑消息
-            SyncLocalBuildingAttack(fromPos, toPos, targetOwnerId, targetBuilding.BuildingID, 0, true);
-
+           
             // 2. 销毁建筑GameObject
             if (targetUnit != null) Destroy(targetUnit);
 
@@ -3521,14 +3521,14 @@ public class PlayerOperationManager : MonoBehaviour
 
             //移除UI
             UnitStatusUIManager.Instance.RemoveStatusUI(msg.BuildingID);
-			// 播放建筑摧毁动画
-			Sequence destroySequence = DOTween.Sequence();
-            destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
-            destroySequence.Join(buildingObj.transform.DORotate(
-                new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+			//// 播放建筑摧毁动画
+			//Sequence destroySequence = DOTween.Sequence();
+   //         destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
+   //         destroySequence.Join(buildingObj.transform.DORotate(
+   //             new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
 
-            destroySequence.OnComplete(() =>
-            {
+            //destroySequence.OnComplete(() =>
+            //{
 
                 // 1. 销毁建筑GameObject
                 Destroy(buildingObj);
@@ -3568,7 +3568,7 @@ public class PlayerOperationManager : MonoBehaviour
                     attackerPos,
                     buildingPos
                 );
-            });
+            //});
         }
         else
         {
@@ -5028,19 +5028,19 @@ public class PlayerOperationManager : MonoBehaviour
         if (buildingObj != null)
         {
 
-            // 2. 播放建筑摧毁动画
-            Sequence destroySequence = DOTween.Sequence();
-            destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
-            destroySequence.Join(buildingObj.transform.DORotate(
-                new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
+            //// 2. 播放建筑摧毁动画
+            //Sequence destroySequence = DOTween.Sequence();
+            //destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
+            //destroySequence.Join(buildingObj.transform.DORotate(
+            //    new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
 
             // 10. 网络同步:发送建筑摧毁消息
             SyncBuildingDestruction(buildingPos, buildingID);
             //移除UI
             UnitStatusUIManager.Instance.RemoveStatusUI(buildingID);
 
-			destroySequence.OnComplete(() =>
-            {
+			//destroySequence.OnComplete(() =>
+   //         {
                 // 销毁建筑GameObject
                 Destroy(buildingObj);
                 Debug.Log($"[建筑摧毁] 建筑GameObject已销毁");
@@ -5085,7 +5085,7 @@ public class PlayerOperationManager : MonoBehaviour
 
 
         Debug.Log($"[建筑摧毁] 摧毁逻辑处理完成");
-            });
+            //});
         }
     }
 
