@@ -3239,9 +3239,10 @@ public class PlayerOperationManager : MonoBehaviour
                 targetUnit.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5).OnComplete(() =>
                 {
                     if (buildingDestroyed)
-                    {
-                        // 建筑被摧毁，攻击者前进到建筑位置
-                        ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
+					{
+						UnitStatusUIManager.Instance.RemoveStatusUI(targetBuilding.BuildingID);
+						// 建筑被摧毁，攻击者前进到建筑位置
+						ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
                         GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[targetOwnerId].PlayerReligion, GameManage.Instance.FindCell(targetCellId).Cells2DPos);
 
                         PlayerDataManager.Instance.AllRuinCells[targetOwnerId].Add(targetCellId);
@@ -3260,7 +3261,6 @@ public class PlayerOperationManager : MonoBehaviour
                         // 添加结局数据
                         PlayerDataManager.Instance.Result_BuildingDestroyedNumber += 1;
 
-                        UnitStatusUIManager.Instance.RemoveStatusUI(targetBuilding.BuildingID);
                     }
                     else
                     {
@@ -3519,16 +3519,16 @@ public class PlayerOperationManager : MonoBehaviour
             // ===== 建筑被摧毁，攻击者前进到建筑位置 =====
             Debug.Log($"[网络建筑攻击] 建筑被摧毁，攻击者将前进到建筑位置");
 
-            // 播放建筑摧毁动画
-            Sequence destroySequence = DOTween.Sequence();
+            //移除UI
+            UnitStatusUIManager.Instance.RemoveStatusUI(msg.BuildingID);
+			// 播放建筑摧毁动画
+			Sequence destroySequence = DOTween.Sequence();
             destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
             destroySequence.Join(buildingObj.transform.DORotate(
                 new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
 
             destroySequence.OnComplete(() =>
             {
-                //移除UI
-                UnitStatusUIManager.Instance.RemoveStatusUI(msg.BuildingID);
 
                 // 1. 销毁建筑GameObject
                 Destroy(buildingObj);
@@ -3670,13 +3670,15 @@ public class PlayerOperationManager : MonoBehaviour
             return;
         }
 
-        // 播放建筑摧毁动画
-        Sequence destroySequence = DOTween.Sequence();
+        //移除UI
+        UnitStatusUIManager.Instance.RemoveStatusUI(msg.BuildingID);
+		// 播放建筑摧毁动画
+		Sequence destroySequence = DOTween.Sequence();
         destroySequence.Join(buildingObj.transform.DOScale(0f, 0.5f));
         destroySequence.Join(buildingObj.transform.DORotate(
             new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
 
-        destroySequence.OnComplete(() =>
+		destroySequence.OnComplete(() =>
         {
             // 1. 销毁建筑GameObject
             Destroy(buildingObj);
@@ -3709,8 +3711,6 @@ public class PlayerOperationManager : MonoBehaviour
             BuildingRuins[msg.BuildingOwnerId][RuinID] = ruin;
             RuinID++;
 
-            //移除UI
-            UnitStatusUIManager.Instance.RemoveStatusUI(msg.BuildingID);
 
             Debug.Log($"[网络建筑摧毁] 废墟已创建");
         });
@@ -3865,7 +3865,7 @@ public class PlayerOperationManager : MonoBehaviour
 
                 //                Debug.Log("Heal HP is " + PlayerDataManager.Instance.GetPlayerData(localPlayerId).PlayerUnits[i].PlayerUnitDataSO.currentHP);
                 //            }
-                //        }
+                //        
                 //    }
                 //}
 
@@ -5027,8 +5027,6 @@ public class PlayerOperationManager : MonoBehaviour
 
         if (buildingObj != null)
         {
-            //移除UI
-            UnitStatusUIManager.Instance.RemoveStatusUI(buildingID);
 
             // 2. 播放建筑摧毁动画
             Sequence destroySequence = DOTween.Sequence();
@@ -5036,8 +5034,12 @@ public class PlayerOperationManager : MonoBehaviour
             destroySequence.Join(buildingObj.transform.DORotate(
                 new Vector3(0, 360, 0), 0.5f, RotateMode.FastBeyond360));
 
+            // 10. 网络同步:发送建筑摧毁消息
+            SyncBuildingDestruction(buildingPos, buildingID);
+            //移除UI
+            UnitStatusUIManager.Instance.RemoveStatusUI(buildingID);
 
-            destroySequence.OnComplete(() =>
+			destroySequence.OnComplete(() =>
             {
                 // 销毁建筑GameObject
                 Destroy(buildingObj);
@@ -5064,8 +5066,8 @@ public class PlayerOperationManager : MonoBehaviour
                 int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
                 PlayerDataManager.Instance.AllRuinCells[localPlayerId].Add(cellID);
 
-                // 保存废墟
-                BuildingRuins[localPlayerId][RuinID] = ruin;
+				// 保存废墟
+				BuildingRuins[localPlayerId][RuinID] = ruin;
 
                 // 记录cellID到PlayerDataManager (不需要网络同步)
                 PlayerDataManager.Instance.AddPlayerRuinCell(cellID);
@@ -5081,8 +5083,6 @@ public class PlayerOperationManager : MonoBehaviour
         GameManage.Instance._BuildingManager.RemoveBuilding(buildingID);
 
 
-        // 10. 网络同步:发送建筑摧毁消息
-        SyncBuildingDestruction(buildingPos, buildingID);
 
         Debug.Log($"[建筑摧毁] 摧毁逻辑处理完成");
             });
