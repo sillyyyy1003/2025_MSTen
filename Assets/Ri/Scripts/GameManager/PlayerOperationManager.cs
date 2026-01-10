@@ -3244,7 +3244,10 @@ public class PlayerOperationManager : MonoBehaviour
 						// 建筑被摧毁，攻击者前进到建筑位置
 						ExecuteMoveToDestroyedBuildingPosition(attackerPos, targetPos, targetCellId, targetUnit, targetOwnerId, targetBuilding);
                         GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[targetOwnerId].PlayerReligion, GameManage.Instance.FindCell(targetCellId).Cells2DPos);
-
+                        if (!PlayerDataManager.Instance.AllRuinCells.ContainsKey(targetOwnerId))
+                        {
+                            PlayerDataManager.Instance.AllRuinCells[targetOwnerId] = new List<int>();
+                        }
                         PlayerDataManager.Instance.AllRuinCells[targetOwnerId].Add(targetCellId);
 
                         // 6. 清空本地cellObject
@@ -3557,7 +3560,10 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 获取当前cell的ID
                 int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
-
+                if (!PlayerDataManager.Instance.AllRuinCells.ContainsKey(localPlayerId))
+                {
+                    PlayerDataManager.Instance.AllRuinCells[localPlayerId] = new List<int>();
+                }
                 PlayerDataManager.Instance.AllRuinCells[localPlayerId].Add(cellID);
 
                 PlayerDataManager.Instance.AddPlayerRuinCell(cellID);
@@ -3698,7 +3704,10 @@ public class PlayerOperationManager : MonoBehaviour
 
             // 5. 创建废墟
             GameObject ruin = CreateRuin(PlayerDataManager.Instance.GetAllPlayersData()[msg.BuildingOwnerId].PlayerReligion, buildingPos);
-
+            if (!PlayerDataManager.Instance.AllRuinCells.ContainsKey(msg.BuildingOwnerId))
+            {
+                PlayerDataManager.Instance.AllRuinCells[msg.BuildingOwnerId] = new List<int>();
+            }
             PlayerDataManager.Instance.AllRuinCells[msg.BuildingOwnerId].Add(GameManage.Instance.GetCell2D(buildingPos).id);
 
             // 6. 清空本地cellObject
@@ -5061,6 +5070,10 @@ public class PlayerOperationManager : MonoBehaviour
 
                 // 获取当前cell的ID
                 int cellID = GameManage.Instance.GetCell2D(buildingPos).id;
+                if (!PlayerDataManager.Instance.AllRuinCells.ContainsKey(localPlayerId))
+                {
+                    PlayerDataManager.Instance.AllRuinCells[localPlayerId] = new List<int>();
+                }
                 PlayerDataManager.Instance.AllRuinCells[localPlayerId].Add(cellID);
 
 				// 保存废墟
